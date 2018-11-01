@@ -1,0 +1,29 @@
+#include "tensor_signature.hpp"
+#include "tensor_shape.hpp"
+#include "tensor_leg.hpp"
+
+#include <iostream>
+#include <utility>
+
+using namespace exatn;
+using namespace exatn::numerics;
+
+int main(int argc, char ** argv)
+{
+ TensorSignature signa{std::pair<SpaceId,SubspaceId>(1,5), std::pair<SpaceId,SubspaceId>(SOME_SPACE,13)};
+ std::cout << signa.getRank() << " " <<
+              signa.getDimSpaceId(0) << " " <<
+              signa.getDimSubspaceId(1) << " " <<
+              std::get<0>(signa.getDimSpaceAttr(1)) << std::endl;
+ signa.printIt(); std::cout << std::endl;
+
+ TensorShape shape{61,32};
+ std::cout << shape.getRank() << " " <<
+              shape.getDimExtent(0) << " " << shape.getDimExtent(1) << std::endl;
+ shape.printIt(); std::cout << std::endl;
+
+ TensorLeg leg{1,4};
+ leg.printIt(); std::cout << std::endl;
+
+ return 0;
+}

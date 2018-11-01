@@ -1,3 +1,13 @@
-ExaTN Readme
+ExaTN library: Exascale Tensor Networks
 
-Code coming soon!
+License/copyright/authors:
+
+Description:
+
+Dependencies:
+
+Build instructions:
+
+Testing instructions:
+
+Details:

@@ -1,0 +1,16 @@
+*.o
+*.mod
+*.modmic
+*.ptx
+*.i
+*.ii
+*.cudafe*
+*.fatbin*
+*.cubin
+*.module_id
+*.hash
+*.a
+*.so
+*.x
+*.log
+*.out
