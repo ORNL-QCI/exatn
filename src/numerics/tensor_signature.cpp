@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2018/10/31
+REVISION: 2018/11/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -20,6 +20,11 @@ subspaces_(subspaces)
 
 TensorSignature::TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces):
 subspaces_(subspaces)
+{
+}
+
+TensorSignature::TensorSignature(unsigned int rank):
+subspaces_(rank,std::pair<SpaceId,SubspaceId>(SOME_SPACE,0))
 {
 }
 

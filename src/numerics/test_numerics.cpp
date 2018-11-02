@@ -1,3 +1,4 @@
+#include "tensor.hpp"
 #include "tensor_signature.hpp"
 #include "tensor_shape.hpp"
 #include "tensor_leg.hpp"
@@ -24,6 +25,9 @@ int main(int argc, char ** argv)
 
  TensorLeg leg{1,4};
  leg.printIt(); std::cout << std::endl;
+
+ Tensor tensor("T",shape,signa);
+ tensor.printIt(); std::cout << std::endl;
 
  return 0;
 }

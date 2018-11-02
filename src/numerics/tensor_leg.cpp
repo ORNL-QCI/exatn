@@ -32,7 +32,8 @@ unsigned int TensorLeg::getDimensionId() const
  return dimensn_id_;
 }
 
-void TensorLeg::resetConnection(unsigned int tensor_id, unsigned int dimensn_id)
+void TensorLeg::resetConnection(unsigned int tensor_id,
+                                unsigned int dimensn_id)
 {
  tensor_id_=tensor_id; dimensn_id_=dimensn_id;
  return;
