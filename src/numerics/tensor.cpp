@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/02
+REVISION: 2018/11/04
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,6 +33,31 @@ void Tensor::printIt() const
 {
  std::cout << name_; signature_.printIt(); shape_.printIt();
  return;
+}
+
+unsigned int Tensor::getRank() const
+{
+ return this->shape_.getRank();
+}
+
+DimExtent Tensor::getDimExtent(unsigned int dim_id) const
+{
+ return this->shape_.getDimExtent(dim_id);
+}
+
+SpaceId Tensor::getDimSpaceId(unsigned int dim_id) const
+{
+ return this->signature_.getDimSpaceId(dim_id);
+}
+
+SubspaceId Tensor::getDimSubspaceId(unsigned int dim_id) const
+{
+ return this->signature_.getDimSubspaceId(dim_id);
+}
+
+std::pair<SpaceId,SubspaceId> Tensor::getDimSpaceAttr(unsigned int dim_id) const
+{
+ return this->signature_.getDimSpaceAttr(dim_id);
 }
 
 } //namespace numerics
