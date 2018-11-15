@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/04
+REVISION: 2018/11/15
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,6 +43,11 @@ unsigned int Tensor::getRank() const
 DimExtent Tensor::getDimExtent(unsigned int dim_id) const
 {
  return this->shape_.getDimExtent(dim_id);
+}
+
+const std::vector<DimExtent> & Tensor::getDimExtents() const
+{
+ return shape_.getDimExtents();
 }
 
 SpaceId Tensor::getDimSpaceId(unsigned int dim_id) const

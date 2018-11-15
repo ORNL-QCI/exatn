@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2018/10/31
+REVISION: 2018/11/15
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,6 +35,11 @@ unsigned int TensorShape::getRank() const
 DimExtent TensorShape::getDimExtent(unsigned int dim_id) const
 {
  return extents_.at(dim_id);
+}
+
+const std::vector<DimExtent> & TensorShape::getDimExtents() const
+{
+ return extents_;
 }
 
 } //namespace numerics

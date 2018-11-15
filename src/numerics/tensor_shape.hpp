@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2018/10/31
+REVISION: 2018/11/15
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,6 +43,7 @@ public:
 
  /** Get the extent of a specific tensor dimension. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
+ const std::vector<DimExtent> & getDimExtents() const;
 
 private:
 
