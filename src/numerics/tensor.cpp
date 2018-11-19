@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/15
+REVISION: 2018/11/16
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,6 +38,16 @@ void Tensor::printIt() const
 unsigned int Tensor::getRank() const
 {
  return this->shape_.getRank();
+}
+
+const TensorShape & Tensor::getShape() const
+{
+ return shape_;
+}
+
+const TensorSignature & Tensor::getSignature() const
+{
+ return signature_;
 }
 
 DimExtent Tensor::getDimExtent(unsigned int dim_id) const

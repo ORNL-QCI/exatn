@@ -1,3 +1,4 @@
+#include "tensor_factory.hpp"
 #include "tensor.hpp"
 #include "tensor_signature.hpp"
 #include "tensor_shape.hpp"
@@ -26,8 +27,10 @@ int main(int argc, char ** argv)
  TensorLeg leg{1,4};
  leg.printIt(); std::cout << std::endl;
 
- Tensor tensor("T",shape,signa);
- tensor.printIt(); std::cout << std::endl;
+ TensorFactory tensor_factory;
+
+ auto tensor = tensor_factory.createTensor(TensorKind::TENSOR,"T",shape,signa);
+ tensor->printIt(); std::cout << std::endl;
 
  return 0;
 }

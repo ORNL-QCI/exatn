@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/15
+REVISION: 2018/11/16
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -63,9 +63,14 @@ public:
 
  /** Get the tensor rank (order). **/
  unsigned int getRank() const;
+ /** Get the tensor shape. **/
+ const TensorShape & getShape() const;
+ /** Get the tensor signature. **/
+ const TensorSignature & getSignature() const;
 
  /** Get the extent of a specific tensor dimension. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
+ /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
 
  /** Get the space/subspace id for a specific tensor dimension. **/

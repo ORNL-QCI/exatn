@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2018/11/02
+REVISION: 2018/11/16
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,7 +21,7 @@ class TensorSignature{
 public:
 
  /** Create a tensor signature by specifying pairs <space_id,subspace_id> for each tensor dimension:
-     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset in some abstract space;
+     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in some abstract space;
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);

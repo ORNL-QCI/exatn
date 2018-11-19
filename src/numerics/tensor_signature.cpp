@@ -1,10 +1,12 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2018/11/02
+REVISION: 2018/11/16
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_signature.hpp"
+
+#include <assert.h>
 
 #include <iostream>
 #include <iterator>
@@ -49,17 +51,20 @@ unsigned int TensorSignature::getRank() const
 
 SpaceId TensorSignature::getDimSpaceId(unsigned int dim_id) const
 {
- return std::get<0>(subspaces_.at(dim_id));
+ assert(dim_id < subspaces_.size());
+ return std::get<0>(subspaces_[dim_id]);
 }
 
 SubspaceId TensorSignature::getDimSubspaceId(unsigned int dim_id) const
 {
- return std::get<1>(subspaces_.at(dim_id));
+ assert(dim_id < subspaces_.size());
+ return std::get<1>(subspaces_[dim_id]);
 }
 
 std::pair<SpaceId,SubspaceId> TensorSignature::getDimSpaceAttr(unsigned int dim_id) const
 {
- return subspaces_.at(dim_id);
+ assert(dim_id < subspaces_.size());
+ return subspaces_[dim_id];
 }
 
 } //namespace numerics

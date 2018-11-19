@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2018/10/31
+REVISION: 2018/11/16
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,6 +22,12 @@ using DimExtent = unsigned long long int;  //dimension extent type
 using DimOffset = unsigned long long int;  //dimension base offset type
 
 const SpaceId SOME_SPACE = 0; //any unregistered space (all registered spaces will have SpaceId > 0)
+
+enum class TensorKind{
+ TENSOR,     //base tensor (no numerical implementation)
+ TENSOR_SHA, //shared-memory tensor (TAL-SH numerical backend)
+ TENSOR_EXA  //distributed-memory tensor (ExaTENSOR numerical backend)
+};
 
 } //namespace exatn
 
