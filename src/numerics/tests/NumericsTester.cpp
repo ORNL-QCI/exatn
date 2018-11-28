@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include "tensor_factory.hpp"
 #include "tensor.hpp"
 #include "tensor_signature.hpp"
@@ -10,8 +12,8 @@
 using namespace exatn;
 using namespace exatn::numerics;
 
-int main(int argc, char ** argv)
-{
+TEST(NumericsTester, checkSimple) {
+
  TensorSignature signa{std::pair<SpaceId,SubspaceId>(1,5), std::pair<SpaceId,SubspaceId>(SOME_SPACE,13)};
  std::cout << signa.getRank() << " " <<
               signa.getDimSpaceId(0) << " " <<
@@ -31,6 +33,9 @@ int main(int argc, char ** argv)
 
  auto tensor = tensor_factory.createTensor(TensorKind::TENSOR,"T",shape,signa);
  tensor->printIt(); std::cout << std::endl;
+}
 
- return 0;
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

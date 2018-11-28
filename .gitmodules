@@ -1,0 +1,3 @@
+[submodule "tpls/gtest"]
+	path = tpls/gtest
+	url = https://github.com/abseil/googletest
