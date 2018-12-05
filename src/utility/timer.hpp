@@ -7,15 +7,15 @@ REVISION: 2018/10/29
 #ifndef TIMER_HPP_
 #define TIMER_HPP_
 
-namespace exatn{
+namespace exatn {
 
-namespace utility{
+namespace utility {
 
-double time_sys_sec();  //system time stamp in seconds (thread-global)
-double time_high_sec(); //high-resolution time stamp in seconds
+double time_sys_sec();  // system time stamp in seconds (thread-global)
+double time_high_sec(); // high-resolution time stamp in seconds
 
-} //namespace utility
+} // namespace utility
 
-} //namespace exatn
+} // namespace exatn
 
-#endif //TIMER_HPP_
+#endif // TIMER_HPP_
