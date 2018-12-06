@@ -1,0 +1,7 @@
+{
+    "cpp.buildConfigurations": [{
+        "name": "exatn",
+        "directory": "/home/project/exatn/build"
+    }
+    ]
+}
