@@ -54,29 +54,35 @@ private:
 
 //TEMPLATES:
 template<typename T>
-TensorShape::TensorShape(std::initializer_list<T> extents)
+TensorShape::TensorShape(std::initializer_list<T> extents):
+extents_(extents.size())
 {
  static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape type must be integral!");
 
+ //DEBUG:
  for(const auto & extent: extents){
   if(extent < 0) std::cout << "ERROR(TensorShape::TensorShape): Negative dimension extent passed!" << std::endl;
   assert(extent >= 0);
  }
 
- for(const auto & extent: extents) extents_.emplace_back(static_cast<DimExtent>(extent));
+ int i = 0;
+ for(const auto & extent: extents) extents_[i++] = static_cast<DimExtent>(extent);
 }
 
 template<typename T>
-TensorShape::TensorShape(const std::vector<T> & extents)
+TensorShape::TensorShape(const std::vector<T> & extents):
+extents_(extents.size())
 {
  static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape type must be integral!");
 
+ //DEBUG:
  for(const auto & extent: extents){
   if(extent < 0) std::cout << "ERROR(TensorShape::TensorShape): Negative dimension extent passed!" << std::endl;
   assert(extent >= 0);
  }
 
- for(const auto & extent: extents) extents_.emplace_back(static_cast<DimExtent>(extent));
+ int i = 0;
+ for(const auto & extent: extents) extents_[i++] = static_cast<DimExtent>(extent);
 }
 
 } //namespace numerics

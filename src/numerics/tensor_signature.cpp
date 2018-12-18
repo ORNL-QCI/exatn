@@ -51,19 +51,19 @@ unsigned int TensorSignature::getRank() const
 
 SpaceId TensorSignature::getDimSpaceId(unsigned int dim_id) const
 {
- assert(dim_id < subspaces_.size());
+ assert(dim_id < subspaces_.size()); //debug
  return std::get<0>(subspaces_[dim_id]);
 }
 
 SubspaceId TensorSignature::getDimSubspaceId(unsigned int dim_id) const
 {
- assert(dim_id < subspaces_.size());
+ assert(dim_id < subspaces_.size()); //debug
  return std::get<1>(subspaces_[dim_id]);
 }
 
 std::pair<SpaceId,SubspaceId> TensorSignature::getDimSpaceAttr(unsigned int dim_id) const
 {
- assert(dim_id < subspaces_.size());
+ assert(dim_id < subspaces_.size()); //debug
  return subspaces_[dim_id];
 }
 
