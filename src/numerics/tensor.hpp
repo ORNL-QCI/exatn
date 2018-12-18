@@ -117,8 +117,8 @@ name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size(
 }
 
 template<typename T>
-Tensor::Tensor::Tensor(const std::string & name,
-                       const std::vector<T> & extents):
+Tensor::Tensor(const std::string & name,
+               const std::vector<T> & extents):
 name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size()))
 {
 }
