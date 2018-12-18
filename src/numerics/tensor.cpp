@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/16
+REVISION: 2018/12/18
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,6 +19,7 @@ Tensor::Tensor(const std::string & name,
                const TensorSignature & signature):
 name_(name), shape_(shape), signature_(signature)
 {
+ //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
  assert(signature_.getRank() == shape_.getRank());
 }
@@ -37,7 +38,7 @@ void Tensor::printIt() const
 
 unsigned int Tensor::getRank() const
 {
- return this->shape_.getRank();
+ return shape_.getRank();
 }
 
 const TensorShape & Tensor::getShape() const
@@ -52,7 +53,7 @@ const TensorSignature & Tensor::getSignature() const
 
 DimExtent Tensor::getDimExtent(unsigned int dim_id) const
 {
- return this->shape_.getDimExtent(dim_id);
+ return shape_.getDimExtent(dim_id);
 }
 
 const std::vector<DimExtent> & Tensor::getDimExtents() const
@@ -62,17 +63,17 @@ const std::vector<DimExtent> & Tensor::getDimExtents() const
 
 SpaceId Tensor::getDimSpaceId(unsigned int dim_id) const
 {
- return this->signature_.getDimSpaceId(dim_id);
+ return signature_.getDimSpaceId(dim_id);
 }
 
 SubspaceId Tensor::getDimSubspaceId(unsigned int dim_id) const
 {
- return this->signature_.getDimSubspaceId(dim_id);
+ return signature_.getDimSubspaceId(dim_id);
 }
 
 std::pair<SpaceId,SubspaceId> Tensor::getDimSpaceAttr(unsigned int dim_id) const
 {
- return this->signature_.getDimSpaceAttr(dim_id);
+ return signature_.getDimSpaceAttr(dim_id);
 }
 
 } //namespace numerics

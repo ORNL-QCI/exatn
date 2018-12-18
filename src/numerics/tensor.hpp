@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/11/16
+REVISION: 2018/12/18
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -93,6 +93,7 @@ Tensor::Tensor(const std::string & name,
                std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces):
 name_(name), shape_(extents), signature_(subspaces)
 {
+ //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
  assert(signature_.getRank() == shape_.getRank());
 }
@@ -103,6 +104,7 @@ Tensor::Tensor(const std::string & name,
                const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces):
 name_(name), shape_(extents), signature_(subspaces)
 {
+ //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
  assert(signature_.getRank() == shape_.getRank());
 }
@@ -110,14 +112,14 @@ name_(name), shape_(extents), signature_(subspaces)
 template<typename T>
 Tensor::Tensor(const std::string & name,
                std::initializer_list<T> extents):
-name_(name), shape_(extents), signature_(extents.size(),std::pair<SpaceId,SubspaceId>(SOME_SPACE,0))
+name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size()))
 {
 }
 
 template<typename T>
 Tensor::Tensor::Tensor(const std::string & name,
                        const std::vector<T> & extents):
-name_(name), shape_(extents), signature_(extents.size(),std::pair<SpaceId,SubspaceId>(SOME_SPACE,0))
+name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size()))
 {
 }
 
