@@ -9,13 +9,22 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILDS ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
-project(exatn LANGUAGES CXX)
+project(exatn LANGUAGES CXX Fortran)
 
 option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
 option(EXATENSOR_ROOT "The root of the ExaTensor install, will contain include/lib directories" /usr)
 
 include(CTest)
 link_directories(${EXATENSOR_ROOT}/lib)
+
+find_package(MPI REQUIRED)
+find_package(OpenMP REQUIRED)
+
+if (OpenMP_FOUND) 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
+
+message(STATUS "MPI: ${MPI_CXX_LIBRARIES}")
 
 add_subdirectory(tpls)
 add_subdirectory(src)
