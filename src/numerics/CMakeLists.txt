@@ -8,7 +8,7 @@ add_library(${LIBRARY_NAME}
             tensor_exa.cpp
             tensor_factory.cpp)
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
-target_link_libraries(${LIBRARY_NAME} exatn-utility)
+target_link_libraries(${LIBRARY_NAME} exatn-utility exatensor talsh)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)

@@ -12,8 +12,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 project(exatn LANGUAGES CXX)
 
 option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
+option(EXATENSOR_ROOT "The root of the ExaTensor install, will contain include/lib directories" /usr)
 
 include(CTest)
+
+include_directories(${EXATENSOR_ROOT}/include)
+link_directories(${EXATENSOR_ROOT}/lib)
 
 add_subdirectory(tpls)
 add_subdirectory(src)
