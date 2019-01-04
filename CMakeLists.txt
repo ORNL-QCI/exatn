@@ -19,5 +19,8 @@ include(CTest)
 include_directories(${EXATENSOR_ROOT}/include)
 link_directories(${EXATENSOR_ROOT}/lib)
 
+find_package(CUDA)
+find_package(BLAS REQUIRED)
+
 add_subdirectory(tpls)
 add_subdirectory(src)
