@@ -15,12 +15,7 @@ option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
 option(EXATENSOR_ROOT "The root of the ExaTensor install, will contain include/lib directories" /usr)
 
 include(CTest)
-
-include_directories(${EXATENSOR_ROOT}/include)
 link_directories(${EXATENSOR_ROOT}/lib)
-
-find_package(CUDA)
-find_package(BLAS REQUIRED)
 
 add_subdirectory(tpls)
 add_subdirectory(src)
