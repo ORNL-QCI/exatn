@@ -24,7 +24,5 @@ if (OpenMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
-message(STATUS "MPI: ${MPI_CXX_LIBRARIES}")
-
 add_subdirectory(tpls)
 add_subdirectory(src)
