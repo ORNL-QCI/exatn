@@ -12,6 +12,7 @@ set(EXATENSOR_ROOT ${CMAKE_SOURCE_DIR}/tpls/ExaTensor-devel)
 
 project(exatn LANGUAGES CXX Fortran)
 
+option(CUDA_HOST_COMPILER "Provide the host compiler for nvcc" "")
 option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
 option(EXATENSOR_ROOT "The root of the ExaTensor install, will contain include/lib directories" /usr)
 
@@ -26,6 +27,8 @@ find_package(CUDA)
 if (OpenMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
+
+link_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor-devel/lib)
 
 add_subdirectory(tpls)
 add_subdirectory(src)

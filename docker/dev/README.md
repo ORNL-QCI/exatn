@@ -5,7 +5,7 @@ To develop ExaTN using the Eclipse Theia IDE and Docker
 ```bash
 $ git clone --recursive https://code.ornl.gov/qci/exatn
 $ cd exatn/docker/dev
-$ nvidia-docker run -d -ti --ipc=host -p 3005:3005 -v ../../../:/home/project code.ornl.gov:4567/qci/exatn
+$ nvidia-docker run -d -ti --ipc=host -p 3005:3005 -v $PWD/../../../:/home/project code.ornl.gov:4567/qci/exatn
 ```
 
 Navigate to `http://localhost:3005` in your web browser.

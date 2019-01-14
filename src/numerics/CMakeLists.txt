@@ -8,12 +8,15 @@ add_library(${LIBRARY_NAME}
             tensor_exa.cpp
             tensor_factory.cpp)
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
+
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+if (NOT CUDA_FOUND)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+endif()
 
 if(CUDA_FOUND)
-   target_link_libraries(${LIBRARY_NAME} exatn-utility exatensor talsh blas ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES} gfortran gomp ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
+   target_link_libraries(${LIBRARY_NAME} exatn-utility blas ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES} gfortran gomp ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} exatensor talsh)
 else()
    target_link_libraries(${LIBRARY_NAME} exatn-utility exatensor talsh blas ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES} gfortran gomp)
 endif()

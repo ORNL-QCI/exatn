@@ -48,21 +48,34 @@ if(CUDA_FOUND)
   message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
   message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
 
+  message(STATUS "HELLO ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
-  add_custom_target(
-    exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env GPU_CUDA=CUDA PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
-            MPILIB=OPENMPI BLASLIB=ATLAS
-            PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
-            PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-            PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+  if(CUDA_HOST_COMPILER)
+    add_custom_target(
+      exatensor-build
+      COMMAND ${CMAKE_COMMAND} -E env GPU_CUDA=CUDA
+              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
+              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
+              PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
+              PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+              make
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+  else()
+    add_custom_target(
+      exatensor-build
+      COMMAND ${CMAKE_COMMAND} -E env GPU_CUDA=CUDA
+              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
+              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
+              PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
+              PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+  endif()
 else()
   add_custom_target(
     exatensor-build
     COMMAND ${CMAKE_COMMAND} -E env MPILIB=OPENMPI BLASLIB=ATLAS
             PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
             PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-            PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
+            PATH_OPENMPI_BIN=${MPI_BIN_PATH} VERBOSE=1 make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
 endif()
