@@ -1,21 +1,24 @@
-ExaTN library: Exascale Tensor Networks
+# ExaTN library: Exascale Tensor Networks
+ExaTN provides a software library for the expression of
+hierarchical tensor networks to be leveraged in the simulation
+of quantum many-body systems at exascale.
 
-License/copyright/authors:
+## Dependencies
+GCC 8.0+, CUDA 9/10, MPI, CMake (for build)
 
-Description:
+## Build instructions
 
-Dependencies:
-
-Build instructions:
+``` bash
 $ (from top-level exatn) mkdir build && cd build
-Without ExaTENSOR:
-$ cmake .. -DEXATN_BUILD_TESTS=TRUE
-With ExaTENSOR:
-$ cmake .. -DEXATN_BUILD_TESTS=TRUE -DEXATENSOR_ROOT=<PATH_TO_EXATENSOR>
-$ make VERBOSE=1
+$ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=$(which g++-5)
+$ make
+```
 
-Testing instructions:
+## Testing instructions
 From build directory
+```bash
 $ ctest (or ./src/numerics/tests/NumericsTester to run the executable)
+```
 
-Details:
+## License
+See LICENSE.txt
