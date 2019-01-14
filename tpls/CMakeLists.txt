@@ -34,8 +34,6 @@ if(EXATN_BUILD_TESTS)
   endmacro()
 endif()
 
-include(ExternalProject)
-
 list(GET MPI_Fortran_INCLUDE_PATH 0 MPI_FORTRAN_INCLUDE)
 get_filename_component(MPI_ROOT_DIR ${MPI_FORTRAN_INCLUDE} DIRECTORY)
 get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
@@ -59,7 +57,7 @@ if(CUDA_FOUND)
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
               PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
               make
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   else()
     add_custom_target(
       exatensor-build
@@ -68,7 +66,7 @@ if(CUDA_FOUND)
               PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
               PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
 else()
   add_custom_target(
@@ -76,6 +74,6 @@ else()
     COMMAND ${CMAKE_COMMAND} -E env MPILIB=OPENMPI BLASLIB=ATLAS
             PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
             PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-            PATH_OPENMPI_BIN=${MPI_BIN_PATH} VERBOSE=1 make
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor-devel)
+            PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 endif()

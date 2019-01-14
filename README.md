@@ -8,8 +8,11 @@ GCC 8.0+, CUDA 9/10, MPI, CMake (for build)
 
 ## Build instructions
 
+Note that for now, developers must clone ExaTensor manually
 ``` bash
-$ (from top-level exatn) mkdir build && cd build
+  (from top-level exatn)
+$ git clone https://gitlab.com/DmitryLyakh/ExaTensor tpls/ExaTensor
+$ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=$(which g++-5)
 $ make
 ```
