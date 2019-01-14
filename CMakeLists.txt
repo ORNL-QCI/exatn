@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_DISABLE_IN_SOURCE_BUILDS ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(EXATENSOR_ROOT ${CMAKE_SOURCE_DIR}/tpls/ExaTensor-devel)
 
 project(exatn LANGUAGES CXX Fortran)
 
@@ -16,11 +17,13 @@ option(EXATENSOR_ROOT "The root of the ExaTensor install, will contain include/l
 
 include(CTest)
 link_directories(${EXATENSOR_ROOT}/lib)
+include_directories(${EXATENSOR_ROOT}/include)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(CUDA)
 
-if (OpenMP_FOUND) 
+if (OpenMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
