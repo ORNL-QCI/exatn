@@ -4,7 +4,7 @@ hierarchical tensor networks to be leveraged in the simulation
 of quantum many-body systems at exascale.
 
 ## Dependencies
-GCC 8.0+, MPI, CMake (for build), CUDA 9/10 (optional)
+GCC 8.0+, OpenMPI, CMake (for build), CUDA 9/10 (optional)
 
 ## Build instructions
 
