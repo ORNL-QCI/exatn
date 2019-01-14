@@ -27,5 +27,10 @@ endif()
 
 link_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib)
 
+message(STATUS "HOWDY ${CUDA_cublas_device_LIBRARY}")
+message(STATUS "HOWDY ${CUDA_CUBLAS_LIBRARIES}")
+
 add_subdirectory(tpls)
 add_subdirectory(src)
+
+
