@@ -1,4 +1,5 @@
 set(LIBRARY_NAME exatn-numerics)
+
 add_library(${LIBRARY_NAME}
             SHARED
             tensor_signature.cpp
@@ -7,22 +8,17 @@ add_library(${LIBRARY_NAME}
             tensor.cpp
             tensor_exa.cpp
             tensor_factory.cpp)
+
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
-if(NOT CUDA_FOUND)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
-endif()
-
 if(CUDA_FOUND)
-  list(GET CUDA_BLAS_LIB 0 CUDA_CUBLAS_LIBRARIES)
-  message(STATUS "CUDA BLAS Library: ${CUDA_BLAS_LIB}")
-  target_link_libraries(${LIBRARY_NAME}
+  message(STATUS "CUDA BLAS Library: ${CUDA_CUBLAS_LIBRARIES}")
+  target_link_libraries(${LIBRARY_NAME} PUBLIC
                         exatn-utility
-                        blas
-                        ${MPI_CXX_LIBRARIES}
-                        ${MPI_Fortran_LIBRARIES}
+                        MPI::MPI_CXX
+                        MPI::MPI_Fortran
                         gfortran
                         gomp
                         ${CUDA_LIBRARIES}
@@ -30,13 +26,16 @@ if(CUDA_FOUND)
                         exatensor
                         talsh)
 else()
-  target_link_libraries(${LIBRARY_NAME}
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+
+  target_link_libraries(${LIBRARY_NAME} PUBLIC
                         exatn-utility
                         exatensor
                         talsh
                         blas
-                        ${MPI_CXX_LIBRARIES}
-                        ${MPI_Fortran_LIBRARIES}
+                        MPI::MPI_CXX
+                        MPI::MPI_Fortran
                         gfortran
                         gomp)
 endif()

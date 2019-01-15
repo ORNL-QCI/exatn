@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
@@ -21,14 +21,13 @@ find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(CUDA)
 
+message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
+
 if (OpenMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
 link_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib)
-
-message(STATUS "HOWDY ${CUDA_cublas_device_LIBRARY}")
-message(STATUS "HOWDY ${CUDA_CUBLAS_LIBRARIES}")
 
 add_subdirectory(tpls)
 add_subdirectory(src)

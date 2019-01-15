@@ -9,7 +9,20 @@ Compiler: GCC 8+, Intel 18+, IBM XL 16.1.1+
 MPI: OpenMPI, MPICH
 BLAS: ATLAS, MKL, ESSL, ACML
 CUDA 9+ (optional)
-CMake (for build)
+CMake 3.9+ (for build)
+```
+On Ubuntu 16.04, for GCC 8, OpenMPI, and ATLAS Blas run the following
+```bash
+$ add-apt-repository ppa:ubuntu-toolchain-r/test
+$ apt-get update
+$ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
+$ python -m pip install --upgrade cmake
+```
+for CMake 3.9+, do not use the apt-get installer, instead use `pip`, and
+ensure that `/usr/local/bin` is in your path
+```bash
+$ python -m pip install --upgrade cmake
+$ export PATH=$PATH:/usr/local/bin
 ```
 
 ## Build instructions
