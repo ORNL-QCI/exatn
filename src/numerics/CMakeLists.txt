@@ -17,14 +17,15 @@ if(CUDA_FOUND)
   message(STATUS "CUDA BLAS Library: ${CUDA_CUBLAS_LIBRARIES}")
   target_link_libraries(${LIBRARY_NAME} PUBLIC
                         exatn-utility
+                        exatensor
+                        talsh
+                        blas
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
-                        gfortran
-                        gomp
-                        ${CUDA_LIBRARIES}
                         ${CUDA_BLAS_LIB}
-                        exatensor
-                        talsh)
+                        ${CUDA_LIBRARIES}
+                        gfortran
+                        gomp)
 else()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")

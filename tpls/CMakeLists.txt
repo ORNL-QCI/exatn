@@ -15,6 +15,7 @@ endif()
 if(EXATN_BUILD_TESTS)
   enable_testing()
 
+  set(BUILD_SHARED_LIBS TRUE)
   add_subdirectory(gtest)
   mark_as_advanced(BUILD_GMOCK
                    BUILD_GTEST
