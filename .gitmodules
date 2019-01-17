@@ -1,3 +1,6 @@
 [submodule "tpls/gtest"]
 	path = tpls/gtest
 	url = https://github.com/abseil/googletest
+[submodule "tpls/cppmicroservices"]
+	path = tpls/cppmicroservices
+	url = https://github.com/ornl-qci/cppmicroservices

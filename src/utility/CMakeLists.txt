@@ -1,9 +1,17 @@
 set(LIBRARY_NAME exatn-utility)
-add_library(${LIBRARY_NAME} SHARED timer.cpp srep/Srep2TaProl.cpp)
-target_include_directories(${LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(${LIBRARY_NAME}
+            SHARED
+            timer.cpp
+            ServiceRegistry.cpp
+            srep/Srep2TaProl.cpp)
+target_include_directories(
+  ${LIBRARY_NAME}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(srep/tests)
+  add_subdirectory(tests)
 endif()

@@ -13,12 +13,6 @@ target_include_directories(${LIBRARY_NAME} PUBLIC .)
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
-if(NOT CUDA_FOUND)
-
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
-
-endif()
-
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

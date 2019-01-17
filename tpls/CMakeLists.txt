@@ -1,3 +1,6 @@
+set(BUILD_SHARED_LIBS TRUE)
+add_subdirectory(cppmicroservices)
+
 find_package(Git QUIET)
 
 if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
@@ -15,7 +18,6 @@ endif()
 if(EXATN_BUILD_TESTS)
   enable_testing()
 
-  set(BUILD_SHARED_LIBS TRUE)
   add_subdirectory(gtest)
   mark_as_advanced(BUILD_GMOCK
                    BUILD_GTEST
@@ -46,7 +48,7 @@ if(CUDA_FOUND)
   message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")
   message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
   message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
-  
+
   if(CUDA_HOST_COMPILER)
     add_custom_target(
       exatensor-build

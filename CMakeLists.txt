@@ -21,13 +21,16 @@ find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(CUDA)
 
-message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
-
-if (OpenMP_FOUND)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fopenmp")
+if(NOT CUDA_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
-link_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib)
+if (OpenMP_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
+
+include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
+include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/framework/include)
 
 add_subdirectory(tpls)
 add_subdirectory(src)
