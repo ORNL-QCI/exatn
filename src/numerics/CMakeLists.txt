@@ -11,8 +11,15 @@ add_library(${LIBRARY_NAME}
 
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
 
+exatn_enable_rpath(${LIBRARY_NAME})
+
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
+
+file (GLOB HEADERS *.hpp)
+
+install(FILES ${HEADERS} DESTINATION include/exatn)
+install(TARGETS ${LIBRARY_NAME} DESTINATION lib)

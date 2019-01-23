@@ -9,9 +9,16 @@ target_include_directories(
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
+exatn_enable_rpath(${LIBRARY_NAME})
+
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(srep/tests)
   add_subdirectory(tests)
 endif()
+
+file (GLOB HEADERS *.hpp)
+
+install(FILES ${HEADERS} DESTINATION include/exatn)
+install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
