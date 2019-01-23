@@ -29,6 +29,7 @@
  *
  **********************************************************************************/
 #include <string>
+#include "Identifiable.hpp"
 
 namespace exatn {
 namespace utility {
@@ -36,7 +37,7 @@ namespace utility {
  * This class serves as an interface for clients
  * to map strings in one tensor network representation to another.
  */
-class TNRepConverter {
+class TNRepConverter : public Identifiable {
 public:
   virtual const std::string convert(const std::string tnRep) = 0;
 };

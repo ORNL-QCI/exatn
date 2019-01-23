@@ -36,6 +36,12 @@ class Srep2TaProl : public TNRepConverter {
 
 public:
   const std::string convert(const std::string tnRep) override;
+  const std::string name() const {
+      return "srep";
+  }
+  const std::string description() const override {
+      return "";
+  }
 };
 } // namespace utility
 } // namespace exatn
