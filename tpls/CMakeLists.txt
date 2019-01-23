@@ -1,4 +1,6 @@
 set(BUILD_SHARED_LIBS TRUE)
+include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
+include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/framework/include)
 add_subdirectory(cppmicroservices)
 
 find_package(Git QUIET)

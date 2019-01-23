@@ -24,7 +24,7 @@ protected:
 public:
   ServiceRegistry() : framework(FrameworkFactory().NewFramework()) {}
 
-  void initialize();
+  void initialize(const std::string pluginPath = "");
 
   template <typename ServiceInterface> bool hasService(const std::string name) {
     auto allServiceRefs = context.GetServiceReferences<ServiceInterface>();

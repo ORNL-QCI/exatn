@@ -1,14 +1,21 @@
 #include <gtest/gtest.h>
 
 #include "ServiceRegistry.hpp"
+#include "exatn_config.hpp"
+#include "TestInterface.hpp"
 
 using namespace exatn;
+using namespace exatn::utility;
 
 TEST(ServiceRegistryTester, checkInitialize) {
 
- ServiceRegistry registry;
- registry.initialize();
+ std::string fakepluginpath = std::string(EXATN_BUILD_DIR) + "/src/utility/tests/testplugin";
 
+ ServiceRegistry registry;
+ registry.initialize(fakepluginpath);
+ auto test = registry.getService<TestInterface>("test");
+ auto s = test->test("HOWDY");
+ EXPECT_EQ("HOWDY",s);
 }
 
 int main(int argc, char **argv) {

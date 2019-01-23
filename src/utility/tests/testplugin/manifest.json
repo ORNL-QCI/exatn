@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_test_plugin",
+  "bundle.activator" : true,
+  "bundle.name" : "",
+  "bundle.description" : ""
+}

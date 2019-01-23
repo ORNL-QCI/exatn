@@ -3,7 +3,7 @@
 
 namespace exatn {
 
-void ServiceRegistry::initialize() {
+void ServiceRegistry::initialize(const std::string pluginPath) {
 
   if (!initialized) {
     framework = FrameworkFactory().NewFramework();
@@ -16,9 +16,10 @@ void ServiceRegistry::initialize() {
     }
 
     // Get the paths/files we'll be searching
-
-    std::string exatnPluginPath =
-        std::getenv("HOME") + std::string("/.exatn/plugins");
+    std::string exatnPluginPath = pluginPath;
+    if (exatnPluginPath.empty()) {
+       exatnPluginPath = std::getenv("HOME") + std::string("/.exatn/plugins");
+    }
 
     std::string parentPath = "";
 
