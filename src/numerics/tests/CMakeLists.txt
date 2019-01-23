@@ -5,7 +5,6 @@ if(CUDA_FOUND)
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
                         exatn-utility
-                        exatensor
                         talsh
                         blas
                         MPI::MPI_CXX
@@ -18,7 +17,6 @@ else()
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
                         exatn-utility
-                        exatensor
                         talsh
                         blas
                         MPI::MPI_CXX
