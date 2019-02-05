@@ -35,11 +35,12 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       FORCE)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(CTest)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
-find_package(CUDA)
+find_package(CUDAExaTN)
 
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
