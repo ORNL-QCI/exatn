@@ -4,6 +4,25 @@ REVISION: 2018/12/18
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
+/** NOTES:
+ Tensor specification requires:
+ (a) Symbolic tensor name;
+ (b) Tensor shape (extents of all tensor dimensions);
+ (c) Optional tensor signature.
+
+ Tensor signature identifies the tensor or its slice. Tensor signature
+ requires providing a pair<SpaceId,SubspaceId> for each tensor dimension.
+ It has two alternative specifications:
+ (a) SpaceId = SOME_SPACE: In this case, SubspaceId is the lower bound
+     of the specified tensor slice (0 means the full tensor). The upper
+     bound is computed by adding the dimension extent to the lower bound - 1.
+     The defining vector space (SOME_SPACE) is just an abstract vector space.
+ (b) SpaceId != SOME_SPACE: In this case, SpaceId refers to a registered
+     vector space and the SubspaceId refers to a registered subspace of
+     this vector space. The subspace will carry lower/upper bounds of the
+     specified tensor tensor slice. SubspaceId = 0 refers to the full space.
+**/
+
 #ifndef TENSOR_HPP_
 #define TENSOR_HPP_
 
