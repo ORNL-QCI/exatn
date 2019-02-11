@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/01/27
+REVISION: 2019/02/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,44 +10,45 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "space_basis.hpp"
 
-#include <assert.h>
-
-#include <iostream>
 #include <string>
-#include <unordered_map>
 
 namespace exatn{
 
 namespace numerics{
 
-class SpaceRegister{
+class VectorSpace{
 public:
 
- SpaceRegister();
- SpaceRegister(const SpaceRegister & space_register) = delete;
- SpaceRegister & operator=(const SpaceRegister & space_register) = delete;
- SpaceRegister(SpaceRegister && space_register) = default;
- SpaceRegister & operator=(SpaceRegister && space_register) = default;
- virtual ~SpaceRegister() = default;
+ VectorSpace(DimExtent space_dim);
+ VectorSpace(DimExtent space_dim, const std::string & space_name);
 
- /** Print. **/
+ VectorSpace(const VectorSpace & vector_space) = default;
+ VectorSpace & operator=(const VectorSpace & vector_space) = default;
+ VectorSpace(VectorSpace && vector_space) = default;
+ VectorSpace & operator=(VectorSpace && vector_space) = default;
+ virtual ~VectorSpace() = default;
+
+ /** Prints. **/
  void printIt() const;
 
- /** Registers a vector space by providing only its dimension and optional name. **/
- SpaceId registerSpace(DimExtent space_dim, const std::string & space_name = std:string());
+ /** Returns the space dimension. **/
+ DimExtent getSpaceDimension() const;
 
- /** Registers a vector space by providing its concrete basis and optional name. **/
- SpaceId registerSpace(const SpaceBasis & basis, const std::string & space_name = std:string());
+ /** Returns the space name. **/
+ const std::string & getSpaceName() const;
 
- /** Returns a reference to the registered vector space. **/
- const VectorSpace & getSpace(SpaceId space_id);
- const VectorSpace & getSpace(const std::string & space_name);
+ /** Returns the registered space id. **/
+ SpaceId getSpaceId() const;
+
+ /** Sets a registered space id. **/
+ void resetRegisteredId(SpaceId id);
 
 private:
 
- SpaceId last_; //last registered Space ID
- std::unordered_map<SpaceId,VectorSpace> space_register_;
- std::unordered_map<std::string,SpaceId> space_name2id_;
+ SpaceBasis basis_;       //basis defining the vector space
+ std::string space_name_; //optional space name
+ SpaceId id_;             //registered space id
+
 };
 
 } //namespace numerics

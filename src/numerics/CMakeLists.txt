@@ -2,6 +2,9 @@ set(LIBRARY_NAME exatn-numerics)
 
 add_library(${LIBRARY_NAME}
             SHARED
+            basis_vector.cpp
+            space_basis.cpp
+            spaces.cpp
             tensor_signature.cpp
             tensor_shape.cpp
             tensor_leg.cpp

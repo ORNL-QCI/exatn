@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/01/27
+/** ExaTN::Numerics: Space Basis
+REVISION: 2019/02/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,11 +8,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #define SPACE_BASIS_HPP_
 
 #include "tensor_basic.hpp"
-
-#include <assert.h>
-
-#include <iostream>
-#include <vector>
+#include "basis_vector.hpp"
 
 namespace exatn{
 
@@ -22,19 +18,22 @@ class SpaceBasis{
 public:
 
  SpaceBasis(DimExtent space_dim);
+
  SpaceBasis(const SpaceBasis & space_basis) = default;
  SpaceBasis & operator=(const SpaceBasis & space_basis) = default;
  SpaceBasis(SpaceBasis && space_basis) = default;
  SpaceBasis & operator=(SpaceBasis && space_basis) = default;
  virtual ~SpaceBasis() = default;
 
- /** Print. **/
+ /** Prints. **/
  void printIt() const;
+
+ /** Returns the basis dimension. **/
+ DimExtent getBasisDimension() const;
 
 private:
 
- DimExtent basis_dim_;
- std::vector<BasisVector> basis_;
+ DimExtent basis_dim_; //basis dimension
 };
 
 } //namespace numerics
