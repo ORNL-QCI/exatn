@@ -27,10 +27,11 @@ SubspaceRegEntry::SubspaceRegEntry(std::shared_ptr<Subspace> && subspace):
 
 SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> & subspace)
 {
- assert(subspace->getRegisteredId() == 0);
- SubspaceId id = subspaces_.size();
+ assert(subspace->getRegisteredId() == 0); //subspace must not have been registered before
+ SubspaceId id = subspaces_.size(); //new registered subspace id (>0)
+ bool unique = name2id_.insert({subspace->getSubspaceName(),id}).second; assert(unique); //name must be unique
  subspace->resetRegisteredId(id);
- subspaces_.emplace_back(SubspaceRegEntry(subspace));
+ subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
  return id;
 }
 
@@ -41,6 +42,18 @@ SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> && subsp
  subspace->resetRegisteredId(id);
  subspaces_.emplace_back(SubspaceRegEntry(subspace));
  return id;
+}
+
+Subspace & SubspaceRegister::getSubspace(SubspaceId id) const
+{
+ assert(id < subspaces_.size());
+ return *(subspaces_[id].subspace_);
+}
+
+Subspace & SubspaceRegister::getSubspace(const std::string & name) const
+{
+ auto it = name2id_.find(name); assert(it != name2id_.end());
+ return *(subspaces_[it->second].subspace_);
 }
 
 
@@ -73,11 +86,24 @@ SpaceRegister::SpaceRegister()
 
 SpaceId SpaceRegister::registerSpace(std::shared_ptr<VectorSpace> & space)
 {
- assert(space->getRegisteredId() == SOME_SPACE);
- SpaceId id = spaces_.size();
+ assert(space->getRegisteredId() == SOME_SPACE); //space must not have been registered before
+ SpaceId id = spaces_.size(); //new registered space id (>0)
+ bool unique = name2id_.insert({space->getSpaceName(),id}).second; assert(unique); //name must be unique
  space->resetRegisteredId(id);
- spaces_.emplace_back(SpaceRegEntry(space));
+ spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
  return id;
+}
+
+VectorSpace & SpaceRegister::getSpace(SpaceId id) const
+{
+ assert(id < spaces_.size());
+ return *(spaces_[id].space_);
+}
+
+VectorSpace & SpaceRegister::getSpace(const std::string & name) const
+{
+ auto it = name2id_.find(name); assert(it != name2id_.end());
+ return *(spaces_[it->second].space_);
 }
 
 } //namespace numerics
