@@ -9,3 +9,4 @@ g++ -c -g -std=c++14 tensor_leg.cpp
 g++ -c -g -std=c++14 tensor.cpp
 g++ -c -g -std=c++14 tensor_exa.cpp
 g++ -c -g -std=c++14 tensor_factory.cpp
+g++ -c -g -std=c++14 register.cpp

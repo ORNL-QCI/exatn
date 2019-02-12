@@ -1,8 +1,8 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2018/12/18
+REVISION: 2019/02/12
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef TENSOR_BASIC_HPP_
 #define TENSOR_BASIC_HPP_
@@ -22,6 +22,7 @@ using DimExtent = unsigned long long int;  //dimension extent type
 using DimOffset = unsigned long long int;  //dimension base offset type
 
 constexpr SpaceId SOME_SPACE = 0; //any unregistered space (all registered spaces will have SpaceId > 0)
+constexpr DimExtent MAX_SPACE_DIM = 0xFFFFFFFFFFFFFFFF; //max dimension of unregistered spaces
 
 enum class LegDirection{
  UNDIRECT, //no direction

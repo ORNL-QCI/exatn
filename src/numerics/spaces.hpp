@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/02/11
+REVISION: 2019/02/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,7 +40,7 @@ public:
  const std::string & getSpaceName() const;
 
  /** Returns the registered space id. **/
- SpaceId getSpaceId() const;
+ SpaceId getRegisteredId() const;
 
  /** Resets the registered space id. **/
  void resetRegisteredId(SpaceId id);
@@ -90,7 +90,7 @@ public:
  const std::string & getSubspaceName() const;
 
  /** Returns the registered subspace id. **/
- SubspaceId getSubspaceId() const;
+ SubspaceId getRegisteredId() const;
 
  /** Resets the registered subspace id. **/
  void resetRegisteredId(SubspaceId id);

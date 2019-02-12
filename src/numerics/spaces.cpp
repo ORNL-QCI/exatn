@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/02/11
+REVISION: 2019/02/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -42,7 +42,7 @@ const std::string & VectorSpace::getSpaceName() const
  return space_name_;
 }
 
-SpaceId VectorSpace::getSpaceId() const
+SpaceId VectorSpace::getRegisteredId() const
 {
  return id_;
 }
@@ -106,7 +106,7 @@ const std::string & Subspace::getSubspaceName() const
  return subspace_name_;
 }
 
-SubspaceId Subspace::getSubspaceId() const
+SubspaceId Subspace::getRegisteredId() const
 {
  return id_;
 }

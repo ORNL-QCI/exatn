@@ -1,13 +1,14 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2018/11/16
+REVISION: 2019/02/12
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef TENSOR_SIGNATURE_HPP_
 #define TENSOR_SIGNATURE_HPP_
 
 #include "tensor_basic.hpp"
+#include "spaces.hpp"
 
 #include <utility>
 #include <initializer_list>
