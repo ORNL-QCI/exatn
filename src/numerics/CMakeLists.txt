@@ -10,7 +10,8 @@ add_library(${LIBRARY_NAME}
             tensor_leg.cpp
             tensor.cpp
             tensor_exa.cpp
-            tensor_factory.cpp)
+            tensor_factory.cpp
+            register.cpp)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
 
