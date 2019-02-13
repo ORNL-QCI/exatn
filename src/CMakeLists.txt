@@ -1,6 +1,6 @@
 add_subdirectory(utility)
 add_subdirectory(numerics)
-add_subdirectory(driver_rpc)
+add_subdirectory(driver-rpc)
 
 set(LIBRARY_NAME exatn)
 
