@@ -5,10 +5,11 @@ namespace rpc {
 namespace mpi {
 
 MPIClient::MPIClient() {
-//   std::string portName = "tcp://172.17.0.2:52893";
-//   char * c_portName = const_cast<char*> (portName.c_str());
   char portName[MPI_MAX_PORT_NAME];
-  MPI_Lookup_name("exatn-mpi-server", MPI_INFO_NULL, portName);
+
+  MPI_Status status;
+
+  MPI_Recv(portName, MPI_MAX_PORT_NAME, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &status);
   std::cout << "[client] Attempting to connect with server - " << portName << "\n";
 
   MPI_Comm_connect(portName, MPI_INFO_NULL, 0, MPI_COMM_SELF,
@@ -43,7 +44,14 @@ const double MPIClient::retrieveResult(const std::string jobId) {
 }
 
 void MPIClient::shutdown() {
-  MPI_Send(0, 1, MPI_INT, 0, -1, serverComm);
+  char buf[1];
+  MPI_Request request;
+
+  std::cout << "[client] sending shutdown.\n";
+  MPI_Isend(buf, 1, MPI_CHAR, 0, 1, serverComm, &request);
+   MPI_Status status;
+   std::cout << "[client] waiting for shutdown.\n";
+  MPI_Wait(&request, &status);
   MPI_Comm_disconnect(&serverComm);
 }
 

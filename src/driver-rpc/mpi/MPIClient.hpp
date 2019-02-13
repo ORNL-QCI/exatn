@@ -33,8 +33,6 @@ protected:
 
   std::map<std::string, MPI_Request> requests;
 
-  int rank;
-
 public:
   MPIClient();
 

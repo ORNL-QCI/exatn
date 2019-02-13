@@ -9,4 +9,10 @@ int main(int argc, char** argv) {
     MPIServer server;
     server.start();
 
+    std::cout << "Exiting server.cpp\n";
+
+    MPI_Finalize();
+
+    return 0;
+
 }
