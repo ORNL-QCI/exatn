@@ -7,11 +7,13 @@ namespace mpi {
 MPIClient::MPIClient() {
   char portName[MPI_MAX_PORT_NAME];
 
+  // First things first, the server is going
+  // to send us the port name
   MPI_Status status;
-
   MPI_Recv(portName, MPI_MAX_PORT_NAME, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &status);
   std::cout << "[client] Attempting to connect with server - " << portName << "\n";
 
+  // Connect to the server, creating a new intercomm, serverComm
   MPI_Comm_connect(portName, MPI_INFO_NULL, 0, MPI_COMM_SELF,
                    &serverComm);
   std::cout << "[client] Connected with the server\n";
@@ -21,12 +23,17 @@ MPIClient::MPIClient() {
 // so this is an asynchronous call
 const std::string MPIClient::sendTaProl(const std::string taProlStr) {
 
+  // Asynchronously send the taProl string to the server
   MPI_Request request;
   auto jobId = generateRandomString();
   std::cout << "[client] sending request with jobid " << jobId << "\n";
   MPI_Isend(taProlStr.c_str(), taProlStr.size(), MPI_CHAR, 0, 0, serverComm,
             &request);
+
+  // Store the request object for us to use
+  // later to wait on results in retrieveResult
   requests.insert({jobId, request});
+
   return jobId;
 }
 
@@ -46,7 +53,6 @@ const double MPIClient::retrieveResult(const std::string jobId) {
 void MPIClient::shutdown() {
   char buf[1];
   MPI_Request request;
-
   std::cout << "[client] sending shutdown.\n";
   MPI_Isend(buf, 1, MPI_CHAR, 0, 1, serverComm, &request);
    MPI_Status status;
