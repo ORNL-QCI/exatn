@@ -1,10 +1,12 @@
 #include "MPIClient.hpp"
+#include <gtest/gtest.h>
 
 using namespace exatn::rpc::mpi;
 
-int main(int argc, char** argv) {
+TEST(client_test, checkSimple) {
 
-  MPI_Init(&argc, &argv);
+// int main(int argc, char** argv) {
+
 
   // Create the client
   MPIClient client;
@@ -17,6 +19,7 @@ int main(int argc, char** argv) {
 
   // Retrieve the result
   auto value = client.retrieveResult(jobId);
+  EXPECT_EQ(3.3, value);
 
   std::cout << "[client.cpp] value is " << value << "\n";
 
@@ -24,12 +27,21 @@ int main(int argc, char** argv) {
   jobId = client.sendTaProl("hello again");
   value = client.retrieveResult(jobId);
 
+  EXPECT_EQ(3.3, value);
   std::cout << "[client.cpp] value second time is " << value << "\n";
 
   // Shutdown the client, this
   // also tells the server to shutdown.
   client.shutdown();
 
-  MPI_Finalize();
 
+}
+
+
+int main(int argc, char **argv) {
+  MPI_Init(&argc, &argv);
+  ::testing::InitGoogleTest(&argc, argv);
+  auto ret = RUN_ALL_TESTS();
+  MPI_Finalize();
+  return ret;
 }
