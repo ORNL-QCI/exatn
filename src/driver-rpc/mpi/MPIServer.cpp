@@ -43,6 +43,11 @@ void MPIServer::start() {
       // Execute an Isend back to the client rank 0
       // containing the results
 
+      MPI_Request request;
+      std::cout << "[server] processed taprol, returning result.\n";
+      double d = 3.3;
+      MPI_Isend(&d, 1, MPI_DOUBLE, 0, 0, client,
+            &request);
     }
   }
 

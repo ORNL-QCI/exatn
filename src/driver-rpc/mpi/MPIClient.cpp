@@ -43,11 +43,15 @@ const double MPIClient::retrieveResult(const std::string jobId) {
 
   auto request = requests[jobId];
 
-  MPI_Status status;
+  MPI_Status status, status2;
   MPI_Wait(&request, &status);
 
   // now we know the execution has occurred,
   // so get the result with a Recv.
+
+  double d;
+  MPI_Recv(&d, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, serverComm, &status2);
+  return d;
 }
 
 void MPIClient::shutdown() {

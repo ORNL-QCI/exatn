@@ -10,7 +10,13 @@ int main(int argc, char** argv) {
   auto jobId = client.sendTaProl("hello world");
   std::cout << "[client.cpp] job-id = " << jobId << ".\n";
 
-//   auto value = client.retrieveResult(jobId);
+  auto value = client.retrieveResult(jobId);
+
+  std::cout << "[client.cpp] value is " << value << "\n";
+
+  jobId = client.sendTaProl("hello again");
+  value = client.retrieveResult(jobId);
+  std::cout << "[client.cpp] value second time is " << value << "\n";
 
   client.shutdown();
 
