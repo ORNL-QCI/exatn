@@ -40,8 +40,13 @@ void MPIServer::start() {
 
       std::cout << "[server] Execution taprol commands.\n";
 
-      // Execute an Isend back to the client rank 0
-      // containing the results
+      // FIXME with DMITRY:
+      // Execute the TAPROL with our Numerics backend
+      // I'm assuming the result will be a contracted
+      // scalar (double).
+
+      // Now take that result and execute an
+      // asynchronous Isend back to the client rank 0
 
       MPI_Request request;
       std::cout << "[server] processed taprol, returning result.\n";
