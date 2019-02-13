@@ -13,6 +13,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace exatn{
 
@@ -29,6 +30,8 @@ public:
  SubspaceRegEntry(SubspaceRegEntry &&) = default;
  SubspaceRegEntry & operator=(SubspaceRegEntry &&) = default;
  virtual ~SubspaceRegEntry() = default;
+
+ friend class SubspaceRegister;
 
 private:
 
@@ -51,9 +54,15 @@ public:
  SubspaceId registerSubspace(std::shared_ptr<Subspace> & subspace);
  SubspaceId registerSubspace(std::shared_ptr<Subspace> && subspace);
 
+ /** Returns a stored subspace by its id. **/
+ Subspace & getSubspace(SubspaceId id) const;
+ /** Returns a stored subspace by its symbolic name. **/
+ Subspace & getSubspace(const std::string & name) const;
+
 private:
 
  std::vector<SubspaceRegEntry> subspaces_; //registered subspaces of some vector space
+ std::unordered_map<std::string,SubspaceId> name2id_; //maps subspace names to their integer ids
 };
 
 
@@ -68,6 +77,8 @@ public:
  SpaceRegEntry(SpaceRegEntry &&) = default;
  SpaceRegEntry & operator=(SpaceRegEntry &&) = default;
  virtual ~SpaceRegEntry() = default;
+
+ friend class SpaceRegister;
 
 private:
 
@@ -91,9 +102,15 @@ public:
  SpaceId registerSpace(std::shared_ptr<VectorSpace> & space);
  SpaceId registerSpace(std::shared_ptr<VectorSpace> && space);
 
+ /** Returns a stored space by its id. **/
+ VectorSpace & getSpace(SpaceId id) const;
+ /** Returns a stored subspace by its symbolic name. **/
+ VectorSpace & getSpace(const std::string & name) const;
+
 private:
 
  std::vector<SpaceRegEntry> spaces_; //registered vector spaces
+ std::unordered_map<std::string,SpaceId> name2id_; //maps space names to their integer ids
 };
 
 } //namespace numerics
