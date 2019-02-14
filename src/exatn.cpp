@@ -10,6 +10,7 @@ std::shared_ptr<ServiceRegistry> serviceRegistry =
 void Initialize() {
   if (!exatnFrameworkInitialized) {
     serviceRegistry->initialize();
+    exatnFrameworkInitialized =true;
   }
 }
 

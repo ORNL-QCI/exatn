@@ -6,7 +6,8 @@
 #include "mpi.h"
 #include <algorithm>
 #include <functional>
-#include <string>
+
+
 namespace exatn {
 namespace rpc {
 namespace mpi {
@@ -33,16 +34,20 @@ protected:
 
   std::map<std::string, MPI_Request> requests;
 
+  std::map<std::string, int> jobId2NResults;
+  
+  std::vector<std::complex<double>> results;
+
 public:
   MPIClient();
 
   // Send TaProl string, get a jobId string,
   // so this is an asynchronous call
-  const std::string sendTaProl(const std::string taProlStr) override;
+  const std::string sendTAProL(const std::string taProlStr) override;
 
   // Retrieve result of job with given jobId.
   // Returns a scalar type double?
-  const double retrieveResult(const std::string jobId) override;
+  const std::vector<std::complex<double>> retrieveResult(const std::string jobId) override;
 
   void shutdown() override;
 

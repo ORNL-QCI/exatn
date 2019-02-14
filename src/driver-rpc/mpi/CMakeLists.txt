@@ -27,6 +27,7 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
+target_link_libraries(${LIBRARY_NAME} PUBLIC ${MPI_CXX_LIBRARIES} CppMicroServices)
 exatn_enable_rpath(${LIBRARY_NAME})
 
 if(EXATN_BUILD_TESTS)

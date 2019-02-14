@@ -23,7 +23,7 @@ void ServiceRegistry::initialize(const std::string pluginPath) {
 
     std::string parentPath = "";
 
-    std::cout << "ExaTN Plugin Path: " << exatnPluginPath << "\n";;
+    std::cout << "[service-registry] ExaTN Plugin Path: " << exatnPluginPath << "\n";;
 
     DIR *dir;
     struct dirent *ent;
@@ -31,14 +31,14 @@ void ServiceRegistry::initialize(const std::string pluginPath) {
       /* print all the files and directories within directory */
       while ((ent = readdir(dir)) != NULL) {
         if (std::string(ent->d_name).find("lib") != std::string::npos) {
-          printf("Installing Plugin: %s\n", ent->d_name);
+          printf("[service-registry] Installing Plugin: %s\n", ent->d_name);
           context.InstallBundles(exatnPluginPath + "/" + std::string(ent->d_name));
         }
       }
       closedir(dir);
     } else {
       /* could not open directory */
-      std::cerr << "Could not open plugin directory.\n";
+      std::cerr << "[service-registry] Could not open plugin directory.\n";
     }
 
     // Start the framework itself.

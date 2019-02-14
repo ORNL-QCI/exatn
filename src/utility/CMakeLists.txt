@@ -9,9 +9,10 @@ target_include_directories(
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices)
 exatn_enable_rpath(${LIBRARY_NAME})
 
-add_dependencies(${LIBRARY_NAME} exatensor-build)
+#add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(srep/tests)

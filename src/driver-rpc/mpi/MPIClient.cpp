@@ -11,22 +11,28 @@ MPIClient::MPIClient() {
   // to send us the port name
   MPI_Status status;
   MPI_Recv(portName, MPI_MAX_PORT_NAME, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &status);
-  std::cout << "[client] Attempting to connect with server - " << portName << "\n";
+  std::cout << "[mpi-client] Attempting to connect with server - " << portName << "\n";
 
   // Connect to the server, creating a new intercomm, serverComm
   MPI_Comm_connect(portName, MPI_INFO_NULL, 0, MPI_COMM_SELF,
                    &serverComm);
-  std::cout << "[client] Connected with the server\n";
+  std::cout << "[mpi-client] Connected with the server\n";
 }
 
 // Send TaProl string, get a jobId string,
 // so this is an asynchronous call
-const std::string MPIClient::sendTaProl(const std::string taProlStr) {
+const std::string MPIClient::sendTAProL(const std::string taProlStr) {
+
+  auto jobId = generateRandomString();
+
+  // Analyze the taProlStr to see how many GET commands there are
+  // and populate the jobId2NResults map
+  int nResults = 1;
+  jobId2NResults.insert({jobId, nResults});
 
   // Asynchronously send the taProl string to the server
   MPI_Request request;
-  auto jobId = generateRandomString();
-  std::cout << "[client] sending request with jobid " << jobId << "\n";
+  std::cout << "[mpi-client] sending request with jobid " << jobId << "\n";
   MPI_Isend(taProlStr.c_str(), taProlStr.size(), MPI_CHAR, 0, 0, serverComm,
             &request);
 
@@ -39,7 +45,7 @@ const std::string MPIClient::sendTaProl(const std::string taProlStr) {
 
 // Retrieve result of job with given jobId.
 // Returns a scalar type double?
-const double MPIClient::retrieveResult(const std::string jobId) {
+const std::vector<std::complex<double>> MPIClient::retrieveResult(const std::string jobId) {
 
   auto request = requests[jobId];
 
@@ -47,20 +53,31 @@ const double MPIClient::retrieveResult(const std::string jobId) {
   MPI_Wait(&request, &status);
 
   // now we know the execution has occurred,
-  // so get the result with a Recv.
+  // send a synchronize command to driver
+  // Tag of 1 == SYNCHRONIZE command
+  char buf[1];
+  MPI_Send(buf, 1, MPI_CHAR, 0, 1, serverComm);
 
-  double d;
-  MPI_Recv(&d, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, serverComm, &status2);
-  return d;
+  // now get all the results
+
+  std::vector<std::complex<double>> results;
+  for (int k = 0; k < jobId2NResults[jobId]; k++) {
+    double r, i;
+    MPI_Recv(&r, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, serverComm, &status2);
+    MPI_Recv(&i, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, serverComm, &status2);
+    results.push_back(std::complex<double>(r,i));
+  }
+  return results;
 }
 
 void MPIClient::shutdown() {
   char buf[1];
   MPI_Request request;
-  std::cout << "[client] sending shutdown.\n";
-  MPI_Isend(buf, 1, MPI_CHAR, 0, 1, serverComm, &request);
+  std::cout << "[mpi-client] sending shutdown.\n";
+  // Tag of 2 == SHUTDOWN command
+  MPI_Isend(buf, 1, MPI_CHAR, 0, 2, serverComm, &request);
    MPI_Status status;
-   std::cout << "[client] waiting for shutdown.\n";
+   std::cout << "[mpi-client] waiting for shutdown.\n";
   MPI_Wait(&request, &status);
   MPI_Comm_disconnect(&serverComm);
 }

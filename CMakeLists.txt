@@ -71,6 +71,10 @@ configure_file("${CMAKE_SOURCE_DIR}/cmake/exatn_config.hpp.in"
 add_subdirectory(tpls)
 add_subdirectory(src)
 
+if(PYTHON_INCLUDE_DIR)
+   add_subdirectory(python)
+endif()
+
 configure_file("${CMAKE_SOURCE_DIR}/cmake/exatn-config.cmake.in"
                "${CMAKE_BINARY_DIR}/exatn-config.cmake" @ONLY)
 install(FILES "${CMAKE_BINARY_DIR}/exatn-config.cmake" DESTINATION .)
