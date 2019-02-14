@@ -12,5 +12,7 @@ target_include_directories(
 
 exatn_enable_rpath(${LIBRARY_NAME})
 
+file (GLOB HEADERS *.hpp)
+
 install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)

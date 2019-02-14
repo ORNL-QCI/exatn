@@ -35,6 +35,7 @@ $ cd exatn
 $ git clone https://gitlab.com/DmitryLyakh/ExaTensor tpls/ExaTensor
 $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
+  (for Python API add) -DPYTHON_INCLUDE_DIR=/usr/include/python3.5 (or wherever Python.h lives)
 $ make
 ```
 Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible
