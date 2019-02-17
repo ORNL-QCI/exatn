@@ -5,6 +5,7 @@ REVISION: 2019/02/16
 Copyright (C) 2016-2019 Dmitry I. Liakh.
 Copyright (C) 2016-2019 Oak Ridge National Laboratory, UT-Battelle, LLC.
 
+TAProL version 1.0 (2019/02/16)
 
 0. PREAMBULE
 
@@ -94,6 +95,13 @@ Vector subspace specification:
  Here, again, "lower1" and "upper1" identifiers will be looked up in the Exchange Space.
 
  Each declared vector space automatically declares itself as a subspace under the same name.
+
+ Alternatively, one may also define subspaces within the unnamed vector space as
+
+  subspace(): subspace0=[13:134], subspace1=[lower1:upper1]
+
+ The unnamed vector space is predefined in TAProL. It has infinite dimension. One
+ may define any subspace in the unnamed vector space by specifying an integer range.
 
 Index specification (placeholder for a given subspace):
 
@@ -369,6 +377,10 @@ Examples of defined basic tensor operations:
                           (2) Every index on the left of "=" must also appear on the right only once;
                           (3) Every index on the right, which is not present on the left, must appear
                               at least twice on the right.
+
+In cases where tensor indices must be additionally classified as either covariant or contravariant,
+a "+" can be appended to those indices which are considered contravariant in a given tensor operation,
+for example: T1(i,j+,k,l+) += S1(k,c+,j+,d) * S2(c+,i,l+,d).
 
 
 2.4. Tensor network specification:
