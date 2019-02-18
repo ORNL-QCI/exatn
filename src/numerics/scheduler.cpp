@@ -1,26 +1,30 @@
 #include <mpi.h>
+#include <string>
+using namespace std;
 
 namespace Scheduler {
 	int proc_cnt; //currently serves as the resource count
 
 	struct Task {
-		String TaProl_cmds;
+		string TaProl_cmds;
 		int num_procs;
 	};
 
 	struct Job {
 		int id;
 		Task tsk;
-		String System;
-		Job next_job;
-		private int jobid_cnt;
+		string System;
+		Job *next_job;
+		private: int jobid_cnt;
 	
 	};
 
-	Class Job_WaitQueue {
+	class Job_WaitQueue {
+	private: 
+		int wait_cnt;
+	public:
 		Job first_job;
 		Job last_job;
-		private int wait_cnt;
 		
 		Job get_next_job(int max_proc_cnt/*arguments are resource requirements*/) 
 		{
@@ -36,12 +40,14 @@ namespace Scheduler {
 		{
 
 		}
-	}
+	};
 
-	Class Job_RunQueue {
+	class Job_RunQueue {
+	private: 
+		int run_cnt;
+	public:
 		Job first_job;
 		Job last_job;
-		private int run_cnt;
 		
 		void add_job(Job j)
 		{
@@ -52,7 +58,7 @@ namespace Scheduler {
 		{
 
 		}
-	}
+	};
 
 	void Job_Submit(/*takes TaProl string and processor count*/)
 	{
@@ -75,4 +81,7 @@ namespace Scheduler {
 		//deallocate job and task
 		//update resource count
 	}
+
+	Job_WaitQueue *waitq = new Job_WaitQueue();
+	Job_RunQueue *runq = new Job_RunQueue(); 
 }
