@@ -1,0 +1,57 @@
+#The most basic TAProL for testing ExaTN: Workflow:
+# (0) Application initializes ExaTN Driver via
+#     exatn::initialize().
+# (1) Application registers the data and method (TensorMethod) necessary for
+#     initializing input tensors in the TAProL code (method "Hamiltonian").
+#     Relevant ExaTN Driver Client API:
+#     exatn::registerExternalData(id:string,data:BytePacket&);
+#     exatn::registerExternalMethod(id:string,method:TensorMethod*).
+# (2) Application executes the following TAProL code via
+#     exatn::interpretTaprol(taprol:string&): TaprolTask.
+# (3) Application synchronizes the scheduled TAProL task via
+#     exatn::synchronize(task:TaprolTask&,wait:bool=true): bool.
+# (4) Application retrieves back the relevant results (scalars) via
+#     exatn::retrieveResult(task:TaprolTask&).
+#     The saved scalar X2 from the TAProL code below will become
+#     available to the application.
+# (5) Application shuts down ExaTN Driver via
+#     exatn::finalize().
+
+entry: main
+
+scope main group()
+
+#Declare a subspace of the unnamed space:
+ subspace(): s0=[0:127]
+
+#Declare some indices (placeholders) for subspace s0:
+ index(s0): a,b,c,d,i,j,k,l
+
+#Create tensor H2 and initialize it with the Hamiltonian method:
+ H2(a,b,c,d) = method("Hamiltonian")
+
+#Create tensor T2 and initialize it to complex value {1.0,0.0}:
+ T2(a,b,c,d) = {1.0,0.0}
+
+#Create tensor Z2 and initialize it to zero:
+ Z2(a,b,c,d) = {0.0,0.0}
+
+#Evaluate a tensor network:
+ Z2(a,b,c,d) += H2(i,j,k,l) * T2(c,d,i,j) * T2(a,b,k,l)
+
+#Create a scalar X2 and initialize it to zero:
+ X2() = {0.0,0.0}
+
+#Evaluate the norm of Z2:
+ X2() += Z2+(a,b,c,d) * Z2(a,b,c,d)
+
+#Save scalar X2 for retrieval by the application:
+ save X2: tag("Z2_norm")
+
+#Destroy tensors:
+ ~X2
+ ~Z2
+ ~T2
+ ~H2
+
+end scope main
