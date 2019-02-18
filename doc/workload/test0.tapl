@@ -4,14 +4,14 @@
 # (1) Application registers the data and method (TensorMethod) necessary for
 #     initializing input tensors in the TAProL code (method "Hamiltonian").
 #     Relevant ExaTN Driver Client API:
-#     exatn::registerTensorData(id:string,data:DataDescriptor);
-#     exatn::registerTensorMethod(id:string,method:TensorMethod*).
+#     exatn::registerExternalData(id:string,data:BytePacket&);
+#     exatn::registerExternalMethod(id:string,method:TensorMethod*).
 # (2) Application executes the following TAProL code via
-#     exatn::interpretTaprol(taprol:string): TaprolTask.
+#     exatn::interpretTaprol(taprol:string&): TaprolTask.
 # (3) Application synchronizes the scheduled TAProL task via
-#     exatn::synchronize(task:TaprolTask,wait:bool=true): bool.
+#     exatn::synchronize(task:TaprolTask&,wait:bool=true): bool.
 # (4) Application retrieves back the relevant results (scalars) via
-#     exatn::retrieveResult(task:TaprolTask).
+#     exatn::retrieveResult(task:TaprolTask&).
 #     The saved scalar X2 from the TAProL code below will become
 #     available to the application.
 # (5) Application shuts down ExaTN Driver via
