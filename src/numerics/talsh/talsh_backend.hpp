@@ -34,6 +34,7 @@ protected:
   };
 
 public:
+
   std::vector<std::string> translate(const std::string taProl) override;
   void execute(std::vector<std::string> &simpleTaPrlList) override;
 

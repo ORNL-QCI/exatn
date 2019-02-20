@@ -1,7 +1,6 @@
 #include "MPIServer.hpp"
 #include <future>
-// #include "exatn.hpp"
-// #include "backend.hpp"
+#include "exatn.hpp"
 
 namespace exatn {
 namespace rpc {
@@ -13,6 +12,9 @@ int MPIServer::SYNC_TAG = 2;
 int MPIServer::SHUTDOWN_TAG = 3;
 
 void MPIServer::start() {
+
+  // FIXME Provide hook for specifying this at runtime
+  backend = exatn::getService<exatn::numerics::Backend>("talsh");
 
   listen = true;
 
@@ -87,18 +89,10 @@ void MPIServer::start() {
 
       // FIXME with DMITRY:
       // Execute the TAPROL with our Numerics backend
-      // I'm assuming the result will be a contracted
-      // scalar (double).
-      //   auto simpleTaProlList = exatn::numerics::translate(taprol_str);
+      auto simpleTaProlList = backend->translate(taProlProg);
 
       // depending on backend talsh or exatensor
-      //   auto backend = getService<Backend>("talsh");
-      //   backend->execute(simpleTaProlList);
-
-    //   if (!exatn::isInitialize()) exatn::Initialize();
-
-    //   auto backend = exatn::getService<exatn::numerics::Backend>("talsh");
-
+      backend->execute(simpleTaProlList);
 
 
     } else if (status.MPI_TAG == REGISTER_TENSORMETHOD) {
@@ -108,20 +102,20 @@ void MPIServer::start() {
         std::cout << "[mpi-server] Registering tensor method " << tmName << ".\n";
 
         MPI_Status status;
-        char buf[1000];
-        int size;
-        MPI_Recv(buf, size, MPI_CHAR, 0, MPI_ANY_TAG, client, &status);
+        char base_addr[1000];
+        int size_bytes;
+        MPI_Recv(base_addr, size_bytes, MPI_CHAR, 0, MPI_ANY_TAG, client, &status);
 
-        // if (!exatn::isInitialize()) exatn::Initialize();
+        // Here we assume that ExaTN has been initialized by server.main()
+        auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
 
-        // auto tensor_method = exatn::getService<TensorMethod>(tmName);
+        BytePacket packet;
+        packet.base_addr = base_addr;
+        packet.size_bytes = size_bytes;
+        tensor_method->unpack(packet);
 
-        // BytePacket packet;
-        // packet.base_address = buf;
-        // packet.size = size;
-        // tensor_method->unpack(packet);
+        backend->addTensorMethod(tensor_method);
 
-        // registeredTensorMethods.insert({tmName, tensor_method});
     }
   }
 

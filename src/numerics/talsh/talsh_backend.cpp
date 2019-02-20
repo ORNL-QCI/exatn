@@ -6,7 +6,12 @@ namespace numerics {
 namespace talsh {
 
 std::vector<std::string> TalshBackend::translate(const std::string taProl) {
-    return split(taProl, "\n");
+    // Just splitting on all new lines
+    auto commands = split(taProl, "\n");
+
+    // Do something with these commands
+
+    return commands;
 }
 
 void TalshBackend::execute(std::vector<std::string>& simpleTaPrlList) {
