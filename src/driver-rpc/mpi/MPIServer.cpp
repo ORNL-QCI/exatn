@@ -102,9 +102,9 @@ void MPIServer::start() {
         std::cout << "[mpi-server] Registering tensor method " << tmName << ".\n";
 
         MPI_Status status;
-        char base_addr[1000];
+        void * base_addr;
         int size_bytes;
-        MPI_Recv(base_addr, size_bytes, MPI_CHAR, 0, MPI_ANY_TAG, client, &status);
+        MPI_Recv(base_addr, size_bytes, MPI_BYTE, 0, 0, client, &status);
 
         // Here we assume that ExaTN has been initialized by server.main()
         auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
@@ -115,6 +115,8 @@ void MPIServer::start() {
         tensor_method->unpack(packet);
 
         backend->addTensorMethod(tensor_method);
+
+        std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
 
     }
   }

@@ -50,6 +50,9 @@ TEST(client_test, checkSimple) {
   EXPECT_EQ(3.3, std::imag(values[0]));
   std::cout << "[client.cpp] value second time is " << std::real(values[0]) << ", " << std::imag(values[0]) << "\n";
 
+//   auto tm = exatn::getService<TensorMethod<exatn::Identifiable>>("example-tensor-method");
+//   client->registerTensorMethod(*tm.get());
+
   // Shutdown the client, this
   // also tells the server to shutdown.
   client->shutdown();

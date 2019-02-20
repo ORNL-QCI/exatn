@@ -27,17 +27,21 @@ void MPIClient::connect() {
 
 }
 
-void MPIClient::registerTensorMethod(TensorMethod<Identifiable>& method) {
+void MPIClient::registerTensorMethod(TensorMethod<exatn::Identifiable>& method) {
 
    if (!connected) connect();
 
    auto name = method.name();
+   std::cout << "[mpi-client] Sending TensorMethod " << name << " to remote server.\n";
    MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
 
    BytePacket packet;
    method.pack(packet);
 
-   MPI_Send(packet.base_addr, packet.size_bytes, MPI_CHAR, 0, MPI_ANY_TAG, serverComm);
+   std::cout << "[mpi-client] Sending TensorMethod data to remote server.\n";
+   MPI_Send(packet.base_addr, packet.size_bytes, MPI_BYTE, 0, 0, serverComm);
+
+   return;
 }
 
 // Send TaProl string, get a jobId string,

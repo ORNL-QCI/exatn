@@ -13,3 +13,5 @@ add_test(NAME client_server_test COMMAND mpirun --allow-run-as-root -np 1 server
 
 add_dependencies(client_test exatensor-build)
 add_dependencies(server_test exatensor-build)
+
+add_subdirectory(example-tensor-method)
