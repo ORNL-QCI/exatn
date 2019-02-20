@@ -1,5 +1,5 @@
 {
-  "bundle.symbolic_name" : "exatn_mpi_server",
+  "bundle.symbolic_name" : "exatn_mpi_rpc",
   "bundle.activator" : true,
   "bundle.name" : "ExaTN MPI Server",
   "bundle.description" : "MPI implementation for the DriverServer"

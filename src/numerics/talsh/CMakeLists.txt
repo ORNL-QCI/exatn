@@ -1,4 +1,4 @@
-set(LIBRARY_NAME exatn-mpi-rpc)
+set(LIBRARY_NAME exatn-numerics-talsh)
 
 file(GLOB SRC *.cpp)
 
@@ -7,17 +7,14 @@ usFunctionGenerateBundleInit(TARGET ${LIBRARY_NAME} OUT SRC)
 
 add_library(${LIBRARY_NAME} SHARED ${SRC})
 
-add_dependencies(${LIBRARY_NAME} exatensor-build)
-
-
 if(CUDA_FOUND)
   target_include_directories(${LIBRARY_NAME}
                              PUBLIC .
                                     ..
-                                    ${CMAKE_SOURCE_DIR}/src/numerics
+                                    ${CMAKE_SOURCE_DIR}/src
                                     ${CMAKE_SOURCE_DIR}/src/utility
                                     ${MPI_CXX_INCLUDE_DIRS}
-                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
+                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH
                                     ${CUDA_INCLUDE_DIRS})
 
 else()
@@ -25,13 +22,13 @@ else()
                              PUBLIC .
                                     ..
                                     ${CMAKE_SOURCE_DIR}/src/utility
-                                    ${CMAKE_SOURCE_DIR}/src/numerics
                                     ${MPI_CXX_INCLUDE_DIRS}
-                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include)
+                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH)
 
 endif()
 
-set(_bundle_name exatn_mpi_rpc)
+set(_bundle_name exatn_numerics_talsh)
+
 set_target_properties(${LIBRARY_NAME}
                       PROPERTIES COMPILE_DEFINITIONS
                                  US_BUNDLE_NAME=${_bundle_name}
@@ -45,12 +42,13 @@ usFunctionEmbedResources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC exatn exatn-numerics exatn-utility ${MPI_CXX_LIBRARIES} CppMicroServices)
+target_link_libraries(${LIBRARY_NAME}
+                      PUBLIC exatn exatn-utility ${MPI_CXX_LIBRARIES} CppMicroServices)
 exatn_enable_rpath(${LIBRARY_NAME})
 
-if(EXATN_BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
+#if(EXATN_BUILD_TESTS)
+#  add_subdirectory(tests)
+#endif()
 
 file(GLOB HEADERS *.hpp)
 

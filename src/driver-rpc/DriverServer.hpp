@@ -3,9 +3,11 @@
 
 #include "Identifiable.hpp"
 #include <string>
+#include "tensor_method.hpp"
 
 namespace exatn {
 namespace rpc {
+
 class DriverServer : public Identifiable {
 
 public:

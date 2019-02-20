@@ -13,6 +13,9 @@ void Initialize() {
     exatnFrameworkInitialized =true;
   }
 }
+bool isInitialize() {
+    return exatnFrameworkInitialized;
+}
 
 void Finalize() { exatnFrameworkInitialized = false; }
 

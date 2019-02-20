@@ -30,29 +30,37 @@ private:
   }
 
 protected:
+
   MPI_Comm serverComm;
-
   std::map<std::string, MPI_Request> requests;
-
   std::map<std::string, int> jobId2NResults;
-  
   std::vector<std::complex<double>> results;
 
+  static int SYNC_TAG;
+  static int SHUTDOWN_TAG;
+  static int SENDTAPROL_TAG;
+  static int REGISTER_TENSORMETHOD;
+
+  bool connected = false;
+  void connect();
+
 public:
-  MPIClient();
+
+  MPIClient() = default;
 
   // Send TaProl string, get a jobId string,
   // so this is an asynchronous call
-  const std::string sendTAProL(const std::string taProlStr) override;
+  const std::string interpretTAProL(const std::string taProlStr) override;
 
   // Retrieve result of job with given jobId.
   // Returns a scalar type double?
-  const std::vector<std::complex<double>> retrieveResult(const std::string jobId) override;
+  const std::vector<std::complex<double>> getResults(const std::string jobId) override;
+
+  void registerTensorMethod(TensorMethod<Identifiable>& method) override;
 
   void shutdown() override;
 
   const std::string name() const override { return "mpi"; }
-
   const std::string description() const override {
     return "This DriverClient uses MPI to communicate with ExaTN Driver.";
   }

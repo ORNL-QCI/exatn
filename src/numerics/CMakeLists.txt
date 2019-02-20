@@ -19,6 +19,9 @@ exatn_enable_rpath(${LIBRARY_NAME})
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
+add_subdirectory(talsh)
+add_subdirectory(exatensor)
+
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

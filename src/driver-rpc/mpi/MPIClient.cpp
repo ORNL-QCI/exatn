@@ -4,7 +4,12 @@ namespace exatn {
 namespace rpc {
 namespace mpi {
 
-MPIClient::MPIClient() {
+int MPIClient::SENDTAPROL_TAG = 0;
+int MPIClient::REGISTER_TENSORMETHOD = 1;
+int MPIClient::SYNC_TAG = 2;
+int MPIClient::SHUTDOWN_TAG = 3;
+
+void MPIClient::connect() {
   char portName[MPI_MAX_PORT_NAME];
 
   // First things first, the server is going
@@ -17,23 +22,48 @@ MPIClient::MPIClient() {
   MPI_Comm_connect(portName, MPI_INFO_NULL, 0, MPI_COMM_SELF,
                    &serverComm);
   std::cout << "[mpi-client] Connected with the server\n";
+
+  connected = true;
+
+}
+
+void MPIClient::registerTensorMethod(TensorMethod<Identifiable>& method) {
+
+   if (!connected) connect();
+
+   auto name = method.name();
+   MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
+
+   BytePacket packet;
+   method.pack(packet);
+
+   MPI_Send(packet.base_addr, packet.size_bytes, MPI_CHAR, 0, MPI_ANY_TAG, serverComm);
 }
 
 // Send TaProl string, get a jobId string,
 // so this is an asynchronous call
-const std::string MPIClient::sendTAProL(const std::string taProlStr) {
+const std::string MPIClient::interpretTAProL(const std::string taProlStr) {
+
+  if (!connected) connect();
 
   auto jobId = generateRandomString();
 
   // Analyze the taProlStr to see how many GET commands there are
   // and populate the jobId2NResults map
-  int nResults = 1;
+  int nResults = 0;
+  auto position = taProlStr.find("save",0);
+  while (position != std::string::npos) {
+      nResults++;
+      position = taProlStr.find("save",position+1);
+  }
+  std::cout << "[mpi-client] This TAProL program produces " << nResults << " scalar results.\n";
+
   jobId2NResults.insert({jobId, nResults});
 
   // Asynchronously send the taProl string to the server
   MPI_Request request;
   std::cout << "[mpi-client] sending request with jobid " << jobId << "\n";
-  MPI_Isend(taProlStr.c_str(), taProlStr.size(), MPI_CHAR, 0, 0, serverComm,
+  MPI_Isend(taProlStr.c_str(), taProlStr.size(), MPI_CHAR, 0, SENDTAPROL_TAG, serverComm,
             &request);
 
   // Store the request object for us to use
@@ -45,7 +75,9 @@ const std::string MPIClient::sendTAProL(const std::string taProlStr) {
 
 // Retrieve result of job with given jobId.
 // Returns a scalar type double?
-const std::vector<std::complex<double>> MPIClient::retrieveResult(const std::string jobId) {
+const std::vector<std::complex<double>> MPIClient::getResults(const std::string jobId) {
+
+  if (!connected) connect();
 
   auto request = requests[jobId];
 
@@ -56,7 +88,7 @@ const std::vector<std::complex<double>> MPIClient::retrieveResult(const std::str
   // send a synchronize command to driver
   // Tag of 1 == SYNCHRONIZE command
   char buf[1];
-  MPI_Send(buf, 1, MPI_CHAR, 0, 1, serverComm);
+  MPI_Send(buf, 1, MPI_CHAR, 0, SYNC_TAG, serverComm);
 
   // now get all the results
 
@@ -71,11 +103,13 @@ const std::vector<std::complex<double>> MPIClient::retrieveResult(const std::str
 }
 
 void MPIClient::shutdown() {
+  if (!connected) connect();
+
   char buf[1];
   MPI_Request request;
   std::cout << "[mpi-client] sending shutdown.\n";
   // Tag of 2 == SHUTDOWN command
-  MPI_Isend(buf, 1, MPI_CHAR, 0, 2, serverComm, &request);
+  MPI_Isend(buf, 1, MPI_CHAR, 0, SHUTDOWN_TAG, serverComm, &request);
    MPI_Status status;
    std::cout << "[mpi-client] waiting for shutdown.\n";
   MPI_Wait(&request, &status);

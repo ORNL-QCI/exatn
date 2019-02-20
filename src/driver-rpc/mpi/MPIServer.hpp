@@ -4,6 +4,7 @@
 #include "DriverServer.hpp"
 #include "mpi.h"
 #include <string>
+#include <memory>
 
 namespace exatn {
 namespace rpc {
@@ -12,14 +13,18 @@ class MPIServer : public DriverServer {
 
 protected:
   bool listen = false;
+  int nResults = 0;
+  static int SYNC_TAG;
+  static int SHUTDOWN_TAG;
+  static int SENDTAPROL_TAG;
+  static int REGISTER_TENSORMETHOD;
 
-  MPI_Comm communicator;
   std::string portName = "exatn-mpi-driver";
+
+//   std::map<std::string, std::shared_ptr<TensorMethod>> registeredTensorMethods;
 
 public:
   MPIServer() {}
-
-  void setCommunicator(MPI_Comm &comm) { communicator = comm; }
 
   void start() override;
   void stop() override;

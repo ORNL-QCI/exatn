@@ -10,7 +10,15 @@ target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC . utility)
 
-exatn_enable_rpath(${LIBRARY_NAME})
+target_link_libraries(exatn PUBLIC CppMicroServices exatn-utility)
+
+if(APPLE)
+   set_target_properties(exatn PROPERTIES INSTALL_RPATH "@loader_path")
+   set_target_properties(exatn PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
+   set_target_properties(exatn PROPERTIES INSTALL_RPATH "$ORIGIN")
+   set_target_properties(exatn PROPERTIES LINK_FLAGS "-shared")
+endif()
 
 file (GLOB HEADERS *.hpp)
 

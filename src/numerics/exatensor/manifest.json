@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_numerics_exatensor",
+  "bundle.activator" : true,
+  "bundle.name" : "ExaTN ExaTensor Backend",
+  "bundle.description" : "ExaTensor implementation of numerics backend."
+}

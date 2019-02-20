@@ -12,6 +12,7 @@ extern bool exatnFrameworkInitialized;
 extern std::shared_ptr<ServiceRegistry> serviceRegistry;
 
 void Initialize();
+bool isInitialize();
 
 template <typename Service>
 std::shared_ptr<Service> getService(const std::string &serviceName) {

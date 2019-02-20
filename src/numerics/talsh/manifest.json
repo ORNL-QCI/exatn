@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_numerics_talsh",
+  "bundle.activator" : true,
+  "bundle.name" : "ExaTN Talsh Backend",
+  "bundle.description" : "Talsh implementation of numerics backend."
+}

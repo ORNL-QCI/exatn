@@ -56,17 +56,19 @@ include_directories(${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
 macro(exatn_enable_rpath LIBNAME)
   if(APPLE)
-    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path")
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
     set_target_properties(${LIBNAME}
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
   else()
-    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
     set_target_properties(${LIBNAME} PROPERTIES LINK_FLAGS "-shared")
   endif()
 endmacro()
 
 configure_file("${CMAKE_SOURCE_DIR}/cmake/exatn_config.hpp.in"
                "${CMAKE_BINARY_DIR}/exatn_config.hpp")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEXATN_SERVICE")
 
 add_subdirectory(tpls)
 add_subdirectory(src)

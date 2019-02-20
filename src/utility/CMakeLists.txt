@@ -10,7 +10,14 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices)
-exatn_enable_rpath(${LIBRARY_NAME})
+
+if(APPLE)
+   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path")
+   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+else()
+   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-shared")
+endif()
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(srep/tests)
