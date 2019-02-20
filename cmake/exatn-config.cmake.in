@@ -18,7 +18,7 @@ set (EXATN_LIBRARY_DIR "${EXATN_ROOT}/lib")
 link_directories("${EXATN_ROOT}/lib")
 set(EXATN_INCLUDE_ROOT "${EXATN_ROOT}/include")
 
-set (EXATN_INCLUDE_DIRS "${EXATN_INCLUDE_ROOT}/cppmicroservices4;${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}/gtest")
+set (EXATN_INCLUDE_DIRS "${EXATN_INCLUDE_ROOT}/cppmicroservices4;${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}/gtest;${EXATN_INCLUDE_ROOT}/exatensor")
 set (EXATN_LIBRARIES "exatn;exatn-numerics;exatn-utility;CppMicroServices")
 
 macro(exatn_add_test TESTNAME)
