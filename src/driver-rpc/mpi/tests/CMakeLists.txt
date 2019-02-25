@@ -7,7 +7,11 @@ target_link_libraries(client_test PRIVATE gtest gmock gtest_main)
 
 add_executable(server_test server.cpp)
 target_include_directories(server_test PRIVATE ${CUDA_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(server_test PRIVATE exatn exatn-utility ${MPI_CXX_LIBRARIES})
+if (CUDA_FOUND)
+target_link_libraries(server_test PRIVATE exatn exatn-utility ${MPI_CXX_LIBRARIES} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} blas gfortran gomp ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+else()
+target_link_libraries(server_test PRIVATE exatn exatn-utility ${MPI_CXX_LIBRARIES} blas gfortran gomp ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+endif()
 
 add_test(NAME client_server_test COMMAND mpirun --allow-run-as-root -np 1 ./server_test : -np 1 ./client_test)
 
