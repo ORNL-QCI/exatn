@@ -45,6 +45,7 @@ get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
 
 message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
 message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
+message(STATUS "CUDA Host Compiler: ${CMAKE_CXX_COMPILER}")
 
 if(CUDA_FOUND)
   message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")
@@ -54,7 +55,7 @@ if(CUDA_FOUND)
   if(CUDA_HOST_COMPILER)
     add_custom_target(
       exatensor-build
-      COMMAND ${CMAKE_COMMAND} -E env GPU_CUDA=CUDA
+      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
               PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
@@ -64,17 +65,17 @@ if(CUDA_FOUND)
   else()
     add_custom_target(
       exatensor-build
-      COMMAND ${CMAKE_COMMAND} -E env GPU_CUDA=CUDA
+      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
               PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-              PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
+              PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CMAKE_CXX_COMPILER} make
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
 else()
   add_custom_target(
     exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env MPILIB=OPENMPI BLASLIB=ATLAS
+    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 MPILIB=OPENMPI BLASLIB=ATLAS
             PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
             PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
             PATH_OPENMPI_BIN=${MPI_BIN_PATH} make

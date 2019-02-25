@@ -5,12 +5,9 @@ namespace exatn {
 namespace numerics {
 namespace exatensor {
 
-std::vector<std::string> ExatensorBackend::translate(const std::string taProl) {
-    return split(taProl, "\n");
-}
+void ExatensorBackend::execute(const std::string& taProl) {
 
-void ExatensorBackend::execute(std::vector<std::string>& simpleTaPrlList) {
-
+    auto commands = split(taProl, "\n");
     std::cout << "[exatensor] Executing taprol strings\n";
 
 }

@@ -23,9 +23,8 @@ public:
   virtual void addTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method) {
       methods.insert({method->name(), method});
   }
-  
-  virtual std::vector<std::string> translate(const std::string taProl) = 0;
-  virtual void execute(std::vector<std::string>& simpleTaPrlList) = 0;
+
+  virtual void execute(const std::string& taProl) = 0;
 
 };
 

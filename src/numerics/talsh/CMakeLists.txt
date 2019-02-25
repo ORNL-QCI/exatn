@@ -7,6 +7,8 @@ usFunctionGenerateBundleInit(TARGET ${LIBRARY_NAME} OUT SRC)
 
 add_library(${LIBRARY_NAME} SHARED ${SRC})
 
+add_dependencies(${LIBRARY_NAME} exatensor-build)
+
 if(CUDA_FOUND)
   target_include_directories(${LIBRARY_NAME}
                              PUBLIC .
@@ -14,8 +16,11 @@ if(CUDA_FOUND)
                                     ${CMAKE_SOURCE_DIR}/src
                                     ${CMAKE_SOURCE_DIR}/src/utility
                                     ${MPI_CXX_INCLUDE_DIRS}
-                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH
+                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
                                     ${CUDA_INCLUDE_DIRS})
+
+target_link_libraries(${LIBRARY_NAME}
+                      PUBLIC exatn exatn-utility ${MPI_CXX_LIBRARIES} CppMicroServices ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so blas ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 
 else()
   target_include_directories(${LIBRARY_NAME}
@@ -23,8 +28,9 @@ else()
                                     ..
                                     ${CMAKE_SOURCE_DIR}/src/utility
                                     ${MPI_CXX_INCLUDE_DIRS}
-                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH)
-
+                                    ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include)
+target_link_libraries(${LIBRARY_NAME}
+                      PUBLIC exatn exatn-utility ${MPI_CXX_LIBRARIES} CppMicroServices ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so blas)
 endif()
 
 set(_bundle_name exatn_numerics_talsh)
@@ -42,8 +48,7 @@ usFunctionEmbedResources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME}
-                      PUBLIC exatn exatn-utility ${MPI_CXX_LIBRARIES} CppMicroServices)
+
 exatn_enable_rpath(${LIBRARY_NAME})
 
 #if(EXATN_BUILD_TESTS)

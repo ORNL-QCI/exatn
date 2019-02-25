@@ -35,8 +35,7 @@ protected:
 
 public:
 
-  std::vector<std::string> translate(const std::string taProl) override;
-  void execute(std::vector<std::string> &simpleTaPrlList) override;
+  void execute(const std::string &taProl) override;
 
   const std::string name() const override { return "talsh"; }
   const std::string description() const override { return ""; }

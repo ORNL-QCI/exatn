@@ -89,10 +89,7 @@ void MPIServer::start() {
 
       // FIXME with DMITRY:
       // Execute the TAPROL with our Numerics backend
-      auto simpleTaProlList = backend->translate(taProlProg);
-
-      // depending on backend talsh or exatensor
-      backend->execute(simpleTaProlList);
+      backend->execute(taProlProg);
 
 
     } else if (status.MPI_TAG == REGISTER_TENSORMETHOD) {
