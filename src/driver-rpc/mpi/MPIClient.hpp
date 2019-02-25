@@ -6,6 +6,8 @@
 #include "mpi.h"
 #include <algorithm>
 #include <functional>
+#include <map>
+#include <iostream>
 
 
 namespace exatn {
