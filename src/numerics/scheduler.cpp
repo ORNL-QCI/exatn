@@ -1,4 +1,4 @@
-#include <mpi.h>
+//#include <mpi.h>
 #include <string>
 using namespace std;
 
@@ -15,25 +15,55 @@ namespace Scheduler {
 		Task tsk;
 		string System;
 		Job *next_job;
-		private: int jobid_cnt;
-	
+
+		Job(Task t, string s)
+		{
+			tsk=t;
+			System=s;
+			id=-1;
+			next_job=NULL;
+		}
 	};
 
-	class Job_WaitQueue {
+	class Job_Queue {
 	private: 
-		int wait_cnt;
+		int jobid_cnt;
 	public:
-		Job first_job;
-		Job last_job;
+		Job *first_job;
+		Job *last_job;
 		
+		Job_Queue()
+		{
+			jobid_cnt=0;
+			first_job=NULL;
+			last_job=NULL;
+		}
+
 		Job get_next_job(int max_proc_cnt/*arguments are resource requirements*/) 
 		{
 
 		}
 
-		void add_job(Job j)
+		void add_job(Job *j, bool is_newj)
 		{
+			jobid_cnt+=1;
+			if(is_newj) j->id=jobid_cnt;
 
+			if(first_job == NULL)
+			{
+				first_job=j;
+				last_job=j;
+			}
+			else if(first_job->next_job==NULL)
+			{
+				first_job->next_job=j;
+				last_job=first_job->next_job;
+			}
+			else
+			{
+				last_job->next_job=j;
+				last_job=last_job->next_job;
+			}
 		}
 
 		void remove_job(Job j)
@@ -42,23 +72,6 @@ namespace Scheduler {
 		}
 	};
 
-	class Job_RunQueue {
-	private: 
-		int run_cnt;
-	public:
-		Job first_job;
-		Job last_job;
-		
-		void add_job(Job j)
-		{
-
-		}
-
-		void remove_job(Job j)
-		{
-
-		}
-	};
 
 	void Job_Submit(/*takes TaProl string and processor count*/)
 	{
@@ -82,6 +95,6 @@ namespace Scheduler {
 		//update resource count
 	}
 
-	Job_WaitQueue *waitq = new Job_WaitQueue();
-	Job_RunQueue *runq = new Job_RunQueue(); 
+	Job_Queue *waitq = new Job_Queue();
+	Job_Queue *runq = new Job_Queue(); 
 }
