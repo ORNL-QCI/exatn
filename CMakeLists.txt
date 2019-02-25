@@ -83,3 +83,6 @@ install(FILES "${CMAKE_BINARY_DIR}/exatn-config.cmake" DESTINATION .)
 
 file (GLOB EXATENSOR_HEADERS ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_method.hpp)
 install(FILES ${EXATENSOR_HEADERS} DESTINATION include/exatensor)
+
+file (GLOB EXATENSOR_LIBS ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+install(FILES ${EXATENSOR_LIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
