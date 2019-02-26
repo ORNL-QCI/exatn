@@ -101,7 +101,7 @@ void MPIServer::start() {
 
     } else if (status.MPI_TAG == REGISTER_TENSORMETHOD) {
 
-        std::string tmName(buf); 
+        std::string tmName(buf);
 
         std::cout << "[mpi-server] Registering tensor method " << tmName << ".\n";
 

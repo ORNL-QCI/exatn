@@ -50,7 +50,7 @@ void MPIClient::registerTensorMethod(TensorMethod<exatn::Identifiable>& method) 
 
 // Send TaProl string, get a jobId string,
 // so this is an asynchronous call
-const std::string MPIClient::interpretTAProL(const std::string taProlStr) {
+const std::string MPIClient::interpretTAProL(const std::string& taProlStr) {
 
   if (!connected) connect();
 
@@ -83,7 +83,7 @@ const std::string MPIClient::interpretTAProL(const std::string taProlStr) {
 
 // Retrieve result of job with given jobId.
 // Returns a scalar type double?
-const std::vector<std::complex<double>> MPIClient::getResults(const std::string jobId) {
+const std::vector<std::complex<double>> MPIClient::getResults(const std::string& jobId) {
 
   if (!connected) connect();
 

@@ -18,6 +18,8 @@ protected:
 
   std::map<std::string, std::shared_ptr<TensorMethod<Identifiable>>> methods;
 
+  std::map<std::string, BytePacket> extData;
+
 public:
 
   virtual void addTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method) {
@@ -26,6 +28,10 @@ public:
 
   virtual void initialize() = 0;
   virtual void execute(const std::string& taProl) = 0;
+  virtual BytePacket getExternalData(const std::string& tag) {
+      return extData[tag];
+  }
+
   virtual void shutdown() = 0;
 
 };

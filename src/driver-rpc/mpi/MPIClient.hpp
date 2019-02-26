@@ -52,11 +52,11 @@ public:
 
   // Send TaProl string, get a jobId string,
   // so this is an asynchronous call
-  const std::string interpretTAProL(const std::string taProlStr) override;
+  const std::string interpretTAProL(const std::string& taProlStr) override;
 
   // Retrieve result of job with given jobId.
   // Returns a scalar type double?
-  const std::vector<std::complex<double>> getResults(const std::string jobId) override;
+  const std::vector<std::complex<double>> getResults(const std::string& jobId) override;
 
   void registerTensorMethod(TensorMethod<Identifiable>& method) override;
 

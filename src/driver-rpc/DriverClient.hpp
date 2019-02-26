@@ -16,11 +16,11 @@ public:
 
   // Send TaProl string, get a jobId string,
   // so this is an asynchronous call
-  virtual const std::string interpretTAProL(const std::string taProlStr) = 0;
+  virtual const std::string interpretTAProL(const std::string& taProlStr) = 0;
 
   // Retrieve result of job with given jobId.
   // Returns a scalar type double?
-  virtual const std::vector<std::complex<double>> getResults(const std::string jobId) = 0;
+  virtual const std::vector<std::complex<double>> getResults(const std::string& jobId) = 0;
 
   virtual void registerTensorMethod(TensorMethod<Identifiable>& method) = 0;
 

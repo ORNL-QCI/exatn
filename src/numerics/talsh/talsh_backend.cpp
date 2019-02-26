@@ -17,6 +17,7 @@ void TalshBackend::execute(const std::string& taProl) {
 
 }
 
+
 void TalshBackend::shutdown() {
     ::talsh::shutdown();
 }
