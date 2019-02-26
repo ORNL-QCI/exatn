@@ -27,8 +27,7 @@ if(CUDA_FOUND)
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
            ${CUDA_LIBRARIES}
-           ${CUDA_CUBLAS_LIBRARIES}
- )
+           ${CUDA_CUBLAS_LIBRARIES})
 
 else()
   target_include_directories(${LIBRARY_NAME}
