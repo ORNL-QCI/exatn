@@ -18,10 +18,7 @@ void ExampleTensorMethod::unpack(BytePacket &packet) {
 
 int ExampleTensorMethod::apply(const TensorDenseBlock& local_tensor) {
 
-    // local_tensor.num_dims=1;
-    // local_tensor.data_kind = 1;
-    // local_tensor.body_ptr = (void*) data;
-    auto nElements = 10;// getDenseTensorVolume(local_tensor);
+    auto nElements = getDenseTensorVolume(local_tensor);
 
     for (int i = 0; i < nElements; i++) {
         if (local_tensor.data_kind == ::talsh::TensorData<double>::kind) {

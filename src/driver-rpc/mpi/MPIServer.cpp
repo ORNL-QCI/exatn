@@ -41,7 +41,12 @@ void MPIServer::start() {
     std::cout << "[mpi-server] Listening for requests.\n";
     std::cout << "[mpi-server] Running MPI_Recv.\n";
 
+    int messageLength;
+
     MPI_Recv(buf, 1000, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, client, &status);
+    MPI_Get_count(&status, MPI_CHAR, &messageLength);
+    buf[messageLength] = '\0';
+
     std::cout << "[mpi-server] received: " << std::string(buf) << "\n";
 
     if (status.MPI_TAG == SYNC_TAG) {
@@ -96,7 +101,7 @@ void MPIServer::start() {
 
     } else if (status.MPI_TAG == REGISTER_TENSORMETHOD) {
 
-        std::string tmName(buf);
+        std::string tmName(buf); 
 
         std::cout << "[mpi-server] Registering tensor method " << tmName << ".\n";
 

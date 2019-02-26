@@ -31,9 +31,12 @@ void MPIClient::registerTensorMethod(TensorMethod<exatn::Identifiable>& method) 
 
    if (!connected) connect();
 
+//    char buf[1];
    auto name = method.name();
    std::cout << "[mpi-client] Sending TensorMethod " << name << " to remote server.\n";
    MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
+
+//    MPI_Send(buf, 1, MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
 
    BytePacket packet;
    initBytePacket(&packet);
