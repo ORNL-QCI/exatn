@@ -35,7 +35,11 @@ protected:
 
 public:
 
+  void initialize() override;
+
   void execute(const std::string &taProl) override;
+
+  void shutdown() override;
 
   const std::string name() const override { return "talsh"; }
   const std::string description() const override { return ""; }

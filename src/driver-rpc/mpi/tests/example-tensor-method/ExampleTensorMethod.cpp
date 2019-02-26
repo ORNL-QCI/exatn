@@ -6,13 +6,11 @@ namespace exatn {
 namespace test {
 
 void ExampleTensorMethod::pack(BytePacket& packet) {
-    packet.base_addr = &data;
-    packet.size_bytes = sizeof (data); //size;
+   appendToBytePacket(&packet, data);
 }
 
-void ExampleTensorMethod::unpack(const BytePacket &packet) {
-    data = (int&) packet.base_addr;
-    size = packet.size_bytes;
+void ExampleTensorMethod::unpack(BytePacket &packet) {
+    extractFromBytePacket(&packet, data);
 }
 
 int ExampleTensorMethod::apply(const TensorDenseBlock& local_tensor) {

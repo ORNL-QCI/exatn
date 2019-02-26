@@ -16,6 +16,8 @@ void MPIServer::start() {
   // FIXME Provide hook for specifying this at runtime
   backend = exatn::getService<exatn::numerics::Backend>("talsh");
 
+  backend->initialize();
+
   listen = true;
 
   MPI_Comm client;
@@ -99,18 +101,15 @@ void MPIServer::start() {
         std::cout << "[mpi-server] Registering tensor method " << tmName << ".\n";
 
         MPI_Status status;
-        void * base_addr;
-        int size_bytes;
-        MPI_Recv(base_addr, size_bytes, MPI_BYTE, 0, 0, client, &status);
-
-        // Here we assume that ExaTN has been initialized by server.main()
-        auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
-
         BytePacket packet;
-        packet.base_addr = base_addr;
-        packet.size_bytes = size_bytes;
-        tensor_method->unpack(packet);
+        int count;
+        initBytePacket(&packet);
+        MPI_Recv(packet.base_addr, packet.capacity, MPI_BYTE, 0, 0, client, &status);
+        MPI_Get_count(&status, MPI_BYTE, &count);
+        packet.size_bytes = count;
 
+        auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
+        tensor_method->unpack(packet);
         backend->addTensorMethod(tensor_method);
 
         std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
@@ -120,6 +119,7 @@ void MPIServer::start() {
 
   std::cout << "[mpi-server] Out of event loop.\n";
   MPI_Comm_disconnect(&client);
+  backend->shutdown();
   return;
 }
 

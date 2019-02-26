@@ -24,7 +24,9 @@ public:
       methods.insert({method->name(), method});
   }
 
+  virtual void initialize() = 0;
   virtual void execute(const std::string& taProl) = 0;
+  virtual void shutdown() = 0;
 
 };
 

@@ -9,12 +9,11 @@ protected:
 
    // FIXME Dmitry provide an example implementation for this
    int data = 1;
-   int size = 4;
 
 public:
 
     void pack(BytePacket& packet) override;
-    void unpack(const BytePacket& packet) override;
+    void unpack(BytePacket& packet) override;
     int apply(const TensorDenseBlock& local_tensor) override;
 
     const std::string name() const override { return "example-tensor-method"; }

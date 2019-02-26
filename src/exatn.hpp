@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "ServiceRegistry.hpp"
+#include "DriverClient.hpp"
 
 namespace exatn {
 

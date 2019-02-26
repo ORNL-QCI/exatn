@@ -5,6 +5,10 @@ namespace exatn {
 namespace numerics {
 namespace exatensor {
 
+
+void ExatensorBackend::initialize() {
+}
+
 void ExatensorBackend::execute(const std::string& taProl) {
 
     auto commands = split(taProl, "\n");
@@ -12,6 +16,8 @@ void ExatensorBackend::execute(const std::string& taProl) {
 
 }
 
+void ExatensorBackend::shutdown() {
+}
 }
 }
 }

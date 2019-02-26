@@ -34,8 +34,13 @@ protected:
   };
 
 public:
-  void execute(const std::string& taProl) override;
 
+  void initialize() override;
+
+  void execute(const std::string &taProl) override;
+
+  void shutdown() override;
+  
   const std::string name() const override { return "exatensor"; }
   const std::string description() const override { return ""; }
 };

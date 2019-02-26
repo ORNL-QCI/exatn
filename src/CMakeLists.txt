@@ -6,9 +6,11 @@ set(LIBRARY_NAME exatn)
 
 add_library(${LIBRARY_NAME} SHARED exatn.cpp)
 
+add_dependencies(${LIBRARY_NAME} exatensor-build)
+
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC . utility)
+  PUBLIC . utility driver-rpc ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include)
 
 target_link_libraries(exatn PUBLIC CppMicroServices exatn-utility)
 
