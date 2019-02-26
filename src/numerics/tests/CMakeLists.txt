@@ -5,19 +5,19 @@ if(CUDA_FOUND)
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
                         exatn-utility
-                        talsh
+                        ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
+                        ${CUDA_LIBRARIES}
+                        ${CUDA_CUBLAS_LIBRARIES}
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
-                        ${CUDA_BLAS_LIB}
-                        ${CUDA_LIBRARIES}
                         gfortran
                         gomp)
 else()
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
                         exatn-utility
-                        talsh
+                        ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
