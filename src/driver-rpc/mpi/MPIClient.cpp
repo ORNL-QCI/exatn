@@ -29,27 +29,39 @@ void MPIClient::connect() {
 
 void MPIClient::registerTensorMethod(TensorMethod<exatn::Identifiable>& method) {
 
-   if (!connected) connect();
+  if (!connected) connect();
 
-//    char buf[1];
-   auto name = method.name();
-   std::cout << "[mpi-client] Sending TensorMethod " << name << " to remote server.\n";
-   MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
+//  char buf[1];
+  auto name = method.name();
+  std::cout << "[mpi-client] Sending TensorMethod " << name << " to remote server.\n";
+  MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
 
-//    MPI_Send(buf, 1, MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
+//  MPI_Send(buf, 1, MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
 
-   BytePacket packet;
-   initBytePacket(&packet);
-   method.pack(packet);
+  BytePacket packet;
+  initBytePacket(&packet);
+  method.pack(packet);
 
-   std::cout << "[mpi-client] Sending TensorMethod data to remote server.\n";
-   MPI_Send(packet.base_addr, packet.size_bytes, MPI_BYTE, 0, 0, serverComm);
+  std::cout << "[mpi-client] Sending TensorMethod data to remote server.\n";
+  MPI_Send(packet.base_addr, packet.size_bytes, MPI_BYTE, 0, 0, serverComm);
 
-   return;
+  return;
 }
 
-// Send TaProl string, get a jobId string,
-// so this is an asynchronous call
+void MPIClient::registerExternalData(const std::string& name, BytePacket& packet) {
+
+  if (!connected) connect();
+
+  std::cout << "[mpi-client] Sending External Data ID " << name << " to remote server.\n";
+  //MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_EXTDATA, serverComm);
+
+  std::cout << "[mpi-client] Sending External Data to remote server.\n";
+  //MPI_Send(packet.base_addr, packet.size_bytes, MPI_BYTE, 0, 0, serverComm);
+
+  return;
+}
+
+// Send TAProL code, get a jobId string, so this is a non-blocking asynchronous call.
 const std::string MPIClient::interpretTAProL(const std::string& taProlStr) {
 
   if (!connected) connect();
@@ -81,8 +93,8 @@ const std::string MPIClient::interpretTAProL(const std::string& taProlStr) {
   return jobId;
 }
 
-// Retrieve result of job with given jobId.
-// Returns a scalar type double?
+// Retrieve results of a TAProL job with given jobId.
+// Currently retrieves saved complex<double> scalars.
 const std::vector<std::complex<double>> MPIClient::getResults(const std::string& jobId) {
 
   if (!connected) connect();

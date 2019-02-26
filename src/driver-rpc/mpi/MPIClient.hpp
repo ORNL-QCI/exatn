@@ -50,16 +50,24 @@ public:
 
   MPIClient() = default;
 
-  // Send TaProl string, get a jobId string,
-  // so this is an asynchronous call
+  // Send TAProL code, get a jobId string, so this is a non-blocking asynchronous call.
   const std::string interpretTAProL(const std::string& taProlStr) override;
 
-  // Retrieve result of job with given jobId.
-  // Returns a scalar type double?
+  // Retrieve results of a TAProL job with given jobId.
+  // Currently retrieves saved complex<double> scalars.
   const std::vector<std::complex<double>> getResults(const std::string& jobId) override;
 
+  // Register an external tensor method, a subclass of TensorMethod class
+  // which overrides the .apply(const TensorDenseBlock &) method. This
+  // allows an application to initialize and transform tensors is a custom way
+  // since the registered tensor methods will be accessible in TAProL text.
   void registerTensorMethod(TensorMethod<Identifiable>& method) override;
 
+  // Register external data under some symbolic name. This data will be accessible
+  // in TAProL text. It can be used to define tensor dimensions dynamically, for example.
+  void registerExternalData(const std::string& name, BytePacket& packet) override;
+
+  // Shut down MPIClient.
   void shutdown() override;
 
   const std::string name() const override { return "mpi"; }
