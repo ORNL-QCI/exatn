@@ -9,7 +9,7 @@ const std::string src = R"src(entry: main
 scope main group()
  subspace(): s0=[0:127]
  index(s0): a,b,c,d,i,j,k,l
- H2(a,b,c,d) = method("Hamiltonian")
+ H2(a,b,c,d) = method("HamiltonianTest")
  T2(a,b,c,d) = {1.0,0.0}
  Z2(a,b,c,d) = {0.0,0.0}
  Z2(a,b,c,d) += H2(i,j,k,l) * T2(c,d,i,j) * T2(a,b,k,l)
@@ -50,7 +50,7 @@ TEST(client_test, checkSimple) {
   EXPECT_EQ(3.3, std::imag(values[0]));
   std::cout << "[client.cpp] value second time is " << std::real(values[0]) << ", " << std::imag(values[0]) << "\n";
 
-//   auto tm = exatn::getService<TensorMethod<exatn::Identifiable>>("example-tensor-method");
+  auto tm = exatn::getService<TensorMethod<exatn::Identifiable>>("HamiltonianTest");
 //   client->registerTensorMethod(*tm.get());
 
   // Shutdown the client, this

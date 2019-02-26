@@ -16,6 +16,8 @@ target_include_directories(
   ${LIBRARY_NAME}
   PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${CMAKE_SOURCE_DIR}/src/utility ${CUDA_INCLUDE_DIRS})
 
+target_link_libraries(${LIBRARY_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+
 set(_bundle_name exatn_example_tensormethod)
 
 set_target_properties(${LIBRARY_NAME}
@@ -33,5 +35,6 @@ usFunctionEmbedResources(TARGET
                          ${CMAKE_CURRENT_SOURCE_DIR}
                          FILES
                          manifest.json)
+exatn_enable_rpath(${LIBRARY_NAME})
 
 install(TARGETS ${LIBRARY_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
