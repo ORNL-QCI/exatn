@@ -7,8 +7,7 @@ class ExampleTensorMethod : public TensorMethod<Identifiable> {
 
 protected:
 
-   // FIXME Dmitry provide an example implementation for this
-   int data = 1;
+   double datum = 0.001;
 
 public:
 
@@ -16,7 +15,7 @@ public:
     void unpack(BytePacket& packet) override;
     int apply(const TensorDenseBlock& local_tensor) override;
 
-    const std::string name() const override { return "example-tensor-method"; }
+    const std::string name() const override { return "HamiltonianTest"; }
     const std::string description() const override {
         return "";
     }

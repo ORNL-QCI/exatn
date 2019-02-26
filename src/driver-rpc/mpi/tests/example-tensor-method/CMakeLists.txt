@@ -14,7 +14,7 @@ add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${CMAKE_SOURCE_DIR}/src/utility)
+  PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${CMAKE_SOURCE_DIR}/src/utility ${CUDA_INCLUDE_DIRS})
 
 set(_bundle_name exatn_example_tensormethod)
 

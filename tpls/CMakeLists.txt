@@ -39,6 +39,11 @@ if(EXATN_BUILD_TESTS)
   endmacro()
 endif()
 
+set(TALSHXX_EXISTS "NO")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor/include/talshxx.hpp")
+  set(TALSHXX_EXISTS "YES")
+endif()
+
 list(GET MPI_Fortran_INCLUDE_PATH 0 MPI_FORTRAN_INCLUDE)
 get_filename_component(MPI_ROOT_DIR ${MPI_FORTRAN_INCLUDE} DIRECTORY)
 get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
@@ -57,7 +62,7 @@ if(CUDA_FOUND)
       exatensor-build
       COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
-              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
+              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
               PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
               make
@@ -67,7 +72,7 @@ if(CUDA_FOUND)
       exatensor-build
       COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
-              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
+              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
               PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CMAKE_CXX_COMPILER} make
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
@@ -76,7 +81,7 @@ else()
   add_custom_target(
     exatensor-build
     COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 MPILIB=OPENMPI BLASLIB=ATLAS
-            PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include
+            PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
             PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
             PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
