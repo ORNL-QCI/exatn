@@ -22,7 +22,6 @@ if(CUDA_FOUND)
   target_link_libraries(
     ${LIBRARY_NAME}
     PUBLIC exatn
-           exatn-utility
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
@@ -40,7 +39,6 @@ else()
   target_link_libraries(
     ${LIBRARY_NAME}
     PUBLIC exatn
-           exatn-utility
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so

@@ -5,7 +5,6 @@ if(CUDA_FOUND)
   link_directories(${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
-                        exatn-utility
                         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
                         ${CUDA_LIBRARIES}
@@ -18,7 +17,6 @@ if(CUDA_FOUND)
 else()
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
-                        exatn-utility
                         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
                         MPI::MPI_CXX
