@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/02/12
+REVISION: 2019/03/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/

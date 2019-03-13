@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/02/12
+REVISION: 2019/03/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,7 +37,7 @@ DimExtent VectorSpace::getSpaceDimension() const
  return basis_.getBasisDimension();
 }
 
-const std::string & VectorSpace::getSpaceName() const
+const std::string & VectorSpace::getName() const
 {
  return space_name_;
 }
@@ -72,10 +72,10 @@ vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound
 void Subspace::printIt() const
 {
  if(subspace_name_.length() > 0){
-  std::cout << "Subspace {Space name = " << vector_space_->getSpaceName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
+  std::cout << "Subspace {Space name = " << vector_space_->getName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = " << subspace_name_ << "}";
  }else{
-  std::cout << "Subspace {Space name = " << vector_space_->getSpaceName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
+  std::cout << "Subspace {Space name = " << vector_space_->getName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = NONE}";
  }
  return;
@@ -101,7 +101,7 @@ const VectorSpace * Subspace::getVectorSpace() const
  return vector_space_;
 }
 
-const std::string & Subspace::getSubspaceName() const
+const std::string & Subspace::getName() const
 {
  return subspace_name_;
 }

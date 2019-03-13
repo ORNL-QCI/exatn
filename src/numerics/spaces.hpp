@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/02/12
+REVISION: 2019/03/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,7 +37,7 @@ public:
  DimExtent getSpaceDimension() const;
 
  /** Returns the name of the space. **/
- const std::string & getSpaceName() const;
+ const std::string & getName() const;
 
  /** Returns the registered space id. **/
  SpaceId getRegisteredId() const;
@@ -87,7 +87,7 @@ public:
  const VectorSpace * getVectorSpace() const;
 
  /** Returns the name of the subspace. **/
- const std::string & getSubspaceName() const;
+ const std::string & getName() const;
 
  /** Returns the registered subspace id. **/
  SubspaceId getRegisteredId() const;
