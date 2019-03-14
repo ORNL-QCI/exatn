@@ -9,7 +9,7 @@ using namespace exatn::utility;
 
 TEST(ServiceRegistryTester, checkInitialize) {
 
- std::string fakepluginpath = std::string(EXATN_BUILD_DIR) + "/src/utility/tests/testplugin";
+ std::string fakepluginpath = std::string(EXATN_BUILD_DIR) + "/src/exatn/tests/testplugin";
 
  ServiceRegistry registry;
  registry.initialize(fakepluginpath);
