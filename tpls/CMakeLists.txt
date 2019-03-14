@@ -86,3 +86,30 @@ else()
             PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 endif()
+
+# Compiler-specific C++11 activation (FROM ANTLR4).
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    # Just g++-5.0 and greater contain <codecvt> header. (test in ubuntu)
+    if (NOT (GCC_VERSION VERSION_GREATER 5.0 OR GCC_VERSION VERSION_EQUAL 5.0))
+        message(WARNING "${PROJECT_NAME} requires g++ 5.0 or greater. XACC will not build Antlr support.")
+    else ()
+        add_subdirectory(antlr)
+    endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    add_subdirectory(antlr)
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CLANG_VERSION)
+    if (NOT (CLANG_VERSION VERSION_GREATER 4.2.1 OR CLANG_VERSION VERSION_EQUAL 4.2.1))
+        message(WARNING "${PROJECT_NAME} requires clang 4.2.1 or greater. XACC will not build Antlr support.")
+    else ()
+        add_subdirectory(antlr)
+    endif()
+    # You can use libc++ to compile this project when g++ is NOT greater than or equal to 5.0.
+    if (WITH_LIBCXX)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    endif()
+endif ()
