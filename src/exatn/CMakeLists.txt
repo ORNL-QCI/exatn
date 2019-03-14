@@ -5,6 +5,8 @@ add_library(${LIBRARY_NAME}
             ServiceRegistry.cpp
             )
 
+add_dependencies(${LIBRARY_NAME} exatensor-build)
+
 target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
