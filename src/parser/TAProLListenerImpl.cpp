@@ -29,45 +29,74 @@ void TAProLListenerImpl::enterEntry(TAProLParser::EntryContext *ctx) {
 }
 
 void TAProLListenerImpl::enterScope(TAProLParser::ScopeContext *ctx) {
-    std::cout << "ENTERING SCOPE: " << ctx->getText() << "\n";
+    std::cout << "ENTERING SCOPE: " << ctx->scopebeginname->getText() << ", " << ctx->scopeendname->getText() << "\n";
+    // check that scope end name and scope begin name are equal
 }
-
-void TAProLListenerImpl::enterSimpleop(TAProLParser::SimpleopContext *ctx) {}
-
-void TAProLListenerImpl::enterCompositeop(
-    TAProLParser::CompositeopContext *ctx) {}
 
 void TAProLListenerImpl::enterSpace(TAProLParser::SpaceContext *ctx) {}
 
-void TAProLListenerImpl::enterSubspace(TAProLParser::SubspaceContext *ctx) {}
+void TAProLListenerImpl::enterSubspace(TAProLParser::SubspaceContext *ctx) {
+    std::cout << "Entering subsbace: " << ctx->getText() << "\n";
+    if (ctx->spacename != nullptr) {
+      auto spacename = ctx->spacename->getText();
+    }
+
+    std::cout << ctx->spacelist()->spacename->getText() << "\n";
+}
 
 void TAProLListenerImpl::enterIndex(TAProLParser::IndexContext *ctx) {
-  std::cout << "ENTERING INDEX\n";
   auto subspace = ctx->subspacename->getText();
-  int nIndices = ctx->id().size();
+
+  int nIndices = ctx->idx().size();
+
   std::vector<std::string> indices;
   for (int i = 0; i < nIndices; i++) {
-    std::cout << "ADDING INDEX: " << ctx->id(i)->getText() << "\n";
-    indices.push_back(ctx->id(i)->getText());
+    std::cout << "adding index: " << ctx->idx(i)->getText() << "\n";
+    indices.push_back(ctx->idx(i)->getText());
   }
 }
 
 void TAProLListenerImpl::enterAssignment(TAProLParser::AssignmentContext *ctx) {
+    if (ctx->complex() != nullptr) {
+        // this is an assigment of the form
+        // X2 = {0.0,0.0} or T2 = {1.0,0.0}
+        std::cout << "= assignment: " << ctx->getText() << "\n";
+
+    } else if (ctx->string() != nullptr) {
+        // this is a method assigment
+        std::cout << "method assignment: " << ctx->getText() << "\n";
+
+
+    }
 }
 
 void TAProLListenerImpl::enterLoad(TAProLParser::LoadContext *ctx) {}
 
-void TAProLListenerImpl::enterSave(TAProLParser::SaveContext *ctx) {}
+void TAProLListenerImpl::enterSave(TAProLParser::SaveContext *ctx) {
+    auto tensor = ctx->tensor()->getText();
+    auto tag = ctx->string()->getText();
+    tag = tag.substr(1,tag.length()-2);
+    std::cout << "Entering Save: " << ctx->getText() << "\n";
+    std::cout << "Save Data: " << tensor << "\n";
+    std::cout << "Save Data: " << tag << "\n";
+}
 
-void TAProLListenerImpl::enterDestroy(TAProLParser::DestroyContext *ctx) {}
+void TAProLListenerImpl::enterDestroy(TAProLParser::DestroyContext *ctx) {
+    std::cout << "Destroying Tensor: " << ctx->getText() << "\n";
+    
+}
 
 void TAProLListenerImpl::enterCopy(TAProLParser::CopyContext *ctx) {}
 
 void TAProLListenerImpl::enterScale(TAProLParser::ScaleContext *ctx) {}
 
-void TAProLListenerImpl::enterUnaryop(TAProLParser::UnaryopContext *ctx) {}
+void TAProLListenerImpl::enterUnaryop(TAProLParser::UnaryopContext *ctx) {
+    std::cout << "Entering unary op: " << ctx->getText() << "\n";
+}
 
-void TAProLListenerImpl::enterBinaryop(TAProLParser::BinaryopContext *ctx) {}
+void TAProLListenerImpl::enterBinaryop(TAProLParser::BinaryopContext *ctx) {
+    std::cout << "Entering binary op: " << ctx->getText() << "\n";
+}
 
 void TAProLListenerImpl::enterCompositeproduct(
     TAProLParser::CompositeproductContext *ctx) {}

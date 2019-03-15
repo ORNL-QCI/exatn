@@ -1,16 +1,15 @@
 grammar TAProL;
 
 taprolsrc
-   : entry
-   | scope+
+   : entry (scope)+
    ;
 
 entry
-   : 'entry:' ID
+   : 'entry:' entryName=ID
    ;
 
 scope
-   : 'scope' scopename=id 'group' '(' groupnamelist? ')' code
+   : 'scope' scopebeginname=id 'group' '(' groupnamelist? ')' code 'end' 'scope' scopeendname=id
    ;
 
 code
@@ -54,13 +53,21 @@ subspace
    : 'subspace' '(' (spacename=id)? ')' ':' spacelist
    ;
 
+spacelist
+   : spacename=id '=' range (',' spacelist)+?
+   ;
+
 index
-   : 'index' '(' subspacename=id ')' ':' id (',' id)?
+   : 'index' '(' subspacename=id ')' ':' idx (',' idx)+?
+   ;
+
+idx
+   : id
    ;
 
 assignment
    : tensor '=' '?'
-   | tensor '=' 'method' '(' id ')'
+   | tensor '=' 'method' '(' string ')'
    | tensor '=' complex
    ;
 
@@ -108,6 +115,7 @@ tensorname
 
 tensor
    : tensorname '(' (indexlist)? ')'
+   | tensorname
    ;
 
 conjtensor
@@ -120,16 +128,12 @@ actualindex
    ;
 
 indexlist
-   : actualindex (',' actualindex)?
+   : actualindex (',' actualindex)+?
    ;
 
 /* A program comment */
 comment
    : COMMENT
-   ;
-
-spacelist
-   : spacename=id '=' range (',' spacelist)?
    ;
 
 range

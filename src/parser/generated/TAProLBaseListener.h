@@ -48,8 +48,14 @@ public:
   virtual void enterSubspace(TAProLParser::SubspaceContext * /*ctx*/) override { }
   virtual void exitSubspace(TAProLParser::SubspaceContext * /*ctx*/) override { }
 
+  virtual void enterSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
+  virtual void exitSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
+
   virtual void enterIndex(TAProLParser::IndexContext * /*ctx*/) override { }
   virtual void exitIndex(TAProLParser::IndexContext * /*ctx*/) override { }
+
+  virtual void enterIdx(TAProLParser::IdxContext * /*ctx*/) override { }
+  virtual void exitIdx(TAProLParser::IdxContext * /*ctx*/) override { }
 
   virtual void enterAssignment(TAProLParser::AssignmentContext * /*ctx*/) override { }
   virtual void exitAssignment(TAProLParser::AssignmentContext * /*ctx*/) override { }
@@ -98,9 +104,6 @@ public:
 
   virtual void enterComment(TAProLParser::CommentContext * /*ctx*/) override { }
   virtual void exitComment(TAProLParser::CommentContext * /*ctx*/) override { }
-
-  virtual void enterSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
-  virtual void exitSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
 
   virtual void enterRange(TAProLParser::RangeContext * /*ctx*/) override { }
   virtual void exitRange(TAProLParser::RangeContext * /*ctx*/) override { }

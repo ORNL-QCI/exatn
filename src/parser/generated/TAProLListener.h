@@ -46,8 +46,14 @@ public:
   virtual void enterSubspace(TAProLParser::SubspaceContext *ctx) = 0;
   virtual void exitSubspace(TAProLParser::SubspaceContext *ctx) = 0;
 
+  virtual void enterSpacelist(TAProLParser::SpacelistContext *ctx) = 0;
+  virtual void exitSpacelist(TAProLParser::SpacelistContext *ctx) = 0;
+
   virtual void enterIndex(TAProLParser::IndexContext *ctx) = 0;
   virtual void exitIndex(TAProLParser::IndexContext *ctx) = 0;
+
+  virtual void enterIdx(TAProLParser::IdxContext *ctx) = 0;
+  virtual void exitIdx(TAProLParser::IdxContext *ctx) = 0;
 
   virtual void enterAssignment(TAProLParser::AssignmentContext *ctx) = 0;
   virtual void exitAssignment(TAProLParser::AssignmentContext *ctx) = 0;
@@ -96,9 +102,6 @@ public:
 
   virtual void enterComment(TAProLParser::CommentContext *ctx) = 0;
   virtual void exitComment(TAProLParser::CommentContext *ctx) = 0;
-
-  virtual void enterSpacelist(TAProLParser::SpacelistContext *ctx) = 0;
-  virtual void exitSpacelist(TAProLParser::SpacelistContext *ctx) = 0;
 
   virtual void enterRange(TAProLParser::RangeContext *ctx) = 0;
   virtual void exitRange(TAProLParser::RangeContext *ctx) = 0;

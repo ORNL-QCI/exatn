@@ -22,10 +22,6 @@ public:
 
   void enterScope(TAProLParser::ScopeContext *ctx) override;
 
-  void enterSimpleop(TAProLParser::SimpleopContext *ctx) override;
-
-  void enterCompositeop(TAProLParser::CompositeopContext *ctx) override;
-
   void enterSpace(TAProLParser::SpaceContext *ctx) override;
 
   void enterSubspace(TAProLParser::SubspaceContext *ctx) override;
