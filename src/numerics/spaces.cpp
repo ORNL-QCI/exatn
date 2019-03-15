@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/03/13
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,6 +7,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "spaces.hpp"
 
 #include <iostream>
+#include <assert.h>
 
 namespace exatn{
 
@@ -25,16 +26,16 @@ VectorSpace::VectorSpace(DimExtent space_dim, const std::string & space_name):
 void VectorSpace::printIt() const
 {
  if(space_name_.length() > 0){
-  std::cout << "Space {Dimension = " << basis_.getBasisDimension() << "; id = " << id_ << "; Name = " << space_name_ << "}";
+  std::cout << "Space {Dimension = " << this->getDimension() << "; id = " << id_ << "; Name = " << space_name_ << "}";
  }else{
-  std::cout << "Space {Dimension = " << basis_.getBasisDimension() << "; id = " << id_ << "; Name = NONE}";
+  std::cout << "Space {Dimension = " << this->getDimension() << "; id = " << id_ << "; Name = NONE}";
  }
  return;
 }
 
-DimExtent VectorSpace::getSpaceDimension() const
+DimExtent VectorSpace::getDimension() const
 {
- return basis_.getBasisDimension();
+ return basis_.getDimension();
 }
 
 const std::string & VectorSpace::getName() const
@@ -57,28 +58,39 @@ void VectorSpace::resetRegisteredId(SpaceId id)
 Subspace::Subspace(const VectorSpace * vector_space,
                    DimOffset lower_bound,
                    DimOffset upper_bound):
-vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound), subspace_name_(""), id_(0)
+vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound),
+subspace_name_(""), id_(UNREG_SUBSPACE)
 {
+ assert(lower_bound_ <= upper_bound_ && upper_bound_ < vector_space_->getDimension());
 }
 
 Subspace::Subspace(const VectorSpace * vector_space,
                    DimOffset lower_bound,
                    DimOffset upper_bound,
                    const std::string & subspace_name):
-vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound), subspace_name_(subspace_name), id_(0)
+vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound),
+subspace_name_(subspace_name), id_(UNREG_SUBSPACE)
 {
+ assert(lower_bound_ <= upper_bound_ && upper_bound_ < vector_space_->getDimension());
 }
 
 void Subspace::printIt() const
 {
  if(subspace_name_.length() > 0){
-  std::cout << "Subspace {Space name = " << vector_space_->getName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
+  std::cout << "Subspace {Space name = " << vector_space_->getName() <<
+               "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = " << subspace_name_ << "}";
  }else{
-  std::cout << "Subspace {Space name = " << vector_space_->getName() << "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
+  std::cout << "Subspace {Space name = " << vector_space_->getName() <<
+               "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = NONE}";
  }
  return;
+}
+
+DimExtent Subspace::getDimension() const
+{
+ return upper_bound_ - lower_bound_ + 1;
 }
 
 DimOffset Subspace::getLowerBound() const

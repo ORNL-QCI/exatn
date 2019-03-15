@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/03/13
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,7 +34,7 @@ public:
  void printIt() const;
 
  /** Returns the space dimension. **/
- DimExtent getSpaceDimension() const;
+ DimExtent getDimension() const;
 
  /** Returns the name of the space. **/
  const std::string & getName() const;
@@ -42,10 +42,12 @@ public:
  /** Returns the registered space id. **/
  SpaceId getRegisteredId() const;
 
- /** Resets the registered space id. **/
- void resetRegisteredId(SpaceId id);
+ friend class SpaceRegister;
 
 private:
+
+ /** Resets the registered space id. **/
+ void resetRegisteredId(SpaceId id);
 
  SpaceBasis basis_;       //basis defining the vector space
  std::string space_name_; //optional space name
@@ -74,6 +76,9 @@ public:
  /** Prints. **/
  void printIt() const;
 
+ /** Returns the subspace dimension. **/
+ DimExtent getDimension() const;
+
  /** Returns the lower bound of the subspace. **/
  DimOffset getLowerBound() const;
 
@@ -92,10 +97,12 @@ public:
  /** Returns the registered subspace id. **/
  SubspaceId getRegisteredId() const;
 
- /** Resets the registered subspace id. **/
- void resetRegisteredId(SubspaceId id);
+ friend class SubspaceRegister;
 
 private:
+
+ /** Resets the registered subspace id. **/
+ void resetRegisteredId(SubspaceId id);
 
  const VectorSpace * vector_space_; //non-owning pointer to the vector space
  DimOffset lower_bound_;            //lower bound defining the subspace of the vector space

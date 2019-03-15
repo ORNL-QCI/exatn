@@ -1,8 +1,16 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/03/13
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+
+/* NOTES:
+ (a) Any unregistered vector space has id = SOME_SPACE = 0.
+ (b) Any registered vector space has id > 0.
+ (c) Any unregistered subspace of any vector space has id = UNREG_SUBSPACE = max(uint64_t).
+ (d) Every registered vector space has an automatically registered full subspace under the space name with id 0.
+ (e) Every registered non-trivial subspace of any registered vector space has id: 0 < id < max(uint64_t).
+*/
 
 #ifndef REGISTER_HPP_
 #define REGISTER_HPP_

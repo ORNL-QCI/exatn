@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/02/10
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -23,7 +23,7 @@ void SpaceBasis::printIt() const
  return;
 }
 
-DimExtent SpaceBasis::getBasisDimension() const
+DimExtent SpaceBasis::getDimension() const
 {
  return basis_dim_;
 }

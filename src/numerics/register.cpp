@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/03/13
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,22 +27,38 @@ SubspaceRegEntry::SubspaceRegEntry(std::shared_ptr<Subspace> && subspace):
 
 SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> & subspace)
 {
- assert(subspace->getRegisteredId() == 0); //subspace must not have been registered before
- SubspaceId id = subspaces_.size(); //new registered subspace id (>0)
- bool unique = name2id_.insert({subspace->getName(),id}).second; assert(unique); //name must be unique
- subspace->resetRegisteredId(id);
- subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
+ SubspaceId id = subspace->getRegisteredId();
+ if(id == UNREG_SUBSPACE){ //previously unregistered
+  id = subspaces_.size(); //new registered subspace id (>0)
+  bool unique = name2id_.insert({subspace->getName(),id}).second;
+  if(unique){
+   subspace->resetRegisteredId(id);
+   subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
+  }else{
+   std::cout << "WARNING: Attempt to register subspace with an already registered name: " << subspace->getName() << std::endl;
+   assert(unique); //subspace with this name already exists, registration unsuccessful
+  }
+ }
  return id;
 }
 
 SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> && subspace)
 {
- assert(subspace->getRegisteredId() == 0);
- SubspaceId id = subspaces_.size();
- subspace->resetRegisteredId(id);
- subspaces_.emplace_back(SubspaceRegEntry(subspace));
+ SubspaceId id = subspace->getRegisteredId();
+ if(id == UNREG_SUBSPACE){ //previously unregistered
+  id = subspaces_.size(); //new registered subspace id (>0)
+  bool unique = name2id_.insert({subspace->getName(),id}).second;
+  if(unique){
+   subspace->resetRegisteredId(id);
+   subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
+  }else{
+   std::cout << "WARNING: Attempt to register subspace with an already registered name: " << subspace->getName() << std::endl;
+   assert(unique); //subspace with this name already exists, registration unsuccessful
+  }
+ }
  return id;
 }
+
 
 Subspace & SubspaceRegister::getSubspace(SubspaceId id) const
 {
@@ -61,38 +77,63 @@ SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> & space):
  space_(space)
 {
  DimOffset lower = 0;
- DimOffset upper = lower + space_->getSpaceDimension() - 1;
+ DimOffset upper = lower + space_->getDimension() - 1;
  const std::string & space_name = space_->getName();
  SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
- assert(id == 0);
+ assert(id == FULL_SUBSPACE);
 }
 
 SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> && space):
  space_(space)
 {
  DimOffset lower = 0;
- DimOffset upper = lower + space_->getSpaceDimension() - 1;
+ DimOffset upper = lower + space_->getDimension() - 1;
  const std::string & space_name = space_->getName();
  SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
- assert(id == 0);
+ assert(id == FULL_SUBSPACE);
 }
 
 
 SpaceRegister::SpaceRegister()
 {
- spaces_.emplace_back(SpaceRegEntry(std::make_shared<VectorSpace>(MAX_SPACE_DIM))); //Space 0 is an unnamed abstract space of maximal dimension
+ static_assert(SOME_SPACE == 0);
+ spaces_.emplace_back(SpaceRegEntry(std::make_shared<VectorSpace>(MAX_SPACE_DIM))); //Space 0 (SOME_SPACE) is an unnamed abstract space of maximal dimension
 }
-
 
 SpaceId SpaceRegister::registerSpace(std::shared_ptr<VectorSpace> & space)
 {
- assert(space->getRegisteredId() == SOME_SPACE); //space must not have been registered before
- SpaceId id = spaces_.size(); //new registered space id (>0)
- bool unique = name2id_.insert({space->getName(),id}).second; assert(unique); //name must be unique
- space->resetRegisteredId(id);
- spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
+ SpaceId id = space->getRegisteredId();
+ if(id == SOME_SPACE){ //previously unregistered
+  id = spaces_.size(); //new registered space id (>0)
+  bool unique = name2id_.insert({space->getName(),id}).second;
+  if(unique){
+   space->resetRegisteredId(id);
+   spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
+  }else{
+   std::cout << "WARNING: Attempt to register vector space with an already registered name: " << space->getName() << std::endl;
+   assert(unique); //space with this name already exists, registration unsuccessful
+  }
+ }
  return id;
 }
+
+SpaceId SpaceRegister::registerSpace(std::shared_ptr<VectorSpace> && space)
+{
+ SpaceId id = space->getRegisteredId();
+ if(id == SOME_SPACE){ //previously unregistered
+  id = spaces_.size(); //new registered space id (>0)
+  bool unique = name2id_.insert({space->getName(),id}).second;
+  if(unique){
+   space->resetRegisteredId(id);
+   spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
+  }else{
+   std::cout << "WARNING: Attempt to register vector space with an already registered name: " << space->getName() << std::endl;
+   assert(unique); //space with this name already exists, registration unsuccessful
+  }
+ }
+ return id;
+}
+
 
 VectorSpace & SpaceRegister::getSpace(SpaceId id) const
 {

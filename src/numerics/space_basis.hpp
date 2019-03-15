@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/02/10
+REVISION: 2019/03/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,7 +29,7 @@ public:
  void printIt() const;
 
  /** Returns the basis dimension. **/
- DimExtent getBasisDimension() const;
+ DimExtent getDimension() const;
 
 private:
 
