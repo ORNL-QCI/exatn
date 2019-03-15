@@ -36,7 +36,7 @@ SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> & subspa
    subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
   }else{
    std::cout << "WARNING: Attempt to register subspace with an already registered name: " << subspace->getName() << std::endl;
-   assert(unique); //subspace with this name already exists, registration unsuccessful
+   return UNREG_SUBSPACE; //subspace with this name already exists, subspace cannot be registered
   }
  }
  return id;
@@ -53,7 +53,7 @@ SubspaceId SubspaceRegister::registerSubspace(std::shared_ptr<Subspace> && subsp
    subspaces_.emplace_back(SubspaceRegEntry(subspace)); //subspace register shares ownership of the stored subspace
   }else{
    std::cout << "WARNING: Attempt to register subspace with an already registered name: " << subspace->getName() << std::endl;
-   assert(unique); //subspace with this name already exists, registration unsuccessful
+   return UNREG_SUBSPACE; //subspace with this name already exists, subspace cannot be registered
   }
  }
  return id;
@@ -111,7 +111,7 @@ SpaceId SpaceRegister::registerSpace(std::shared_ptr<VectorSpace> & space)
    spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
   }else{
    std::cout << "WARNING: Attempt to register vector space with an already registered name: " << space->getName() << std::endl;
-   assert(unique); //space with this name already exists, registration unsuccessful
+   return SOME_SPACE; //space with this name already exists, space cannot be registered
   }
  }
  return id;
@@ -128,7 +128,7 @@ SpaceId SpaceRegister::registerSpace(std::shared_ptr<VectorSpace> && space)
    spaces_.emplace_back(SpaceRegEntry(space)); //space register shares ownership of the stored space
   }else{
    std::cout << "WARNING: Attempt to register vector space with an already registered name: " << space->getName() << std::endl;
-   assert(unique); //space with this name already exists, registration unsuccessful
+   return SOME_SPACE; //space with this name already exists, space cannot be registered
   }
  }
  return id;
