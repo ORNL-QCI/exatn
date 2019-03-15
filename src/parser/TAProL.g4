@@ -22,25 +22,6 @@ line
    | comment
    ;
 
-/*
-entry: main # First function to start from, hence ENTRY
-scope main group() # Function definition
- subspace(): s0=[0:127]
- index(s0): a,b,c,d,i,j,k,l
- H2(a,b,c,d) = method("HamiltonianTest")
- T2(a,b,c,d) = {1.0,0.0}
- Z2(a,b,c,d) = {0.0,0.0}
- Z2(a,b,c,d) += H2(i,j,k,l) * T2(c,d,i,j) * T2(a,b,k,l)
- X2() = {0.0,0.0}
- X2() += Z2+(a,b,c,d) * Z2(a,b,c,d)
- save X2: tag("Z2_norm")
- ~X2
- ~Z2
- ~T2
- ~H2
-end scope main
-*/
-
 statement
    : space
    | subspace
@@ -150,7 +131,7 @@ comment
 spacelist
    : spacename=id '=' range (',' spacelist)?
    ;
-   
+
 range
    : '[' (INT | id) ':' (INT | id) ']'
    ;

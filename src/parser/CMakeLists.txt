@@ -4,16 +4,17 @@ set (LIBRARY_NAME exatn-taprol-parser)
 file (GLOB_RECURSE HEADERS *.hpp generated/*.hpp)
 file (GLOB SRC *.cpp generated/*.cpp)
 
-include_directories(${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src)
-
-include_directories(generated)
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-link_directories(${CMAKE_SOURCE_DIR}/dist)
-
 add_library(${LIBRARY_NAME} SHARED ${SRC})
+target_include_directories(${LIBRARY_NAME}
+                            PUBLIC
+                            ${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src
+                            ${CMAKE_CURRENT_SOURCE_DIR}
+                            ${CMAKE_CURRENT_SOURCE_DIR}/generated
+                            )
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC exatn antlr4-runtime)
+add_dependencies(${LIBRARY_NAME} antlr4_shared)
+find_library(antlr_lib antlr4-runtime HINTS ${CMAKE_SOURCE_DIR}/dist)
+target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${antlr_lib})
 
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path")
@@ -24,7 +25,7 @@ else()
 endif()
 
 if(EXATN_BUILD_TESTS)
- # add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
 file (GLOB HEADERS *.hpp)
