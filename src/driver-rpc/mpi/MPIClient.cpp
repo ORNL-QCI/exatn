@@ -27,7 +27,7 @@ void MPIClient::connect() {
 
 }
 
-void MPIClient::registerTensorMethod(TensorMethod<exatn::Identifiable>& method) {
+void MPIClient::registerTensorMethod(const std::string& varName, TensorMethod<exatn::Identifiable>& method) {
 
   if (!connected) connect();
 

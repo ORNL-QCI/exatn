@@ -36,7 +36,7 @@ TEST(client_test, checkSimple) {
 
   // Create the client
   auto client = exatn::getService<DriverClient>("mpi");
-  client->registerTensorMethod(*tm.get());
+  client->registerTensorMethod("test", *tm.get());
 
   // Send some taprol asynchronously, here its just
   // a test so just send any string

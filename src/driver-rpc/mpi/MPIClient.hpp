@@ -61,7 +61,7 @@ public:
   // which overrides the .apply(const TensorDenseBlock &) method. This
   // allows an application to initialize and transform tensors is a custom way
   // since the registered tensor methods will be accessible in TAProL text.
-  void registerTensorMethod(TensorMethod<Identifiable>& method) override;
+  void registerTensorMethod(const std::string& varName, TensorMethod<Identifiable>& method) override;
 
   // Register external data under some symbolic name. This data will be accessible
   // in TAProL text. It can be used to define tensor dimensions dynamically, for example.
