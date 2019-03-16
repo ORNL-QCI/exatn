@@ -1,23 +1,37 @@
 # ExaTN library: Exascale Tensor Networks
-ExaTN is a software library for the expression and processing of
-hierarchical tensor networks to be leveraged in the simulation
-of quantum many-body systems at exascale and other domains
-which rely heavily on large-scale numerical tensor algebra.
+
+ExaTN is a software library for expressing and processing
+hierarchical tensor networks on homo- and heterogeneous HPC
+platforms of vastly different scale, from laptops to leadership
+HPC systems. The library can be leveraged in any computational
+domain which heavily relies on large-scale numerical tensor algebra:
+ (a) Quantum many-body theory in condensed matter physics;
+ (b) Quantum many-body theory in quantum chemistry;
+ (c) Quantum computing simulations;
+ (d) General relativity simulations;
+ (e) Multivariate data analytics;
+ (f) Tensor-based neural network algorithms.
+
 
 ## Dependencies
 ```
-Compiler: GCC 8+, Intel 18+, IBM XL 16.1.1+
-MPI: OpenMPI, MPICH
+Compiler (C++11, Fortran-2003): GNU 8+, Intel 18+, IBM XL 16.1.1+
+MPI: OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
 BLAS: ATLAS, MKL, ACML, ESSL
 CUDA 9+ (optional)
 CMake 3.9+ (for build)
+ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar
+
+## Build instructions
 ```
-On Ubuntu 16.04, for GCC 8, OpenMPI, and ATLAS Blas, run the following:
+On Ubuntu 16+, for GCC 8+, OpenMPI 3+, and ATLAS BLAS, run the following:
 ```bash
 $ add-apt-repository ppa:ubuntu-toolchain-r/test
 $ apt-get update
 $ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
 $ python -m pip install --upgrade cmake
+$ wget https://www.antlr.org/download/antlr-4.7.2-complete.jar
+$ mv ./antlr-4.7.2-complete.jar PATH_TO_EXATN_SOURCE/src/parser
 ```
 for CMake 3.9+, do not use the apt-get installer, instead use `pip`, and
 ensure that `/usr/local/bin` is in your PATH:
@@ -25,10 +39,7 @@ ensure that `/usr/local/bin` is in your PATH:
 $ python -m pip install --upgrade cmake
 $ export PATH=$PATH:/usr/local/bin
 ```
-
-## Build instructions
-
-Note that, for now, developers must clone ExaTensor manually:
+Note that, for now, developers must clone ExaTENSOR manually:
 ``` bash
 $ git clone --recursive https://code.ornl.gov/qci/exatn
 $ cd exatn
@@ -41,8 +52,7 @@ $ make install
 Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible
 with the CUDA nvcc compiler on your system. For example, CUDA 10 only supports up to
 GCC 7, so if your default `g++` is version 8, then you will need to
-point CMake to a compatible version (for example, g++-5 or g++-7).
-
+point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
 
@@ -53,4 +63,4 @@ $ ctest (or ./src/numerics/tests/NumericsTester to run the executable)
 ```
 
 ## License
-See LICENSE.txt
+See LICENSE
