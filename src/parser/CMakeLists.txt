@@ -13,8 +13,7 @@ target_include_directories(${LIBRARY_NAME}
                             )
 
 add_dependencies(${LIBRARY_NAME} antlr4_shared)
-find_library(antlr_lib antlr4-runtime HINTS ${CMAKE_SOURCE_DIR}/dist)
-target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${antlr_lib})
+target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.so)
 
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path")

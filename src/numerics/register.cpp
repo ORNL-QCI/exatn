@@ -101,7 +101,7 @@ SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> && space):
 
 SpaceRegister::SpaceRegister()
 {
- static_assert(SOME_SPACE == 0);
+ static_assert(SOME_SPACE == 0, "SOME_SPACE not equal 0.");
  spaces_.emplace_back(SpaceRegEntry(std::make_shared<VectorSpace>(MAX_SPACE_DIM))); //Space 0 (SOME_SPACE) is an unnamed abstract space of maximal dimension
 }
 

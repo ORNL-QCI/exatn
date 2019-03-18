@@ -1,13 +1,11 @@
 exatn_add_test(NumericsTester NumericsTester.cpp)
 target_include_directories(NumericsTester PRIVATE ${CMAKE_SOURCE_DIR}/src/numerics)
 
-find_library(talsh_lib talsh HINTS ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib)
-
 if(CUDA_FOUND)
   link_directories(${CUDA_TOOLKIT_ROOT_DIR}/lib64)
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
-                        ${talsh_lib}
+                        ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
                         ${CUDA_LIBRARIES}
                         ${CUDA_CUBLAS_LIBRARIES}
@@ -19,7 +17,7 @@ if(CUDA_FOUND)
 else()
   target_link_libraries(NumericsTester PRIVATE
                         exatn-numerics
-                        ${talsh_lib}
+                        ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
                         blas
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
