@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Basis Vector
-REVISION: 2019/02/10
+REVISION: 2019/03/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,7 +19,7 @@ BasisVector::BasisVector(SubspaceId id):
 
 void BasisVector::printIt() const
 {
- std::cout << "Basis Vector {id = " << id_ << "}";
+ std::cout << "BasisVector{id = " << id_ << "}";
  return;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/03/15
+REVISION: 2019/03/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -26,9 +26,9 @@ VectorSpace::VectorSpace(DimExtent space_dim, const std::string & space_name):
 void VectorSpace::printIt() const
 {
  if(space_name_.length() > 0){
-  std::cout << "Space {Dimension = " << this->getDimension() << "; id = " << id_ << "; Name = " << space_name_ << "}";
+  std::cout << "VectorSpace{Dim = " << this->getDimension() << "; id = " << id_ << "; Name = " << space_name_ << "}";
  }else{
-  std::cout << "Space {Dimension = " << this->getDimension() << "; id = " << id_ << "; Name = NONE}";
+  std::cout << "VectorSpace{Dim = " << this->getDimension() << "; id = " << id_ << "; Name = NONE}";
  }
  return;
 }
@@ -77,11 +77,11 @@ subspace_name_(subspace_name), id_(UNREG_SUBSPACE)
 void Subspace::printIt() const
 {
  if(subspace_name_.length() > 0){
-  std::cout << "Subspace {Space name = " << vector_space_->getName() <<
+  std::cout << "Subspace{Space = " << vector_space_->getName() <<
                "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = " << subspace_name_ << "}";
  }else{
-  std::cout << "Subspace {Space name = " << vector_space_->getName() <<
+  std::cout << "Subspace{Space = " << vector_space_->getName() <<
                "; Lbound = " << lower_bound_ << "; Ubound = " << upper_bound_ <<
                "; id = " << id_ << "; Name = NONE}";
  }

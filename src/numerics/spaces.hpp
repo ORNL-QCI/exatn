@@ -1,8 +1,17 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/03/15
+REVISION: 2019/03/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+
+/** Rationale:
+ (a) An abstract vector space is solely defined by its dimension, N;
+     it is spanned by its N abstract basis vectors.
+ (b) A specialized vector space is a span of a set of linear-independent
+     specialized basis vectors (specialized basis).
+ (c) A subspace of a vector space is defined by its encompassing vector space
+     and a range of basis vectors it is spanned over.
+**/
 
 #ifndef SPACES_HPP_
 #define SPACES_HPP_

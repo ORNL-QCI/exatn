@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/03/15
+REVISION: 2019/03/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,7 +19,7 @@ SpaceBasis::SpaceBasis(DimExtent space_dim):
 
 void SpaceBasis::printIt() const
 {
- std::cout << "Basis {Dimension = " << basis_dim_ << "}";
+ std::cout << "SpaceBasis{Dim = " << basis_dim_ << "}";
  return;
 }
 

@@ -1,16 +1,17 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/03/15
+REVISION: 2019/03/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
-/* NOTES:
- (a) Any unregistered vector space has id = SOME_SPACE = 0.
- (b) Any registered vector space has id > 0.
+/** Rationale:
+ (a) Any explicitly unregistered vector space has id = SOME_SPACE = 0 (anonymous vector space).
+ (b) Any explicitly registered (named) vector space has id > 0.
  (c) Any unregistered subspace of any vector space has id = UNREG_SUBSPACE = max(uint64_t).
- (d) Every registered vector space has an automatically registered full subspace under the space name with id 0.
- (e) Every registered non-trivial subspace of any registered vector space has id: 0 < id < max(uint64_t).
-*/
+ (d) Every named vector space has an automatically registered full subspace under
+     the same (space) name with id = FULL_SUBSPACE = 0 (subspace spanning the space itself).
+ (e) Every registered non-trivial subspace of any vector space has id: 0 < id < max(uint64_t).
+**/
 
 #ifndef REGISTER_HPP_
 #define REGISTER_HPP_
@@ -58,14 +59,17 @@ public:
  SubspaceRegister & operator=(SubspaceRegister &&) = default;
  virtual ~SubspaceRegister() = default;
 
- /** Registers a subspace of some vector space and returns its registered id. **/
+ /** Registers a subspace of some vector space and returns its registered id.
+ If the subspace has already been registered before, returns its existing id.
+ Returned id = UNREG_SUBSPACE means that another subspace with the same name
+ has already been registered before. **/
  SubspaceId registerSubspace(std::shared_ptr<Subspace> & subspace);
  SubspaceId registerSubspace(std::shared_ptr<Subspace> && subspace);
 
  /** Returns a stored subspace by its id. **/
- Subspace & getSubspace(SubspaceId id) const;
+ const Subspace * getSubspace(SubspaceId id) const;
  /** Returns a stored subspace by its symbolic name. **/
- Subspace & getSubspace(const std::string & name) const;
+ const Subspace * getSubspace(const std::string & name) const;
 
 private:
 
@@ -90,7 +94,7 @@ public:
 
 private:
 
- std::shared_ptr<VectorSpace> space_; //registered vector space
+ std::shared_ptr<VectorSpace> space_; //registered vector space (co-owned by RegEntry)
  SubspaceRegister subspaces_;         //subspace register for this vector space
 };
 
@@ -106,19 +110,23 @@ public:
  SpaceRegister & operator=(SpaceRegister &&) = default;
  virtual ~SpaceRegister() = default;
 
- /** Registers a vector space and returns its registered id. **/
+ /** Registers a named vector space and returns its registered id.
+ If it has already been registered before, returns its existing id.
+ Returned id = SOME_SPACE indicates an attempt to register a named
+ vector space when another vector space has already been registered
+ under the same name. **/
  SpaceId registerSpace(std::shared_ptr<VectorSpace> & space);
  SpaceId registerSpace(std::shared_ptr<VectorSpace> && space);
 
- /** Returns a stored space by its id. **/
- VectorSpace & getSpace(SpaceId id) const;
- /** Returns a stored subspace by its symbolic name. **/
- VectorSpace & getSpace(const std::string & name) const;
+ /** Returns a stored vector space by its id. **/
+ const VectorSpace * getSpace(SpaceId id) const;
+ /** Returns a stored vector space by its symbolic name. **/
+ const VectorSpace * getSpace(const std::string & name) const;
 
 private:
 
  std::vector<SpaceRegEntry> spaces_; //registered vector spaces
- std::unordered_map<std::string,SpaceId> name2id_; //maps space names to their integer ids
+ std::unordered_map<std::string,SpaceId> name2id_; //maps vector space names to their integer ids
 };
 
 } //namespace numerics

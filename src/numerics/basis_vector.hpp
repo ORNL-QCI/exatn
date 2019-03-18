@@ -1,8 +1,16 @@
 /** ExaTN::Numerics: Basis Vector
-REVISION: 2019/02/10
+REVISION: 2019/03/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+
+/** Rationale:
+ (a) Any basis vector is a 1-dimensional subspace;
+ (b) Any space/subspace can be composed from linear-independent
+     1-dimensional subspaces by taking a direct sum of them.
+ (c) Any abstract basis vector can be further specialized by
+     introducing additional attributes peculiar to a specific basis kind.
+**/
 
 #ifndef BASIS_VECTOR_HPP_
 #define BASIS_VECTOR_HPP_
@@ -16,7 +24,7 @@ namespace numerics{
 class BasisVector{
 public:
 
- BasisVector(SubspaceId id = 0);
+ BasisVector(SubspaceId id = UNREG_SUBSPACE);
 
  BasisVector(const BasisVector & basis_vector) = default;
  BasisVector & operator=(const BasisVector & basis_vector) = default;
@@ -29,7 +37,7 @@ public:
 
 private:
 
- SubspaceId id_; //basis vector id
+ SubspaceId id_; //basis vector id (>=0)
 
 };
 
