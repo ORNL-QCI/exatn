@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/03/17
+REVISION: 2019/03/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,8 +18,16 @@ VectorSpace::VectorSpace(DimExtent space_dim):
 {
 }
 
-VectorSpace::VectorSpace(DimExtent space_dim, const std::string & space_name):
+VectorSpace::VectorSpace(DimExtent space_dim,
+                         const std::string & space_name):
  basis_(space_dim), space_name_(space_name), id_(SOME_SPACE)
+{
+}
+
+VectorSpace::VectorSpace(DimExtent space_dim,
+                         const std::string & space_name,
+                         const std::vector<SymmetryRange> & symmetry_subranges):
+ basis_(space_dim,symmetry_subranges), space_name_(space_name), id_(SOME_SPACE)
 {
 }
 
@@ -41,6 +49,11 @@ DimExtent VectorSpace::getDimension() const
 const std::string & VectorSpace::getName() const
 {
  return space_name_;
+}
+
+const std::vector<SymmetryRange> & VectorSpace::getSymmetrySubranges() const
+{
+ return basis_.getSymmetrySubranges();
 }
 
 SpaceId VectorSpace::getRegisteredId() const

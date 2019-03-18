@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/03/17
+REVISION: 2019/03/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -101,7 +101,7 @@ SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> && space):
 
 SpaceRegister::SpaceRegister()
 {
- static_assert(SOME_SPACE == 0, "SOME_SPACE not equal 0.");
+ static_assert(SOME_SPACE == 0, "#FATAL(exatn::numerics::SpaceRegister): Predefined SOME_SPACE space id is not equal 0.");
  spaces_.emplace_back(SpaceRegEntry(std::make_shared<VectorSpace>(MAX_SPACE_DIM))); //Space 0 (SOME_SPACE) is an unnamed abstract space of maximal dimension
 }
 

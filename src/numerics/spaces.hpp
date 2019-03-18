@@ -1,13 +1,15 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/03/17
+REVISION: 2019/03/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) An abstract vector space is solely defined by its dimension, N;
-     it is spanned by its N abstract basis vectors.
- (b) A specialized vector space is a span of a set of linear-independent
+ (a) An abstract vector space is defined by its dimension, N, making it
+     a linear span of its N abstract basis vectors. Additonally, symmetry
+     subranges can be defined within the space basis, that is, contiguous
+     subranges of basis vectors can be assigned a specific symmetry id.
+ (b) A specialized vector space is a span of linear-independent
      specialized basis vectors (specialized basis).
  (c) A subspace of a vector space is defined by its encompassing vector space
      and a range of basis vectors it is spanned over.
@@ -21,6 +23,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <utility>
 #include <string>
+#include <vector>
 
 namespace exatn{
 
@@ -32,6 +35,9 @@ public:
  VectorSpace(DimExtent space_dim);
  VectorSpace(DimExtent space_dim,
              const std::string & space_name);
+ VectorSpace(DimExtent space_dim,
+             const std::string & space_name,
+             const std::vector<SymmetryRange> & symmetry_subranges);
 
  VectorSpace(const VectorSpace & vector_space) = default;
  VectorSpace & operator=(const VectorSpace & vector_space) = default;
@@ -47,6 +53,9 @@ public:
 
  /** Returns the name of the space. **/
  const std::string & getName() const;
+
+ /** Returns currently defined symmetry subranges. **/
+ const std::vector<SymmetryRange> & getSymmetrySubranges() const;
 
  /** Returns the registered space id. **/
  SpaceId getRegisteredId() const;

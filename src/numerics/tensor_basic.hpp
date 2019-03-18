@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/03/17
+REVISION: 2019/03/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,6 +18,7 @@ using UInt8 = uint64_t;
 
 using SpaceId = unsigned int;              //space id type
 using SubspaceId = unsigned long long int; //subspace id type
+using SymmetryId = int;                    //symmetry id type
 using DimExtent = unsigned long long int;  //dimension extent type
 using DimOffset = unsigned long long int;  //dimension base offset type
 
