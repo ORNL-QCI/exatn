@@ -5,11 +5,27 @@ taprolsrc
    ;
 
 entry
-   : 'entry:' entryName=ID
+   : 'entry' ':' entryname
+   ;
+
+entryname:
+   : id
    ;
 
 scope
-   : 'scope' scopebeginname=id 'group' '(' groupnamelist? ')' code 'end' 'scope' scopeendname=id
+   : 'scope' scopename 'group' '(' groupnamelist? ')' code 'end'
+   ;
+
+scopename
+   : id
+   ;
+
+groupnamelist
+   : groupname (',' groupname)*
+   ;
+
+groupname
+   : id
    ;
 
 code
@@ -17,16 +33,21 @@ code
    ;
 
 line
-   : statement+
+   : statement
    | comment
    ;
 
 statement
-   : space
-   | subspace
-   | index
-   | simpleop
-   | compositeop
+   : space EOL
+   | subspace EOL
+   | index EOL
+   | simpleop EOL
+   | compositeop EOL
+   ;
+
+compositeop
+   : compositeproduct
+   | tensornetwork
    ;
 
 simpleop
@@ -40,35 +61,39 @@ simpleop
    | binaryop
    ;
 
-compositeop
-   : compositeproduct
-   | tensornetwork
-   ;
-
-space
-   : 'space' '(' ('real'|'complex') ')' ':' spacelist
+index
+   : 'index' '(' subspacename ')' ':' indexlist
    ;
 
 subspace
-   : 'subspace' '(' (spacename=id)? ')' ':' spacelist
+   : 'subspace' '(' (spacename)? ')' ':' subspacelist
+   ;
+
+subspacelist
+   : subspacename '=' range (',' subspacelist)*
+   ;
+
+subspacename
+   : id
+   ;
+
+space
+   : 'space' '(' ('real' | 'complex') ')' ':' spacelist
    ;
 
 spacelist
-   : spacename=id '=' range (',' spacelist)+?
+   : spacename '=' range (',' spacelist)*
    ;
 
-index
-   : 'index' '(' subspacename=id ')' ':' idx (',' idx)+?
-   ;
-
-idx
+spacename
    : id
    ;
 
 assignment
    : tensor '=' '?'
+   | tensor '=' (real | complex)
    | tensor '=' 'method' '(' string ')'
-   | tensor '=' complex
+   | tensor '=>' 'method' '(' string ')'
    ;
 
 load
@@ -82,7 +107,7 @@ save
 destroy
    : '~' tensorname
    | '~' tensor
-   | 'destroy' (tensorname | tensor) (',' (tensorname | tensor) )?
+   | 'destroy' (tensorname | tensor) (',' (tensorname | tensor) )*
    ;
 
 copy
@@ -94,7 +119,7 @@ scale
    ;
 
 unaryop
-   : tensor '+=' (tensor | conjtensor) ( '*' (real | complex | id))?
+   : tensor '+=' (tensor | conjtensor) ( '*' (real | complex | id) )?
    ;
 
 binaryop
@@ -102,54 +127,47 @@ binaryop
    ;
 
 compositeproduct
-   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (tensor|conjtensor) )+ ( '*' (real | complex | id) )?
+   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+ ( '*' (real | complex | id) )?
    ;
 
 tensornetwork
-   : tensor '=>' (tensor | conjtensor) ( '*' (tensor|conjtensor) )+
-   ;
-
-tensorname
-   : id
-   ;
-
-tensor
-   : tensorname '(' (indexlist)? ')'
-   | tensorname
+   : tensor '=>' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+
    ;
 
 conjtensor
    : tensorname '+' '(' (indexlist)? ')'
    ;
 
-actualindex
+tensor
+   : tensorname '(' (indexlist)? ')'
+   ;
+
+tensorname
    : id
-   | INT
+   ;
+
+tensormodelist
+   : tensormode (',' tensormode)*
+   ;
+
+tensormode
+   : indexlabel
+   | range
    ;
 
 indexlist
-   : actualindex (',' actualindex)+?
+   : indexlabel (',' indexlabel)*
    ;
 
-/* A program comment */
-comment
-   : COMMENT
+indexlabel
+   : id
    ;
 
 range
    : '[' (INT | id) ':' (INT | id) ']'
    ;
 
-groupnamelist
-   : groupname (',' groupnamelist)?
-   ;
-
-/* A parameter */
-groupname
-   : id
-   ;
-
-/* variable identity */
+/* TAProL identifier */
 id
    : ID
    ;
@@ -162,31 +180,34 @@ real
    : REAL
    ;
 
-/* strings are enclosed in quotes */
+/* Strings are enclosed in quotes */
 string
    : STRING
    ;
 
-/* Tokens for the grammer */
+/* A program comment */
+comment
+   : COMMENT
+   ;
+
+/* Tokens for the grammar */
 
 /* Comment */
 COMMENT
    : '#' ~ [\r\n]* EOL
    ;
 
-/* id, ego, and super-ego */
+/* Alphanumeric_ identifier */
 ID
-   : [a-z][A-Za-z0-9_]*
-   | [A-Z][A-Za-z0-9_]*
-   | [A-Z][A-Za-z]*
+   : [A-Za-z][A-Za-z0-9_]*
    ;
 
-/* Keep it real...numbers */
+/* Real number */
 REAL
-   : INT ( '.' (INT) )
+   : ('-')? INT '.' INT
    ;
 
-/* Non-negative integers */
+/* Non-negative integer */
 INT
    : ('0'..'9')+
    ;

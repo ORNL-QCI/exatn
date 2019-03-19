@@ -1,17 +1,18 @@
-Tensor Algebra Programming Language (TAProL) Specification
+Tensor Algebra Programming Language/Protocol (TAProL) Specification
 AUTHOR: Dmitry I. Lyakh (Liakh): quant4me@gmail.com, liakhdi@ornl.gov
-REVISION: 2019/02/16
+REVISION: 2019/03/21
 
 Copyright (C) 2016-2019 Dmitry I. Liakh.
 Copyright (C) 2016-2019 Oak Ridge National Laboratory, UT-Battelle, LLC.
 
-TAProL version 1.0 (2019/02/16)
+TAProL version 1.0 (2019/03/21)
 
 0. PREAMBULE
 
 TAProL is a high-level concise programming language for expressing numerical tensor algebra
 computations, that is, numerical operations performed on individual tensors and their aggregates.
 A subset of TAProL also serves as the assembly language for the ExaTENSOR tensor algebra processor.
+A subset of TAProL can also be used as a protocol for defining native language-specific API.
 
 
 1. TAProL PROGRAM STRUCTURE
@@ -24,14 +25,15 @@ visible to that Scope. To pass objects from one Scope to another Scope the "Exch
 has to be used. The Exchange Space contains named objects for exchange between Scopes,
 together with their access permissions. An object can be Exported from one Scope into the
 Exchange Space with user-defined access permissions and subsequently Imported by another Scope,
-provided that the latter has matching access permissions. Thus, different Scopes may depend
-on each other only via data dependencies mediated through the Exchange Space.
+provided that the latter has matching access permissions. Thus, data dependencies between
+different Scopes are mediated solely through the Exchange Space.
 
 In the following text, names in angle brackets <> are supposed to be substituted by
 the corresponding content. A list of keywords separated by "|" within a pair of curly
 brackets {} provides alternatives among which a specific one needs to be chosen by
-the programmer. All user-defined names in TAProl are case-sensitive and may only contain
-alphanumeric characters and underscores "_", and must begin with a letter character.
+the programmer. All user-defined names (identifiers) in TAProl are case-sensitive
+and may only contain alphanumeric characters and underscores "_"; each such a name
+or identifier must begin with a letter character.
 
 Scope specification:
 
@@ -42,7 +44,7 @@ Scope specification:
  The comma-separated list of <group_name> specifies which logical
  groups the Scope belongs to. Each Scope always belongs to its
  default (own) group, which has the same name as the Scope, as well
- as to the global group called "GLOBAL" which contains all Scopes.
+ as to the global group called "GLOBAL" which includes all Scopes.
  Example:
   scope my_scope group()
   end scope my_scope
@@ -60,6 +62,19 @@ Entry Point specification:
 2. TAProl LANGUAGE CONSTRUCTS
 
 2.1. Basic declarations:
+
+TAProL automatically defines a single unnamed (anonymous) vector space of infinite
+dimension with a countable basis: [0,1,..,inf). Additionally, a user may explicitly
+define any number of named vector spaces of any dimension. Each defined vector space
+automatically defines its complete trivial subspace (the space itself) under the same
+name as the space. Any defined subspace can be assigned an arbitrary number of aliases
+called index labels; each declared index label may only refer to a single subspace.
+Index labels are necessary for specifying tensor operations. Specifically, index labels
+are used to select a particular tensor slice participating in a tensor operation,
+for example, a specific section of a previously created tensor. In case a previously
+undeclared index label shows up in a tensor participating in a tensor operation,
+it will be temporarily associated with the subspace used for defining the corresponding
+tensor mode (tensor mode = tensor dimension).
 
 Vector space specification:
 
@@ -92,20 +107,20 @@ Vector subspace specification:
  Example:
   space(real): space1=[0:947]
   subspace(space1): subspace0=[13:134], subspace1=[lower1:upper1]
- Here, again, "lower1" and "upper1" identifiers will be looked up in the Exchange Space.
+ Here, "lower1" and "upper1" identifiers will be looked up in the Exchange Space.
 
  Each declared vector space automatically declares itself as a subspace under the same name.
 
- Alternatively, one may also define subspaces within the unnamed vector space as
+ Alternatively, one may also define subspaces of the unnamed vector space as
 
   subspace(): subspace0=[13:134], subspace1=[lower1:upper1]
 
  The unnamed vector space is predefined in TAProL. It has infinite dimension. One
  may define any subspace in the unnamed vector space by specifying an integer range.
 
-Index specification (placeholder for a given subspace):
+Index label specification (placeholder for a given subspace):
 
- index(<subspace_name>): <index_name>,<index_name>, ...
+ index(<subspace_name>): <index_name>, <index_name>, ...
 
  where
   <subspace_name> is the name of a subspace, either defined automatically by the
@@ -118,36 +133,39 @@ Index specification (placeholder for a given subspace):
   index(subspace0): i,j,k,l1
   index(subspace1): a1,b1,c2,d
 
-Index inheritance:
+ Each defined subspace automatically declares an index label under the subspace name
+ that refers to the subspace.
 
- index: <index_name1>=<index_name0>,<index_name3>=<index_name2>, ...
+Index label inferrence:
+
+ index: <index_name1>=<index_name0>, <index_name3>=<index_name2>, ...
 
  where
-  index <index_name1> inherits the properies from an already defined index <index_name0>, etc.
+  index label <index_name1> infers the properies from an already defined index label <index_name0>, etc.
  Example:
   index: b1=a1, b2=a2
- Here indices b1 and b2 will bind to the same subspaces as a1 and a2, respectively.
+ Here indices labels b1 and b2 will bind to the same subspaces as a1 and a2, respectively.
 
 
 2.2. Tensor creation and destruction:
 
 A tensor can be defined in two ways. First, it can be defined via its alphanumeric name (at least one letter)
-and a comma-separated list of indices enclosed in parentheses: <tensor_name>(<index>,<index>,...).
+and a comma-separated list of index labels enclosed in parentheses: <tensor_name>(<index>,<index>,...).
 No space is allowed between the tensor name and the left parenthesis. A scalar (order-0) tensor can be defined
-as <scalar_name>(). Each index in the tensor declaration associates its subspace with the corresponding
+as <scalar_name>(). Each index label in the tensor declaration associates its subspace with the corresponding
 tensor dimension. The total number of tensor dimensions (total number of tensor indices) is called
 the tensor order (or the tensor rank). The subspace associated with a specific tensor dimension determines
 the range of that tensor dimension; the dimension of the subspace determines the extent of the tensor dimension.
 Alternatively, a tensor can be defined via its alphanumeric name (at least one letter) and a comma-separated
 list of integer pairs: <tensor_name>(<lower_bound1>:<upper_bound1>,<lower_bound2:upper_bound2>,...). In this
 case, the range of each tensor dimension is defined explicitly via integer literals (bounds), with the same
-restrictions as used in the space/subspace declarations. All such literal ranges refer to the same unnamed
-vector space of infinite dimension. A mixed definition of tensors is also allowed, where some tensor dimensions
-are defined via symbolic indices and some via explicit literal ranges. All tensors with the same name are
-considered as part of the same (super-)tensor.
+restrictions as in the space/subspace declarations. Identifiers from the Exchange Space may be used inside these
+ranges. All such literal ranges refer to the same unnamed vector space of infinite dimension. A mixed definition
+of tensors is also allowed, where some tensor dimensions are defined via symbolic indices and some via explicit
+literal ranges. All tensors with the same name are considered belonging to the same (super-)tensor.
 
 Examples of tensors: S34(a1,b,c3), TT(i,j,k,l), SS1(), B5(10:34,45:63), CR23(i,0:15,lw3:up3,45:134).
-In the last tensor, lw3 and up3 are previously defined identifiers looked up in the Exchange Space.
+In the last tensor, lw3 and up3 are previously defined identifiers dereferenced from the Exchange Space.
 
 Explicit creation with initialization:
 
@@ -161,8 +179,8 @@ Explicit creation with initialization:
     W2(k,l,m) = init_value1
 
  2) <tensor> = method("<method_name>")
-    where "<method_name>" is a symbolic name of the corresponding user-defined functor
-    used to initialize the tensor right after its creation. Example:
+    where "<method_name>" is a symbolic name of the corresponding user-defined tensor
+    functor used to initialize the tensor right after its creation. Example:
     RR(i,j,k,l,m) = method("Init_my_tensor")
 
  3) load <tensor>: tag("<stored_name>")
@@ -170,7 +188,7 @@ Explicit creation with initialization:
     persistent storage space where the tensor is marked by its "<stored_name>". Examples:
     load S2(i,j,k): tag("My old tensor")
     If a tensor index has already been defined, its range must match the stored value.
-    If a tensor index is undefined, it will become defined from the stored value.
+    If a tensor index is undefined, it will become temporarily defined from the stored value.
 
 Explicit creation without initialization:
 
@@ -189,20 +207,24 @@ Explicit creation with deferred initialization:
  In addition to explicit construction, a tensor will be constructed implicitly
  when it is undefined while being the result of a tensor operation.
 
-Index symmetry restrictions (index seniority ordering):
+Index symmetry restrictions:
 
  Optionally, one can specify index symmetry restrictions during tensor creation,
- except for the "load" statement. The index symmetry restrictions are appended
- in square brackets at the end of the creation/initalization statement after a colon,
- for example:
+ except for the "load" statement (the load statement infers index symmetry restrictions
+ from the tensor metadata in the persistent storage from where the tensor is loaded).
+ The index symmetry restrictions are appended in square brackets at the end of the
+ creation/initalization statement after a colon, for example:
 
  T2(a,b,i,j,k) = 0: [a<=b] [i<j<k]
- MM(a,b) = 0: [a<b]
+ MM(a,b) = 1.0: [a>b]
+ D(a,b,c) = {0.0,0.0}: [my_predicate:a,b,c]
 
- In this case, only the tensor parts satisfying these conditions will be created.
- In particular, MM(a,b) will be created as an upper triangular matrix. Index symmetry
- restrictions can also be specified during indirect tensor creation in a tensor
- operation (when a previously undefined tensor appears as a result of the operation).
+ In this case, only the tensor elements satisfying these conditions will be created.
+ In particular, MM(a,b) will be created as a lower triangular matrix. Or, in the
+ 3rd example, only the combinations of indices a,b,c that evaluate the user-defined
+ predicate functor to TRUE will exist in tensor D(a,b,c). Index symmetry restrictions
+ can also be specified during indirect tensor creation in a tensor operation
+ (when a previously undefined tensor appears as the result of a tensor operation).
 
 Explicit destruction:
 
@@ -221,7 +243,7 @@ Explicit destruction:
   destroy R5
   destroy F3(m,n,k)
   destroy C4,TT(i,l,4:7)
- It is not permitted to use literal ranges for tensor dimensions created via subspace indices,
+ It is not permitted to use literal ranges for tensor dimensions created via named subspaces,
  and vice versa.
 
 A tensor can be stored in persistent storage by the following statement:
@@ -244,19 +266,19 @@ operations can be specified symbolically via tensor notation, in which there is 
 output tensor on the l.h.s of the expression, and no more than two input tensors
 (plus some numerical literals) on the r.h.s. of the expression. In such tensor
 expressions, tensor indices (if any) on the l.h.s. must be mutually distinct. These
-indices are the ForAll indices, that is, the tensor expression is element-wise iterated
-over all possible combinations of these indices (possibly with restrictions). All l.h.s.
-indices are ForAll indices. Any of them may also appear on the r.h.s. of the tensor
-expression. The tensor indices which solely appear on the r.h.s. of the tensor
+indices are the For-All indices, that is, the tensor expression is element-wise iterated
+over all possible combinations of these indices (possibly with symmetry restrictions).
+All l.h.s. indices are For-All indices. Any of them may also appear on the r.h.s. of the
+tensor expression. The tensor indices which solely appear on the r.h.s. of the tensor
 expression are the Summation indices, that is, an implicit summation is run over
-these indices (over their associated ranges). Consequently, each tensor expression
-is element-wise iterated over the ForAll indices while a summation over the Summation
-indices is performed for each allowed combination of the ForAll indices.
+these indices (over their associated ranges). Consequently, each basic tensor expression
+is element-wise iterated over the For-All indices while a summation over the Summation
+indices is performed for each allowed combination of the For-All indices.
 
 The TAProL programming language also defines composite tensor operations, in which
 more than one output tensor may appear on the l.h.s. and more than two input tensors
 may appear on the r.h.s. of the corresponding tensor expression. The precise rules
-are further clarified in the specification of such tensor operations.
+are clarified in the specification of each such composite tensor operation.
 
 Examples of defined basic tensor operations:
 
@@ -270,7 +292,7 @@ Examples of defined basic tensor operations:
     In the second example, "new_value" will be looked up in the Exchange Space, if there.
     Pattern restrictions: (1) Every index on the left of "=" must appear only once.
 
- 2) Permutation of tensor dimensions (including the trivial copy case):
+ 2) Copy/slice/insert (with an optional permutation of tensor dimensions):
     <tensor0> = <tensor1>
     Examples:
     T1(i,j,k,l) = S1(i,j,k,l)
@@ -349,9 +371,10 @@ Examples of defined basic tensor operations:
     G3(a,b,c,d) += Q(d,b,a) * R(a,c) * my_factor
     In the third example, "my_factor" will be looked up in the Exchange Space, if there.
     Pattern restrictions: (1) Every index on the left of "=" must appear only once;
-                          (2) Every index on the left of "=" must also appear on the right.
+                          (2) Every index on the left of "=" must also appear on the right;
+                          (3) Each r.h.s. tensor may not have more than one occurence of the same index.
 
- 10) Binary contraction:
+ 10) Binary contraction (and generalizations):
     <tensor0> += <tensor1> * <tensor2> {|* <numerical_value>}
     where <tensor1> and <tensor2> have Summation indices in common (contracted indices).
     Examples:
@@ -374,23 +397,32 @@ Examples of defined basic tensor operations:
     U2(c,d) += W2(a,d,a,c,a) * my_factor
     In the third example, "my_factor" will be looked up in the Exchange Space, if there.
     Pattern restrictions: (1) Every index on the left of "=" must appear only once;
-                          (2) Every index on the left of "=" must also appear on the right only once;
-                          (3) Every index on the right, which is not present on the left, must appear
-                              at least twice on the right.
+                          (2) Every index on the left of "=" must also appear on the right,
+                              either once or twice (once per r.h.s. tensor);
+                          (3) Every index on the right, which is not present on the left,
+                              must appear twice on the right (once per r.h.s. tensor).
 
 In cases where tensor indices must be additionally classified as either covariant or contravariant,
 a "+" can be appended to those indices which are considered contravariant in a given tensor operation,
 for example: T1(i,j+,k,l+) += S1(k,c+,j+,d) * S2(c+,i,l+,d).
 
 
-2.4. Tensor network specification:
+2.4. Tensor networks:
 
-A tensor network is a contraction of two or more tensors. It can be specified as (example):
+A tensor network is a contraction of two or more tensors (generalization of the binary
+tensor contraction defined above to a larger number of arguments). A tensor network
+defines a tensor (or a scalar) computed as a contraction of two or more tensors:
+
+ TN(i,j,k,l) += F1(i,a) * F2(a,j,b) * F3(b,k,c) * F4(c,l)
+
+In this case the tensor TN(i,j,k,l) will be computed as a sequence of binary tensor
+contractions. Alternatively, one may define a placeholder for a tensor network:
+
  TN(i,j,k,l) => F1(i,a) * F2(a,j,b) * F3(b,k,c) * F4(c,l)
+
 Here TN(i,j,k,l) is just a placeholder for the 4-tensor contraction defined on the r.h.s.
 Whenever TN(i,j,k,l) is encountered in a tensor expression, it will be expanded accordingly.
-
-A tensor network specification can be used for defining tensor decompositions, for example:
+A tensor network placeholder can be used for defining tensor decompositions, for example:
  TN(i,j,k,l) = S13(i,j,k,l)
 where TN(i,j,k,l) is a tensor network placeholder, for instance the one defined above.
 This statement will factorize the tensor S13(i,j,k,l) according to the structure of TN(i,j,k,l).
@@ -400,12 +432,13 @@ Another example (SVD decomposition in TAProL):
  TN(i,j,k,l) = S13(i,j,k,l)
  F1+(i,j,c) * F1(i,j,d) = DELTA(c,d)
  F2+(c,k,l) * F2(d,k,l) = DELTA(c,d)
-Here the tensor S13(i,j,k,l) will be decomposed into F1(i,j,d) * S(d) * F2(d,k,l).
+Here the tensor S13(i,j,k,l) will be decomposed into F1(i,j,d) * S(d) * F2(d,k,l),
+subject to the constraints expressed by the last two lines.
 
 
 2.5. Passing control to other Scopes and data exchange between Scopes:
 
-A Scope can be invoked from another Scope by the following statement:
+A TAProL Scope can be invoked from another Scope by the following statement:
 
  invoke <scope_name>
 
@@ -428,25 +461,32 @@ except that "import" only associates the data between different Scopes whereas
 <access> parameters in the "export" statement regulate the access permissions for each
 group the tensor is exported to, taking the following possible values:
  "r" which means Read Only;
- "w" which means Read-or-Write;
+ "w" which means Read-or-Write.
+
+The to() list in the export statement may be empty, in which case the tensor
+will be exported to all groups with Read-or-Write access permissions.
 
 
-2.6. External application-defined data and tensor methods:
+2.6. External application-defined data and tensor functors:
 
 In most cases the application will need to provide some domain data for tensor initialization
-and/or processing as well as define some external tensor operations peculiar to a specific domain.
-A compliant TAProL server must provide two relevant registration API functions:
+and/or processing as well as define some external tensor operations peculiar to a specific domain
+as well as provide certain predicates necessary for enforcing tensor sparsity due to symmetries.
+A compliant TAProL server must provide the relevant registration API functions:
 
- taprolDataRegister(name_identifier:string, location_identifier:TensorData)
+ taprolRegisterExternalData(data_name:string, extrn_data:BytePacket)
 
- taprolMethodRegister(name_identifier:string, functor_identifier:TensorMethod*)
+ taprolRegisterExternalMethod(method_name:string, tensor_functor:TensorMethod)
 
-The <name_identifier> is an alphanumeric_ name associated with the data or method that can later
-appear in TAProL statements. The data <location_identifier> contains information necessary for
-locating the exposed data, for example the base pointer and the size. The <functor_identifier>
-is a pointer to a concrete implementation of the TensorMethod interface. The TensorMethod interface
-exposes a deferred member function .apply(const LocalTensor &), where LocalTensor is a descriptor
-of a locally stored tensor, which encompasses tensor signature (name, id), tensor shape, and tensor
-body location (base pointer and size where the local tensor data is stored). By overriding this
-deferred member function, the concrete implementations of the TensorMethod interface, defined in
-the application, can supply user-defined tensor operations into the TAProL code.
+ taprolRegisterExternalPredicate(predicate_name:string, predicate_functor:TensorPredicate)
+
+where the name arguments are alphanumeric(+underscore) names associated with the external data,
+method, or predicate that can later appear in TAProL statements. <ext_data> is a BytePacket
+containing the exposed external data. The <tensor_functor> is a pointer to a concrete implementation
+of the TensorMethod interface. The TensorMethod interface exposes a deferred method .apply(LocalTensor),
+where LocalTensor is a descriptor of a locally stored tensor, which encompasses tensor signature (name, id),
+tensor shape, and tensor body location (base pointer and size where the local tensor data is stored).
+By overriding this deferred member function, the concrete implementations of the TensorMethod interface,
+defined in the application, can supply user-defined tensor operations into the TAProL code.
+The <predicate_functor> is a concrete implementation of the TensorPredicate interface with an overriden function:
+bool evaluate(subspace_list:vector<BasisSubrange>).
