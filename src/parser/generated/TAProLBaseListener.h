@@ -24,20 +24,11 @@ public:
   virtual void enterEntry(TAProLParser::EntryContext * /*ctx*/) override { }
   virtual void exitEntry(TAProLParser::EntryContext * /*ctx*/) override { }
 
-  virtual void enterEntryname(TAProLParser::EntrynameContext * /*ctx*/) override { }
-  virtual void exitEntryname(TAProLParser::EntrynameContext * /*ctx*/) override { }
-
   virtual void enterScope(TAProLParser::ScopeContext * /*ctx*/) override { }
   virtual void exitScope(TAProLParser::ScopeContext * /*ctx*/) override { }
 
-  virtual void enterScopename(TAProLParser::ScopenameContext * /*ctx*/) override { }
-  virtual void exitScopename(TAProLParser::ScopenameContext * /*ctx*/) override { }
-
   virtual void enterGroupnamelist(TAProLParser::GroupnamelistContext * /*ctx*/) override { }
   virtual void exitGroupnamelist(TAProLParser::GroupnamelistContext * /*ctx*/) override { }
-
-  virtual void enterGroupname(TAProLParser::GroupnameContext * /*ctx*/) override { }
-  virtual void exitGroupname(TAProLParser::GroupnameContext * /*ctx*/) override { }
 
   virtual void enterCode(TAProLParser::CodeContext * /*ctx*/) override { }
   virtual void exitCode(TAProLParser::CodeContext * /*ctx*/) override { }
@@ -57,26 +48,44 @@ public:
   virtual void enterIndex(TAProLParser::IndexContext * /*ctx*/) override { }
   virtual void exitIndex(TAProLParser::IndexContext * /*ctx*/) override { }
 
+  virtual void enterIndexlist(TAProLParser::IndexlistContext * /*ctx*/) override { }
+  virtual void exitIndexlist(TAProLParser::IndexlistContext * /*ctx*/) override { }
+
+  virtual void enterIndexname(TAProLParser::IndexnameContext * /*ctx*/) override { }
+  virtual void exitIndexname(TAProLParser::IndexnameContext * /*ctx*/) override { }
+
   virtual void enterSubspace(TAProLParser::SubspaceContext * /*ctx*/) override { }
   virtual void exitSubspace(TAProLParser::SubspaceContext * /*ctx*/) override { }
-
-  virtual void enterSubspacelist(TAProLParser::SubspacelistContext * /*ctx*/) override { }
-  virtual void exitSubspacelist(TAProLParser::SubspacelistContext * /*ctx*/) override { }
-
-  virtual void enterSubspacename(TAProLParser::SubspacenameContext * /*ctx*/) override { }
-  virtual void exitSubspacename(TAProLParser::SubspacenameContext * /*ctx*/) override { }
 
   virtual void enterSpace(TAProLParser::SpaceContext * /*ctx*/) override { }
   virtual void exitSpace(TAProLParser::SpaceContext * /*ctx*/) override { }
 
-  virtual void enterSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
-  virtual void exitSpacelist(TAProLParser::SpacelistContext * /*ctx*/) override { }
-
   virtual void enterSpacename(TAProLParser::SpacenameContext * /*ctx*/) override { }
   virtual void exitSpacename(TAProLParser::SpacenameContext * /*ctx*/) override { }
 
+  virtual void enterNumfield(TAProLParser::NumfieldContext * /*ctx*/) override { }
+  virtual void exitNumfield(TAProLParser::NumfieldContext * /*ctx*/) override { }
+
+  virtual void enterSpacedeflist(TAProLParser::SpacedeflistContext * /*ctx*/) override { }
+  virtual void exitSpacedeflist(TAProLParser::SpacedeflistContext * /*ctx*/) override { }
+
+  virtual void enterSpacedef(TAProLParser::SpacedefContext * /*ctx*/) override { }
+  virtual void exitSpacedef(TAProLParser::SpacedefContext * /*ctx*/) override { }
+
+  virtual void enterRange(TAProLParser::RangeContext * /*ctx*/) override { }
+  virtual void exitRange(TAProLParser::RangeContext * /*ctx*/) override { }
+
+  virtual void enterLowerbound(TAProLParser::LowerboundContext * /*ctx*/) override { }
+  virtual void exitLowerbound(TAProLParser::LowerboundContext * /*ctx*/) override { }
+
+  virtual void enterUpperbound(TAProLParser::UpperboundContext * /*ctx*/) override { }
+  virtual void exitUpperbound(TAProLParser::UpperboundContext * /*ctx*/) override { }
+
   virtual void enterAssignment(TAProLParser::AssignmentContext * /*ctx*/) override { }
   virtual void exitAssignment(TAProLParser::AssignmentContext * /*ctx*/) override { }
+
+  virtual void enterMethodname(TAProLParser::MethodnameContext * /*ctx*/) override { }
+  virtual void exitMethodname(TAProLParser::MethodnameContext * /*ctx*/) override { }
 
   virtual void enterLoad(TAProLParser::LoadContext * /*ctx*/) override { }
   virtual void exitLoad(TAProLParser::LoadContext * /*ctx*/) override { }
@@ -84,8 +93,14 @@ public:
   virtual void enterSave(TAProLParser::SaveContext * /*ctx*/) override { }
   virtual void exitSave(TAProLParser::SaveContext * /*ctx*/) override { }
 
+  virtual void enterTagname(TAProLParser::TagnameContext * /*ctx*/) override { }
+  virtual void exitTagname(TAProLParser::TagnameContext * /*ctx*/) override { }
+
   virtual void enterDestroy(TAProLParser::DestroyContext * /*ctx*/) override { }
   virtual void exitDestroy(TAProLParser::DestroyContext * /*ctx*/) override { }
+
+  virtual void enterTensorlist(TAProLParser::TensorlistContext * /*ctx*/) override { }
+  virtual void exitTensorlist(TAProLParser::TensorlistContext * /*ctx*/) override { }
 
   virtual void enterCopy(TAProLParser::CopyContext * /*ctx*/) override { }
   virtual void exitCopy(TAProLParser::CopyContext * /*ctx*/) override { }
@@ -98,6 +113,9 @@ public:
 
   virtual void enterBinaryop(TAProLParser::BinaryopContext * /*ctx*/) override { }
   virtual void exitBinaryop(TAProLParser::BinaryopContext * /*ctx*/) override { }
+
+  virtual void enterPrefactor(TAProLParser::PrefactorContext * /*ctx*/) override { }
+  virtual void exitPrefactor(TAProLParser::PrefactorContext * /*ctx*/) override { }
 
   virtual void enterCompositeproduct(TAProLParser::CompositeproductContext * /*ctx*/) override { }
   virtual void exitCompositeproduct(TAProLParser::CompositeproductContext * /*ctx*/) override { }
@@ -113,21 +131,6 @@ public:
 
   virtual void enterTensorname(TAProLParser::TensornameContext * /*ctx*/) override { }
   virtual void exitTensorname(TAProLParser::TensornameContext * /*ctx*/) override { }
-
-  virtual void enterTensormodelist(TAProLParser::TensormodelistContext * /*ctx*/) override { }
-  virtual void exitTensormodelist(TAProLParser::TensormodelistContext * /*ctx*/) override { }
-
-  virtual void enterTensormode(TAProLParser::TensormodeContext * /*ctx*/) override { }
-  virtual void exitTensormode(TAProLParser::TensormodeContext * /*ctx*/) override { }
-
-  virtual void enterIndexlist(TAProLParser::IndexlistContext * /*ctx*/) override { }
-  virtual void exitIndexlist(TAProLParser::IndexlistContext * /*ctx*/) override { }
-
-  virtual void enterIndexlabel(TAProLParser::IndexlabelContext * /*ctx*/) override { }
-  virtual void exitIndexlabel(TAProLParser::IndexlabelContext * /*ctx*/) override { }
-
-  virtual void enterRange(TAProLParser::RangeContext * /*ctx*/) override { }
-  virtual void exitRange(TAProLParser::RangeContext * /*ctx*/) override { }
 
   virtual void enterId(TAProLParser::IdContext * /*ctx*/) override { }
   virtual void exitId(TAProLParser::IdContext * /*ctx*/) override { }

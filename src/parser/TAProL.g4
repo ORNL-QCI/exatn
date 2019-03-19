@@ -2,30 +2,19 @@ grammar TAProL;
 
 taprolsrc
    : entry (scope)+
+   | code
    ;
 
 entry
-   : 'entry' ':' entryname
-   ;
-
-entryname
-   : id
+   : 'entry' ':' entryname=id
    ;
 
 scope
-   : 'scope' scopename 'group' '(' groupnamelist? ')' code 'end'
-   ;
-
-scopename
-   : id
+   : 'scope' scopename=id 'group' '(' groupnamelist? ')' code 'end'
    ;
 
 groupnamelist
-   : groupname (',' groupname)*
-   ;
-
-groupname
-   : id
+   : groupname=id (',' groupname=id)*
    ;
 
 code
@@ -62,52 +51,87 @@ simpleop
    ;
 
 index
-   : 'index' '(' subspacename ')' ':' indexlist
+   : 'index' '(' spacename ')' ':' indexlist
    ;
 
-subspace
-   : 'subspace' '(' (spacename)? ')' ':' subspacelist
+indexlist
+   : indexname (',' indexname)*
    ;
 
-subspacelist
-   : subspacename '=' range (',' subspacelist)*
-   ;
-
-subspacename
+indexname
    : id
    ;
 
-space
-   : 'space' '(' ('real' | 'complex') ')' ':' spacelist
+subspace
+   : 'subspace' '(' (spacename)? ')' ':' spacedeflist
    ;
 
-spacelist
-   : spacename '=' range (',' spacelist)*
+space
+   : 'space' '(' numfield ')' ':' spacedeflist
    ;
 
 spacename
    : id
    ;
 
+numfield
+   : 'real'
+   | 'complex'
+   ;
+
+spacedeflist
+   : spacedef (',' spacedef)*
+   ;
+
+spacedef
+   : spacename '=' range
+   ;
+
+range
+   : '[' lowerbound ':' upperbound ']'
+   ;
+
+lowerbound
+   : INT
+   | id
+   ;
+
+upperbound
+   : INT
+   | id
+   ;
+
 assignment
    : tensor '=' '?'
    | tensor '=' (real | complex)
-   | tensor '=' 'method' '(' string ')'
-   | tensor '=>' 'method' '(' string ')'
+   | tensor '=' 'method' '(' methodname ')'
+   | tensor '=>' 'method' '(' methodname ')'
+   ;
+
+methodname
+   : string
    ;
 
 load
-   : 'load' tensor ':' 'tag' '(' string ')'
+   : 'load' tensor ':' 'tag' '(' tagname ')'
    ;
 
 save
-   : 'save' tensor ':' 'tag' '(' string ')'
+   : 'save' tensor ':' 'tag' '(' tagname ')'
+   ;
+
+tagname
+   : string
    ;
 
 destroy
    : '~' tensorname
    | '~' tensor
-   | 'destroy' (tensorname | tensor) (',' (tensorname | tensor) )*
+   | 'destroy' tensorlist
+   ;
+
+tensorlist
+   : (tensorname | tensor) (',' (tensorname | tensor) )*
    ;
 
 copy
@@ -115,19 +139,25 @@ copy
    ;
 
 scale
-   : tensor '*=' (real | complex | id)
+   : tensor '*=' prefactor
    ;
 
 unaryop
-   : tensor '+=' (tensor | conjtensor) ( '*' (real | complex | id) )?
+   : tensor '+=' (tensor | conjtensor) ( '*' prefactor )?
    ;
 
 binaryop
-   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (real | complex | id) )?
+   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' prefactor )?
+   ;
+
+prefactor
+   : real
+   | complex
+   | id
    ;
 
 compositeproduct
-   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+ ( '*' (real | complex | id) )?
+   : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+ ( '*' prefactor )?
    ;
 
 tensornetwork
@@ -146,28 +176,6 @@ tensorname
    : id
    ;
 
-tensormodelist
-   : tensormode (',' tensormode)*
-   ;
-
-tensormode
-   : indexlabel
-   | range
-   ;
-
-indexlist
-   : indexlabel (',' indexlabel)*
-   ;
-
-indexlabel
-   : id
-   ;
-
-range
-   : '[' (INT | id) ':' (INT | id) ']'
-   ;
-
-/* TAProL identifier */
 id
    : ID
    ;
@@ -180,12 +188,10 @@ real
    : REAL
    ;
 
-/* Strings are enclosed in quotes */
 string
    : STRING
    ;
 
-/* A program comment */
 comment
    : COMMENT
    ;

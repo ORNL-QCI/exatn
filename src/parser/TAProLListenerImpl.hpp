@@ -8,14 +8,13 @@
 using namespace taprol;
 
 namespace exatn {
+
 namespace parser {
 
-/**
- */
 class TAProLListenerImpl : public TAProLBaseListener {
 
 protected:
-  std::string entryValue = "";
+  std::string entryScopeName = ""; //name of the first TAProL scope to interpret
 
 public:
   void enterEntry(TAProLParser::EntryContext *ctx) override;
@@ -44,8 +43,7 @@ public:
 
   void enterBinaryop(TAProLParser::BinaryopContext *ctx) override;
 
-  void
-  enterCompositeproduct(TAProLParser::CompositeproductContext *ctx) override;
+  void enterCompositeproduct(TAProLParser::CompositeproductContext *ctx) override;
 
   void enterTensornetwork(TAProLParser::TensornetworkContext *ctx) override;
 };
@@ -54,4 +52,4 @@ public:
 
 } // namespace exatn
 
-#endif
+#endif //EXATN_TAPROLLISTENERIMPL_H

@@ -22,16 +22,17 @@ public:
   };
 
   enum {
-    RuleTaprolsrc = 0, RuleEntry = 1, RuleEntryname = 2, RuleScope = 3, 
-    RuleScopename = 4, RuleGroupnamelist = 5, RuleGroupname = 6, RuleCode = 7, 
-    RuleLine = 8, RuleStatement = 9, RuleCompositeop = 10, RuleSimpleop = 11, 
-    RuleIndex = 12, RuleSubspace = 13, RuleSubspacelist = 14, RuleSubspacename = 15, 
-    RuleSpace = 16, RuleSpacelist = 17, RuleSpacename = 18, RuleAssignment = 19, 
-    RuleLoad = 20, RuleSave = 21, RuleDestroy = 22, RuleCopy = 23, RuleScale = 24, 
-    RuleUnaryop = 25, RuleBinaryop = 26, RuleCompositeproduct = 27, RuleTensornetwork = 28, 
-    RuleConjtensor = 29, RuleTensor = 30, RuleTensorname = 31, RuleTensormodelist = 32, 
-    RuleTensormode = 33, RuleIndexlist = 34, RuleIndexlabel = 35, RuleRange = 36, 
-    RuleId = 37, RuleComplex = 38, RuleReal = 39, RuleString = 40, RuleComment = 41
+    RuleTaprolsrc = 0, RuleEntry = 1, RuleScope = 2, RuleGroupnamelist = 3, 
+    RuleCode = 4, RuleLine = 5, RuleStatement = 6, RuleCompositeop = 7, 
+    RuleSimpleop = 8, RuleIndex = 9, RuleIndexlist = 10, RuleIndexname = 11, 
+    RuleSubspace = 12, RuleSpace = 13, RuleSpacename = 14, RuleNumfield = 15, 
+    RuleSpacedeflist = 16, RuleSpacedef = 17, RuleRange = 18, RuleLowerbound = 19, 
+    RuleUpperbound = 20, RuleAssignment = 21, RuleMethodname = 22, RuleLoad = 23, 
+    RuleSave = 24, RuleTagname = 25, RuleDestroy = 26, RuleTensorlist = 27, 
+    RuleCopy = 28, RuleScale = 29, RuleUnaryop = 30, RuleBinaryop = 31, 
+    RulePrefactor = 32, RuleCompositeproduct = 33, RuleTensornetwork = 34, 
+    RuleConjtensor = 35, RuleTensor = 36, RuleTensorname = 37, RuleId = 38, 
+    RuleComplex = 39, RuleReal = 40, RuleString = 41, RuleComment = 42
   };
 
   TAProLParser(antlr4::TokenStream *input);
@@ -46,41 +47,42 @@ public:
 
   class TaprolsrcContext;
   class EntryContext;
-  class EntrynameContext;
   class ScopeContext;
-  class ScopenameContext;
   class GroupnamelistContext;
-  class GroupnameContext;
   class CodeContext;
   class LineContext;
   class StatementContext;
   class CompositeopContext;
   class SimpleopContext;
   class IndexContext;
+  class IndexlistContext;
+  class IndexnameContext;
   class SubspaceContext;
-  class SubspacelistContext;
-  class SubspacenameContext;
   class SpaceContext;
-  class SpacelistContext;
   class SpacenameContext;
+  class NumfieldContext;
+  class SpacedeflistContext;
+  class SpacedefContext;
+  class RangeContext;
+  class LowerboundContext;
+  class UpperboundContext;
   class AssignmentContext;
+  class MethodnameContext;
   class LoadContext;
   class SaveContext;
+  class TagnameContext;
   class DestroyContext;
+  class TensorlistContext;
   class CopyContext;
   class ScaleContext;
   class UnaryopContext;
   class BinaryopContext;
+  class PrefactorContext;
   class CompositeproductContext;
   class TensornetworkContext;
   class ConjtensorContext;
   class TensorContext;
   class TensornameContext;
-  class TensormodelistContext;
-  class TensormodeContext;
-  class IndexlistContext;
-  class IndexlabelContext;
-  class RangeContext;
   class IdContext;
   class ComplexContext;
   class RealContext;
@@ -94,6 +96,7 @@ public:
     EntryContext *entry();
     std::vector<ScopeContext *> scope();
     ScopeContext* scope(size_t i);
+    CodeContext *code();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -104,20 +107,8 @@ public:
 
   class  EntryContext : public antlr4::ParserRuleContext {
   public:
+    TAProLParser::IdContext *entryname = nullptr;;
     EntryContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    EntrynameContext *entryname();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  EntryContext* entry();
-
-  class  EntrynameContext : public antlr4::ParserRuleContext {
-  public:
-    EntrynameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     IdContext *id();
 
@@ -126,14 +117,15 @@ public:
    
   };
 
-  EntrynameContext* entryname();
+  EntryContext* entry();
 
   class  ScopeContext : public antlr4::ParserRuleContext {
   public:
+    TAProLParser::IdContext *scopename = nullptr;;
     ScopeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    ScopenameContext *scopename();
     CodeContext *code();
+    IdContext *id();
     GroupnamelistContext *groupnamelist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -143,25 +135,13 @@ public:
 
   ScopeContext* scope();
 
-  class  ScopenameContext : public antlr4::ParserRuleContext {
-  public:
-    ScopenameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    IdContext *id();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  ScopenameContext* scopename();
-
   class  GroupnamelistContext : public antlr4::ParserRuleContext {
   public:
+    TAProLParser::IdContext *groupname = nullptr;;
     GroupnamelistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    std::vector<GroupnameContext *> groupname();
-    GroupnameContext* groupname(size_t i);
+    std::vector<IdContext *> id();
+    IdContext* id(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -169,19 +149,6 @@ public:
   };
 
   GroupnamelistContext* groupnamelist();
-
-  class  GroupnameContext : public antlr4::ParserRuleContext {
-  public:
-    GroupnameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    IdContext *id();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  GroupnameContext* groupname();
 
   class  CodeContext : public antlr4::ParserRuleContext {
   public:
@@ -267,7 +234,7 @@ public:
   public:
     IndexContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SubspacenameContext *subspacename();
+    SpacenameContext *spacename();
     IndexlistContext *indexlist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -277,11 +244,38 @@ public:
 
   IndexContext* index();
 
+  class  IndexlistContext : public antlr4::ParserRuleContext {
+  public:
+    IndexlistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<IndexnameContext *> indexname();
+    IndexnameContext* indexname(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  IndexlistContext* indexlist();
+
+  class  IndexnameContext : public antlr4::ParserRuleContext {
+  public:
+    IndexnameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdContext *id();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  IndexnameContext* indexname();
+
   class  SubspaceContext : public antlr4::ParserRuleContext {
   public:
     SubspaceContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SubspacelistContext *subspacelist();
+    SpacedeflistContext *spacedeflist();
     SpacenameContext *spacename();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -291,40 +285,12 @@ public:
 
   SubspaceContext* subspace();
 
-  class  SubspacelistContext : public antlr4::ParserRuleContext {
-  public:
-    SubspacelistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    SubspacenameContext *subspacename();
-    RangeContext *range();
-    std::vector<SubspacelistContext *> subspacelist();
-    SubspacelistContext* subspacelist(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SubspacelistContext* subspacelist();
-
-  class  SubspacenameContext : public antlr4::ParserRuleContext {
-  public:
-    SubspacenameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    IdContext *id();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SubspacenameContext* subspacename();
-
   class  SpaceContext : public antlr4::ParserRuleContext {
   public:
     SpaceContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SpacelistContext *spacelist();
+    NumfieldContext *numfield();
+    SpacedeflistContext *spacedeflist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -332,22 +298,6 @@ public:
   };
 
   SpaceContext* space();
-
-  class  SpacelistContext : public antlr4::ParserRuleContext {
-  public:
-    SpacelistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    SpacenameContext *spacename();
-    RangeContext *range();
-    std::vector<SpacelistContext *> spacelist();
-    SpacelistContext* spacelist(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SpacelistContext* spacelist();
 
   class  SpacenameContext : public antlr4::ParserRuleContext {
   public:
@@ -362,6 +312,88 @@ public:
 
   SpacenameContext* spacename();
 
+  class  NumfieldContext : public antlr4::ParserRuleContext {
+  public:
+    NumfieldContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  NumfieldContext* numfield();
+
+  class  SpacedeflistContext : public antlr4::ParserRuleContext {
+  public:
+    SpacedeflistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<SpacedefContext *> spacedef();
+    SpacedefContext* spacedef(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SpacedeflistContext* spacedeflist();
+
+  class  SpacedefContext : public antlr4::ParserRuleContext {
+  public:
+    SpacedefContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    SpacenameContext *spacename();
+    RangeContext *range();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SpacedefContext* spacedef();
+
+  class  RangeContext : public antlr4::ParserRuleContext {
+  public:
+    RangeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    LowerboundContext *lowerbound();
+    UpperboundContext *upperbound();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  RangeContext* range();
+
+  class  LowerboundContext : public antlr4::ParserRuleContext {
+  public:
+    LowerboundContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *INT();
+    IdContext *id();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  LowerboundContext* lowerbound();
+
+  class  UpperboundContext : public antlr4::ParserRuleContext {
+  public:
+    UpperboundContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *INT();
+    IdContext *id();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  UpperboundContext* upperbound();
+
   class  AssignmentContext : public antlr4::ParserRuleContext {
   public:
     AssignmentContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -369,7 +401,7 @@ public:
     TensorContext *tensor();
     RealContext *real();
     ComplexContext *complex();
-    StringContext *string();
+    MethodnameContext *methodname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -378,12 +410,25 @@ public:
 
   AssignmentContext* assignment();
 
+  class  MethodnameContext : public antlr4::ParserRuleContext {
+  public:
+    MethodnameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    StringContext *string();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  MethodnameContext* methodname();
+
   class  LoadContext : public antlr4::ParserRuleContext {
   public:
     LoadContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     TensorContext *tensor();
-    StringContext *string();
+    TagnameContext *tagname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -397,7 +442,7 @@ public:
     SaveContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     TensorContext *tensor();
-    StringContext *string();
+    TagnameContext *tagname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -406,9 +451,37 @@ public:
 
   SaveContext* save();
 
+  class  TagnameContext : public antlr4::ParserRuleContext {
+  public:
+    TagnameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    StringContext *string();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  TagnameContext* tagname();
+
   class  DestroyContext : public antlr4::ParserRuleContext {
   public:
     DestroyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    TensornameContext *tensorname();
+    TensorContext *tensor();
+    TensorlistContext *tensorlist();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  DestroyContext* destroy();
+
+  class  TensorlistContext : public antlr4::ParserRuleContext {
+  public:
+    TensorlistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     std::vector<TensornameContext *> tensorname();
     TensornameContext* tensorname(size_t i);
@@ -420,7 +493,7 @@ public:
    
   };
 
-  DestroyContext* destroy();
+  TensorlistContext* tensorlist();
 
   class  CopyContext : public antlr4::ParserRuleContext {
   public:
@@ -441,9 +514,7 @@ public:
     ScaleContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     TensorContext *tensor();
-    RealContext *real();
-    ComplexContext *complex();
-    IdContext *id();
+    PrefactorContext *prefactor();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -459,9 +530,7 @@ public:
     std::vector<TensorContext *> tensor();
     TensorContext* tensor(size_t i);
     ConjtensorContext *conjtensor();
-    RealContext *real();
-    ComplexContext *complex();
-    IdContext *id();
+    PrefactorContext *prefactor();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -478,6 +547,19 @@ public:
     TensorContext* tensor(size_t i);
     std::vector<ConjtensorContext *> conjtensor();
     ConjtensorContext* conjtensor(size_t i);
+    PrefactorContext *prefactor();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  BinaryopContext* binaryop();
+
+  class  PrefactorContext : public antlr4::ParserRuleContext {
+  public:
+    PrefactorContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
     RealContext *real();
     ComplexContext *complex();
     IdContext *id();
@@ -487,7 +569,7 @@ public:
    
   };
 
-  BinaryopContext* binaryop();
+  PrefactorContext* prefactor();
 
   class  CompositeproductContext : public antlr4::ParserRuleContext {
   public:
@@ -497,9 +579,7 @@ public:
     TensorContext* tensor(size_t i);
     std::vector<ConjtensorContext *> conjtensor();
     ConjtensorContext* conjtensor(size_t i);
-    RealContext *real();
-    ComplexContext *complex();
-    IdContext *id();
+    PrefactorContext *prefactor();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -564,77 +644,6 @@ public:
   };
 
   TensornameContext* tensorname();
-
-  class  TensormodelistContext : public antlr4::ParserRuleContext {
-  public:
-    TensormodelistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    std::vector<TensormodeContext *> tensormode();
-    TensormodeContext* tensormode(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  TensormodelistContext* tensormodelist();
-
-  class  TensormodeContext : public antlr4::ParserRuleContext {
-  public:
-    TensormodeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    IndexlabelContext *indexlabel();
-    RangeContext *range();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  TensormodeContext* tensormode();
-
-  class  IndexlistContext : public antlr4::ParserRuleContext {
-  public:
-    IndexlistContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    std::vector<IndexlabelContext *> indexlabel();
-    IndexlabelContext* indexlabel(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  IndexlistContext* indexlist();
-
-  class  IndexlabelContext : public antlr4::ParserRuleContext {
-  public:
-    IndexlabelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    IdContext *id();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  IndexlabelContext* indexlabel();
-
-  class  RangeContext : public antlr4::ParserRuleContext {
-  public:
-    RangeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    std::vector<antlr4::tree::TerminalNode *> INT();
-    antlr4::tree::TerminalNode* INT(size_t i);
-    std::vector<IdContext *> id();
-    IdContext* id(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  RangeContext* range();
 
   class  IdContext : public antlr4::ParserRuleContext {
   public:

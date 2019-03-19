@@ -23,85 +23,86 @@ scope main group() # Function definition
 end scope main
 */
 
-void TAProLListenerImpl::enterEntry(TAProLParser::EntryContext *ctx) {
-  entryValue = ctx->ID()->getText();
-  std::cout << "ENTERING ENTRY " << entryValue << "\n";
+void TAProLListenerImpl::enterEntry(TAProLParser::EntryContext *ctx){
+ entryScopeName = ctx->id()->getText();
+ std::cout << "ENTRY: " << entryScopeName << std::endl;
 }
 
-void TAProLListenerImpl::enterScope(TAProLParser::ScopeContext *ctx) {
-    std::cout << "ENTERING SCOPE: " << ctx->scopebeginname->getText() << ", " << ctx->scopeendname->getText() << "\n";
-    // check that scope end name and scope begin name are equal
+void TAProLListenerImpl::enterScope(TAProLParser::ScopeContext *ctx){
+ std::cout << "SCOPE: " << ctx->id()->getText() << std::endl;
 }
 
-void TAProLListenerImpl::enterSpace(TAProLParser::SpaceContext *ctx) {}
-
-void TAProLListenerImpl::enterSubspace(TAProLParser::SubspaceContext *ctx) {
-    std::cout << "Entering subsbace: " << ctx->getText() << "\n";
-    if (ctx->spacename != nullptr) {
-      auto spacename = ctx->spacename->getText();
-    }
-
-    std::cout << ctx->spacelist()->spacename->getText() << "\n";
+void TAProLListenerImpl::enterSpace(TAProLParser::SpaceContext *ctx){
+ std::cout << "SPACES: ";
+ for(const auto & spacedef: ctx->spacedeflist()->spacedef()) std::cout << spacedef->spacename()->id()->getText() << ",";
+ std::cout << std::endl;
 }
 
-void TAProLListenerImpl::enterIndex(TAProLParser::IndexContext *ctx) {
-  auto subspace = ctx->subspacename->getText();
+void TAProLListenerImpl::enterSubspace(TAProLParser::SubspaceContext *ctx){
+ if(ctx->spacename() != nullptr){
+  std::cout << "SUBSPACES of SPACE " << ctx->spacename()->getText() << ":";
+  for(const auto & spacedef: ctx->spacedeflist()->spacedef()) std::cout << spacedef->spacename()->id()->getText() << ",";
+  std::cout << std::endl;
+ }
+}
 
-  int nIndices = ctx->idx().size();
-
-  std::vector<std::string> indices;
-  for (int i = 0; i < nIndices; i++) {
-    std::cout << "adding index: " << ctx->idx(i)->getText() << "\n";
-    indices.push_back(ctx->idx(i)->getText());
-  }
+void TAProLListenerImpl::enterIndex(TAProLParser::IndexContext *ctx){
+ std::cout << "INDICES: ";
+ for(const auto & index: ctx->indexlist()->indexname()) std::cout << index->id()->getText() << ",";
+ std::cout << std::endl;
 }
 
 void TAProLListenerImpl::enterAssignment(TAProLParser::AssignmentContext *ctx) {
-    if (ctx->complex() != nullptr) {
-        // this is an assigment of the form
-        // X2 = {0.0,0.0} or T2 = {1.0,0.0}
-        std::cout << "= assignment: " << ctx->getText() << "\n";
-
-    } else if (ctx->string() != nullptr) {
-        // this is a method assigment
-        std::cout << "method assignment: " << ctx->getText() << "\n";
-
-
-    }
+ if(ctx->complex() != nullptr || ctx->real() != nullptr){
+  // This is an assignment of the form
+  // X2(a,b) = 0.0 or T2(a,b) = {1.0,0.0}
+  std::cout << "ASSIGNMENT(=): " << ctx->getText() << std::endl;
+ }else if(ctx->methodname() != nullptr){
+  // This is an external method based assigment
+  std::cout << "ASSIGNMENT(methof): " << ctx->getText() << std::endl;
+ }
 }
 
-void TAProLListenerImpl::enterLoad(TAProLParser::LoadContext *ctx) {}
+void TAProLListenerImpl::enterLoad(TAProLParser::LoadContext *ctx){
+
+}
 
 void TAProLListenerImpl::enterSave(TAProLParser::SaveContext *ctx) {
-    auto tensor = ctx->tensor()->getText();
-    auto tag = ctx->string()->getText();
-    tag = tag.substr(1,tag.length()-2);
-    std::cout << "Entering Save: " << ctx->getText() << "\n";
-    std::cout << "Save Data: " << tensor << "\n";
-    std::cout << "Save Data: " << tag << "\n";
+ auto tensor = ctx->tensor()->getText();
+ auto tag = ctx->tagname()->getText();
+ std::cout << "SAVE TENSOR    : " << ctx->getText() << std::endl;
+ std::cout << " Saved tensor  : " << tensor << std::endl;
+ std::cout << " Saved tag name: " << tag << std::endl;
 }
 
-void TAProLListenerImpl::enterDestroy(TAProLParser::DestroyContext *ctx) {
-    std::cout << "Destroying Tensor: " << ctx->getText() << "\n";
-    
+void TAProLListenerImpl::enterDestroy(TAProLParser::DestroyContext *ctx){
+
 }
 
-void TAProLListenerImpl::enterCopy(TAProLParser::CopyContext *ctx) {}
+void TAProLListenerImpl::enterCopy(TAProLParser::CopyContext *ctx){
 
-void TAProLListenerImpl::enterScale(TAProLParser::ScaleContext *ctx) {}
-
-void TAProLListenerImpl::enterUnaryop(TAProLParser::UnaryopContext *ctx) {
-    std::cout << "Entering unary op: " << ctx->getText() << "\n";
 }
 
-void TAProLListenerImpl::enterBinaryop(TAProLParser::BinaryopContext *ctx) {
-    std::cout << "Entering binary op: " << ctx->getText() << "\n";
+void TAProLListenerImpl::enterScale(TAProLParser::ScaleContext *ctx){
+
 }
 
-void TAProLListenerImpl::enterCompositeproduct(
-    TAProLParser::CompositeproductContext *ctx) {}
+void TAProLListenerImpl::enterUnaryop(TAProLParser::UnaryopContext *ctx){
 
-void TAProLListenerImpl::enterTensornetwork(
-    TAProLParser::TensornetworkContext *ctx) {}
+}
+
+void TAProLListenerImpl::enterBinaryop(TAProLParser::BinaryopContext *ctx){
+
+}
+
+void TAProLListenerImpl::enterCompositeproduct(TAProLParser::CompositeproductContext *ctx){
+
+}
+
+void TAProLListenerImpl::enterTensornetwork(TAProLParser::TensornetworkContext *ctx){
+
+}
+
 } // namespace parser
+
 } // namespace exatn
