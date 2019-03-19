@@ -8,7 +8,7 @@ entry
    : 'entry' ':' entryname
    ;
 
-entryname:
+entryname
    : id
    ;
 
