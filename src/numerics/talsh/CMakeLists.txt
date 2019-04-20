@@ -25,7 +25,7 @@ if(CUDA_FOUND)
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
-           blas
+           ${BLAS_LIBRARIES}
            ${CUDA_LIBRARIES}
            ${CUDA_CUBLAS_LIBRARIES})
 
@@ -42,7 +42,7 @@ else()
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
-           blas)
+           ${BLAS_LIBRARIES})
 endif()
 
 set(_bundle_name exatn_numerics_talsh)

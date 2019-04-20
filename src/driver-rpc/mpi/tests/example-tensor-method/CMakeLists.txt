@@ -16,7 +16,7 @@ target_include_directories(
   ${LIBRARY_NAME}
   PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${CMAKE_SOURCE_DIR}/src/exatn ${CUDA_INCLUDE_DIRS})
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnvToolsExt.so blas gfortran gomp CppMicroServices)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libnvToolsExt.so ${BLAS_LIBRARIES} gfortran gomp CppMicroServices)
 
 set(_bundle_name exatn_example_tensormethod)
 
