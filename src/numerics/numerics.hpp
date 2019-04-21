@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Client Header
-REVISION: 2019/03/17
+REVISION: 2019/04/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -23,6 +23,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #define NUMERICS_HPP_
 
 #include "numerics_factory.hpp"
+#include "tensor_network.hpp"
 
 #include <utility>
 #include <memory>

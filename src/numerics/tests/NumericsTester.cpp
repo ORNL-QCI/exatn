@@ -1,10 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "tensor.hpp"
-#include "tensor_factory.hpp"
-#include "tensor_leg.hpp"
-#include "tensor_shape.hpp"
-#include "tensor_signature.hpp"
+#include "numerics.hpp"
 
 #include <iostream>
 #include <utility>
@@ -12,8 +8,10 @@
 using namespace exatn;
 using namespace exatn::numerics;
 
-TEST(NumericsTester, checkSimple) {
+TEST(NumericsTester, checkSimple)
+{
 
+ {
   TensorSignature signa{std::pair<SpaceId, SubspaceId>(1, 5),
                         std::pair<SpaceId, SubspaceId>(SOME_SPACE, 13)};
   std::cout << signa.getRank() << " " << signa.getDimSpaceId(0) << " "
@@ -35,9 +33,16 @@ TEST(NumericsTester, checkSimple) {
   TensorFactory tensor_factory;
 
   auto tensor =
-      tensor_factory.createTensor(TensorKind::TENSOR, "T", shape, signa);
+       tensor_factory.createTensor(TensorKind::TENSOR, "T", shape, signa);
   tensor->printIt();
   std::cout << std::endl;
+ }
+
+ {
+  SpaceRegister space_reg;
+  
+ }
+
 }
 
 int main(int argc, char **argv) {

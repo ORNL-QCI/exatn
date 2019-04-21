@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor factory
-REVISION: 2018/11/18
+REVISION: 2019/04/20
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,7 @@ Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
+#include "tensor_exa.hpp"
 
 #include <assert.h>
 

@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: Factories
-REVISION: 2019/03/17
+/** ExaTN::Numerics: Factory
+REVISION: 2019/04/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "register.hpp"
+#include "tensor_factory.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -17,16 +18,16 @@ namespace exatn{
 
 namespace numerics{
 
-class Factories{ //singleton
+class Factory{ //singleton
 
 public:
 
- Factories() = default;
- Factories(const Factories &) = delete;
- Factories & operator=(const Factories &) = delete;
- Factories(const Factories &&) = default;
- Factories & operator=(const Factories &&) = default;
- ~Factories() = default;
+ Factory() = default;
+ Factory(const Factory &) = delete;
+ Factory & operator=(const Factory &) = delete;
+ Factory(Factory &&) = default;
+ Factory & operator=(Factory &&) = default;
+ ~Factory() = default;
 
 private:
 

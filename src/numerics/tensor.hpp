@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/02/12
+REVISION: 2019/04/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,8 +28,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #define TENSOR_HPP_
 
 #include "tensor_basic.hpp"
-#include "tensor_signature.hpp"
 #include "tensor_shape.hpp"
+#include "tensor_signature.hpp"
 
 #include <assert.h>
 

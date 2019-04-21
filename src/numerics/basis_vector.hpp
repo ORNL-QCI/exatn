@@ -1,12 +1,12 @@
 /** ExaTN::Numerics: Basis Vector
-REVISION: 2019/03/16
+REVISION: 2019/04/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Any basis vector is a 1-dimensional subspace;
- (b) Any space/subspace can be composed from linear-independent
+ (b) Any space/subspace can be composed of linear-independent
      1-dimensional subspaces by taking a direct sum of them.
  (c) Any abstract basis vector can be further specialized by
      introducing additional attributes peculiar to a specific basis kind.
