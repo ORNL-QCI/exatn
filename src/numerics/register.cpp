@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/04/20
+REVISION: 2019/04/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,8 +84,10 @@ SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> & space):
  DimOffset lower = 0;
  DimOffset upper = lower + space_->getDimension() - 1;
  const std::string & space_name = space_->getName();
- SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
- assert(id == FULL_SUBSPACE); //=0
+ if(space_name.length() > 0){
+  SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
+  assert(id == FULL_SUBSPACE); //=0
+ }
 }
 
 SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> && space):
@@ -94,8 +96,10 @@ SpaceRegEntry::SpaceRegEntry(std::shared_ptr<VectorSpace> && space):
  DimOffset lower = 0;
  DimOffset upper = lower + space_->getDimension() - 1;
  const std::string & space_name = space_->getName();
- SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
- assert(id == FULL_SUBSPACE); //=0
+ if(space_name.length() > 0){
+  SubspaceId id = subspaces_.registerSubspace(std::make_shared<Subspace>(space_.get(),lower,upper,space_name)); //register the full space as its trivial subspace under the same name
+  assert(id == FULL_SUBSPACE); //=0
+ }
 }
 
 
@@ -152,9 +156,13 @@ const VectorSpace * SpaceRegister::getSpace(SpaceId id) const
 
 const VectorSpace * SpaceRegister::getSpace(const std::string & name) const
 {
- auto it = name2id_.find(name);
- if(it == name2id_.end()) return nullptr;
- return spaces_[it->second].space_.get();
+ if(name.length() > 0){ //named vector space
+  auto it = name2id_.find(name);
+  if(it == name2id_.end()) return nullptr;
+  return spaces_[it->second].space_.get();
+ }else{ //unnamed vector space (space 0 = SOME_SPACE)
+  return spaces_[0].space_.get();
+ }
 }
 
 } //namespace numerics

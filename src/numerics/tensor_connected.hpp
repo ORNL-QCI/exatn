@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors
-REVISION: 2019/04/20
+REVISION: 2019/04/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -24,7 +24,9 @@ namespace numerics{
 class TensorConn{
 public:
 
- TensorConn() = default;
+ TensorConn(const Tensor * tensor,
+            unsigned int id,
+            const std::vector<TensorLeg> & legs);
 
  TensorConn(const TensorConn &) = default;
  TensorConn & operator=(const TensorConn &) = default;
@@ -34,7 +36,8 @@ public:
 
 private:
 
- Tensor * tensor_;             //non-owning pointer to the tensor
+ const Tensor * tensor_;       //non-owning pointer to the tensor
+ unsigned int id_;             //tensor id in the tensor network
  std::vector<TensorLeg> legs_; //tensor legs: Connections to other tensors
 
 };

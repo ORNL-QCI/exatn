@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register
-REVISION: 2019/03/17
+REVISION: 2019/04/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,8 +34,8 @@ public:
  SubspaceRegEntry(std::shared_ptr<Subspace> & subspace);
  SubspaceRegEntry(std::shared_ptr<Subspace> && subspace);
 
- SubspaceRegEntry(const SubspaceRegEntry &) = delete;
- SubspaceRegEntry & operator=(const SubspaceRegEntry &) = delete;
+ SubspaceRegEntry(const SubspaceRegEntry &) = default;
+ SubspaceRegEntry & operator=(const SubspaceRegEntry &) = default;
  SubspaceRegEntry(SubspaceRegEntry &&) = default;
  SubspaceRegEntry & operator=(SubspaceRegEntry &&) = default;
  virtual ~SubspaceRegEntry() = default;

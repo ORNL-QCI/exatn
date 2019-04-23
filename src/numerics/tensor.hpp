@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/04/20
+REVISION: 2019/04/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,7 +8,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
  Tensor specification requires:
  (a) Symbolic tensor name;
  (b) Tensor shape (extents of all tensor dimensions);
- (c) Optional tensor signature.
+ (c) Optional tensor signature (space/subspace identifier for all tensor dimensions).
 
  Tensor signature identifies the tensor or its slice. Tensor signature
  requires providing a pair<SpaceId,SubspaceId> for each tensor dimension.
