@@ -1,20 +1,22 @@
-/** ExaTN::Numerics: Register
-REVISION: 2019/04/22
+/** ExaTN::Numerics: Register of vector spaces and their subspaces
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Any explicitly unregistered vector space has id = SOME_SPACE = 0 (anonymous vector space).
+ (a) Any unregistered vector space has id = SOME_SPACE = 0 (anonymous vector space).
+     A subspace of the anonymous vector space is defined by
+     the base offset (first basis vector) and its dimension.
  (b) Any explicitly registered (named) vector space has id > 0.
- (c) Any unregistered subspace of any vector space has id = UNREG_SUBSPACE = max(uint64_t).
+ (c) Any unregistered subspace of any registered vector space has id = UNREG_SUBSPACE = max(uint64_t).
  (d) Every named vector space has an automatically registered full subspace under
-     the same (space) name with id = FULL_SUBSPACE = 0 (subspace spanning the space itself).
- (e) Every registered non-trivial subspace of any vector space has id: 0 < id < max(uint64_t).
+     the same (space) name with id = FULL_SUBSPACE = 0 (trivial subspace which spans the full space).
+ (e) Every registered non-trivial subspace of any registered vector space has id: 0 < id < max(uint64_t).
 **/
 
-#ifndef REGISTER_HPP_
-#define REGISTER_HPP_
+#ifndef EXATN_NUMERICS_SPACE_REGISTER_HPP_
+#define EXATN_NUMERICS_SPACE_REGISTER_HPP_
 
 #include "tensor_basic.hpp"
 #include "spaces.hpp"
@@ -36,15 +38,15 @@ public:
 
  SubspaceRegEntry(const SubspaceRegEntry &) = default;
  SubspaceRegEntry & operator=(const SubspaceRegEntry &) = default;
- SubspaceRegEntry(SubspaceRegEntry &&) = default;
- SubspaceRegEntry & operator=(SubspaceRegEntry &&) = default;
+ SubspaceRegEntry(SubspaceRegEntry &&) noexcept = default;
+ SubspaceRegEntry & operator=(SubspaceRegEntry &&) noexcept = default;
  virtual ~SubspaceRegEntry() = default;
 
  friend class SubspaceRegister;
 
 private:
 
- std::shared_ptr<Subspace> subspace_; //registered subspace of a vector space
+ std::shared_ptr<Subspace> subspace_; //registered subspace of a vector space (owned by RegEntry)
 };
 
 
@@ -55,8 +57,8 @@ public:
 
  SubspaceRegister(const SubspaceRegister &) = delete;
  SubspaceRegister & operator=(const SubspaceRegister &) = delete;
- SubspaceRegister(SubspaceRegister &&) = default;
- SubspaceRegister & operator=(SubspaceRegister &&) = default;
+ SubspaceRegister(SubspaceRegister &&) noexcept = default;
+ SubspaceRegister & operator=(SubspaceRegister &&) noexcept = default;
  virtual ~SubspaceRegister() = default;
 
  /** Registers a subspace of some vector space and returns its registered id.
@@ -86,15 +88,15 @@ public:
 
  SpaceRegEntry(const SpaceRegEntry &) = delete;
  SpaceRegEntry & operator=(const SpaceRegEntry &) = delete;
- SpaceRegEntry(SpaceRegEntry &&) = default;
- SpaceRegEntry & operator=(SpaceRegEntry &&) = default;
+ SpaceRegEntry(SpaceRegEntry &&) noexcept = default;
+ SpaceRegEntry & operator=(SpaceRegEntry &&) noexcept = default;
  virtual ~SpaceRegEntry() = default;
 
  friend class SpaceRegister;
 
 private:
 
- std::shared_ptr<VectorSpace> space_; //registered vector space (co-owned by RegEntry)
+ std::shared_ptr<VectorSpace> space_; //registered vector space (owned by RegEntry)
  SubspaceRegister subspaces_;         //subspace register for this vector space
 };
 
@@ -106,8 +108,8 @@ public:
 
  SpaceRegister(const SpaceRegister &) = delete;
  SpaceRegister & operator=(const SpaceRegister &) = delete;
- SpaceRegister(SpaceRegister &&) = default;
- SpaceRegister & operator=(SpaceRegister &&) = default;
+ SpaceRegister(SpaceRegister &&) noexcept = default;
+ SpaceRegister & operator=(SpaceRegister &&) noexcept = default;
  virtual ~SpaceRegister() = default;
 
  /** Registers a named vector space and returns its registered id.
@@ -133,4 +135,4 @@ private:
 
 } //namespace exatn
 
-#endif //REGISTER_HPP_
+#endif //EXATN_NUMERICS_SPACE_REGISTER_HPP_

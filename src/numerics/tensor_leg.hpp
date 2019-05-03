@@ -1,11 +1,11 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2018/12/18
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_LEG_HPP_
-#define TENSOR_LEG_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_LEG_HPP_
+#define EXATN_NUMERICS_TENSOR_LEG_HPP_
 
 #include "tensor_basic.hpp"
 
@@ -27,8 +27,8 @@ public:
 
  TensorLeg(const TensorLeg & tens_leg) = default;
  TensorLeg & operator=(const TensorLeg & tens_leg) = default;
- TensorLeg(TensorLeg && tens_leg) = default;
- TensorLeg & operator=(TensorLeg && tens_leg) = default;
+ TensorLeg(TensorLeg && tens_leg) noexcept = default;
+ TensorLeg & operator=(TensorLeg && tens_leg) noexcept = default;
  virtual ~TensorLeg() = default;
 
  /** Print. **/
@@ -68,4 +68,4 @@ private:
 
 } //namespace exatn
 
-#endif //TENSOR_LEG_HPP_
+#endif //EXATN_NUMERICS_TENSOR_LEG_HPP_

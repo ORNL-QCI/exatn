@@ -1,11 +1,11 @@
 /** ExaTN::Numerics: ExaTENSOR Tensor
-REVISION: 2019/04/20
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_EXA_HPP_
-#define TENSOR_EXA_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_EXA_HPP_
+#define EXATN_NUMERICS_TENSOR_EXA_HPP_
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
@@ -53,13 +53,13 @@ public:
 
  TensorExa(const TensorExa & tensor) = default;
  TensorExa & operator=(const TensorExa & tensor) = default;
- TensorExa(TensorExa && tensor) = default;
- TensorExa & operator=(TensorExa && tensor) = default;
+ TensorExa(TensorExa && tensor) noexcept = default;
+ TensorExa & operator=(TensorExa && tensor) noexcept = default;
  virtual ~TensorExa() = default;
 
 private:
 
- std::string exasymbol_; //symbolic representation of the tensor registered with ExaTENSOR
+ std::string exasymbol_; //symbolic id of the tensor registered with the ExaTENSOR backend
 };
 
 
@@ -98,4 +98,4 @@ Tensor(name,extents)
 
 } //namespace exatn
 
-#endif //TENSOR_EXA_HPP_
+#endif //EXATN_NUMERICS_TENSOR_EXA_HPP_

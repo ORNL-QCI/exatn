@@ -1,10 +1,10 @@
-/** ExaTN::Numerics: Register
-REVISION: 2019/04/22
+/** ExaTN::Numerics: Register of vector spaces and their subspaces
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#include "register.hpp"
+#include "space_register.hpp"
 
 #include <iostream>
 

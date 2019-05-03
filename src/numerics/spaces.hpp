@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/03/18
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,8 +15,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      and a range of basis vectors it is spanned over.
 **/
 
-#ifndef SPACES_HPP_
-#define SPACES_HPP_
+#ifndef EXATN_NUMERICS_SPACES_HPP_
+#define EXATN_NUMERICS_SPACES_HPP_
 
 #include "tensor_basic.hpp"
 #include "space_basis.hpp"
@@ -32,17 +32,20 @@ namespace numerics{
 class VectorSpace{
 public:
 
+ /** Abstract unnamed vector space of a given dimension. **/
  VectorSpace(DimExtent space_dim);
+ /** Abstract named vector space of a given dimension. **/
  VectorSpace(DimExtent space_dim,
              const std::string & space_name);
+ /** Abstract named vector space of a given dimension with symmetry subranges. **/
  VectorSpace(DimExtent space_dim,
              const std::string & space_name,
              const std::vector<SymmetryRange> & symmetry_subranges);
 
  VectorSpace(const VectorSpace & vector_space) = default;
  VectorSpace & operator=(const VectorSpace & vector_space) = default;
- VectorSpace(VectorSpace && vector_space) = default;
- VectorSpace & operator=(VectorSpace && vector_space) = default;
+ VectorSpace(VectorSpace && vector_space) noexcept = default;
+ VectorSpace & operator=(VectorSpace && vector_space) noexcept = default;
  virtual ~VectorSpace() = default;
 
  /** Prints. **/
@@ -77,9 +80,11 @@ private:
 class Subspace{
 public:
 
+ /** Unnamed subspace of a vector space defined by a subrange of basis vectors. **/
  Subspace(const VectorSpace * vector_space,
           DimOffset lower_bound,
           DimOffset upper_bound);
+ /** Named subspace of a vector space defined by a subrange of basis vectors. **/
  Subspace(const VectorSpace * vector_space,
           DimOffset lower_bound,
           DimOffset upper_bound,
@@ -87,8 +92,8 @@ public:
 
  Subspace(const Subspace & subspace) = default;
  Subspace & operator=(const Subspace & subspace) = default;
- Subspace(Subspace && subspace) = default;
- Subspace & operator=(Subspace && subspace) = default;
+ Subspace(Subspace && subspace) noexcept = default;
+ Subspace & operator=(Subspace && subspace) noexcept = default;
  virtual ~Subspace() = default;
 
  /** Prints. **/
@@ -134,4 +139,4 @@ private:
 
 } //namespace exatn
 
-#endif //SPACES_HPP_
+#endif //EXATN_NUMERICS_SPACES_HPP_

@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: Tensor
-REVISION: 2019/04/22
+/** ExaTN::Numerics: Abstract Tensor
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,7 +7,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 /** NOTES:
  Tensor specification requires:
  (a) Symbolic tensor name;
- (b) Tensor shape (extents of all tensor dimensions);
+ (b) Tensor rank (number of tensor dimensions) and
+     tensor shape (extents of all tensor dimensions);
  (c) Optional tensor signature (space/subspace identifier for all tensor dimensions).
 
  Tensor signature identifies the tensor or its slice. Tensor signature
@@ -16,16 +17,19 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
  (a) SpaceId = SOME_SPACE: In this case, SubspaceId is the lower bound
      of the specified tensor slice (0 is the min lower bound). The upper
      bound is computed by adding the dimension extent to the lower bound - 1.
-     The defining vector space (SOME_SPACE) is just an abstract vector space.
+     The defining vector space (SOME_SPACE) is an abstract anonymous vector space.
  (b) SpaceId != SOME_SPACE: In this case, SpaceId refers to a registered
      vector space and the SubspaceId refers to a registered subspace of
      this vector space. The subspaces will carry lower/upper bounds of
      the specified tensor slice. SubspaceId = 0 refers to the full space,
      which is automatically registered when the space is registered.
+     Although tensor dimension extents cannot exceed the dimensions
+     of the corresponding registered subspaces from the tensor signature,
+     they in general can be smaller than the latter.
 **/
 
-#ifndef TENSOR_HPP_
-#define TENSOR_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_HPP_
+#define EXATN_NUMERICS_TENSOR_HPP_
 
 #include "tensor_basic.hpp"
 #include "tensor_shape.hpp"
@@ -74,8 +78,8 @@ public:
 
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;
- Tensor(Tensor && tensor) = default;
- Tensor & operator=(Tensor && tensor) = default;
+ Tensor(Tensor && tensor) noexcept = default;
+ Tensor & operator=(Tensor && tensor) noexcept = default;
  virtual ~Tensor() = default;
 
  /** Print. **/
@@ -100,9 +104,9 @@ public:
 
 private:
 
- std::string name_;
- TensorShape shape_;
- TensorSignature signature_;
+ std::string name_;          //tensor name
+ TensorShape shape_;         //tensor shape
+ TensorSignature signature_; //tensor signature
 };
 
 
@@ -147,4 +151,4 @@ name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size(
 
 } //namespace exatn
 
-#endif //TENSOR_HPP_
+#endif //EXATN_NUMERICS_TENSOR_HPP_

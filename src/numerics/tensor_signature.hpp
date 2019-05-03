@@ -1,11 +1,21 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/02/12
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_SIGNATURE_HPP_
-#define TENSOR_SIGNATURE_HPP_
+/** Rationale:
+ (a) Tensor signature is an ordered set of tensor dimension specifiers;
+ (b) Registered signature: Tensor dimension specifier consists of a Space Id
+     and a Subspace Id, thus associating the tensor dimension with a specific
+     registered subspace of a specific registered vector space.
+ (c) Anonymous signature: Tensor dimension specifier consists of
+     the Space Id = SOME_SPACE, while the Subspace Id specifies
+     the offset (first basis vector) in SOME_SPACE.
+**/
+
+#ifndef EXATN_NUMERICS_TENSOR_SIGNATURE_HPP_
+#define EXATN_NUMERICS_TENSOR_SIGNATURE_HPP_
 
 #include "tensor_basic.hpp"
 #include "spaces.hpp"
@@ -22,7 +32,7 @@ class TensorSignature{
 public:
 
  /** Create a tensor signature by specifying pairs <space_id,subspace_id> for each tensor dimension:
-     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in some abstract space;
+     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in anonymous abstract space;
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);
@@ -32,8 +42,8 @@ public:
 
  TensorSignature(const TensorSignature & tens_signature) = default;
  TensorSignature & operator=(const TensorSignature & tens_signature) = default;
- TensorSignature(TensorSignature && tens_signature) = default;
- TensorSignature & operator=(TensorSignature && tens_signature) = default;
+ TensorSignature(TensorSignature && tens_signature) noexcept = default;
+ TensorSignature & operator=(TensorSignature && tens_signature) noexcept = default;
  virtual ~TensorSignature() = default;
 
  /** Print. **/
@@ -49,11 +59,11 @@ public:
 
 private:
 
- std::vector<std::pair<SpaceId,SubspaceId>> subspaces_;
+ std::vector<std::pair<SpaceId,SubspaceId>> subspaces_; //tensor signature
 };
 
 } //namespace numerics
 
 } //namespace exatn
 
-#endif //TENSOR_SIGNATURE_HPP_
+#endif //EXATN_NUMERICS_TENSOR_SIGNATURE_HPP_

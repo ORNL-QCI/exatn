@@ -1,20 +1,20 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/03/18
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Space basis is a collection of linear-independent basis vectors.
+ (a) Space basis is a set of linear-independent basis vectors.
  (b) An abstract space basis can be further specialized by storing
-     specialized basis vectors with additional attributes. By default
+     specialized basis vectors with additional attributes. By default,
      an abstract space basis is only characterized by its dimension.
  (c) Space basis may additionally include symmetry subranges, that is,
      contiguous ranges of basis vectors assigned a specific symmetry id.
 **/
 
-#ifndef SPACE_BASIS_HPP_
-#define SPACE_BASIS_HPP_
+#ifndef EXATN_NUMERICS_SPACE_BASIS_HPP_
+#define EXATN_NUMERICS_SPACE_BASIS_HPP_
 
 #include "tensor_basic.hpp"
 #include "basis_vector.hpp"
@@ -38,14 +38,16 @@ struct SymmetryRange{
 class SpaceBasis{
 public:
 
+ /** Abstract space basis of given dimension. **/
  SpaceBasis(DimExtent space_dim);
+ /** Abstract space basis of given dimension with symmetry subranges. **/
  SpaceBasis(DimExtent space_dim,
             const std::vector<SymmetryRange> & symmetry_subranges);
 
  SpaceBasis(const SpaceBasis & space_basis) = default;
  SpaceBasis & operator=(const SpaceBasis & space_basis) = default;
- SpaceBasis(SpaceBasis && space_basis) = default;
- SpaceBasis & operator=(SpaceBasis && space_basis) = default;
+ SpaceBasis(SpaceBasis && space_basis) noexcept = default;
+ SpaceBasis & operator=(SpaceBasis && space_basis) noexcept = default;
  virtual ~SpaceBasis() = default;
 
  /** Prints. **/
@@ -57,8 +59,8 @@ public:
  /** Returns currently registered symmetry subranges. **/
  const std::vector<SymmetryRange> & getSymmetrySubranges() const;
 
- /** Registers a symmetry subrange within the basis: A contiguous
- range of basis vectors assigned a specific symmetry id. **/
+ /** Registers a symmetry subrange within the space basis:
+     A contiguous range of basis vectors assigned a specific symmetry id. **/
  void registerSymmetrySubrange(const SymmetryRange subrange);
 
 private:
@@ -71,4 +73,4 @@ private:
 
 } //namespace exatn
 
-#endif //SPACES_BASIS_HPP_
+#endif //EXATN_NUMERICS_SPACES_BASIS_HPP_

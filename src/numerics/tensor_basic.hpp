@@ -1,11 +1,11 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/03/18
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_BASIC_HPP_
-#define TENSOR_BASIC_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_BASIC_HPP_
+#define EXATN_NUMERICS_TENSOR_BASIC_HPP_
 
 #include <cstdint>
 
@@ -41,4 +41,4 @@ enum class TensorKind{
 
 } //namespace exatn
 
-#endif //TENSOR_BASIC_HPP_
+#endif //EXATN_NUMERICS_TENSOR_BASIC_HPP_

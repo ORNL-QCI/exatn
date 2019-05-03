@@ -1,15 +1,23 @@
-/** ExaTN::Numerics: Tensor connected to other tensors
-REVISION: 2019/04/22
+/** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
-
+ (a) A tensor inside a tensor network is generally connected
+     to other tensors in that network via so-called tensor legs,
+     each tensor leg is associated with its own tensor dimension.
+ (b) Each tensor leg specifies a connection of a given tensor dimension
+     to some dimension (or dimensions) in another tensor (or tensors) in
+     the same tensor network. Thus, tensor legs can be binary, ternary, etc.,
+     based on whether the tensor network is a graph or a hyper-graph.
+ (c) The abstraction of a connected tensor is introduced for a quick
+     inspection of the neighborhood of a chosen tensor inside the tensor network.
 **/
 
-#ifndef TENSOR_CONNECTED_HPP_
-#define TENSOR_CONNECTED_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_CONNECTED_HPP_
+#define EXATN_NUMERICS_TENSOR_CONNECTED_HPP_
 
 #include "tensor_basic.hpp"
 #include "tensor_leg.hpp"
@@ -24,14 +32,15 @@ namespace numerics{
 class TensorConn{
 public:
 
- TensorConn(const Tensor * tensor,
-            unsigned int id,
-            const std::vector<TensorLeg> & legs);
+ /** Constructs a connected tensor inside a tensor network. **/
+ TensorConn(const Tensor * tensor,                //non-owning pointer to the tensor
+            unsigned int id,                      //tensor id in the tensor network
+            const std::vector<TensorLeg> & legs); //tensor legs: Connections to other tensors in the tensor network
 
  TensorConn(const TensorConn &) = default;
  TensorConn & operator=(const TensorConn &) = default;
- TensorConn(TensorConn &&) = default;
- TensorConn & operator=(TensorConn &&) = default;
+ TensorConn(TensorConn &&) noexcept = default;
+ TensorConn & operator=(TensorConn &&) noexcept = default;
  virtual ~TensorConn() = default;
 
 private:
@@ -46,4 +55,4 @@ private:
 
 } //namespace exatn
 
-#endif //TENSOR_CONNECTED_HPP_
+#endif //EXATN_NUMERICS_TENSOR_CONNECTED_HPP_

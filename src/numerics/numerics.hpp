@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: Client Header
-REVISION: 2019/04/20
+/** ExaTN::Numerics: General client header
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,21 +9,22 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
     (a) Any unnamed vector space is automatically associated with a preregistered
         anonymous vector space wtih id = SOME_SPACE = 0.
     (b) Any explicitly registered (named) vector space has id > 0.
-    (c) Any unregistered subspace of any vector space has id = UNREG_SUBSPACE = max(uint64_t).
+    (c) Any unregistered subspace of any named vector space has id = UNREG_SUBSPACE = max(uint64_t).
     (d) Every explicitly registered (named) vector space has an automatically registered full
-        subspace (=space) under the smae (space) name with id = FULL_SUBSPACE = 0.
-    (e) Every registered non-trivial subspace of any vector space, including anonymous, has id:
+        subspace (=space) under the same (space) name with id = FULL_SUBSPACE = 0.
+    (e) Every registered non-trivial subspace of any named vector space has id:
         0 < id < max(uint64_t).
+    (f) A subspace of the anonymous vector space is defined by the
+        base offset (first basis vector) and its dimension.
  2. Index labels:
     (a) Any registered subspace can be assigned a symbolic index label serving as a placeholder for it;
         any index label can only refer to a single registered (named) subspace it is associated with.
 **/
 
-#ifndef NUMERICS_HPP_
-#define NUMERICS_HPP_
+#ifndef EXATN_NUMERICS_NUMERICS_HPP_
+#define EXATN_NUMERICS_NUMERICS_HPP_
 
-#include "numerics_factory.hpp"
-#include "tensor_network.hpp"
+#include "num_server.hpp"
 
 #include <utility>
 #include <memory>
@@ -36,7 +37,7 @@ using ScopeId = unsigned int; //TAProL scope ID type
 namespace numerics{
 
 /** Opens a new (child) TAProL scope and returns its id. **/
-ScopeId openScope(const std::string & scope_name);
+ScopeId openScope(const std::string & scope_name); //new scope name
 
 /** Closes the currently open TAProL scope and returns its parental scope id. **/
 ScopeId closeScope();
@@ -56,7 +57,7 @@ void destroyVectorSpace(SpaceId space_id);               //in: id of the vector 
     returns its registered id, and, optionally, a non-owning pointer to it. **/
 SubspaceId createSubspace(const std::string & subspace_name,           //in: subspace name
                           const std::string & space_name,              //in: containing vector space name
-                          const std::pair<DimOffset,DimOffset> bounds, //in: range of basis vectors defining the subspace: [lower:upper]
+                          const std::pair<DimOffset,DimOffset> bounds, //in: range of basis vectors defining the created subspace: [lower:upper]
                           const Subspace ** subspace_ptr = nullptr);   //out: non-owning pointer to the created subspace
 
 /** Destroys a previously created subspace. **/
@@ -67,4 +68,4 @@ void destroySubspace(SubspaceId subspace_id);            //in: id of the subspac
 
 } //namespace exatn
 
-#endif //NUMERICS_HPP_
+#endif //EXATN_NUMERICS_NUMERICS_HPP_

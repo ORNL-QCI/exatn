@@ -1,11 +1,11 @@
 /** ExaTN::Numerics: Tensor factory
-REVISION: 2019/04/20
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_FACTORY_HPP_
-#define TENSOR_FACTORY_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_FACTORY_HPP_
+#define EXATN_NUMERICS_TENSOR_FACTORY_HPP_
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
@@ -26,8 +26,8 @@ public:
  TensorFactory() = default;
  TensorFactory(const TensorFactory & tens_factory) = delete;
  TensorFactory & operator=(const TensorFactory & tens_factory) = delete;
- TensorFactory(TensorFactory && tens_factory) = default;
- TensorFactory & operator=(TensorFactory && tens_factory) = default;
+ TensorFactory(TensorFactory && tens_factory) noexcept = default;
+ TensorFactory & operator=(TensorFactory && tens_factory) noexcept = default;
  virtual ~TensorFactory() = default;
 
  /** Create a tensor by providing its name, shape and signature. **/
@@ -140,4 +140,4 @@ std::unique_ptr<Tensor> TensorFactory::createTensor(TensorKind tensor_kind,
 
 } //namespace exatn
 
-#endif //TENSOR_FACTORY_HPP_
+#endif //EXATN_NUMERICS_TENSOR_FACTORY_HPP_

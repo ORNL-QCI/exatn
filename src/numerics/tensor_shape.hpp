@@ -1,11 +1,16 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2018/11/16
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef TENSOR_SHAPE_HPP_
-#define TENSOR_SHAPE_HPP_
+/** Rationale:
+ (a) Tensor shape is an ordered set of tensor dimension extents.
+     A scalar tensor (rank-0 tensor) has an empty shape.
+**/
+
+#ifndef EXATN_NUMERICS_TENSOR_SHAPE_HPP_
+#define EXATN_NUMERICS_TENSOR_SHAPE_HPP_
 
 #include "tensor_basic.hpp"
 
@@ -31,14 +36,14 @@ public:
 
  TensorShape(const TensorShape & tens_shape) = default;
  TensorShape & operator=(const TensorShape & tens_shape) = default;
- TensorShape(TensorShape && tens_shape) = default;
- TensorShape & operator=(TensorShape && tens_shape) = default;
+ TensorShape(TensorShape && tens_shape) noexcept = default;
+ TensorShape & operator=(TensorShape && tens_shape) noexcept = default;
  virtual ~TensorShape() = default;
 
  /** Print. **/
  void printIt() const;
 
- /** Get tensor rank (number of dimensions). **/
+ /** Get tensor rank (number of tensor dimensions). **/
  unsigned int getRank() const;
 
  /** Get the extent of a specific tensor dimension. **/
@@ -48,7 +53,7 @@ public:
 
 private:
 
- std::vector<DimExtent> extents_;
+ std::vector<DimExtent> extents_; //tensor dimension extents
 };
 
 
@@ -89,4 +94,4 @@ extents_(extents.size())
 
 } //namespace exatn
 
-#endif //TENSOR_SHAPE_HPP_
+#endif //EXATN_NUMERICS_TENSOR_SHAPE_HPP_

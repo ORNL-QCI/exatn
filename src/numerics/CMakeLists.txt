@@ -12,7 +12,7 @@ add_library(${LIBRARY_NAME}
             tensor_exa.cpp
             tensor_factory.cpp
             tensor_connected.cpp
-            register.cpp)
+            space_register.cpp)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
 

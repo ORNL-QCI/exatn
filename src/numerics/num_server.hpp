@@ -1,15 +1,16 @@
-/** ExaTN::Numerics: Factory
-REVISION: 2019/04/20
+/** ExaTN::Numerics: Numerical server
+REVISION: 2019/05/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#ifndef NUMERICS_FACTORY_HPP_
-#define NUMERICS_FACTORY_HPP_
+#ifndef EXATN_NUMERICS_NUM_SERVER_HPP_
+#define EXATN_NUMERICS_NUM_SERVER_HPP_
 
 #include "tensor_basic.hpp"
-#include "register.hpp"
+#include "space_register.hpp"
 #include "tensor_factory.hpp"
+#include "tensor_network.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -18,16 +19,16 @@ namespace exatn{
 
 namespace numerics{
 
-class Factory{ //singleton
+class NumServer{ //singleton
 
 public:
 
- Factory() = default;
- Factory(const Factory &) = delete;
- Factory & operator=(const Factory &) = delete;
- Factory(Factory &&) = default;
- Factory & operator=(Factory &&) = default;
- ~Factory() = default;
+ NumServer() = default;
+ NumServer(const NumServer &) = delete;
+ NumServer & operator=(const NumServer &) = delete;
+ NumServer(NumServer &&) noexcept = default;
+ NumServer & operator=(NumServer &&) noexcept = default;
+ ~NumServer() = default;
 
 private:
 
@@ -40,4 +41,4 @@ private:
 
 } //namespace exatn
 
-#endif //NUMERICS_FACTORY_HPP_
+#endif //EXATN_NUMERICS_NUM_SERVER_HPP_
