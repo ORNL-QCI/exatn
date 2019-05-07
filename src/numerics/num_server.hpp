@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/05/02
+REVISION: 2019/05/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,7 +33,7 @@ public:
 private:
 
  SpaceRegister space_register_; //register of vector spaces and their named subspaces
- std::unordered_map<std::string,SpaceId> name2id_; //maps a subspace name to its parental vector space id
+ std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
 };
 

@@ -9,6 +9,7 @@ add_library(${LIBRARY_NAME}
             tensor_shape.cpp
             tensor_leg.cpp
             tensor.cpp
+            tensor_sha.cpp
             tensor_exa.cpp
             tensor_factory.cpp
             tensor_connected.cpp

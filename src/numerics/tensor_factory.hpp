@@ -1,8 +1,19 @@
 /** ExaTN::Numerics: Tensor factory
-REVISION: 2019/05/02
+REVISION: 2019/05/07
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+
+/** Rationale:
+ (a) TENSOR: Abstract tensor with no numerical implementation.
+     This is a concrete type Tensor.
+ (b) TENSOR_SHA: Shared-memory tensor stored locally on the server,
+     processible by the TAL-SH numerical backend.
+     This is a concrete type TensorSha, subtype of Tensor.
+ (c) TENSOR_EXA: Distributed tensor stored and processible on multiple
+     nodes via the ExaTENSOR numerical backend.
+     This is a concrete type TensorExa, subtype of Tensor.
+**/
 
 #ifndef EXATN_NUMERICS_TENSOR_FACTORY_HPP_
 #define EXATN_NUMERICS_TENSOR_FACTORY_HPP_

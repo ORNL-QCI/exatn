@@ -10,7 +10,6 @@ using namespace exatn::numerics;
 
 TEST(NumericsTester, checkSimple)
 {
-
  {
   TensorSignature signa{std::pair<SpaceId, SubspaceId>(1, 5),
                         std::pair<SpaceId, SubspaceId>(SOME_SPACE, 13)};
@@ -37,12 +36,11 @@ TEST(NumericsTester, checkSimple)
   tensor->printIt();
   std::cout << std::endl;
  }
+}
 
- {
-  SpaceRegister space_reg;
-  
- }
-
+TEST(NumericsTester, checkNumServer)
+{
+ 
 }
 
 int main(int argc, char **argv) {
