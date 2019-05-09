@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: TAL-SH Tensor
-REVISION: 2019/05/07
+REVISION: 2019/05/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,7 +10,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
 
-//#include "talshxx.hpp"
+#include "talshxx.hpp"
 
 #include <assert.h>
 
@@ -61,7 +61,7 @@ public:
 
 private:
 
- //talsh::Tensor tensor_; //TAL-SH tensor
+ talsh::Tensor tensor_; //TAL-SH tensor
 };
 
 
