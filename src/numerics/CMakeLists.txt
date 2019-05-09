@@ -15,9 +15,11 @@ add_library(${LIBRARY_NAME}
             tensor_connected.cpp
             space_register.cpp)
 
-target_include_directories(${LIBRARY_NAME} PUBLIC .
+target_include_directories(${LIBRARY_NAME}
+                           PUBLIC .
                            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-                           ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+                           PRIVATE
+                           ${CUDA_INCLUDE_DIRS})
 
 exatn_enable_rpath(${LIBRARY_NAME})
 

@@ -61,7 +61,7 @@ public:
 
 private:
 
- talsh::Tensor tensor_; //TAL-SH tensor
+ //talsh::Tensor tensor_; //TAL-SH tensor
 };
 
 
