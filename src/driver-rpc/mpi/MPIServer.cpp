@@ -55,7 +55,8 @@ void MPIServer::start() {
       std::cout << "[mpi-server] synchronizing!\n";
 
       // FIXME SYNCHRONIZE TALSH/EXATENSOR
-
+    //   parser->numerics_server->synchronize();
+    
       // Now take the results and execute an
       // asynchronous Isend back to the client rank 0
       for (int i = 0; i < nResults; i++) {
