@@ -3,16 +3,21 @@
 
 #include "Identifiable.hpp"
 #include <string>
-#include "tensor_method.hpp"
+
+#include "TAProLInterpreter.hpp"
 
 namespace exatn {
 namespace rpc {
 
 class DriverServer : public Identifiable {
 
-public:
-  virtual void start() = 0;
+protected:
 
+  std::shared_ptr<exatn::parser::TAProLInterpreter> parser;
+
+public:
+  DriverServer() : parser(std::make_shared<exatn::parser::TAProLInterpreter>()) {}
+  virtual void start() = 0;
   virtual void stop() = 0;
 };
 } // namespace rpc

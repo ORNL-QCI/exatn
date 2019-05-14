@@ -45,6 +45,7 @@ void ServiceRegistry::initialize(const std::string pluginPath) {
     framework.Start();
     auto bundles = context.GetBundles();
     for (auto b : bundles) {
+        std::cout << "HOWDY " << b.GetSymbolicName() << "\n";
       b.Start();
     }
 

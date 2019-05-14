@@ -2,6 +2,7 @@
 #define EXATN_IDENTIFIABLE_HPP_
 
 #include <string>
+#include <memory>
 
 namespace exatn {
 
@@ -12,6 +13,16 @@ public:
   virtual const std::string description() const = 0;
 
   virtual ~Identifiable() {}
+};
+
+template <typename T> class Cloneable {
+public:
+  virtual std::shared_ptr<T> clone() = 0;
+
+  /**
+   * The destructor
+   */
+  virtual ~Cloneable() {}
 };
 
 } // namespace exatn

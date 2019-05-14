@@ -2,7 +2,6 @@
 #define EXATN_DRIVER_MPISERVER_HPP_
 
 #include "DriverServer.hpp"
-#include "backend.hpp"
 
 #include "mpi.h"
 
@@ -25,10 +24,9 @@ protected:
   std::string portName = "exatn-mpi-driver";
 
   std::map<std::string, std::shared_ptr<TensorMethod<Identifiable>>> registeredTensorMethods;
-  std::shared_ptr<exatn::numerics::Backend> backend;
 
 public:
-  MPIServer() {}
+  MPIServer() : DriverServer() {}
 
   void start() override;
   void stop() override;

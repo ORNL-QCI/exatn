@@ -14,9 +14,9 @@ int MPIServer::SHUTDOWN_TAG = 3;
 void MPIServer::start() {
 
   // FIXME Provide hook for specifying this at runtime
-  backend = exatn::getService<exatn::numerics::Backend>("talsh");
+//   backend = exatn::getService<exatn::numerics::Backend>("talsh");
 
-  backend->initialize();
+//   backend->initialize();
 
   listen = true;
 
@@ -91,13 +91,12 @@ void MPIServer::start() {
         position = taProlProg.find("save", position + 1);
       }
 
-
       std::cout << "[mpi-server] Found " << nResults << " save calls.\n";
 
       // FIXME with DMITRY:
       // Execute the TAPROL with our Numerics backend
-      backend->execute(taProlProg);
-
+    //   backend->execute(taProlProg);
+      parser->interpret(taProlProg);
 
     } else if (status.MPI_TAG == REGISTER_TENSORMETHOD) {
 
@@ -115,7 +114,7 @@ void MPIServer::start() {
 
         auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
         tensor_method->unpack(packet);
-        backend->addTensorMethod(tensor_method);
+        parser->numerics_server->addTensorMethod(tensor_method);
 
         std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
 
@@ -124,7 +123,7 @@ void MPIServer::start() {
 
   std::cout << "[mpi-server] Out of event loop.\n";
   MPI_Comm_disconnect(&client);
-  backend->shutdown();
+//   backend->shutdown();
   return;
 }
 

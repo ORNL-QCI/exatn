@@ -12,8 +12,13 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_factory.hpp"
 #include "tensor_network.hpp"
 
+#include "tensor_method.hpp"
+#include "Identifiable.hpp"
+
 #include <string>
 #include <unordered_map>
+
+using exatn::Identifiable;
 
 namespace exatn{
 
@@ -30,11 +35,24 @@ public:
  NumServer & operator=(NumServer &&) noexcept = default;
  ~NumServer() = default;
 
+ virtual void addTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method) {
+   methods.insert({method->name(), method});
+ }
+
+ virtual BytePacket getExternalData(const std::string& tag) {
+   return extData[tag];
+ }
+
 private:
 
  SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
+protected:
+
+  std::map<std::string, std::shared_ptr<TensorMethod<Identifiable>>> methods;
+
+  std::map<std::string, BytePacket> extData;
 };
 
 } //namespace numerics

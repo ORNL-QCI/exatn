@@ -13,7 +13,6 @@ if(CUDA_FOUND)
   target_include_directories(${LIBRARY_NAME}
                              PUBLIC .
                                     ..
-                                    ${CMAKE_SOURCE_DIR}/src/numerics
                                     ${CMAKE_SOURCE_DIR}/src/utility
                                     ${MPI_CXX_INCLUDE_DIRS}
                                     ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
@@ -22,6 +21,7 @@ if(CUDA_FOUND)
     ${LIBRARY_NAME}
     PUBLIC exatn
            exatn-numerics
+           exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
@@ -41,6 +41,7 @@ else()
     ${LIBRARY_NAME}
     PUBLIC exatn
            exatn-numerics
+           exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)

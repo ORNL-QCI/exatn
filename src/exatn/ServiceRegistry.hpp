@@ -48,7 +48,14 @@ public:
       auto identifiable =
           std::dynamic_pointer_cast<exatn::Identifiable>(service);
       if (identifiable && identifiable->name() == name) {
-        ret = service;
+       auto checkCloneable =
+            std::dynamic_pointer_cast<exatn::Cloneable<ServiceInterface>>(
+                service);
+        if (checkCloneable) {
+          ret = checkCloneable->clone();
+        } else {
+          ret = service;
+        }
       }
     }
 

@@ -18,15 +18,13 @@ add_library(${LIBRARY_NAME}
 target_include_directories(${LIBRARY_NAME}
                            PUBLIC .
                            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
+                           ${CMAKE_SOURCE_DIR}/src/exatn
                            PRIVATE
                            ${CUDA_INCLUDE_DIRS})
 
 exatn_enable_rpath(${LIBRARY_NAME})
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
-
-add_subdirectory(talsh)
-add_subdirectory(exatensor)
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)

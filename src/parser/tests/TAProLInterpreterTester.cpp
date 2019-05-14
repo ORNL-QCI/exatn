@@ -5,6 +5,7 @@ using namespace exatn::parser;
 
 TEST(TAProLInterpreterTester, checkSimple) {
 
+
   TAProLInterpreter interpreter;
   const std::string src = R"src(entry: main
 scope main group()

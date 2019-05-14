@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_runtime_executor",
+  "bundle.activator" : true,
+  "bundle.name" : "ExaTN Runtime Execution library",
+  "bundle.description" : ""
+}
