@@ -22,7 +22,7 @@ public:
   TensorDenseBlock getTensorData(const exatn::numerics::Tensor& tensor) {
     // get tensor data after sync
   }
-}
+};
 
 }
 }
