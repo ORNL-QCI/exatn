@@ -8,10 +8,7 @@ namespace runtime {
 
 class TalshExecutor : public GraphExecutor {
 protected:
-
-   void exec_impl(TensorOp& op) override {
-
-   }
+   void exec_impl(TensorOp& op) override;
 };
 }
 }

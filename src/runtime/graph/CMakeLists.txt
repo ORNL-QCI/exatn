@@ -1,6 +1,5 @@
 set(LIBRARY_NAME exatn-runtime-graph)
 
-
 file(GLOB SRC boost/DirectedBoostGraph.cpp GraphActivator.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
@@ -15,7 +14,6 @@ target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC . boost
          ${CMAKE_SOURCE_DIR}/src/exatn
-         ${CMAKE_SOURCE_DIR}/tpls/mpark-variant
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include "TensorGraph.hpp"
 
 namespace exatn {
 namespace runtime {
@@ -14,8 +15,8 @@ class GraphExecutor {
 
 public:
 
-   virtual void execute(Graph& dag);
-   
+   void execute(TensorGraph& dag);
+
 protected:
 
    virtual void exec_impl(TensorOp& op) = 0;

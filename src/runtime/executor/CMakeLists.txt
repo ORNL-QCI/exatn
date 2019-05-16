@@ -1,7 +1,6 @@
 set(LIBRARY_NAME exatn-runtime-executor)
 
-
-file(GLOB SRC ExecutorActivator.cpp)
+file(GLOB SRC GraphExecutorActivator.cpp exatensor/ExatensorExecutor.cpp talsh/TalshExecutor.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)
@@ -15,7 +14,6 @@ target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC . talsh exatensor
          ${CMAKE_SOURCE_DIR}/src/exatn
-         ${CMAKE_SOURCE_DIR}/tpls/mpark-variant
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )
 
@@ -34,7 +32,7 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices PRIVATE Boost::graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices PRIVATE exatn-runtime-graph)
 
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")

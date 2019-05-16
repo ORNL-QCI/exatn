@@ -1,4 +1,3 @@
-
 #include "TalshExecutor.hpp"
 #include "ExatensorExecutor.hpp"
 

@@ -22,7 +22,7 @@ public:
   void Start(BundleContext context) {
 
     auto g = std::make_shared<exatn::DirectedBoostGraph>();
-    context.RegisterService<exatn::Graph>(g);
+    context.RegisterService<exatn::TensorGraph>(g);
   }
 
   /**
