@@ -28,13 +28,6 @@ TEST(NumericsTester, checkSimple)
   TensorLeg leg{1, 4};
   leg.printIt();
   std::cout << std::endl;
-
-  TensorFactory tensor_factory;
-
-  auto tensor =
-       tensor_factory.createTensor(TensorKind::TENSOR, "T", shape, signa);
-  tensor->printIt();
-  std::cout << std::endl;
  }
 }
 

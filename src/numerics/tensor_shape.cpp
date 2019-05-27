@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2018/12/18
+REVISION: 2019/05/27
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_shape.hpp"
 

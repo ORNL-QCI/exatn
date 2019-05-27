@@ -1,11 +1,12 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Tensor signature is an ordered set of tensor dimension specifiers;
+ (a) Tensor signature is an ordered set of tensor dimension specifiers,
+     that is, specifiers of the subspaces tensor dimensions are spanned over;
  (b) Registered signature: Tensor dimension specifier consists of a Space Id
      and a Subspace Id, thus associating the tensor dimension with a specific
      registered subspace of a specific registered vector space.
@@ -32,12 +33,12 @@ class TensorSignature{
 public:
 
  /** Create a tensor signature by specifying pairs <space_id,subspace_id> for each tensor dimension:
-     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in anonymous abstract space;
+     Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in an anonymous abstract space;
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);
 
- /** Create a default tensor signature of std::pair<SOME_SPACE,0> by providing tensor rank only. **/
+ /** Create a default tensor signature of std::pair<SOME_SPACE,0> by providing the tensor rank only. **/
  TensorSignature(unsigned int rank);
 
  TensorSignature(const TensorSignature & tens_signature) = default;

@@ -56,7 +56,7 @@ void MPIServer::start() {
 
       // FIXME SYNCHRONIZE TALSH/EXATENSOR
     //   parser->numerics_server->synchronize();
-    
+
       // Now take the results and execute an
       // asynchronous Isend back to the client rank 0
       for (int i = 0; i < nResults; i++) {
@@ -115,7 +115,7 @@ void MPIServer::start() {
 
         auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
         tensor_method->unpack(packet);
-        parser->numerics_server->addTensorMethod(tensor_method);
+        parser->numerics_server->registerTensorMethod(tensor_method);
 
         std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,7 +32,7 @@ namespace numerics{
 class VectorSpace{
 public:
 
- /** Abstract unnamed vector space of a given dimension. **/
+ /** Abstract anonymous vector space of a given dimension. **/
  VectorSpace(DimExtent space_dim);
  /** Abstract named vector space of a given dimension. **/
  VectorSpace(DimExtent space_dim,
@@ -60,6 +60,10 @@ public:
  /** Returns currently defined symmetry subranges. **/
  const std::vector<SymmetryRange> & getSymmetrySubranges() const;
 
+ /** Registers a symmetry subrange within the space:
+     A contiguous range of basis vectors assigned a specific symmetry id. **/
+ void registerSymmetrySubrange(const SymmetryRange subrange);
+
  /** Returns the registered space id. **/
  SpaceId getRegisteredId() const;
 
@@ -72,7 +76,7 @@ private:
 
  SpaceBasis basis_;       //basis defining the vector space
  std::string space_name_; //optional space name
- SpaceId id_;             //registered space id
+ SpaceId id_;             //registered space id (defaults to SOME_SPACE)
 
 };
 
@@ -80,7 +84,7 @@ private:
 class Subspace{
 public:
 
- /** Unnamed subspace of a vector space defined by a subrange of basis vectors. **/
+ /** Anonymous subspace of a vector space defined by a subrange of basis vectors. **/
  Subspace(const VectorSpace * vector_space,
           DimOffset lower_bound,
           DimOffset upper_bound);
@@ -111,7 +115,7 @@ public:
  /** Returns the bounds of the subspace. **/
  std::pair<DimOffset,DimOffset> getBounds() const;
 
- /** Returns a pointer to the vector space the subspace is defined on. **/
+ /** Returns a pointer to the vector space the subspace is defined in. **/
  const VectorSpace * getVectorSpace() const;
 
  /** Returns the name of the subspace. **/
@@ -131,7 +135,7 @@ private:
  DimOffset lower_bound_;            //lower bound defining the subspace of the vector space
  DimOffset upper_bound_;            //upper bound defining the subspace of the vector space
  std::string subspace_name_;        //optional subspace name
- SubspaceId id_;                    //registered subspace id
+ SubspaceId id_;                    //registered subspace id (defaults to UNREG_SUBSPACE)
 
 };
 

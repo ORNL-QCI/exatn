@@ -1,22 +1,21 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network is a set of connected tensors.
- (b) A tensor network is always closed, which in some
-     cases requires introducing an explicit output tensor
-     collecting all open ends of the original tensor network.
- (c) Each tensor in a tensor network can be connected to
+ (b) Each tensor in a tensor network can be connected to
      other tensors in that tensor network via tensor legs.
- (d) Each tensor leg in a given tensor is associated with
-     one of the tensor dimensions, one tensor leg per each
-     tensor dimension.
- (e) A tensor leg can connect a given tensor with one or more
+ (c) Each tensor leg in a given tensor is uniquely associated
+     with one of its dimensions, one tensor leg per tensor dimension.
+ (d) A tensor leg can connect a given tensor with one or more
      other tensors in the same tensor network. Thus, tensor
      legs can be binary, ternary, etc.
+ (e) A tensor network is always closed, which in some
+     cases requires introducing an explicit output tensor
+     collecting all open ends of the original tensor network.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_NETWORK_HPP_
@@ -45,6 +44,7 @@ public:
 private:
 
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
+                                                        //map: Nonnegative tensor id --> Connected tensor
 
 };
 
