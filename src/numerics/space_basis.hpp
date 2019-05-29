@@ -1,12 +1,12 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Space basis is a set of linear-independent basis vectors.
- (b) An abstract space basis can be further specialized by storing
+ (b) An abstract space basis can further be specialized by storing
      specialized basis vectors with additional attributes. By default,
      an abstract space basis is only characterized by its dimension.
  (c) Space basis may additionally include symmetry subranges, that is,

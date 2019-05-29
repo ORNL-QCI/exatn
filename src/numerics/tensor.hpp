@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,7 +11,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      tensor shape (extents of all tensor dimensions);
  (c) Optional tensor signature (space/subspace identifier for all tensor dimensions).
 
- Tensor signature identifies the tensor or its slice. Tensor signature
+ Tensor signature identifies a full tensor or its slice. Tensor signature
  requires providing a pair<SpaceId,SubspaceId> for each tensor dimension.
  It has two alternative specifications:
  (a) SpaceId = SOME_SPACE: In this case, SubspaceId is the lower bound
@@ -25,7 +25,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      which is automatically registered when the space is registered.
      Although tensor dimension extents cannot exceed the dimensions
      of the corresponding registered subspaces from the tensor signature,
-     they in general can be smaller than the latter.
+     they in general can be smaller than the latter (low-rank representation).
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_HPP_

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,6 +48,7 @@ public:
 
  /** Get the extent of a specific tensor dimension. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
+
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
 
@@ -62,7 +63,7 @@ template<typename T>
 TensorShape::TensorShape(std::initializer_list<T> extents):
 extents_(extents.size())
 {
- static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape type must be integral!");
+ static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape extent type must be integral!");
 
  //DEBUG:
  for(const auto & extent: extents){
@@ -71,14 +72,14 @@ extents_(extents.size())
  }
 
  int i = 0;
- for(const auto & extent: extents) extents_[i++] = static_cast<DimExtent>(extent);
+ for(const auto & extent: extents) extents_[i++] = DimExtent{extent};
 }
 
 template<typename T>
 TensorShape::TensorShape(const std::vector<T> & extents):
 extents_(extents.size())
 {
- static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape type must be integral!");
+ static_assert(std::is_integral<T>::value,"FATAL(TensorShape::TensorShape): TensorShape extent type must be integral!");
 
  //DEBUG:
  for(const auto & extent: extents){
@@ -87,7 +88,7 @@ extents_(extents.size())
  }
 
  int i = 0;
- for(const auto & extent: extents) extents_[i++] = static_cast<DimExtent>(extent);
+ for(const auto & extent: extents) extents_[i++] = DimExtent{extent};
 }
 
 } //namespace numerics

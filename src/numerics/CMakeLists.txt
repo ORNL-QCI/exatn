@@ -9,11 +9,10 @@ add_library(${LIBRARY_NAME}
             tensor_shape.cpp
             tensor_leg.cpp
             tensor.cpp
-            tensor_sha.cpp
-            tensor_exa.cpp
-            tensor_factory.cpp
+            tensor_operation.cpp
             tensor_connected.cpp
-            space_register.cpp)
+            space_register.cpp
+            num_server.cpp)
 
 target_include_directories(${LIBRARY_NAME}
                            PUBLIC .

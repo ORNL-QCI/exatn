@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,12 +31,6 @@ enum class LegDirection{
  UNDIRECT, //no direction
  INWARD,   //inward direction
  OUTWARD   //outward direction
-};
-
-enum class TensorKind{
- TENSOR,     //base tensor (no numerical implementation)
- TENSOR_SHA, //shared-memory tensor (TAL-SH numerical backend)
- TENSOR_EXA  //distributed-memory tensor (ExaTENSOR numerical backend)
 };
 
 } //namespace exatn

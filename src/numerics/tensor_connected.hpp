@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -42,6 +42,18 @@ public:
  TensorConn(TensorConn &&) noexcept = default;
  TensorConn & operator=(TensorConn &&) noexcept = default;
  virtual ~TensorConn() = default;
+
+ /** Returns a non-owning pointer to the tensor. **/
+ const Tensor * getTensor() const;
+
+ /** Returns the tensor id. **/
+ unsigned int getTensorId() const;
+
+ /** Returns a specific tensor leg. **/
+ TensorLeg getTensorLeg(unsigned int leg_id) const;
+
+ /** Returns all tensor legs. **/
+ const std::vector<TensorLeg> & getTensorLegs() const;
 
 private:
 

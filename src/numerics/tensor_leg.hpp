@@ -1,8 +1,14 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/05/02
+REVISION: 2019/05/27
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+
+/** Rationale:
+ (a) A tensor leg associates a tensor mode with a mode in another tensor
+     by carrying the id of another tensor, its specific mode (position),
+     and direction of the association.
+**/
 
 #ifndef EXATN_NUMERICS_TENSOR_LEG_HPP_
 #define EXATN_NUMERICS_TENSOR_LEG_HPP_
@@ -61,7 +67,7 @@ private:
 
  unsigned int tensor_id_;  //id of the connected tensor [0..*]
  unsigned int dimensn_id_; //dimension id in the connected tensor [0..*]
- LegDirection direction_;  //direction of the leg: {UNDIRECT, INWARD, OUTWARD}
+ LegDirection direction_;  //direction of the leg: {UNDIRECT, INWARD, OUTWARD}, defaults to UNDIRECT
 };
 
 } //namespace numerics
