@@ -47,7 +47,7 @@ public:
 
   // Flip the bool on the TensorOpNode to indicate this
   // node has been executed
-  virtual void setNodeExecuted(const TensorOpNode &Node) = 0;
+  virtual void setNodeExecuted(const int index) = 0;
 
   // Return true if edge exists
   virtual bool edgeExists(const int srcIndex, const int tgtIndex) = 0;

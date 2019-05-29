@@ -62,7 +62,7 @@ public:
   void addVertex(TensorOpNode &properties) override;
 
   TensorOpNode &getVertexProperties(const int index) override;
-  void setNodeExecuted(const TensorOpNode &Node) override;
+  void setNodeExecuted(const int index) override;
 
   bool edgeExists(const int srcIndex, const int tgtIndex) override;
 

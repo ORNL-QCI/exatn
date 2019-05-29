@@ -34,8 +34,8 @@ TensorOpNode &DirectedBoostGraph::getVertexProperties(const int index) {
   return (*_graph.get())[index].properties;
 }
 
-void DirectedBoostGraph::setNodeExecuted(const TensorOpNode &Node) {
-  (*_graph.get())[Node.id].properties.executed = true;
+void DirectedBoostGraph::setNodeExecuted(const int index) {
+  (*_graph.get())[index].properties.executed = true;
 }
 
 bool DirectedBoostGraph::edgeExists(const int srcIndex, const int tgtIndex) {
