@@ -13,27 +13,29 @@ DirectedBoostGraph::DirectedBoostGraph() {
   _graph = std::make_shared<d_adj_list>();
 }
 
-void DirectedBoostGraph::addEdge(const int srcIndex, const int tgtIndex) {
-  add_edge(vertex(srcIndex, *_graph.get()), vertex(tgtIndex, *_graph.get()),
+void DirectedBoostGraph::addEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) {
+  add_edge(vertex(srcNode.id, *_graph.get()), vertex(tgtNode.id, *_graph.get()),
            *_graph.get());
 }
 
 void DirectedBoostGraph::addVertex(TensorOpNode &&properties) {
   auto v = add_vertex(*_graph.get());
   (*_graph.get())[v].properties = properties;
+  (*_graph.get())[v].properties.id=v;
 }
 
 void DirectedBoostGraph::addVertex(TensorOpNode &properties) {
   auto v = add_vertex(*_graph.get());
   (*_graph.get())[v].properties = properties;
+  (*_graph.get())[v].properties.id=v;
 }
 
 TensorOpNode &DirectedBoostGraph::getVertexProperties(const int index) {
   return (*_graph.get())[index].properties;
 }
 
-void DirectedBoostGraph::setNodeExecuted(const int index) {
-  (*_graph.get())[index].properties.executed = true;
+void DirectedBoostGraph::setNodeExecuted(const TensorOpNode &Node) {
+  (*_graph.get())[Node.id].properties.executed = true;
 }
 
 bool DirectedBoostGraph::edgeExists(const int srcIndex, const int tgtIndex) {

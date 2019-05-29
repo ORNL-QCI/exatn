@@ -21,6 +21,7 @@ public:
   TensorOpNode(TensorOp *o) : op(o) {}
   TensorOp *op;
   bool executed = false;
+  int id;
   // Add any other info you need
 };
 
@@ -29,14 +30,14 @@ class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
 public:
   // Add an edge between src and tgt, this is
   // a directed edge
-  virtual void addEdge(const int srcIndex, const int tgtIndex) = 0;
+  virtual void addEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) = 0;
 
   virtual void addVertex(TensorOpNode &opNode) = 0;
   virtual void addVertex(TensorOpNode &&opNode) = 0;
 
   // For now lets assume as you build it,
   // you can't change the structure or the node values
-  // virtual void removeEdge(const int srcIndex, const int tgtIndex) = 0;
+  // virtual void removeEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) = 0;
   // virtual void setVertexProperties(const int index, TensorOpNode& opNode) =
   // 0; virtual void setVertexProperties(const int index, TensorOpNode&& opNode)
   // = 0;
@@ -46,7 +47,7 @@ public:
 
   // Flip the bool on the TensorOpNode to indicate this
   // node has been executed
-  virtual void setNodeExecuted(const int index) = 0;
+  virtual void setNodeExecuted(const TensorOpNode &Node) = 0;
 
   // Return true if edge exists
   virtual bool edgeExists(const int srcIndex, const int tgtIndex) = 0;

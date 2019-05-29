@@ -56,13 +56,13 @@ protected:
 public:
   DirectedBoostGraph();
 
-  void addEdge(const int srcIndex, const int tgtIndex) override;
+  void addEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) override;
 
   void addVertex(TensorOpNode &&properties) override;
   void addVertex(TensorOpNode &properties) override;
 
   TensorOpNode &getVertexProperties(const int index) override;
-  void setNodeExecuted(const int index) override;
+  void setNodeExecuted(const TensorOpNode &Node) override;
 
   bool edgeExists(const int srcIndex, const int tgtIndex) override;
 
