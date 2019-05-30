@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/05/27
+REVISION: 2019/05/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,7 +25,10 @@ namespace numerics{
 class TensorOperation{
 public:
 
- TensorOperation();
+ /** Constructs a yet undefined tensor operation with
+     the specified number of tensor/scalar arguments. **/
+ TensorOperation(unsigned int num_operands, //required number of tensor operands
+                 unsigned int num_scalars); //required number of scalar operands
 
  TensorOperation(const TensorOperation &) = default;
  TensorOperation & operator=(const TensorOperation &) = default;
@@ -63,14 +66,15 @@ public:
  /** Returns the symbolic tensor operation specification (index pattern). **/
  const std::string & getIndexPattern() const;
 
- /** Sets the symbolic tensor operation specification (index pattern). **/
+ /** Sets the symbolic tensor operation specification (index pattern).
+     The tensor operation must have all its tensor/scalar operands set at this point.**/
  void setIndexPattern(const std::string & pattern);
 
 private:
 
  std::string pattern_; //symbolic index pattern
  std::vector<const Tensor *> operands_; //tensor operands (non-owning pointers)
- std::vector<std::complex<double>> scalars_; //additional scalars
+ std::vector<std::complex<double>> scalars_; //additional scalars (prefactors)
  unsigned int num_operands_; //number of required tensor operands
  unsigned int num_scalars_; //number of required scalar arguments
 

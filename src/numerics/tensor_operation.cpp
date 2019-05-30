@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/05/27
+REVISION: 2019/05/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,9 +10,11 @@ namespace exatn{
 
 namespace numerics{
 
-TensorOperation::TensorOperation():
- num_operands_(0), num_scalars_(0)
+TensorOperation::TensorOperation(unsigned int num_operands, unsigned int num_scalars):
+ num_operands_(num_operands), num_scalars_(num_scalars)
 {
+ operands_.reserve(num_operands);
+ scalars_.reserve(num_scalars);
 }
 
 unsigned int TensorOperation::getNumOperands() const
