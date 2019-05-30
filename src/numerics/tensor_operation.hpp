@@ -61,7 +61,8 @@ public:
  std::complex<double> getScalar(unsigned int scalar_num) const;
 
  /** Sets the next scalar argument. **/
- void setScalar(const std::complex<double> scalar);
+ void setScalar(unsigned int scalar_num,
+                const std::complex<double> scalar);
 
  /** Returns the symbolic tensor operation specification (index pattern). **/
  const std::string & getIndexPattern() const;
@@ -70,7 +71,7 @@ public:
      The tensor operation must have all its tensor/scalar operands set at this point.**/
  void setIndexPattern(const std::string & pattern);
 
-private:
+protected:
 
  std::string pattern_; //symbolic index pattern
  std::vector<const Tensor *> operands_; //tensor operands (non-owning pointers)

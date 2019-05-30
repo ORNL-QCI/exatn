@@ -11,10 +11,9 @@ namespace exatn{
 namespace numerics{
 
 TensorOperation::TensorOperation(unsigned int num_operands, unsigned int num_scalars):
- num_operands_(num_operands), num_scalars_(num_scalars)
+ num_operands_(num_operands), num_scalars_(num_scalars), scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
  operands_.reserve(num_operands);
- scalars_.reserve(num_scalars);
 }
 
 unsigned int TensorOperation::getNumOperands() const
@@ -57,10 +56,10 @@ std::complex<double> TensorOperation::getScalar(unsigned int scalar_num) const
  return scalars_[scalar_num];
 }
 
-void TensorOperation::setScalar(const std::complex<double> scalar)
+void TensorOperation::setScalar(unsigned int scalar_num, const std::complex<double> scalar)
 {
- assert(scalars_.size() < num_scalars_);
- scalars_.push_back(scalar);
+ assert(scalar_num < scalars_.size());
+ scalars_[scalar_num] = scalar;
  return;
 }
 
