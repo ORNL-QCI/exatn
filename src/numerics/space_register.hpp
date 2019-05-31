@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2019/05/27
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,8 +33,7 @@ namespace numerics{
 class SubspaceRegEntry{
 public:
 
- SubspaceRegEntry(std::shared_ptr<Subspace> & subspace);
- SubspaceRegEntry(std::shared_ptr<Subspace> && subspace);
+ SubspaceRegEntry(std::shared_ptr<Subspace> subspace);
 
  SubspaceRegEntry(const SubspaceRegEntry &) = default;
  SubspaceRegEntry & operator=(const SubspaceRegEntry &) = default;
@@ -65,8 +64,7 @@ public:
  If the subspace has already been registered before, returns its existing id.
  Returned id = UNREG_SUBSPACE means that another subspace with the same name
  has already been registered before. **/
- SubspaceId registerSubspace(std::shared_ptr<Subspace> & subspace);
- SubspaceId registerSubspace(std::shared_ptr<Subspace> && subspace);
+ SubspaceId registerSubspace(std::shared_ptr<Subspace> subspace);
 
  /** Returns a non-owning pointer to a stored subspace by its id. **/
  const Subspace * getSubspace(SubspaceId id) const;
@@ -83,8 +81,7 @@ private:
 class SpaceRegEntry{
 public:
 
- SpaceRegEntry(std::shared_ptr<VectorSpace> & space);
- SpaceRegEntry(std::shared_ptr<VectorSpace> && space);
+ SpaceRegEntry(std::shared_ptr<VectorSpace> space);
 
  SpaceRegEntry(const SpaceRegEntry &) = delete;
  SpaceRegEntry & operator=(const SpaceRegEntry &) = delete;
@@ -117,8 +114,7 @@ public:
  Returned id = SOME_SPACE indicates an attempt to register a named
  vector space when another vector space has already been registered
  under the same name. **/
- SpaceId registerSpace(std::shared_ptr<VectorSpace> & space);
- SpaceId registerSpace(std::shared_ptr<VectorSpace> && space);
+ SpaceId registerSpace(std::shared_ptr<VectorSpace> space);
 
  /** Returns a non-owning pointer to a stored vector space by its id. **/
  const VectorSpace * getSpace(SpaceId id) const;

@@ -1,13 +1,13 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/05/27
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor inside a tensor network is generally connected
-     to other tensors in that network via so-called tensor legs,
-     each tensor leg is associated with its own tensor dimension.
+     to other tensors in that network via so-called tensor legs;
+     each tensor leg is associated with a specific tensor dimension.
  (b) Each tensor leg specifies a connection of a given tensor dimension
      to some dimension (or dimensions) in another tensor (or tensors) in
      the same tensor network. Thus, tensor legs can be binary, ternary, etc.,
@@ -23,6 +23,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_leg.hpp"
 #include "tensor.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace exatn{
@@ -33,9 +34,9 @@ class TensorConn{
 public:
 
  /** Constructs a connected tensor inside a tensor network. **/
- TensorConn(const Tensor * tensor,                //non-owning pointer to the tensor
-            unsigned int id,                      //tensor id in the tensor network
-            const std::vector<TensorLeg> & legs); //tensor legs: Connections to other tensors in the tensor network
+ TensorConn(std::shared_ptr<Tensor> tensor,       //in: co-owned pointer to the tensor
+            unsigned int id,                      //in: tensor id in the tensor network
+            const std::vector<TensorLeg> & legs); //in: tensor legs: Connections to other tensors in the tensor network
 
  TensorConn(const TensorConn &) = default;
  TensorConn & operator=(const TensorConn &) = default;
@@ -43,8 +44,8 @@ public:
  TensorConn & operator=(TensorConn &&) noexcept = default;
  virtual ~TensorConn() = default;
 
- /** Returns a non-owning pointer to the tensor. **/
- const Tensor * getTensor() const;
+ /** Returns a co-owned pointer to the tensor. **/
+ std::shared_ptr<Tensor> getTensor();
 
  /** Returns the tensor id. **/
  unsigned int getTensorId() const;
@@ -57,9 +58,9 @@ public:
 
 private:
 
- const Tensor * tensor_;       //non-owning pointer to the tensor
- unsigned int id_;             //tensor id in the tensor network
- std::vector<TensorLeg> legs_; //tensor legs: Connections to other tensors
+ std::shared_ptr<Tensor> tensor_; //co-owned pointer to the tensor
+ unsigned int id_;                //tensor id in the tensor network
+ std::vector<TensorLeg> legs_;    //tensor legs: Connections to other tensors
 
 };
 

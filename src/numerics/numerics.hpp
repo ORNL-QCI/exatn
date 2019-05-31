@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/05/02
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -12,10 +12,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
     (c) Any unregistered subspace of any named vector space has id = UNREG_SUBSPACE = max(uint64_t).
     (d) Every explicitly registered (named) vector space has an automatically registered full
         subspace (=space) under the same (space) name with id = FULL_SUBSPACE = 0.
-    (e) Every registered non-trivial subspace of any named vector space has id:
+    (e) Every registered non-trivial named subspace of any named vector space has id:
         0 < id < max(uint64_t).
     (f) A subspace of the anonymous vector space is defined by the
-        base offset (first basis vector) and its dimension.
+        base offset (first basis vector belonging to it) and its dimension.
  2. Index labels:
     (a) Any registered subspace can be assigned a symbolic index label serving as a placeholder for it;
         any index label can only refer to a single registered (named) subspace it is associated with.
@@ -49,7 +49,7 @@ SpaceId createVectorSpace(const std::string & space_name,            //in: vecto
                           DimExtent space_dim,                       //in: vector space dimension
                           const VectorSpace ** space_ptr = nullptr); //out: non-owning pointer to the created vector space
 
-/** Destroys a previously created vector space. **/
+/** Destroys a previously created named vector space. **/
 void destroyVectorSpace(const std::string & space_name); //in: name of the vector space to destroy
 void destroyVectorSpace(SpaceId space_id);               //in: id of the vector space to destroy
 
@@ -60,7 +60,7 @@ SubspaceId createSubspace(const std::string & subspace_name,           //in: sub
                           const std::pair<DimOffset,DimOffset> bounds, //in: range of basis vectors defining the created subspace: [lower:upper]
                           const Subspace ** subspace_ptr = nullptr);   //out: non-owning pointer to the created subspace
 
-/** Destroys a previously created subspace. **/
+/** Destroys a previously created named subspace. **/
 void destroySubspace(const std::string & subspace_name); //in: name of the subspace to destroy
 void destroySubspace(SubspaceId subspace_id);            //in: id of the subspace to destroy
 

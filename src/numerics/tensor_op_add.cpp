@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2019/05/30
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,7 +11,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpAdd::TensorOpAdd():
- TensorOperation(2,1)
+ TensorOperation(TensorOpCode::ADD,2,1)
 {
  this->setScalar(0,std::complex<double>{1.0,0.0}); //default alpha prefactor
 }

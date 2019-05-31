@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/05/27
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,6 +31,15 @@ enum class LegDirection{
  UNDIRECT, //no direction
  INWARD,   //inward direction
  OUTWARD   //outward direction
+};
+
+enum class TensorOpCode{
+ NOOP,           //no operation
+ CREATE,         //tensor creation
+ DESTROY,        //tensor destruction
+ TRANSFORM,      //tensor transformation/initialization
+ ADD,            //tensor addition
+ CONTRACT        //tensor contraction
 };
 
 } //namespace exatn

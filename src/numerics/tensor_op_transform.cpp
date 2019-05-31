@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/05/30
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,7 +11,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpTransform::TensorOpTransform():
- TensorOperation(1,1)
+ TensorOperation(TensorOpCode::TRANSFORM,1,1)
 {
  this->setScalar(0,std::complex<double>{0.0,0.0}); //default numerical initialization value
 }
