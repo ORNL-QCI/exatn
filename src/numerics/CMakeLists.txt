@@ -5,18 +5,20 @@ add_library(${LIBRARY_NAME}
             basis_vector.cpp
             space_basis.cpp
             spaces.cpp
-            tensor_signature.cpp
+            space_register.cpp
             tensor_shape.cpp
+            tensor_signature.cpp
             tensor_leg.cpp
             tensor.cpp
             tensor_connected.cpp
-            space_register.cpp
             tensor_operation.cpp
             tensor_op_create.cpp
             tensor_op_destroy.cpp
             tensor_op_transform.cpp
             tensor_op_add.cpp
             tensor_op_contract.cpp
+            tensor_op_factory.cpp
+            tensor_network.cpp
             num_server.cpp)
 
 target_include_directories(${LIBRARY_NAME}

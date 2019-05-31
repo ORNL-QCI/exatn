@@ -22,6 +22,8 @@ using SymmetryId = int;                    //symmetry id type
 using DimExtent = unsigned long long int;  //dimension extent type
 using DimOffset = unsigned long long int;  //dimension base offset type
 
+using ScopeId = unsigned int; //TAProL scope ID type
+
 constexpr DimExtent MAX_SPACE_DIM = 0xFFFFFFFFFFFFFFFF; //max dimension of unregistered (anonymous) spaces
 constexpr SpaceId SOME_SPACE = 0; //any unregistered (anonymous) space (all registered spaces will have SpaceId > 0)
 constexpr SubspaceId FULL_SUBSPACE = 0; //every space has its trivial (full) subspace automatically registered as subspace 0

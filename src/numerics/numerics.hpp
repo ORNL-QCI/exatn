@@ -32,8 +32,6 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
-using ScopeId = unsigned int; //TAProL scope ID type
-
 namespace numerics{
 
 /** Opens a new (child) TAProL scope and returns its id. **/
