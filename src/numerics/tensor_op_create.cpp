@@ -20,6 +20,11 @@ bool TensorOpCreate::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands());
 }
 
+TensorOperation * TensorOpCreate::createNew()
+{
+ return new TensorOpCreate();
+}
+
 } //namespace numerics
 
 } //namespace exatn

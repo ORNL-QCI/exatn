@@ -23,12 +23,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor_connected.hpp"
-#include "tensor_operation.hpp"
-#include "tensor_op_create.hpp"
-#include "tensor_op_destroy.hpp"
-#include "tensor_op_transform.hpp"
-#include "tensor_op_add.hpp"
-#include "tensor_op_contract.hpp"
+#include "tensor_op_factory.hpp"
 
 #include <unordered_map>
 

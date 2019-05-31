@@ -21,6 +21,11 @@ bool TensorOpTransform::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands());
 }
 
+TensorOperation * TensorOpTransform::createNew()
+{
+ return new TensorOpTransform();
+}
+
 } //namespace numerics
 
 } //namespace exatn

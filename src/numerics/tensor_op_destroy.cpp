@@ -20,6 +20,11 @@ bool TensorOpDestroy::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands());
 }
 
+TensorOperation * TensorOpDestroy::createNew()
+{
+ return new TensorOpDestroy();
+}
+
 } //namespace numerics
 
 } //namespace exatn

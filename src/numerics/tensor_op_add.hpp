@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2019/05/30
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,6 +31,9 @@ public:
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;
+
+ /** Create a new polymorphic instance of this subclass. **/
+ static TensorOperation * createNew();
 
 private:
 

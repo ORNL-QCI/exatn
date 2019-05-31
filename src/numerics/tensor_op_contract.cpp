@@ -22,6 +22,11 @@ bool TensorOpContract::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands() && this->getIndexPattern().length() > 0);
 }
 
+TensorOperation * TensorOpContract::createNew()
+{
+ return new TensorOpContract();
+}
+
 } //namespace numerics
 
 } //namespace exatn

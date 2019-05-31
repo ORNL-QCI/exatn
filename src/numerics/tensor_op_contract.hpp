@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2019/05/30
+REVISION: 2019/05/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,6 +32,9 @@ public:
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;
+
+ /** Create a new polymorphic instance of this subclass. **/
+ static TensorOperation * createNew();
 
 private:
 

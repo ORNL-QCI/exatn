@@ -84,6 +84,8 @@ protected:
 
 };
 
+using createTensorOpFn = TensorOperation* (*)(void);
+
 } //namespace numerics
 
 } //namespace exatn
