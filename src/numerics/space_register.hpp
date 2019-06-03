@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -39,7 +39,7 @@ public:
  SubspaceRegEntry & operator=(const SubspaceRegEntry &) = default;
  SubspaceRegEntry(SubspaceRegEntry &&) noexcept = default;
  SubspaceRegEntry & operator=(SubspaceRegEntry &&) noexcept = default;
- virtual ~SubspaceRegEntry() = default;
+ ~SubspaceRegEntry() = default;
 
  friend class SubspaceRegister;
 
@@ -58,7 +58,7 @@ public:
  SubspaceRegister & operator=(const SubspaceRegister &) = delete;
  SubspaceRegister(SubspaceRegister &&) noexcept = default;
  SubspaceRegister & operator=(SubspaceRegister &&) noexcept = default;
- virtual ~SubspaceRegister() = default;
+ ~SubspaceRegister() = default;
 
  /** Registers a subspace of some vector space and returns its registered id.
  If the subspace has already been registered before, returns its existing id.
@@ -87,7 +87,7 @@ public:
  SpaceRegEntry & operator=(const SpaceRegEntry &) = delete;
  SpaceRegEntry(SpaceRegEntry &&) noexcept = default;
  SpaceRegEntry & operator=(SpaceRegEntry &&) noexcept = default;
- virtual ~SpaceRegEntry() = default;
+ ~SpaceRegEntry() = default;
 
  friend class SpaceRegister;
 
@@ -107,7 +107,7 @@ public:
  SpaceRegister & operator=(const SpaceRegister &) = delete;
  SpaceRegister(SpaceRegister &&) noexcept = default;
  SpaceRegister & operator=(SpaceRegister &&) noexcept = default;
- virtual ~SpaceRegister() = default;
+ ~SpaceRegister() = default;
 
  /** Registers a named vector space and returns its registered id.
  If it has already been registered before, returns its existing id.

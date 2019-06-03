@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,9 +21,9 @@ bool TensorOpTransform::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands());
 }
 
-TensorOperation * TensorOpTransform::createNew()
+std::unique_ptr<TensorOperation> TensorOpTransform::createNew()
 {
- return new TensorOpTransform();
+ return std::unique_ptr<TensorOperation>(new TensorOpTransform());
 }
 
 } //namespace numerics

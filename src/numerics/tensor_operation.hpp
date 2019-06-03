@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,7 +84,7 @@ protected:
 
 };
 
-using createTensorOpFn = TensorOperation* (*)(void);
+using createTensorOpFn = std::unique_ptr<TensorOperation> (*)(void);
 
 } //namespace numerics
 

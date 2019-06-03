@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,13 +33,13 @@ public:
  TensorOpFactory & operator=(const TensorOpFactory &) = delete;
  TensorOpFactory(TensorOpFactory &&) noexcept = default;
  TensorOpFactory & operator=(TensorOpFactory &&) noexcept = default;
- virtual ~TensorOpFactory() = default;
+ ~TensorOpFactory() = default;
 
  /** Registers a new tensor operation subtype to produce instances of. **/
  void registerTensorOp(TensorOpCode opcode, createTensorOpFn creator);
 
  /** Creates a new instance of a desired subtype. **/
- TensorOperation * createTensorOp(TensorOpCode opcode);
+ std::unique_ptr<TensorOperation> createTensorOp(TensorOpCode opcode);
 
  /** Returns a pointer to the TensorOpFactory singleton. **/
  static TensorOpFactory * get();

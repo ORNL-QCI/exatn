@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,7 +33,7 @@ public:
  virtual bool isSet() const override;
 
  /** Create a new polymorphic instance of this subclass. **/
- static TensorOperation * createNew();
+ static std::unique_ptr<TensorOperation> createNew();
 
 private:
 

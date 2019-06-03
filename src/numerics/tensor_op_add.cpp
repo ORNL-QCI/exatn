@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,9 +21,9 @@ bool TensorOpAdd::isSet() const
  return (this->getNumOperandsSet() == this->getNumOperands() && this->getIndexPattern().length() > 0);
 }
 
-TensorOperation * TensorOpAdd::createNew()
+std::unique_ptr<TensorOperation> TensorOpAdd::createNew()
 {
- return new TensorOpAdd();
+ return std::unique_ptr<TensorOperation>(new TensorOpAdd());
 }
 
 } //namespace numerics
