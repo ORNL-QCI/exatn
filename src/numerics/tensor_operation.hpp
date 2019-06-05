@@ -41,6 +41,9 @@ public:
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const = 0;
 
+ /** Prints. **/
+ virtual void printIt() const;
+
  /** Returns the number of tensor operands required for the tensor operation. **/
  unsigned int getNumOperands() const;
 
