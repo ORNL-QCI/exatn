@@ -48,7 +48,7 @@ unsigned int TensorOperation::getNumOperandsSet() const
 
 std::size_t TensorOperation::getTensorOperandId(unsigned int op_num)
 {
- return reinterpret_cast<std::size_t>(this->getTensorOperand(op_num).get());
+ return ((this->getTensorOperand(op_num)).get())->getTensorId();
 }
 
 std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num)

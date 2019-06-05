@@ -4,6 +4,17 @@ REVISION: 2019/06/05
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
+/** Rationale:
+ (a) Numerical server provides basic tensor network processing functionality:
+     + Opening/closing TAProL scopes (top scope 0 "GLOBAL" is open automatically);
+     + Creation/destruction of named vector spaces and their named subspaces;
+     + Registration/retrieval of external data;
+     + Registration/retrieval of external tensor methods;
+     + Submission for processing of individual tensor operations and tensor networks.
+ (b) Processing of individual tensor operations and tensor networks has asynchronous semantics:
+     Submit TensorOperation/TensorNetwork for processing, then synchronize on the tensor-result.
+**/
+
 #ifndef EXATN_NUMERICS_NUM_SERVER_HPP_
 #define EXATN_NUMERICS_NUM_SERVER_HPP_
 
@@ -79,6 +90,22 @@ public:
  /** Destroys a previously created named subspace of a named vector space. **/
  void destroySubspace(const std::string & subspace_name); //in: name of the subspace to destroy
  void destroySubspace(SubspaceId subspace_id);
+
+
+ /** Submits an individual tensor operation for processing. **/
+ int submit(std::shared_ptr<TensorOperation> operation);
+ /** Submits a tensor network for processing (evaluating the tensor-result). **/
+ int submit(std::shared_ptr<TensorNetwork> network);
+
+ /** Synchronizes all tensor operations on a given tensor. **/
+ bool sync(const Tensor & tensor,
+           bool wait = false);
+ /** Synchronizes execution of a specific tensor operation. **/
+ bool sync(const TensorOperation & operation,
+           bool wait = false);
+ /** Synchronizes execution of a specific tensor network. **/
+ bool sync(const TensorNetwork & network,
+           bool wait = false);
 
 private:
 

@@ -96,6 +96,37 @@ void NumServer::destroySubspace(SubspaceId subspace_id)
  return;
 }
 
+
+int submit(std::shared_ptr<TensorOperation> operation)
+{
+ //`Finish
+ return 0;
+}
+
+int submit(std::shared_ptr<TensorNetwork> network)
+{
+ //`Finish
+ return 0;
+}
+
+bool sync(const Tensor & tensor, bool wait)
+{
+ //`Finish
+ return false;
+}
+
+bool sync(const TensorOperation & operation, bool wait)
+{
+ //`Finish
+ return false;
+}
+
+bool sync(const TensorNetwork & network, bool wait)
+{
+ //`Finish
+ return false;
+}
+
 } //namespace numerics
 
 } //namespace exatn
