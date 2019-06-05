@@ -46,6 +46,11 @@ unsigned int TensorOperation::getNumOperandsSet() const
  return static_cast<unsigned int>(operands_.size());
 }
 
+std::size_t TensorOperation::getTensorOperandId(unsigned int op_num)
+{
+ return reinterpret_cast<std::size_t>(this->getTensorOperand(op_num).get());
+}
+
 std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num)
 {
  if(op_num < operands_.size()) return operands_[op_num];
