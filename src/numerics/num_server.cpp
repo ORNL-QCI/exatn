@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/05/31
+REVISION: 2019/06/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,11 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+NumServer::NumServer()
+{
+ scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0});
+}
 
 void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method)
 {
@@ -35,15 +40,18 @@ std::shared_ptr<BytePacket> NumServer::getExternalData(const std::string & tag)
 
 ScopeId NumServer::openScope(const std::string & scope_name)
 {
- //`Finish
- return 0;
+ assert(scope_name.length() > 0);
+ ScopeId new_scope_id = scopes_.size();
+ scopes_.push(std::pair<std::string,ScopeId>{scope_name,new_scope_id});
+ return new_scope_id;
 }
 
 ScopeId NumServer::closeScope()
 {
- auto prev_scope = scopes_.top();
+ const auto & prev_scope = scopes_.top();
+ ScopeId prev_scope_id = std::get<1>(prev_scope);
  scopes_.pop();
- return prev_scope;
+ return prev_scope_id;
 }
 
 

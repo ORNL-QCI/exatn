@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/05/31
+REVISION: 2019/06/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,7 +31,7 @@ class NumServer{
 
 public:
 
- NumServer() = default;
+ NumServer();
  NumServer(const NumServer &) = delete;
  NumServer & operator=(const NumServer &) = delete;
  NumServer(NumServer &&) noexcept = default;
@@ -73,10 +73,10 @@ public:
      returns its registered id, and, optionally, a non-owning pointer to it. **/
  SubspaceId createSubspace(const std::string & subspace_name,           //in: subspace name
                            const std::string & space_name,              //in: containing vector space name
-                           const std::pair<DimOffset,DimOffset> bounds, //in: range of basis vectors defining the created subspace: [
+                           const std::pair<DimOffset,DimOffset> bounds, //in: range of basis vectors defining the created subspace
                            const Subspace ** subspace_ptr = nullptr);   //out: non-owning pointer to the created subspace
 
- /** Destroys a previously created named subspace. **/
+ /** Destroys a previously created named subspace of a named vector space. **/
  void destroySubspace(const std::string & subspace_name); //in: name of the subspace to destroy
  void destroySubspace(SubspaceId subspace_id);
 
@@ -88,7 +88,7 @@ private:
  std::map<std::string,std::shared_ptr<TensorMethod<Identifiable>>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data
 
- std::stack<ScopeId> scopes_; //TAProL scope stack
+ std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
 };
 
