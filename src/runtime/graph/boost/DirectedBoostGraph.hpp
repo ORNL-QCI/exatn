@@ -31,7 +31,7 @@ namespace exatn {
 
 class DirectedBoostVertex {
 public:
-  TensorOpNode properties;
+  std::shared_ptr<TensorOpNode> properties;
 };
 
 using d_adj_list =
@@ -56,12 +56,12 @@ protected:
 public:
   DirectedBoostGraph();
 
-  void addEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) override;
+  void addEdge(const std::shared_ptr<TensorOpNode> &srcNode, const std::shared_ptr<TensorOpNode> &tgtNode) override;
 
-  void addVertex(TensorOpNode &&properties) override;
-  void addVertex(TensorOpNode &properties) override;
+  //void addVertex(TensorOpNode &&properties) override;
+  void addVertex(std::shared_ptr<TensorOpNode> properties) override;
 
-  TensorOpNode &getVertexProperties(const int index) override;
+  const std::shared_ptr<TensorOpNode> &getVertexProperties(const int index) override;
   void setNodeExecuted(const int index) override;
 
   bool edgeExists(const int srcIndex, const int tgtIndex) override;

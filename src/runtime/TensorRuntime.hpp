@@ -14,14 +14,16 @@ namespace runtime {
 
 class TensorRuntime {
 protected:
-  std::map<std::string, TensorGraph> dags;
+  std::map<std::string, std::shared_ptr<TensorGraph>> dags;
   std::string currentScope;
 
 public:
   void openScope(const std::string &scopeName);
   void closeScope();
 
-  void submit(TensorOp &op);
+  void submit(std::shared_ptr<TensorOperation> op);
+
+  void sync(const std::shared_ptr<TensorOperation> &op);
 
   void sync(const exatn::numerics::Tensor &tensor);
 

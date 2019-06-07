@@ -1,21 +1,65 @@
 #include "TensorRuntime.hpp"
+#include "TensorGraph.hpp"
+
+#include<memory>
 
 namespace exatn {
 namespace runtime {
 void TensorRuntime::openScope(const std::string &scopeName) {
+  assert(scopeName.length() > 0);
+  // save currentScope name
   currentScope = scopeName;
   // create new graph with name given by scope name
-  TensorGraph tg;
   // store it in the dags map
-  dags[currentScope]=tg; 
-  // save currentScope name
+  dags[currentScope] = std::make_shared<TensorGraph>();
 }
 
 void TensorRuntime::closeScope() { currentScope = ""; }
 
-void TensorRuntime::submit(TensorOp &op) {
-  // add on to the graph
+void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
+  //Call sync on a single operation for now
+  sync(op);
+
   // work on graph at dags[currentScope]
+  // add on to the graph
+  std::shared_ptr<TensorGraph> tg=dags[currentScope];
+  if(tg->size()==0)
+  {
+        std::shared_ptr<TensorOpNode> dag_node=std:make_shared<TensorOpNode>(op);
+	tg->addVertex(dag_node);
+	//Create a dummy op node to start the graph
+	/* for now this won't be necessary
+        std::shared_ptr<TensorOpNode> dummy=std::make_shared<TensorOpNode>();
+	dummy->is_noop=true;
+        tg->addVertex(dummy);
+        tg->addEdge(dummy,dag_node);*/
+  }
+  else
+  {
+	int tg_sz=tg->size();
+	std::shared_ptr<TensorOpNode> op1=std::make_shared<TensorOpNode>(op);
+	tg->addVertex(op1);
+	unsigned int num_op1_operands = op->getNumOperands();
+	TensorOpNode op0;
+	bool no_edge=true;
+	for(int i=tg_sz-1; i>=0 && no_edge; i--)
+	{
+		op0=tg->getVertexProperties(i);
+		std::size_t op0_outid = op0.op->getTensorOperandId(0);
+		for(int j=1; j<num_op1_operands && no_edge; j++) {
+			if(op0_outid == op1.op->getTensorOperandId(j))
+			{
+				tg->addEdge(op0,op1);
+				no_edge=false;
+			}
+		}
+	}
+  }
+}
+
+void TensorRuntime::sync(const std::shared_ptr<TensorOperation> &op) {
+  // sync on a particular tensor, everything related to tensor
+  // must complete
 }
 
 void TensorRuntime::sync(const exatn::numerics::Tensor &tensor) {

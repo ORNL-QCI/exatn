@@ -18,9 +18,10 @@ using TensorOp = int;
 class TensorOpNode {
 public:
   TensorOpNode() : op(nullptr) {}
-  TensorOpNode(TensorOp *o) : op(o) {}
-  TensorOp *op;
+  TensorOpNode(std::shared_ptr<TensorOperation> o) : op(o) {}
+  std::shared_ptr<TensorOperation> op;
   bool executed = false;
+  bool is_noop = false;
   int id;
   // Add any other info you need
 };
@@ -43,7 +44,7 @@ public:
   // = 0;
 
   // Get the TensorOpNode at the given index
-  virtual TensorOpNode &getVertexProperties(const int index) = 0;
+  virtual const std::shared_ptr<TensorOpNode> &getVertexProperties(const int index) = 0;
 
   // Flip the bool on the TensorOpNode to indicate this
   // node has been executed
