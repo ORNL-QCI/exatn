@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2018/12/18
+REVISION: 2019/06/05
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,6 +74,11 @@ SubspaceId Tensor::getDimSubspaceId(unsigned int dim_id) const
 std::pair<SpaceId,SubspaceId> Tensor::getDimSpaceAttr(unsigned int dim_id) const
 {
  return signature_.getDimSpaceAttr(dim_id);
+}
+
+std::size_t Tensor::getTensorId() const
+{
+ return reinterpret_cast<std::size_t>(this);
 }
 
 } //namespace numerics

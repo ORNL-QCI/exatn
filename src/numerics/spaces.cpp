@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Space Basis
-REVISION: 2019/05/27
+REVISION: 2019/06/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -83,6 +83,12 @@ subspace_name_(""), id_(UNREG_SUBSPACE)
 }
 
 Subspace::Subspace(const VectorSpace * vector_space,
+                   std::pair<DimOffset,DimOffset> bounds):
+Subspace(vector_space,std::get<0>(bounds),std::get<1>(bounds))
+{
+}
+
+Subspace::Subspace(const VectorSpace * vector_space,
                    DimOffset lower_bound,
                    DimOffset upper_bound,
                    const std::string & subspace_name):
@@ -90,6 +96,13 @@ vector_space_(vector_space), lower_bound_(lower_bound), upper_bound_(upper_bound
 subspace_name_(subspace_name), id_(UNREG_SUBSPACE)
 {
  assert(lower_bound_ <= upper_bound_ && upper_bound_ < vector_space_->getDimension());
+}
+
+Subspace::Subspace(const VectorSpace * vector_space,
+                   std::pair<DimOffset,DimOffset> bounds,
+                   const std::string & subspace_name):
+Subspace(vector_space,std::get<0>(bounds),std::get<1>(bounds),subspace_name)
+{
 }
 
 void Subspace::printIt() const

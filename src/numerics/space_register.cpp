@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2019/05/31
+REVISION: 2019/06/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -106,6 +106,29 @@ const VectorSpace * SpaceRegister::getSpace(const std::string & name) const
  }else{ //unnamed (anonymous) vector space (space 0 = SOME_SPACE)
   return spaces_[0].space_.get();
  }
+}
+
+SubspaceId SpaceRegister::registerSubspace(std::shared_ptr<Subspace> subspace)
+{
+ const VectorSpace * space = subspace->getVectorSpace();
+ assert(space != nullptr);
+ SpaceId space_id = space->getRegisteredId();
+ assert(space_id != SOME_SPACE && space_id < spaces_.size());
+ SubspaceRegister & subspace_register = spaces_[space_id].subspaces_;
+ return subspace_register.registerSubspace(subspace);
+}
+
+const Subspace * SpaceRegister::getSubspace(const std::string & space_name,
+                                            const std::string & subspace_name) const
+{
+ assert(space_name.length() > 0 && subspace_name.length() > 0);
+ auto it = name2id_.find(space_name);
+ if(it == name2id_.end()) std::cout << "#ERROR(SpaceRegister::registerSubspace): Space not found: " << space_name << std::endl;
+ assert(it != name2id_.end());
+ SpaceId space_id = (*it).second;
+ assert(space_id != SOME_SPACE && space_id < spaces_.size());
+ const SubspaceRegister & subspace_register = spaces_[space_id].subspaces_;
+ return subspace_register.getSubspace(subspace_name);
 }
 
 } //namespace numerics

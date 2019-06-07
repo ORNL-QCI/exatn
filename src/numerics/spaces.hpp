@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/05/27
+REVISION: 2019/06/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -88,10 +88,15 @@ public:
  Subspace(const VectorSpace * vector_space,
           DimOffset lower_bound,
           DimOffset upper_bound);
+ Subspace(const VectorSpace * vector_space,
+          std::pair<DimOffset,DimOffset> bounds);
  /** Named subspace of a vector space defined by a subrange of basis vectors. **/
  Subspace(const VectorSpace * vector_space,
           DimOffset lower_bound,
           DimOffset upper_bound,
+          const std::string & subspace_name);
+ Subspace(const VectorSpace * vector_space,
+          std::pair<DimOffset,DimOffset> bounds,
           const std::string & subspace_name);
 
  Subspace(const Subspace & subspace) = default;

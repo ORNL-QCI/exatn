@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/05/31
+REVISION: 2019/06/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,6 +43,9 @@ public:
  TensorConn(TensorConn &&) noexcept = default;
  TensorConn & operator=(TensorConn &&) noexcept = default;
  virtual ~TensorConn() = default;
+
+ /** Prints. **/
+ void printIt() const;
 
  /** Returns a co-owned pointer to the tensor. **/
  std::shared_ptr<Tensor> getTensor();

@@ -1,10 +1,12 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/05/31
+REVISION: 2019/06/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operation.hpp"
+
+#include <iostream>
 
 namespace exatn{
 
@@ -17,6 +19,23 @@ TensorOperation::TensorOperation(TensorOpCode opcode, unsigned int num_operands,
  operands_.reserve(num_operands);
 }
 
+void TensorOperation::printIt() const
+{
+ std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
+ if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
+ for(const auto & tensor: operands_){
+  std::cout << " ";
+  tensor->printIt();
+  std::cout << std::endl;
+ }
+ for(const auto & scalar: scalars_){
+  std::cout << " " << scalar;
+ }
+ if(scalars_.size() > 0) std::cout << std::endl;
+ std::cout << "}" << std::endl;
+ return;
+}
+
 unsigned int TensorOperation::getNumOperands() const
 {
  return num_operands_;
@@ -25,6 +44,11 @@ unsigned int TensorOperation::getNumOperands() const
 unsigned int TensorOperation::getNumOperandsSet() const
 {
  return static_cast<unsigned int>(operands_.size());
+}
+
+std::size_t TensorOperation::getTensorOperandId(unsigned int op_num)
+{
+ return ((this->getTensorOperand(op_num)).get())->getTensorId();
 }
 
 std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num)
