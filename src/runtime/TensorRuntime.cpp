@@ -5,7 +5,9 @@ namespace runtime {
 void TensorRuntime::openScope(const std::string &scopeName) {
   currentScope = scopeName;
   // create new graph with name given by scope name
+  TensorGraph tg;
   // store it in the dags map
+  dags[currentScope]=tg; 
   // save currentScope name
 }
 
