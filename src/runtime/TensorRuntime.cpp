@@ -42,18 +42,19 @@ void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
 	unsigned int num_op1_operands = op->getNumOperands();
 	TensorOpNode op0;
 	bool no_edge=true;
-	for(int i=tg_sz-1; i>=0 && no_edge; i--)
+	for(int i=tg_sz-1; i>=0; i--)
 	{
 		op0=tg->getVertexProperties(i);
 		std::size_t op0_outid = op0.op->getTensorOperandId(0);
-		for(int j=1; j<num_op1_operands && no_edge; j++) {
-			if(op0_outid == op1.op->getTensorOperandId(j))
+		for(int j=1; j<num_op1_operands; j++) {
+			if(op0_outid == op1->op->getTensorOperandId(j))
 			{
 				tg->addEdge(op0,op1);
 				no_edge=false;
 			}
 		}
 	}
+	//add edge to dummy node if no edge added (may not be necessary)
   }
 }
 
