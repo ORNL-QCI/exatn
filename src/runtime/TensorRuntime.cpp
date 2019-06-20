@@ -1,9 +1,4 @@
 #include "TensorRuntime.hpp"
-#include "TensorGraph.hpp"
-
-#include<memory>
-#include <mutex>          
-
 
 namespace exatn {
 namespace runtime {
@@ -19,9 +14,8 @@ void TensorRuntime::openScope(const std::string &scopeName) {
 void TensorRuntime::closeScope() { currentScope = ""; }
 
 void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
-  //Call sync on a single operation for now
-  //TODO: add cthread code to lock and unlock
-  int newop_outid = op->op->getTensorOperandId(0);
+  //upate the output tensor executation table
+  int newop_outid = op->getTensorOperandId(0);
   mtx.lock();
   if(outTensorExec.find(newop_outid)==outTensorExec.end())
 	outTensorExec[newop_outid]==1;
@@ -36,32 +30,42 @@ void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   tg->addVertex(op1);
   unsigned int num_op1_operands = op->getNumOperands();
   TensorOpNode op0;
-  bool no_edge=true;
   for(int i=tg_sz-1; i>=0; i--)
   {
 	op0=tg->getVertexProperties(i);
 	std::size_t op0_outid = op0.op->getTensorOperandId(0);
 	for(int j=1; j<num_op1_operands; j++) {
 		if(op0_outid == op1->op->getTensorOperandId(j))
-		{
 			tg->addEdge(op0,op1);
-			no_edge=false;
-		}
 	}
   }
   mtx.unlock();
-
-  sync(op);
 }
 
 void TensorRuntime::sync(const std::shared_ptr<TensorOperation> &op) {
   // sync on a particular tensor, everything related to tensor
-  // must complete
+  bool syncing=true;
+  int op_outid = op->getTensorOperandId(0);
+  while(syncing)
+  {
+	mtx.lock();
+		if(outTensorExec[op_outid]==0)
+			syncing=false;
+	mtx.unlock();
+  }
 }
 
 void TensorRuntime::sync(const exatn::numerics::Tensor &tensor) {
   // sync on a particular tensor, everything related to tensor
-  // must complete
+  bool syncing=true;
+  int tid = tensor.getTensorId();;
+  while(syncing)
+  {
+        mtx.lock();
+                if(outTensorExec[tid]==0)
+                        syncing=false;
+        mtx.unlock();
+  }
 }
 
 TensorDenseBlock

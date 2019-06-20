@@ -7,7 +7,7 @@
 
 #include "TensorGraph.hpp"
 #include "tensor.hpp"
-
+#include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
 namespace exatn {
