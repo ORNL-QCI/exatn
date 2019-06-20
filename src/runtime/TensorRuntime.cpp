@@ -23,39 +23,25 @@ void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg=dags[currentScope];
-  if(tg->size()==0)
+  int tg_sz=tg->size();
+  std::shared_ptr<TensorOpNode> op1=std::make_shared<TensorOpNode>(op);
+  tg->addVertex(op1);
+  unsigned int num_op1_operands = op->getNumOperands();
+  TensorOpNode op0;
+  bool no_edge=true;
+  for(int i=tg_sz-1; i>=0; i--)
   {
-        std::shared_ptr<TensorOpNode> dag_node=std:make_shared<TensorOpNode>(op);
-	tg->addVertex(dag_node);
-	//Create a dummy op node to start the graph
-	/* for now this won't be necessary
-        std::shared_ptr<TensorOpNode> dummy=std::make_shared<TensorOpNode>();
-	dummy->is_noop=true;
-        tg->addVertex(dummy);
-        tg->addEdge(dummy,dag_node);*/
-  }
-  else
-  {
-	int tg_sz=tg->size();
-	std::shared_ptr<TensorOpNode> op1=std::make_shared<TensorOpNode>(op);
-	tg->addVertex(op1);
-	unsigned int num_op1_operands = op->getNumOperands();
-	TensorOpNode op0;
-	bool no_edge=true;
-	for(int i=tg_sz-1; i>=0; i--)
-	{
-		op0=tg->getVertexProperties(i);
-		std::size_t op0_outid = op0.op->getTensorOperandId(0);
-		for(int j=1; j<num_op1_operands; j++) {
-			if(op0_outid == op1->op->getTensorOperandId(j))
-			{
-				tg->addEdge(op0,op1);
-				no_edge=false;
-			}
+	op0=tg->getVertexProperties(i);
+	std::size_t op0_outid = op0.op->getTensorOperandId(0);
+	for(int j=1; j<num_op1_operands; j++) {
+		if(op0_outid == op1->op->getTensorOperandId(j))
+		{
+			tg->addEdge(op0,op1);
+			no_edge=false;
 		}
 	}
-	//add edge to dummy node if no edge added (may not be necessary)
   }
+	//add edge to dummy node if no edge added (may not be necessary)
 }
 
 void TensorRuntime::sync(const std::shared_ptr<TensorOperation> &op) {
