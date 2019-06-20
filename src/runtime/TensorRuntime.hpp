@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 
 #include "TensorGraph.hpp"
 #include "tensor.hpp"
@@ -16,7 +17,8 @@ class TensorRuntime {
 protected:
   std::map<std::string, std::shared_ptr<TensorGraph>> dags;
   std::string currentScope;
-
+  std::map<int, int> outTensorExec; //table for tracking output tensor execution
+  std::mutex mtx;           // mutex for lock on outTensorExec and dags
 public:
   void openScope(const std::string &scopeName);
   void closeScope();

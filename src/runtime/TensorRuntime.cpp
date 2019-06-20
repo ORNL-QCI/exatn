@@ -2,6 +2,8 @@
 #include "TensorGraph.hpp"
 
 #include<memory>
+#include <mutex>          
+
 
 namespace exatn {
 namespace runtime {
@@ -18,7 +20,13 @@ void TensorRuntime::closeScope() { currentScope = ""; }
 
 void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   //Call sync on a single operation for now
-  sync(op);
+  //TODO: add cthread code to lock and unlock
+  int newop_outid = op->op->getTensorOperandId(0);
+  mtx.lock();
+  if(outTensorExec.find(newop_outid)==outTensorExec.end())
+	outTensorExec[newop_outid]==1;
+  else
+	outTensorExec[newop_outid]+=1;
 
   // work on graph at dags[currentScope]
   // add on to the graph
@@ -41,7 +49,9 @@ void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
 		}
 	}
   }
-	//add edge to dummy node if no edge added (may not be necessary)
+  mtx.unlock();
+
+  sync(op);
 }
 
 void TensorRuntime::sync(const std::shared_ptr<TensorOperation> &op) {
