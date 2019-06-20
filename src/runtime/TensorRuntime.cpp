@@ -16,11 +16,20 @@ void TensorRuntime::closeScope() { currentScope = ""; }
 void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   //upate the output tensor executation table
   int newop_outid = op->getTensorOperandId(0);
+  std::map<std::string, std::map<int, int>>::iterator curTableIter;
+  std::map<int, int>::iterator &cur_table;
   mtx.lock();
-  if(outTensorExec.find(newop_outid)==outTensorExec.end())
-	outTensorExec[newop_outid]==1;
+  curTableIter = outTensorExecTbl.find(currentScope);
+  if(curTableIter != outTensorExecTbl.end())
+  {
+	cur_table = curTableIter.second;
+	if(cur_table.find(newop_outid)==cur_table.end())
+		cur_table[newop_outid]=1;
+	else
+		cur_table[newop_outid]+=1;
+  }
   else
-	outTensorExec[newop_outid]+=1;
+	outTensorExeciTbl[currentScope][newop_outid]=1;
 
   // work on graph at dags[currentScope]
   // add on to the graph
