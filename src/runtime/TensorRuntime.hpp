@@ -8,7 +8,7 @@
 #include "TensorGraph.hpp"
 #include "tensor.hpp"
 #include "tensor_operation.hpp"
-#include "tensor_method.hpp"
+//#include "tensor_method.hpp"
 
 namespace exatn {
 namespace runtime {
@@ -17,7 +17,7 @@ class TensorRuntime {
 protected:
   std::map<std::string, std::shared_ptr<TensorGraph>> dags;
   std::string currentScope;
-  std::map<std::string, map<int, int>> outTensorExecTbl; //table for tracking output tensor execution
+  std::map<std::string, std::map<int, int>> outTensorExecTbl; //table for tracking output tensor execution
   std::mutex mtx;           // mutex for lock on outTensorExec and dags
 public:
   void openScope(const std::string &scopeName);

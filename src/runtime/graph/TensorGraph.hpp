@@ -32,10 +32,10 @@ class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
 public:
   // Add an edge between src and tgt, this is
   // a directed edge
-  virtual void addEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) = 0;
+  virtual void addEdge(const std::shared_ptr<TensorOpNode> &srcNode, const std::shared_ptr<TensorOpNode> &tgtNode) = 0;
 
-  virtual void addVertex(TensorOpNode &opNode) = 0;
-  virtual void addVertex(TensorOpNode &&opNode) = 0;
+  virtual void addVertex(std::shared_ptr<TensorOpNode> opNode) = 0;
+  //virtual void addVertex(TensorOpNode &&opNode) = 0;
 
   // For now lets assume as you build it,
   // you can't change the structure or the node values

@@ -16,20 +16,19 @@ void TensorRuntime::closeScope() { currentScope = ""; }
 void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   //upate the output tensor executation table
   int newop_outid = op->getTensorOperandId(0);
-  std::map<std::string, std::map<int, int>>::iterator curTableIter;
-  std::map<int, int>::iterator &cur_table;
   mtx.lock();
-  curTableIter = outTensorExecTbl.find(currentScope);
+  std::map<std::string, std::map<int, int>>::iterator curTableIter = outTensorExecTbl.find(currentScope);
   if(curTableIter != outTensorExecTbl.end())
   {
-	cur_table = curTableIter.second;
+	
+	std::map<int, int> &cur_table = curTableIter->second;
 	if(cur_table.find(newop_outid)==cur_table.end())
 		cur_table[newop_outid]=1;
 	else
 		cur_table[newop_outid]+=1;
   }
   else
-	outTensorExeciTbl[currentScope][newop_outid]=1;
+	outTensorExecTbl[currentScope][newop_outid]=1;
 
   // work on graph at dags[currentScope]
   // add on to the graph
@@ -38,11 +37,11 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   std::shared_ptr<TensorOpNode> op1=std::make_shared<TensorOpNode>(op);
   tg->addVertex(op1);
   unsigned int num_op1_operands = op->getNumOperands();
-  TensorOpNode op0;
+  std::shared_ptr<TensorOpNode> op0;
   for(int i=tg_sz-1; i>=0; i--)
   {
 	op0=tg->getVertexProperties(i);
-	std::size_t op0_outid = op0.op->getTensorOperandId(0);
+	std::size_t op0_outid = op0->op->getTensorOperandId(0);
 	for(int j=1; j<num_op1_operands; j++) {
 		if(op0_outid == op1->op->getTensorOperandId(j))
 			tg->addEdge(op0,op1);
@@ -58,7 +57,7 @@ void TensorRuntime::sync(const std::shared_ptr<numerics::TensorOperation> &op) {
   while(syncing)
   {
 	mtx.lock();
-		if(outTensorExec[op_outid]==0)
+		if(outTensorExecTbl[currentScope][op_outid]==0)
 			syncing=false;
 	mtx.unlock();
   }
@@ -71,7 +70,7 @@ void TensorRuntime::sync(const exatn::numerics::Tensor &tensor) {
   while(syncing)
   {
         mtx.lock();
-                if(outTensorExec[tid]==0)
+                if(outTensorExecTbl[currentScope][tid]==0)
                         syncing=false;
         mtx.unlock();
   }
