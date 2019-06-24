@@ -2,6 +2,7 @@
 #define XACC_QUANTUM_GRAPH_HPP_
 
 #include "Identifiable.hpp"
+#include "tensor_operation.hpp"
 
 #include <fstream>
 #include <iostream>
