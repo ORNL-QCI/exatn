@@ -14,12 +14,13 @@ add_library(${LIBRARY_NAME}
 target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC .
+         boost
          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
          ${CMAKE_SOURCE_DIR}/src/exatn
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph PRIVATE Boost::graph)
 
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path")
@@ -33,7 +34,7 @@ if(EXATN_BUILD_TESTS)
   #add_subdirectory(tests)
 endif()
 
-file (GLOB HEADERS *.hpp)
+file (GLOB HEADERS *.hpp boost/*.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)

@@ -9,7 +9,7 @@
 #include "tensor.hpp"
 #include "tensor_operation.hpp"
 #include "DirectedBoostGraph.hpp"
-include "tensor_method.hpp"
+#include "tensor_method.hpp"
 
 namespace exatn {
 namespace runtime {

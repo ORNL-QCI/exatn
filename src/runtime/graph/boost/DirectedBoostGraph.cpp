@@ -14,8 +14,7 @@ DirectedBoostGraph::DirectedBoostGraph() {
 }
 
 void DirectedBoostGraph::addEdge(const std::shared_ptr<TensorOpNode> &srcNode, const std::shared_ptr<TensorOpNode> &tgtNode) {
-  add_edge(vertex(srcNode.id, *_graph.get()), vertex(tgtNode.id, *_graph.get()),
-           *_graph.get());
+  add_edge(vertex(srcNode->id, *_graph.get()), vertex(tgtNode->id, *_graph.get()), *_graph.get());
 }
 
 /*

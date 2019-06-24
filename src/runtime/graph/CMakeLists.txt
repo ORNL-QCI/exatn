@@ -12,8 +12,10 @@ add_library(${LIBRARY_NAME}
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC . boost
+  PUBLIC .
+         boost
          ${CMAKE_SOURCE_DIR}/src/exatn
+         ${CMAKE_SOURCE_DIR}/src/numerics
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )
 
@@ -50,4 +52,3 @@ file (GLOB HEADERS *.hpp boost/*.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
 install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
-
