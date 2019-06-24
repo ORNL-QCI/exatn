@@ -19,8 +19,8 @@ using TensorOp = int;
 class TensorOpNode {
 public:
   TensorOpNode() : op(nullptr) {}
-  TensorOpNode(std::shared_ptr<TensorOperation> o) : op(o) {}
-  std::shared_ptr<TensorOperation> op;
+  TensorOpNode(std::shared_ptr<numerics::TensorOperation> o) : op(o) {}
+  std::shared_ptr<numerics::TensorOperation> op;
   bool executed = false;
   bool is_noop = false;
   int id;

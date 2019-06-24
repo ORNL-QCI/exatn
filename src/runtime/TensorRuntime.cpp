@@ -13,7 +13,7 @@ void TensorRuntime::openScope(const std::string &scopeName) {
 
 void TensorRuntime::closeScope() { currentScope = ""; }
 
-void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
+void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   //upate the output tensor executation table
   int newop_outid = op->getTensorOperandId(0);
   std::map<std::string, std::map<int, int>>::iterator curTableIter;
@@ -51,7 +51,7 @@ void TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   mtx.unlock();
 }
 
-void TensorRuntime::sync(const std::shared_ptr<TensorOperation> &op) {
+void TensorRuntime::sync(const std::shared_ptr<numerics::TensorOperation> &op) {
   // sync on a particular tensor, everything related to tensor
   bool syncing=true;
   int op_outid = op->getTensorOperandId(0);

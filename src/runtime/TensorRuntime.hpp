@@ -23,9 +23,9 @@ public:
   void openScope(const std::string &scopeName);
   void closeScope();
 
-  void submit(std::shared_ptr<TensorOperation> op);
+  void submit(std::shared_ptr<numerics::TensorOperation> op);
 
-  void sync(const std::shared_ptr<TensorOperation> &op);
+  void sync(const std::shared_ptr<numerics::TensorOperation> &op);
 
   void sync(const exatn::numerics::Tensor &tensor);
 
