@@ -1,4 +1,5 @@
 #include "TensorRuntime.hpp"
+#include "exatn.hpp"
 
 namespace exatn {
 namespace runtime {
