@@ -33,6 +33,8 @@ public:
  TensorShape(std::initializer_list<T> extents);
  template<typename T>
  TensorShape(const std::vector<T> & extents);
+ /** Create an empty tensor shape. **/
+ TensorShape();
 
  TensorShape(const TensorShape & tens_shape) = default;
  TensorShape & operator=(const TensorShape & tens_shape) = default;

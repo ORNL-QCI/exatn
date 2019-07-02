@@ -32,6 +32,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_op_factory.hpp"
 
 #include <unordered_map>
+#include <string>
 
 namespace exatn{
 
@@ -44,7 +45,10 @@ public:
 
  using ContractionSequence = std::vector<std::pair<unsigned int, unsigned int>>; //pairs of contracted tensor id's
 
- TensorNetwork() = default;
+ /** Creates an unnamed empty tensor network with a single scalar output tensor named "_SMOKY_TENSOR_" **/
+ TensorNetwork();
+ /** Creates a named empty tensor network with a single scalar output tensor named with the same name. **/
+ TensorNetwork(const std::string & name);
 
  TensorNetwork(const TensorNetwork &) = default;
  TensorNetwork & operator=(const TensorNetwork &) = default;
@@ -52,9 +56,16 @@ public:
  TensorNetwork & operator=(TensorNetwork &&) noexcept = default;
  virtual ~TensorNetwork() = default;
 
+ /** Prints **/
+ void printIt() const;
+
+ /** Returns the number of input tensors in the tensor network.
+     Note that the output tensor (tensor #0) is not counted here. **/
+ unsigned int getNumTensors() const;
 
 private:
 
+ std::string name_;                                     //tensor network name
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
 };

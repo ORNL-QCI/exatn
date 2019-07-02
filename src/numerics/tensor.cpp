@@ -6,9 +6,8 @@ Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
 
-#include <assert.h>
-
 #include <iostream>
+#include <assert.h>
 
 namespace exatn{
 
@@ -27,6 +26,11 @@ name_(name), shape_(shape), signature_(signature)
 Tensor::Tensor(const std::string & name,
                const TensorShape & shape):
 name_(name), shape_(shape), signature_(shape.getRank())
+{
+}
+
+Tensor::Tensor(const std::string & name):
+name_(name)
 {
 }
 

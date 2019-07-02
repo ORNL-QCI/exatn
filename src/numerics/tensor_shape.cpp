@@ -14,6 +14,10 @@ namespace exatn{
 
 namespace numerics{
 
+TensorShape::TensorShape()
+{
+}
+
 void TensorShape::printIt() const
 {
  std::cout << "{";

@@ -29,6 +29,10 @@ subspaces_(rank,std::pair<SpaceId,SubspaceId>(SOME_SPACE,0))
 {
 }
 
+TensorSignature::TensorSignature()
+{
+}
+
 void TensorSignature::printIt() const
 {
  std::cout << "{";

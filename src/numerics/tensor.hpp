@@ -75,6 +75,8 @@ public:
  template<typename T>
  Tensor(const std::string & name,        //tensor name
         const std::vector<T> & extents); //tensor dimension extents
+ /** Create a rank-0 tensor (scalar). **/
+ Tensor(const std::string & name);       //tensor name
 
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;

@@ -37,9 +37,10 @@ public:
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);
-
  /** Create a default tensor signature of std::pair<SOME_SPACE,0> by providing the tensor rank only. **/
  TensorSignature(unsigned int rank);
+ /** Create an empty tensor signature. **/
+ TensorSignature();
 
  TensorSignature(const TensorSignature & tens_signature) = default;
  TensorSignature & operator=(const TensorSignature & tens_signature) = default;
