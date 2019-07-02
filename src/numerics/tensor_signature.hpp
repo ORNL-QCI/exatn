@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/05/27
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,9 +37,10 @@ public:
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);
-
  /** Create a default tensor signature of std::pair<SOME_SPACE,0> by providing the tensor rank only. **/
  TensorSignature(unsigned int rank);
+ /** Create an empty tensor signature. **/
+ TensorSignature();
 
  TensorSignature(const TensorSignature & tens_signature) = default;
  TensorSignature & operator=(const TensorSignature & tens_signature) = default;
@@ -57,6 +58,12 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Deletes a specific subspace, reducing the signature rank by one. **/
+ void deleteDimension(unsigned int dim_id);
+
+ /** Appends a new subspace at the end, increasing the signature rank by one. **/
+ void appendDimension(std::pair<SpaceId,SubspaceId> subspace = {SOME_SPACE,0});
 
 private:
 

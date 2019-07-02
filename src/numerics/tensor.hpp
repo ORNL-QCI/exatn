@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/06/05
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,6 +75,8 @@ public:
  template<typename T>
  Tensor(const std::string & name,        //tensor name
         const std::vector<T> & extents); //tensor dimension extents
+ /** Create a rank-0 tensor (scalar). **/
+ Tensor(const std::string & name);       //tensor name
 
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;
@@ -101,6 +103,14 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Deletes a specific tensor dimension, reducing the tensor rank by one. **/
+ void deleteDimension(unsigned int dim_id);
+
+ /** Appends a new dimension to the tensor at the end, increasing the tensor rank by one. **/
+ void appendDimension(std::pair<SpaceId,SubspaceId> subspace,
+                      DimExtent dim_extent);
+ void appendDimension(DimExtent dim_extent);
 
  /** Get the unique integer tensor id. **/
  std::size_t getTensorId() const;

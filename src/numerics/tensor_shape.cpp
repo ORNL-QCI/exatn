@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/05/27
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,10 +8,15 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
 #include <iterator>
+#include <assert.h>
 
 namespace exatn{
 
 namespace numerics{
+
+TensorShape::TensorShape()
+{
+}
 
 void TensorShape::printIt() const
 {
@@ -41,6 +46,19 @@ DimExtent TensorShape::getDimExtent(unsigned int dim_id) const
 const std::vector<DimExtent> & TensorShape::getDimExtents() const
 {
  return extents_;
+}
+
+void TensorShape::deleteDimension(unsigned int dim_id)
+{
+ assert(dim_id < extents_.size());
+ extents_.erase(extents_.cbegin()+dim_id);
+ return;
+}
+
+void TensorShape::appendDimension(DimExtent dim_extent)
+{
+ extents_.emplace_back(dim_extent);
+ return;
 }
 
 } //namespace numerics
