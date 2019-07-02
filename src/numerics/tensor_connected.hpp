@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/06/03
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,6 +47,9 @@ public:
  /** Prints. **/
  void printIt() const;
 
+ /** Returns the total number of legs (tensor rank/order). **/
+ unsigned int getNumLegs() const;
+
  /** Returns a co-owned pointer to the tensor. **/
  std::shared_ptr<Tensor> getTensor();
 
@@ -54,10 +57,27 @@ public:
  unsigned int getTensorId() const;
 
  /** Returns a specific tensor leg. **/
- TensorLeg getTensorLeg(unsigned int leg_id) const;
+ TensorLeg & getTensorLeg(unsigned int leg_id);
 
  /** Returns all tensor legs. **/
  const std::vector<TensorLeg> & getTensorLegs() const;
+
+ /** Returns the dimension extent of a specific tensor leg. **/
+ DimExtent getDimExtent(unsigned int dim_id) const;
+
+ /** Resets an existing tensor leg (specific connection to another tensor). **/
+ void resetLeg(unsigned int leg_id,   //in: leg id to reset
+               TensorLeg tensor_leg); //in: new leg configuration
+
+ /** Deletes an existing tensor leg, reducing the tensor rank by one. **/
+ void deleteLeg(unsigned int leg_id); //in: leg id to delete
+
+ /** Appends a new tensor leg as the last leg, increasing the tensor rank by one. **/
+ void appendLeg(std::pair<SpaceId,SubspaceId> subspace, //in: subspace defining the new leg
+                DimExtent dim_extent,                   //in: dimension extent of the new leg
+                TensorLeg tensor_leg);                  //in: new leg configuration
+ void appendLeg(DimExtent dim_extent,
+                TensorLeg tensor_leg);
 
 private:
 

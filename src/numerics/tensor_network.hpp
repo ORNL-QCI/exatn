@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/05/31
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,9 +13,15 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
  (d) A tensor leg can connect a given tensor with one or more
      other tensors in the same tensor network. Thus, tensor
      legs can be binary, ternary, etc.
- (e) A tensor network is always closed, which in some
-     cases requires introducing an explicit output tensor
-     collecting all open ends of the original tensor network.
+ (e) A tensor network is always closed, which requires introducing
+     an explicit output tensor collecting all open legs of the original
+     tensor network. If the original tensor network does not have open
+     legs, the output tensor is simply a scalar which the original tensor
+     network evaluates to; otherwise, a tensor network evaluates to a tensor.
+ (f) Tensor enumeration:
+     0: Output tensor/scalar which the tensor network evaluates to;
+     1..N: Input tensors/scalars constituting the original tensor network;
+     N+1..M: Intermediate tensors obtained by contractions of input tensors.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_NETWORK_HPP_
@@ -34,6 +40,10 @@ namespace numerics{
 class TensorNetwork{
 public:
 
+ static constexpr unsigned int NUM_WALKERS = 1024; //default number of walkers for tensor contraction sequence optimization
+
+ using ContractionSequence = std::vector<std::pair<unsigned int, unsigned int>>; //pairs of contracted tensor id's
+
  TensorNetwork() = default;
 
  TensorNetwork(const TensorNetwork &) = default;
@@ -42,11 +52,11 @@ public:
  TensorNetwork & operator=(TensorNetwork &&) noexcept = default;
  virtual ~TensorNetwork() = default;
 
+
 private:
 
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
-                                                        //map: Nonnegative tensor id --> Connected tensor
-
+                                                        //map: Non-negative tensor id --> Connected tensor
 };
 
 } //namespace numerics

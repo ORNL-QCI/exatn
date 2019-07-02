@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/06/05
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,6 +51,12 @@ public:
 
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
+
+ /** Deletes a specific dimension, reducing the shape rank by one. **/
+ void deleteDimension(unsigned int dim_id);
+
+ /** Appends a new dimension at the end, increasing the shape rank by one. **/
+ void appendDimension(DimExtent dim_extent);
 
 private:
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/06/05
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,6 +74,26 @@ SubspaceId Tensor::getDimSubspaceId(unsigned int dim_id) const
 std::pair<SpaceId,SubspaceId> Tensor::getDimSpaceAttr(unsigned int dim_id) const
 {
  return signature_.getDimSpaceAttr(dim_id);
+}
+
+void Tensor::deleteDimension(unsigned int dim_id)
+{
+ signature_.deleteDimension(dim_id);
+ shape_.deleteDimension(dim_id);
+ return;
+}
+
+void Tensor::appendDimension(std::pair<SpaceId,SubspaceId> subspace, DimExtent dim_extent)
+{
+ signature_.appendDimension(subspace);
+ shape_.appendDimension(dim_extent);
+ return;
+}
+
+void Tensor::appendDimension(DimExtent dim_extent)
+{
+ this->appendDimension(std::pair<SpaceId,SubspaceId>{SOME_SPACE,0},dim_extent);
+ return;
 }
 
 std::size_t Tensor::getTensorId() const

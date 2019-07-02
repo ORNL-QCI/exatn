@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/05/27
+REVISION: 2019/07/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -57,6 +57,12 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Deletes a specific subspace, reducing the signature rank by one. **/
+ void deleteDimension(unsigned int dim_id);
+
+ /** Appends a new subspace at the end, increasing the signature rank by one. **/
+ void appendDimension(std::pair<SpaceId,SubspaceId> subspace = {SOME_SPACE,0});
 
 private:
 
