@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: Space Basis
-REVISION: 2019/06/06
+/** ExaTN::Numerics: Spaces/Subspaces
+REVISION: 2019/07/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
