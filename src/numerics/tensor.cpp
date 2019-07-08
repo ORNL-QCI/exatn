@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/07/02
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,6 +32,15 @@ name_(name), shape_(shape), signature_(shape.getRank())
 Tensor::Tensor(const std::string & name):
 name_(name)
 {
+}
+
+Tensor::Tensor(const std::string & name,    //tensor name
+               const Tensor & left_tensor,  //left tensor
+               const Tensor & right_tensor, //right tensor
+               int index_pattern[]):
+name_(name)
+{
+ //`Finish
 }
 
 void Tensor::printIt() const
