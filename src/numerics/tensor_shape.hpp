@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/07/02
+REVISION: 2019/07/08
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Tensor shape is an ordered set of tensor dimension extents.
@@ -53,6 +53,9 @@ public:
 
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
+
+ /** Resets a specific dimension. **/
+ void resetDimension(unsigned int dim_id, DimExtent extent);
 
  /** Deletes a specific dimension, reducing the shape rank by one. **/
  void deleteDimension(unsigned int dim_id);

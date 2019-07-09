@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/07/02
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -68,6 +68,13 @@ std::pair<SpaceId,SubspaceId> TensorSignature::getDimSpaceAttr(unsigned int dim_
 {
  assert(dim_id < subspaces_.size()); //debug
  return subspaces_[dim_id];
+}
+
+void TensorSignature::resetDimension(unsigned int dim_id, std::pair<SpaceId,SubspaceId> subspace)
+{
+ assert(dim_id < subspaces_.size()); //debug
+ subspaces_[dim_id] = subspace;
+ return;
 }
 
 void TensorSignature::deleteDimension(unsigned int dim_id)
