@@ -21,12 +21,19 @@ add_library(${LIBRARY_NAME}
             tensor_network.cpp
             num_server.cpp)
 
+if (CUDA_FOUND)
 target_include_directories(${LIBRARY_NAME}
                            PUBLIC .
                            ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
                            ${CMAKE_SOURCE_DIR}/src/exatn
                            PRIVATE
                            ${CUDA_INCLUDE_DIRS})
+else()
+target_include_directories(${LIBRARY_NAME}
+                           PUBLIC .
+                           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
+                           ${CMAKE_SOURCE_DIR}/src/exatn)
+endif()
 
 exatn_enable_rpath(${LIBRARY_NAME})
 
