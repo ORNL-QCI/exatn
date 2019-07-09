@@ -18,6 +18,8 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
          ${CMAKE_SOURCE_DIR}/src/exatn
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
+  PRIVATE
+         ${CMAKE_SOURCE_DIR}/src/driver-rpc
   )
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph PRIVATE Boost::graph)

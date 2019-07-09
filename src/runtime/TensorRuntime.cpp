@@ -1,4 +1,5 @@
 #include "TensorRuntime.hpp"
+#include "exatn.hpp"
 
 namespace exatn {
 namespace runtime {
@@ -8,7 +9,7 @@ void TensorRuntime::openScope(const std::string &scopeName) {
   currentScope = scopeName;
   // create new graph with name given by scope name
   // store it in the dags map
-  dags[currentScope] = std::shared_ptr<TensorGraph>(new DirectedBoostGraph());
+  dags[currentScope] = exatn::getService<TensorGraph>("boost-digraph");
 }
 
 void TensorRuntime::closeScope() { currentScope = ""; }
