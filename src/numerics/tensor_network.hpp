@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/07
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -102,7 +102,7 @@ public:
      with the modes of the input tensors already present in the tensor network.
      The unmatched modes of the newly appended tensor will be appended to the
      existing modes of the output tensor of the tensor network (at the end). **/
- bool appendTensor(unsigned int tensor_id,                      //in: tensor id (unique within the tensor network)
+ bool appendTensor(unsigned int tensor_id,                      //in: appended tensor id (unique within the tensor network)
                    std::shared_ptr<Tensor> tensor,              //in: appended tensor
                    const std::vector<TensorLeg> & connections); //in: tensor connections
 
@@ -110,7 +110,7 @@ public:
      with the modes of the output tensor of the tensor network. The unmatched modes
      of the newly appended tensor will be appended to the existing modes of the
      output tensor of the tensor network (at the end). **/
- bool appendTensor(unsigned int tensor_id,                                              //in: tensor id (unique within the tensor network)
+ bool appendTensor(unsigned int tensor_id,                                              //in: appended tensor id (unique within the tensor network)
                    std::shared_ptr<Tensor> tensor,                                      //in: appended tensor
                    const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode -> appended tensor mode
 
@@ -122,8 +122,20 @@ public:
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 
- /** Reoders the modes of the output tensor of the tensor network. **/
- bool reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
+ /** Reoders the modes of the output tensor of the tensor network:
+     order[x] = y: yth mode of the output tensor becomes its xth mode. **/
+ void reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
+
+ /** Deletes a tensor from the tensor network (output tensor cannot be deleted!).
+     The released tensor legs will be joined at the end of the output tensor. **/
+ bool deleteTensor(unsigned int tensor_id); //in: id of the tensor to be deleted
+
+ /** Contracts two tensors in the tensor network, producing another tensor: result = left * right.
+     The uncontracted modes of the left tensor will precede the uncontracted modes
+     of the right tensor in the tensor-result. **/
+ bool contractTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
+                      unsigned int right_id,   //in: right tensor id (present in the tensor network)
+                      unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
 
 private:
 

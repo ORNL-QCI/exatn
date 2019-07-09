@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/07
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -94,8 +94,22 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
  return true;
 }
 
-bool TensorNetwork::reoderOutputModes(const std::vector<unsigned int> & order)
+void TensorNetwork::reoderOutputModes(const std::vector<unsigned int> & order)
 {
+ //`Finish
+ return;
+}
+
+bool TensorNetwork::deleteTensor(unsigned int tensor_id)
+{
+ assert(tensor_id != 0); //output tensor cannot be deleted
+ //`Finish
+ return true;
+}
+
+bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id, unsigned int result_id)
+{
+ assert(left_id != right_id && left_id != result_id && right_id != result_id);
  //`Finish
  return true;
 }

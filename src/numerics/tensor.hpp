@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/07/02
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,6 +34,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor_shape.hpp"
 #include "tensor_signature.hpp"
+#include "tensor_leg.hpp"
 
 #include <assert.h>
 
@@ -77,6 +78,16 @@ public:
         const std::vector<T> & extents); //tensor dimension extents
  /** Create a rank-0 tensor (scalar). **/
  Tensor(const std::string & name);       //tensor name
+ /** Create a tensor by contracting two other tensors.
+     The vectors of tensor legs specify the tensor contraction pattern:
+      contraction.size() = left_rank + right_rank;
+      Output tensor id = 0;
+      Left input tensor id = 1;
+      Right input tensor id = 2. **/
+ Tensor(const std::string & name,                    //tensor name
+        const Tensor & left_tensor,                  //left tensor
+        const Tensor & right_tensor,                 //right tensor
+        const std::vector<TensorLeg> & contraction); //tensor contraction pattern
 
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;

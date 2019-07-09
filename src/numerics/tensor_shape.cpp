@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/07/02
+REVISION: 2019/07/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -46,6 +46,13 @@ DimExtent TensorShape::getDimExtent(unsigned int dim_id) const
 const std::vector<DimExtent> & TensorShape::getDimExtents() const
 {
  return extents_;
+}
+
+void TensorShape::resetDimension(unsigned int dim_id, DimExtent extent)
+{
+ assert(dim_id < extents_.size()); //debug
+ extents_[dim_id] = extent;
+ return;
 }
 
 void TensorShape::deleteDimension(unsigned int dim_id)
