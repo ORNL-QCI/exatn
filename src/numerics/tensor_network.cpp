@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/08
+REVISION: 2019/07/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,10 +73,16 @@ std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id)
 
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
                                  std::shared_ptr<Tensor> tensor,             //in: appended tensor
-                                 const std::vector<TensorLeg> & connections) //in: tensor connections
+                                 const std::vector<TensorLeg> & connections) //in: tensor connections (to input tensors only)
 {
- //`Finish
- return true;
+ std::vector<TensorLeg> legs(connections);
+ TensorConn tensconn(tensor,tensor_id,legs);
+ auto new_pos = tensors_.insert(std::move(std::pair<unsigned int, TensorConn>(tensor_id,tensconn)));
+ if(new_pos.second){ //inserted successfully
+  //`Finish: Update output tensor
+  return true;
+ }
+ return false;
 }
 
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                                             //in: tensor id (unique within the tensor network)
