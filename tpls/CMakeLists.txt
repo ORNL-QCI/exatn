@@ -52,6 +52,17 @@ message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
 message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
 message(STATUS "CUDA Host Compiler: ${CMAKE_CXX_COMPILER}")
 
+if (APPLE)
+message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
+  add_custom_target(
+    exatensor-build
+    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=MPICH BLASLIB=NONE
+            PATH_MPICH_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
+            PATH_MPICH_LIB=${MPI_ROOT_DIR}/lib
+            PATH_MPICH_BIN=${MPI_BIN_PATH} EXA_OS=NO_LINUX GPU_CUDA=NOCUDA EXA_TALSH_ONLY=YES make
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+
+else()
 if(CUDA_FOUND)
   message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")
   message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
@@ -85,6 +96,7 @@ else()
             PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
             PATH_OPENMPI_BIN=${MPI_BIN_PATH} make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+endif()
 endif()
 
 # Compiler-specific C++11 activation (FROM ANTLR4).

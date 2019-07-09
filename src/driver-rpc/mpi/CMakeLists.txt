@@ -9,6 +9,11 @@ add_library(${LIBRARY_NAME} SHARED ${SRC})
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
+set(TALSH_LIB ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+if (APPLE)
+  set(TALSH_LIB ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.a)
+endif()
+
 if(CUDA_FOUND)
   target_include_directories(${LIBRARY_NAME}
                              PUBLIC .
@@ -24,7 +29,7 @@ if(CUDA_FOUND)
            exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
-           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so
+	   ${TALSH_LIB}
            ${CUDA_LIBRARIES}
            ${CUDA_CUBLAS_LIBRARIES})
 
@@ -44,7 +49,7 @@ else()
            exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
-           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+ 	   ${TALSH_LIB})
 
 endif()
 
