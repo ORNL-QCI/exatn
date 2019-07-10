@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/09
+REVISION: 2019/07/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,13 +27,17 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      tensor in the tensor network may have any unique positive id.
  (d) Building a tensor network:
      Option 1: A new tensor can be appended into a tensor network by either:
-               (1) Matching the tensor modes with the modes of the input tensors
-                   already present in the tensor network.
-               (2) Matching the tensor modes with the modes of the output tensor
-                   of the tensor network.
-               In both cases, the unmatched modes of the newly appended tensor
-               will be appended to the output tensor of the tensor network,
-               succeeding the existing modes of the output tensor.
+               (1) Explicitly matching the tensor modes with the modes of all
+                   other tensors present or to be present in the tensor network.
+                   The fully specified output tensor with all its legs has had to
+                   be provided in advance in the TensorNetwork ctor. This way
+                   requires the advance knowledge of the entire tensor network.
+                   Once all tensors have been appended, one needs to call .finalize()
+                   to complete the construction of the tensor network.
+               (2) Matching the tensor modes with the modes of the current output
+                   tensor of the tensor network. In this case, the unmatched modes
+                   of the newly appended tensor will be appended to the current
+                   output tensor of the tensor network (at the end).
      Option 2: A tensor network can be appended to another tensor network by
                matching the modes of the output tensors of both tensor networks.
                The unmatched modes of the output tensor of the appended tensor
@@ -41,6 +45,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
                tensor network (at the end). The appended tensor network will
                cease to exist after being absorbed by the primary tensor network.
  (e) The modes of the output tensor of a tensor network can be examined and reordered.
+ (f) Any tensor except the output tensor can be deleted from the tensor network.
+ (g) Any two tensors, excluding the output tensor, can be merged by tensor contraction.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_NETWORK_HPP_
@@ -70,6 +76,10 @@ public:
  TensorNetwork();
  /** Creates a named empty tensor network with a single scalar output tensor named with the same name. **/
  TensorNetwork(const std::string & name);
+ /** Creates a named empty tensor network with an explicitly provided output tensor with the same name. **/
+ TensorNetwork(const std::string & name,                    //in: tensor network name
+               std::shared_ptr<Tensor> output_tensor,       //in: fully specified output tensor of the tensor network
+               const std::vector<TensorLeg> & output_legs); //in: fully specified output tensor legs
 
  TensorNetwork(const TensorNetwork &) = default;
  TensorNetwork & operator=(const TensorNetwork &) = default;
@@ -82,6 +92,12 @@ public:
 
  /** Returns TRUE if the tensor network is empty, FALSE otherwise. **/
  bool isEmpty() const;
+
+ /** Returns TRUE if the tensor network is being built explicitly, FALSE otherwise. **/
+ bool isExplicit() const;
+
+ /** Returns TRUE if the tensor network is finalized, FALSE otherwise. **/
+ bool isFinalized() const;
 
  /** Returns the number of input tensors in the tensor network.
      Note that the output tensor (tensor #0) is not counted here. **/
@@ -98,13 +114,19 @@ public:
      If not found, returns nullptr. **/
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id);
 
+ /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
+     The tensor network cannot be empty. **/
+ bool finalize();
+
  /** Appends a new tensor to the tensor network by matching the tensor modes
-     with the modes of the input tensors already present in the tensor network.
-     The unmatched modes of the newly appended tensor will be appended to the
-     existing modes of the output tensor of the tensor network (at the end). **/
+     with the modes of other tensors present or to be present in the tensor network.
+     The fully specified output tensor with all its legs has had to be provided
+     in advance in the TensorNetwork ctor. This way requires the advance knowledge
+     of the entire tensor network. Once all tensors have been appended, one needs
+     to call .finalize() to complete the construction of the tensor network. **/
  bool appendTensor(unsigned int tensor_id,                      //in: appended tensor id (unique within the tensor network)
                    std::shared_ptr<Tensor> tensor,              //in: appended tensor
-                   const std::vector<TensorLeg> & connections); //in: tensor connections (to the input tensors of TN only)
+                   const std::vector<TensorLeg> & connections); //in: tensor connections (fully specified)
 
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of the output tensor of the tensor network. The unmatched modes
@@ -124,21 +146,24 @@ public:
 
  /** Reoders the modes of the output tensor of the tensor network:
      order[x] = y: yth mode of the output tensor becomes its xth mode. **/
- void reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
+ bool reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
 
- /** Deletes a tensor from the tensor network (output tensor cannot be deleted!).
+ /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
      The released tensor legs will be joined at the end of the output tensor. **/
  bool deleteTensor(unsigned int tensor_id); //in: id of the tensor to be deleted
 
- /** Contracts two tensors in the tensor network, producing another tensor: result = left * right.
-     The uncontracted modes of the left tensor will precede the uncontracted modes
-     of the right tensor in the tensor-result. **/
+ /** Contracts two tensors in a finalized tensor network, producing another tensor:
+     result = left * right.
+     The uncontracted modes of the left tensor will precede in-order the uncontracted
+     modes of the right tensor in the tensor-result. **/
  bool contractTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                       unsigned int right_id,   //in: right tensor id (present in the tensor network)
                       unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
 
 private:
 
+ int explicit_output_;                                  //whether or not the output tensor has been fully specified during construction
+ int finalized_;                                        //finalization status of the tensor network
  std::string name_;                                     //tensor network name
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
