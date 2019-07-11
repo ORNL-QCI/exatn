@@ -19,6 +19,8 @@ add_library(${LIBRARY_NAME}
             tensor_op_contract.cpp
             tensor_op_factory.cpp
             tensor_network.cpp
+            network_builder_mps.cpp
+            network_build_factory.cpp
             num_server.cpp)
 
 if (CUDA_FOUND)
