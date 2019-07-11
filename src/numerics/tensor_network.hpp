@@ -106,10 +106,6 @@ public:
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;
 
- /** Returns a non-owning pointer to a given tensor of the tensor network
-     together with its connections (legs). If not found, returns nullptr. **/
- const TensorConn * getTensorConn(unsigned int tensor_id) const;
-
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id);
@@ -131,16 +127,21 @@ public:
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of the output tensor of the tensor network. The unmatched modes
      of the newly appended tensor will be appended to the existing modes of the
-     output tensor of the tensor network (at the end). **/
- bool appendTensor(unsigned int tensor_id,                                              //in: appended tensor id (unique within the tensor network)
-                   std::shared_ptr<Tensor> tensor,                                      //in: appended tensor
-                   const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode -> appended tensor mode
+     output tensor of the tensor network (at the end). The optional argument
+     leg_dir allows specification of the leg direction for all tensor modes.
+     If provided, the direction of the paired legs of the appended tensor
+     must anti-match the direction of the corresponding legs of existing tensors. **/
+ bool appendTensor(unsigned int tensor_id,                                                   //in: appended tensor id (unique within the tensor network)
+                   std::shared_ptr<Tensor> tensor,                                           //in: appended tensor
+                   const std::vector<std::pair<unsigned int, unsigned int>> & pairing,       //in: leg pairing: output tensor mode -> appended tensor mode
+                   const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}); //in: optional leg directions (for all tensor modes)
 
  /** Appends a tensor network to the current tensor network by matching the modes
      of the output tensors of both tensor networks. The unmatched modes of the
      output tensor of the appended tensor network will be appended to the output
      tensor of the primary tensor network (at the end). The appended tensor network
-     will cease to exist after being absorbed by the primary tensor network. **/
+     will cease to exist after being absorbed by the primary tensor network.
+     If paired legs of either output tensor are directed, the directions must be respected. **/
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 
@@ -159,6 +160,12 @@ public:
  bool contractTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                       unsigned int right_id,   //in: right tensor id (present in the tensor network)
                       unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+
+protected:
+
+ /** Returns a non-owning pointer to a given tensor of the tensor network
+     together with its connections (legs). If not found, returns nullptr. **/
+ TensorConn * getTensorConn(unsigned int tensor_id);
 
 private:
 

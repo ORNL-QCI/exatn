@@ -90,7 +90,7 @@ const std::string & TensorNetwork::getName() const
 }
 
 
-const TensorConn * TensorNetwork::getTensorConn(unsigned int tensor_id) const
+TensorConn * TensorNetwork::getTensorConn(unsigned int tensor_id)
 {
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return nullptr;
@@ -112,7 +112,6 @@ bool TensorNetwork::finalize()
   std::cout << "#ERROR(TensorNetwork::finalize): Empty tensor network cannot be finalized!" << std::endl;
   return false;
  }
- //`Sanity check: Check connections
  finalized_ = 1;
  return true;
 }
@@ -132,6 +131,23 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
    "Appending a tensor via explicit connections to the tensor network that has been finalized!" << std::endl;
   return false;
  }
+ //Check the validity of new connections:
+ unsigned int mode = 0;
+ for(const auto & leg: connections){
+  const auto * tensconn = this->getTensorConn(leg.getTensorId());
+  if(tensconn == nullptr){
+   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
+   return false;
+  }
+  const auto & tens_legs = tensconn->getTensorLegs();
+  const auto & tens_leg = tens_legs[leg.getDimensionId()];
+  if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
+   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
+   return false;
+  }
+  ++mode;
+ }
+ //Append the tensor to the tensor network:
  auto new_pos = tensors_.emplace(
                                  std::pair<unsigned int, TensorConn>(
                                   tensor_id,TensorConn(tensor,tensor_id,connections)
@@ -148,12 +164,36 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
 
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                                             //in: tensor id (unique within the tensor network)
                                  std::shared_ptr<Tensor> tensor,                                     //in: appended tensor
-                                 const std::vector<std::pair<unsigned int, unsigned int>> & pairing) //in: leg pairing: output tensor mode -> appended tensor mode
+                                 const std::vector<std::pair<unsigned int, unsigned int>> & pairing, //in: leg pairing: output tensor mode -> appended tensor mode
+                                 const std::vector<LegDirection> & leg_dir)                          //in: optional leg direction (for all tensor modes)
 {
  if(explicit_output_ != 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
    "Appending a tensor via implicit pairing with the output tensor, but the output tensor is explicit!" << std::endl;
   return false;
+ }
+ //Check leg pairing:
+ bool dir_present = (leg_dir.size() > 0);
+ auto * output = this->getTensorConn(0); assert(output != nullptr);
+ auto output_rank = output->getNumLegs();
+ auto tensor_rank = tensor->getRank();
+ if(output_rank > 0 && tensor_rank > 0){
+  int ouf[output_rank] = {0};
+  int tef[tensor_rank] = {0};
+  for(const auto & link: pairing){
+   if(link.first >= output_rank || link.second >= tensor_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Invalid leg pairing!" << std::endl;
+    return false;
+   }
+   if(ouf[link.first]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Pairing: Repeated output leg!" << std::endl;
+    return false;
+   }
+   if(tef[link.second]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Pairing: Repeated new tensor leg!" << std::endl;
+    return false;
+   }
+  }
  }
  //`Finish
  finalized_ = 1;
