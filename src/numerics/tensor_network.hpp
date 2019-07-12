@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/10
+REVISION: 2019/07/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor_connected.hpp"
 #include "tensor_op_factory.hpp"
+#include "network_build_factory.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -160,6 +161,9 @@ public:
  bool contractTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                       unsigned int right_id,   //in: right tensor id (present in the tensor network)
                       unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+
+ /** Builds the tensor network from a template implemented by a custom tensor network builder. **/
+ bool buildFromTemplate(NetworkBuilder & builder);
 
 protected:
 

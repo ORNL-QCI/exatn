@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder
-REVISION: 2019/07/11
+REVISION: 2019/07/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,7 +40,7 @@ public:
  virtual bool setParameter(const std::string & name, long long value) = 0;
 
  /** Builds a tensor network of a specific kind. **/
- virtual void build(TensorNetwork & network) const = 0;
+ virtual void build(TensorNetwork & network) = 0;
 
 };
 

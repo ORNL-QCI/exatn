@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2019/07/11
+REVISION: 2019/07/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,13 +38,13 @@ public:
  virtual bool setParameter(const std::string & name, long long value) override;
 
  /** Builds a tensor network of a specific kind. **/
- virtual void build(TensorNetwork & network) const override;
+ virtual void build(TensorNetwork & network) override;
 
  static std::unique_ptr<NetworkBuilder> createNew();
 
 private:
 
- long long num_sites_; //number of sites in the MPS tensor network
+ long long max_bond_dim_; //maximal bond dimension
 
 };
 

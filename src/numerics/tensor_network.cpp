@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/10
+REVISION: 2019/07/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -252,6 +252,13 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
   return false;
  }
  //`Finish
+ return true;
+}
+
+
+bool TensorNetwork::buildFromTemplate(NetworkBuilder & builder)
+{
+ builder.build(*this);
  return true;
 }
 
