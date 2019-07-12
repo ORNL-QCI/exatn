@@ -162,7 +162,8 @@ public:
                       unsigned int right_id,   //in: right tensor id (present in the tensor network)
                       unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
 
- /** Builds the tensor network from a template implemented by a custom tensor network builder. **/
+ /** Builds the tensor network from a template implemented by a custom tensor network builder.
+     Note that the tensor network must already contain the explicit fully specified output tensor. **/
  bool buildFromTemplate(NetworkBuilder & builder);
 
 protected:
@@ -170,6 +171,9 @@ protected:
  /** Returns a non-owning pointer to a given tensor of the tensor network
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
+
+ /** Corrects tensor connection specification when the output tensor is updated. **/
+ void updateConnections();
 
 private:
 

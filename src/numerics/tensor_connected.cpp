@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/07/02
+REVISION: 2019/07/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,7 +43,7 @@ unsigned int TensorConn::getTensorId() const
  return id_;
 }
 
-TensorLeg & TensorConn::getTensorLeg(unsigned int leg_id)
+const TensorLeg & TensorConn::getTensorLeg(unsigned int leg_id) const
 {
  assert(leg_id < legs_.size());
  return legs_[leg_id];

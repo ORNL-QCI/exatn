@@ -62,7 +62,7 @@ void TensorNetwork::printIt() const
 
 bool TensorNetwork::isEmpty() const
 {
- return (tensors_.size() <= 1); //only output tensor exists => empty
+ return (tensors_.size() <= 1); //only output tensor exists => still empty
 }
 
 
@@ -112,8 +112,27 @@ bool TensorNetwork::finalize()
   std::cout << "#ERROR(TensorNetwork::finalize): Empty tensor network cannot be finalized!" << std::endl;
   return false;
  }
+ //`Check validity of the tensor network in its current state
  finalized_ = 1;
  return true;
+}
+
+
+void TensorNetwork::updateConnections()
+{
+ assert(explicit_output_ == 0);
+ auto * output_tensor = this->getTensorConn(0); assert(output_tensor != nullptr);
+ auto output_tensor_rank = output_tensor->getNumLegs();
+ for(unsigned int i = 0; i < output_tensor_rank; ++i){
+  const auto & output_tensor_leg = output_tensor->getTensorLeg(i);
+  auto input_tensor_id = output_tensor_leg.getTensorId();
+  auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
+  auto * input_tensor = this->getTensorConn(input_tensor_id); assert(input_tensor != nullptr);
+  auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
+  input_tensor_leg.resetDimensionId(i);
+  input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
+ }
+ return;
 }
 
 
@@ -172,11 +191,15 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    "Appending a tensor via implicit pairing with the output tensor, but the output tensor is explicit!" << std::endl;
   return false;
  }
- //Check leg pairing:
- bool dir_present = (leg_dir.size() > 0);
- auto * output = this->getTensorConn(0); assert(output != nullptr);
- auto output_rank = output->getNumLegs();
+ //Check validity of leg pairing:
  auto tensor_rank = tensor->getRank();
+ bool dir_present = (leg_dir.size() > 0);
+ if(dir_present && leg_dir.size() != tensor_rank){
+  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Incomplete vector of leg directions!" << std::endl;
+  return false;
+ }
+ auto * output_tensor = this->getTensorConn(0); assert(output_tensor != nullptr);
+ auto output_rank = output_tensor->getNumLegs();
  if(output_rank > 0 && tensor_rank > 0){
   int ouf[output_rank] = {0};
   int tef[tensor_rank] = {0};
@@ -195,7 +218,40 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    }
   }
  }
- //`Finish
+ if(tensor_rank > 0){ //true tensor
+  //Pair legs of the new tensor with input tensors of the network:
+  std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders
+  for(const auto & link: pairing){
+   const auto & output_tensor_leg_id = link.first;
+   const auto & tensor_leg_id = link.second;
+   auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
+   const auto input_tensor_id = output_tensor_leg.getTensorId();
+   const auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
+   auto * input_tensor = this->getTensorConn(input_tensor_id); assert(input_tensor != nullptr);
+   auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
+   input_tensor_leg.resetTensorId(tensor_id);
+   input_tensor_leg.resetDimensionId(tensor_leg_id);
+   input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
+   new_tensor_legs[tensor_leg_id].resetTensorId(input_tensor_id);
+   new_tensor_legs[tensor_leg_id].resetDimensionId(input_tensor_leg_id);
+   if(dir_present) new_tensor_legs[tensor_leg_id].resetDirection(leg_dir[tensor_leg_id]);
+   output_tensor->deleteLeg(output_tensor_leg_id);
+   updateConnections(); //update connections due to deletion of the output tensor leg
+  }
+  //Append unpaired legs of the new tensor to the output tensor of the network:
+  
+ }else{ //scalar tensor
+  auto new_pos = tensors_.emplace(
+                                  std::pair<unsigned int, TensorConn>(
+                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>())
+                                  )
+                                 );
+  if(!(new_pos.second)){
+   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
+   return false;
+  }
+ }
  finalized_ = 1;
  return true;
 }
@@ -258,6 +314,16 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
 
 bool TensorNetwork::buildFromTemplate(NetworkBuilder & builder)
 {
+ if(explicit_output_ == 0){
+  std::cout << "#ERROR(TensorNetwork::buildFromTemplate): Invalid request: " <<
+   "Trying to build a tensor network from a template while missing a full output tensor!" << std::endl;
+  return false;
+ }
+ if(finalized_ != 0){
+  std::cout << "#ERROR(TensorNetwork::buildFromTemplate): Invalid request: " <<
+   "Trying to build a tensor network from a template while the tensor network is already finalized!" << std::endl;
+  return false;
+ }
  builder.build(*this);
  return true;
 }
