@@ -296,15 +296,72 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
 bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,                                           //in: appended tensor network
                                         const std::vector<std::pair<unsigned int, unsigned int>> & pairing) //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 {
+ if(!((*this).isFinalized()) || !(network.isFinalized())){
+  std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid request: " <<
+   "At least one of the tensor networks is not finalized!" << std::endl;
+  return false;
+ }
+ auto * output0 = this->getTensorConn(0);
+ assert(output0 != nullptr);
+ auto output0_rank = output0->getNumLegs();
+ auto * output1 = network.getTensorConn(0);
+ assert(output1 != nullptr);
+ auto output1_rank = output1->getNumLegs();
+ //Check validity of leg pairing:
+ if(output0_rank > 0 && output1_rank > 0){
+  int ou0[output0_rank] = {0};
+  int ou1[output1_rank] = {0};
+  for(const auto & link: pairing){
+   if(link.first >= output0_rank || link.second >= output1_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Invalid leg pairing!" << std::endl;
+    return false;
+   }
+   if(ou0[link.first]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Repeated primary output leg!" << std::endl;
+    return false;
+   }
+   if(ou1[link.second]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Repeated secondary output leg!" << std::endl;
+    return false;
+   }
+  }
+ }else{
+  if(pairing.size() > 0){
+   std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Pairing on a scalar network!" << std::endl;
+   return false;
+  }
+ }
+ //Pair output legs of both networks:
  //`Finish
- finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
+ finalized_ = 1; //implicit leg pairing always keeps the primary tensor network in a finalized state
  return true;
 }
 
 
 bool TensorNetwork::reoderOutputModes(const std::vector<unsigned int> & order)
 {
- //`Finish
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid request: " <<
+   "Reodering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ auto * output_tensor = this->getTensorConn(0);
+ assert(output_tensor != nullptr);
+ auto output_tensor_rank = output_tensor->getNumLegs();
+ if(order.size() != output_tensor_rank){
+  std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid argument: Order: Wrong length: " <<
+   order.size() << " versus " << output_tensor_rank << std::endl;
+  return false;
+ }
+ if(output_tensor_rank > 0){
+  auto legs = output_tensor->getTensorLegs();
+  for(unsigned int i = 0; i < output_tensor_rank; ++i){
+   const auto & old_leg_id = order[i];
+   assert(old_leg_id < output_tensor_rank);
+   output_tensor->resetLeg(i,legs[old_leg_id]);
+  }
+  updateConnections(0);
+ }
  return true;
 }
 
