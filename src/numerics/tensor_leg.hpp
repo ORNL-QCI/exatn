@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/05/27
+REVISION: 2019/07/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,6 +22,13 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+inline LegDirection reverseLegDirection(LegDirection dir){
+ if(dir == LegDirection::INWARD) return LegDirection::OUTWARD;
+ if(dir == LegDirection::OUTWARD) return LegDirection::INWARD;
+ return LegDirection::UNDIRECT;
+}
+
 
 class TensorLeg{
 public:

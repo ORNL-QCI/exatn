@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/12
+REVISION: 2019/07/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -118,19 +118,22 @@ bool TensorNetwork::finalize()
 }
 
 
-void TensorNetwork::updateConnections()
+void TensorNetwork::updateConnections(unsigned int tensor_id)
 {
- assert(explicit_output_ == 0);
- auto * output_tensor = this->getTensorConn(0); assert(output_tensor != nullptr);
- auto output_tensor_rank = output_tensor->getNumLegs();
- for(unsigned int i = 0; i < output_tensor_rank; ++i){
-  const auto & output_tensor_leg = output_tensor->getTensorLeg(i);
-  auto input_tensor_id = output_tensor_leg.getTensorId();
-  auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
-  auto * input_tensor = this->getTensorConn(input_tensor_id); assert(input_tensor != nullptr);
-  auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
-  input_tensor_leg.resetDimensionId(i);
-  input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ auto * tensor = this->getTensorConn(tensor_id);
+ assert(tensor != nullptr); //invalid tensor_id
+ auto tensor_rank = tensor->getNumLegs();
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  const auto & tensor_leg = tensor->getTensorLeg(i);
+  auto other_tensor_id = tensor_leg.getTensorId();
+  auto other_tensor_leg_id = tensor_leg.getDimensionId();
+  auto * other_tensor = this->getTensorConn(other_tensor_id);
+  assert(other_tensor != nullptr); //unable to find the linked tensor
+  auto other_tensor_leg = other_tensor->getTensorLeg(other_tensor_leg_id);
+  other_tensor_leg.resetTensorId(tensor_id);
+  other_tensor_leg.resetDimensionId(i);
+  other_tensor->resetLeg(other_tensor_leg_id,other_tensor_leg);
  }
  return;
 }
@@ -154,21 +157,18 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
  unsigned int mode = 0;
  for(const auto & leg: connections){
   const auto * tensconn = this->getTensorConn(leg.getTensorId());
-  if(tensconn == nullptr){
-   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
-   return false;
-  }
-  const auto & tens_legs = tensconn->getTensorLegs();
-  const auto & tens_leg = tens_legs[leg.getDimensionId()];
-  if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
-   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
-   return false;
+  if(tensconn != nullptr){ //connected tensor is already in the tensor network
+   const auto & tens_legs = tensconn->getTensorLegs();
+   const auto & tens_leg = tens_legs[leg.getDimensionId()];
+   if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
+    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
+    return false;
+   }
   }
   ++mode;
  }
  //Append the tensor to the tensor network:
- auto new_pos = tensors_.emplace(
-                                 std::pair<unsigned int, TensorConn>(
+ auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
                                   tensor_id,TensorConn(tensor,tensor_id,connections)
                                  )
                                 );
@@ -198,7 +198,8 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Incomplete vector of leg directions!" << std::endl;
   return false;
  }
- auto * output_tensor = this->getTensorConn(0); assert(output_tensor != nullptr);
+ auto * output_tensor = this->getTensorConn(0);
+ assert(output_tensor != nullptr); //output tensor must be present
  auto output_rank = output_tensor->getNumLegs();
  if(output_rank > 0 && tensor_rank > 0){
   int ouf[output_rank] = {0};
@@ -217,32 +218,67 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
     return false;
    }
   }
+ }else{
+  if(pairing.size() > 0){
+   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Pairing: Pairing on a scalar tensor!" << std::endl;
+   return false;
+  }
  }
+ //Pair legs of the new tensor with the input tensors of the tensor network:
  if(tensor_rank > 0){ //true tensor
-  //Pair legs of the new tensor with input tensors of the network:
-  std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders
+  std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders for legs
   for(const auto & link: pairing){
    const auto & output_tensor_leg_id = link.first;
    const auto & tensor_leg_id = link.second;
    auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
    const auto input_tensor_id = output_tensor_leg.getTensorId();
    const auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
-   auto * input_tensor = this->getTensorConn(input_tensor_id); assert(input_tensor != nullptr);
+   auto * input_tensor = this->getTensorConn(input_tensor_id);
+   assert(input_tensor != nullptr);
    auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
    input_tensor_leg.resetTensorId(tensor_id);
    input_tensor_leg.resetDimensionId(tensor_leg_id);
    input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
    new_tensor_legs[tensor_leg_id].resetTensorId(input_tensor_id);
    new_tensor_legs[tensor_leg_id].resetDimensionId(input_tensor_leg_id);
-   if(dir_present) new_tensor_legs[tensor_leg_id].resetDirection(leg_dir[tensor_leg_id]);
+   if(dir_present){
+    new_tensor_legs[tensor_leg_id].resetDirection(leg_dir[tensor_leg_id]);
+    if(input_tensor_leg.getDirection() != reverseLegDirection(new_tensor_legs[tensor_leg_id].getDirection())){
+     std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Leg directions: Pairing leg direction mismatch!" << std::endl;
+     return false;
+    }
+   }else{
+    new_tensor_legs[tensor_leg_id].resetDirection(reverseLegDirection(input_tensor_leg.getDirection()));
+   }
    output_tensor->deleteLeg(output_tensor_leg_id);
-   updateConnections(); //update connections due to deletion of the output tensor leg
+   updateConnections(0); //update tensor network connections due to deletion of the output tensor leg
   }
   //Append unpaired legs of the new tensor to the output tensor of the network:
-  
+  output_rank = output_tensor->getNumLegs();
+  unsigned int mode = 0;
+  for(auto & leg: new_tensor_legs){
+   if(leg.getTensorId() == 0){ //unpaired tensor leg
+    LegDirection dir = LegDirection::UNDIRECT;
+    if(dir_present) dir = leg_dir[mode];
+    leg.resetDimensionId(output_rank);
+    leg.resetDirection(dir);
+    output_tensor->appendLeg(tensor->getDimSpaceAttr(mode),tensor->getDimExtent(mode),
+                             TensorLeg(tensor_id,mode,reverseLegDirection(dir)));
+    output_rank = output_tensor->getNumLegs();
+   }
+   ++mode;
+  }
+  auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
+                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs)
+                                  )
+                                 );
+  if(!(new_pos.second)){
+   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
+   return false;
+  }
  }else{ //scalar tensor
-  auto new_pos = tensors_.emplace(
-                                  std::pair<unsigned int, TensorConn>(
+  auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
                                    tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>())
                                   )
                                  );
@@ -252,7 +288,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    return false;
   }
  }
- finalized_ = 1;
+ finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
  return true;
 }
 
@@ -261,7 +297,7 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
                                         const std::vector<std::pair<unsigned int, unsigned int>> & pairing) //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 {
  //`Finish
- finalized_ = 1;
+ finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
  return true;
 }
 

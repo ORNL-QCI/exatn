@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/12
+REVISION: 2019/07/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -172,8 +172,8 @@ protected:
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
 
- /** Corrects tensor connection specification when the output tensor is updated. **/
- void updateConnections();
+ /** Updates tensor network linking when a tensor has its connections modified. **/
+ void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
 
 private:
 
