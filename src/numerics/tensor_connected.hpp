@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/07/12
+REVISION: 2019/07/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -64,6 +64,9 @@ public:
 
  /** Returns the dimension extent of a specific tensor leg. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
+
+ /** Get the space/subspace id for a specific tensor leg. **/
+ std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
 
  /** Resets an existing tensor leg (specific connection to another tensor). **/
  void resetLeg(unsigned int leg_id,   //in: leg id to reset

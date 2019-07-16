@@ -17,11 +17,11 @@ TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(0)
 {
  tensors_.emplace( //output tensor (id = 0)
-           std::make_pair(
-            0U,
-            TensorConn(std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>())
-           )
-          );
+                  std::make_pair(
+                   0U,
+                   TensorConn(std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>())
+                  )
+                 );
 }
 
 
@@ -29,11 +29,11 @@ TensorNetwork::TensorNetwork(const std::string & name):
  explicit_output_(0), finalized_(0), name_(name)
 {
  tensors_.emplace( //output tensor (id = 0)
-           std::make_pair(
-            0U,
-            TensorConn(std::make_shared<Tensor>(name),0U,std::vector<TensorLeg>())
-           )
-          );
+                  std::make_pair(
+                   0U,
+                   TensorConn(std::make_shared<Tensor>(name),0U,std::vector<TensorLeg>())
+                  )
+                 );
 }
 
 
@@ -43,11 +43,11 @@ TensorNetwork::TensorNetwork(const std::string & name,
  explicit_output_(1), finalized_(0), name_(name)
 {
  tensors_.emplace( //output tensor (id = 0)
-           std::make_pair(
-            0U,
-            TensorConn(output_tensor,0U,output_legs)
-           )
-          );
+                  std::make_pair(
+                   0U,
+                   TensorConn(output_tensor,0U,output_legs)
+                  )
+                 );
 }
 
 
@@ -95,6 +95,17 @@ TensorConn * TensorNetwork::getTensorConn(unsigned int tensor_id)
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return nullptr;
  return &(it->second);
+}
+
+
+std::vector<TensorConn*> TensorNetwork::getTensorConnAll()
+{
+ std::vector<TensorConn*> tensors(this->getNumTensors(),nullptr);
+ unsigned int i = 0;
+ for(auto & kv: tensors_){
+  if(kv.first != 0) tensors[i++] = &(kv.second);
+ }
+ return tensors;
 }
 
 
@@ -337,22 +348,22 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
 {
  if(!((*this).isFinalized()) || !(network.isFinalized())){
   std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid request: " <<
-   "At least one of the tensor networks is not finalized!" << std::endl;
+   "Either primary or appended tensor network is not finalized!" << std::endl;
   return false;
  }
+ //Check validity of leg pairing:
  auto * output0 = this->getTensorConn(0);
  assert(output0 != nullptr);
  auto output0_rank = output0->getNumLegs();
  auto * output1 = network.getTensorConn(0);
  assert(output1 != nullptr);
  auto output1_rank = output1->getNumLegs();
- //Check validity of leg pairing:
  if(output0_rank > 0 && output1_rank > 0){
   int ou0[output0_rank] = {0};
   int ou1[output1_rank] = {0};
   for(const auto & link: pairing){
    if(link.first >= output0_rank || link.second >= output1_rank){
-    std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Invalid leg pairing!" << std::endl;
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Out of bounds!" << std::endl;
     return false;
    }
    if(ou0[link.first]++ != 0){
@@ -366,12 +377,60 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
   }
  }else{
   if(pairing.size() > 0){
-   std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Pairing on a scalar network!" << std::endl;
+   std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Non-trivial pairing on scalar networks!" << std::endl;
    return false;
   }
  }
- //Pair output legs of both networks:
- //`Finish
+ //Pair output legs of the primary tensor network with output legs of the appended (secondary) tensor network:
+ for(const auto & link: pairing){
+  const auto & output0_leg_id = link.first;
+  const auto & output1_leg_id = link.second;
+  const auto & output0_leg = output0->getTensorLeg(output0_leg_id);
+  const auto & output1_leg = output1->getTensorLeg(output1_leg_id);
+  const auto input0_id = output0_leg.getTensorId();
+  const auto input0_leg_id = output0_leg.getDimensionId();
+  const auto input1_id = output1_leg.getTensorId();
+  const auto input1_leg_id = output1_leg.getDimensionId();
+  auto * input0 = this->getTensorConn(input0_id);
+  assert(input0 != nullptr);
+  auto * input1 = network.getTensorConn(input1_id);
+  assert(input1 != nullptr);
+  auto input0_leg = input0->getTensorLeg(input0_leg_id);
+  input0_leg.resetTensorId(input1_id);
+  input0_leg.resetDimensionId(input1_leg_id);
+  input0->resetLeg(input0_leg_id,input0_leg);
+  auto input1_leg = input1->getTensorLeg(input1_leg_id);
+  input1_leg.resetTensorId(input0_id);
+  input1_leg.resetDimensionId(input0_leg_id);
+  input1->resetLeg(input1_leg_id,input1_leg);
+ }
+ //Delete matched legs from both output tensors:
+ for(const auto & link: pairing){
+  const auto & output0_leg_id = link.first;
+  const auto & output1_leg_id = link.second;
+  output0->deleteLeg(output0_leg_id);
+  output1->deleteLeg(output1_leg_id);
+ }
+ output0_rank = output0->getNumLegs();
+ output1_rank = output1->getNumLegs();
+ this->updateConnections(0);
+ network.updateConnections(0);
+ //Append unmatched legs of the output tensor from the appended tensor network to the output tensor from the primary tensor network:
+ for(unsigned int i = 0; i < output1_rank; ++i){
+  output0->appendLeg(output1->getDimSpaceAttr(i),
+                     output1->getDimExtent(i),
+                     output1->getTensorLeg(i));
+ }
+ output0_rank = output0->getNumLegs();
+ //Append all input tensors from the appended tensor network into the primary tensor network:
+ auto tensors = network.getTensorConnAll();
+ for(auto & tensor: tensors){
+  unsigned int tensor_id = tensor->getTensorId();
+  tensors_.emplace(std::make_pair(
+                    tensor_id,*tensor
+                   )
+                  );
+ }
  finalized_ = 1; //implicit leg pairing always keeps the primary tensor network in a finalized state
  return true;
 }

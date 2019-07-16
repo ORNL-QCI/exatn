@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/07/12
+REVISION: 2019/07/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -57,6 +57,11 @@ const std::vector<TensorLeg> & TensorConn::getTensorLegs() const
 DimExtent TensorConn::getDimExtent(unsigned int dim_id) const
 {
  return tensor_->getDimExtent(dim_id);
+}
+
+std::pair<SpaceId,SubspaceId> TensorConn::getDimSpaceAttr(unsigned int dim_id) const
+{
+ return tensor_->getDimSpaceAttr(dim_id);
 }
 
 void TensorConn::resetLeg(unsigned int leg_id, TensorLeg tensor_leg)

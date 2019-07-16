@@ -139,10 +139,13 @@ public:
 
  /** Appends a tensor network to the current tensor network by matching the modes
      of the output tensors of both tensor networks. The unmatched modes of the
-     output tensor of the appended tensor network will be appended to the output
+     output tensor of the appended tensor network will be appended to the updated output
      tensor of the primary tensor network (at the end). The appended tensor network
      will cease to exist after being absorbed by the primary tensor network.
-     If paired legs of either output tensor are directed, the directions must be respected. **/
+     If paired legs of either output tensor are directed, the directions must be respected.
+     The tensors constituting the appended tensor network, except its output tensor, must
+     have their unique ids be different from the ids of the tensors constituting
+     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 
@@ -171,6 +174,10 @@ protected:
  /** Returns a non-owning pointer to a given tensor of the tensor network
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
+
+ /** Returns a vector of non-owning pointers to all tensors in the tensor network,
+     except the output tensor. **/
+ std::vector<TensorConn*> getTensorConnAll();
 
  /** Checks validity of connections of a given tensor. **/
  bool checkConnections(unsigned int tensor_id);
