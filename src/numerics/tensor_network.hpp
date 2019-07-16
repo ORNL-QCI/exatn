@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/14
+REVISION: 2019/07/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -113,7 +113,7 @@ public:
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/
- bool finalize();
+ bool finalize(bool check_validity = false);
 
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of other tensors present or to be present in the tensor network.
@@ -171,6 +171,11 @@ protected:
  /** Returns a non-owning pointer to a given tensor of the tensor network
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
+
+ /** Checks validity of connections of a given tensor. **/
+ bool checkConnections(unsigned int tensor_id);
+ /** Checks validity of connections in the enitre tensor network. **/
+ bool checkConnections();
 
  /** Updates tensor network linking when a tensor has its connections modified. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified

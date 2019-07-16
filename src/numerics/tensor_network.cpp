@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/14
+REVISION: 2019/07/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -106,14 +106,53 @@ std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id)
 }
 
 
-bool TensorNetwork::finalize()
+bool TensorNetwork::finalize(bool check_validity)
 {
- if(this->isEmpty()){ //empty networks cannot be finalized
-  std::cout << "#ERROR(TensorNetwork::finalize): Empty tensor network cannot be finalized!" << std::endl;
-  return false;
+ if(finalized_ == 0){
+  if(this->isEmpty()){ //empty networks cannot be finalized
+   std::cout << "#ERROR(TensorNetwork::finalize): Empty tensor network cannot be finalized!" << std::endl;
+   return false;
+  }
+  finalized_ = 1;
+  if(check_validity){
+   if(!checkConnections()){
+    finalized_ = 0;
+    std::cout << "#ERROR(TensorNetwork::finalize): Invalid connectivity prevents tensor network finalization!" << std::endl;
+    return false;
+   }
+  }
  }
- //`Check validity of the tensor network in its current state
- finalized_ = 1;
+ return true;
+}
+
+
+bool TensorNetwork::checkConnections(unsigned int tensor_id)
+{
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ auto * tensor = this->getTensorConn(tensor_id);
+ assert(tensor != nullptr); //invalid tensor_id
+ auto tensor_rank = tensor->getNumLegs();
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  const auto & tensor_leg = tensor->getTensorLeg(i);
+  auto other_tensor_id = tensor_leg.getTensorId();
+  auto other_tensor_leg_id = tensor_leg.getDimensionId();
+  auto * other_tensor = this->getTensorConn(other_tensor_id);
+  assert(other_tensor != nullptr); //unable to find the linked tensor
+  const auto & other_tensor_leg = other_tensor->getTensorLeg(other_tensor_leg_id);
+  if(other_tensor_leg.getTensorId() != tensor_id ||
+     other_tensor_leg.getDimensionId() != i ||
+     other_tensor_leg.getDirection() != reverseLegDirection(tensor_leg.getDirection())) return false;
+ }
+ return true;
+}
+
+
+bool TensorNetwork::checkConnections()
+{
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ for(const auto & kv: tensors_){
+  if(!checkConnections(kv.first)) return false;
+ }
  return true;
 }
 
