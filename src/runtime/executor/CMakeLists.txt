@@ -35,7 +35,7 @@ usfunctionembedresources(TARGET
 target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices PRIVATE exatn-runtime-graph)
 
 if(APPLE)
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib;@loader_path")
    set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 else()
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib;$ORIGIN")

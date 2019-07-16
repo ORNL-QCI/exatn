@@ -15,7 +15,7 @@ set(CMAKE_SKIP_RPATH OFF)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPATH_MAX=4096 -Wno-attributes")
 
 project(exatn LANGUAGES CXX Fortran)
 
@@ -49,10 +49,7 @@ if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
-#if(OpenMP_FOUND and NOT APPLE)
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-#endif()
-
+message(STATUS "MPIRUN: ${MPIEXEC_EXECUTABLE}")
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/framework/include)
 include_directories(${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)

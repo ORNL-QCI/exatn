@@ -20,9 +20,13 @@ MPI: OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
 BLAS: ATLAS, MKL, ACML, ESSL
 CUDA 9+ (optional)
 CMake 3.9+ (for build)
+```
+For TaProl Parser Development
+```
 ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar
+```
 
-## Build instructions
+## Linux Build instructions
 ```
 On Ubuntu 16+, for GCC 8+, OpenMPI 3+, and ATLAS BLAS, run the following:
 ```bash
@@ -30,15 +34,8 @@ $ add-apt-repository ppa:ubuntu-toolchain-r/test
 $ apt-get update
 $ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
 $ python -m pip install --upgrade cmake
-$ wget https://www.antlr.org/download/antlr-4.7.2-complete.jar
-$ mv ./antlr-4.7.2-complete.jar PATH_TO_EXATN_SOURCE/src/parser
 ```
-for CMake 3.9+, do not use the apt-get installer, instead use `pip`, and
-ensure that `/usr/local/bin` is in your PATH:
-```bash
-$ python -m pip install --upgrade cmake
-$ export PATH=$PATH:/usr/local/bin
-```
+
 Note that, for now, developers must clone ExaTENSOR manually:
 ``` bash
 $ git clone --recursive https://code.ornl.gov/qci/exatn
@@ -55,6 +52,23 @@ GCC 7, so if your default `g++` is version 8, then you will need to
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
+
+## Mac OS X Build Instructions
+First install MPICH or OpenMPI from source. Refer to their installation guides for this. 
+Here's an example configure command that we've tested for MPICH:
+```
+$ CC=gcc-8 CXX=g++-8 FC=gfortran-8 ./configure --prefix=/usr/local/mpich --enable-fortran=all
+```
+Then install GCC via homebrew (version 8 due to a bug in version 9)
+```
+$ brew install gcc@8
+```
+Now continue with configuring and building ExaTN
+```
+$ mkdir build && cd build
+$ FC=gfortran-8 CXX=g++-8 cmake .. -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++ -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90 -DEXATN_BUILD_TESTS=TRUE -DPYTHON_INCLUDE_DIR=$(python -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+$ make install
+```
 
 ## Testing instructions
 From build directory:

@@ -12,7 +12,7 @@ add_library(${LIBRARY_NAME} SHARED ${SRC})
 target_include_directories(
   ${LIBRARY_NAME}
   PRIVATE ${CMAKE_SOURCE_DIR}/src/exatn)
-
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices)
 set(_bundle_name exatn_test_plugin)
 
 set_target_properties(${LIBRARY_NAME}
