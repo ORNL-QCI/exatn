@@ -66,7 +66,11 @@ $ brew install gcc@8
 Now continue with configuring and building ExaTN
 ```
 $ mkdir build && cd build
-$ FC=gfortran-8 CXX=g++-8 cmake .. -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++ -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90 -DEXATN_BUILD_TESTS=TRUE -DPYTHON_INCLUDE_DIR=$(python -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+$ FC=gfortran-8 CXX=g++-8 cmake .. 
+    -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++ 
+    -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90 
+    -DEXATN_BUILD_TESTS=TRUE 
+    -DPYTHON_INCLUDE_DIR=$(python -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
 ```
 
