@@ -553,6 +553,19 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
    "Contracting tensors in an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
+ //Merge two tensors together:
+ auto * left_tensor = this->getTensorConn(left_id);
+ assert(left_tensor != nullptr);
+ auto left_tensor_rank = left_tensor->getNumLegs();
+ const auto & left_legs = left_tensor->getTensorLegs();
+ auto * right_tensor = this->getTensorConn(right_id);
+ assert(right_tensor != nullptr);
+ auto right_tensor_rank = right_tensor->getNumLegs();
+ const auto & right_legs = right_tensor->getTensorLegs();
+ unsigned int num_contracted = 0;
+ for(const auto & leg: left_legs){
+  if(leg.getTensorId() == right_id) ++num_contracted;
+ }
  //`Finish
  return true;
 }

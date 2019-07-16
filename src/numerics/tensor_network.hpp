@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/15
+REVISION: 2019/07/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -154,7 +154,9 @@ public:
  bool reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
 
  /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
-     The released tensor legs will be joined at the end of the output tensor. **/
+     The released tensor legs will be joined at the end of the output tensor,
+     unless a tensor leg was already connected to the output tensor, in which case
+     it will be deleted completely, resulting in a reduced rank of the output tensor. **/
  bool deleteTensor(unsigned int tensor_id); //in: id of the tensor to be deleted
 
  /** Contracts two tensors in a finalized tensor network, producing another tensor:

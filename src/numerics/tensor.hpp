@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/07/08
+REVISION: 2019/07/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,7 +79,7 @@ public:
  /** Create a rank-0 tensor (scalar). **/
  Tensor(const std::string & name);       //tensor name
  /** Create a tensor by contracting two other tensors.
-     The vectors of tensor legs specify the tensor contraction pattern:
+     The vector of tensor legs specifies the tensor contraction pattern:
       contraction.size() = left_rank + right_rank;
       Output tensor id = 0;
       Left input tensor id = 1;
