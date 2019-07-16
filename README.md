@@ -59,7 +59,7 @@ Here's an example configure command that we've tested for MPICH:
 ```
 $ CC=gcc-8 CXX=g++-8 FC=gfortran-8 ./configure --prefix=/usr/local/mpich --enable-fortran=all
 ```
-Then install GCC via homebrew (version 8 due to a bug in version 8)
+Then install GCC via homebrew (version 8 due to a bug in version 9)
 ```
 $ brew install gcc@8
 ```
