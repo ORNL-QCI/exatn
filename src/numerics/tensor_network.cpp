@@ -484,7 +484,40 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
    "Deleting a tensor from an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
- //`Finish
+ //Append the released legs from the deleted tensor to the output tensor:
+ auto * tensor = this->getTensorConn(tensor_id);
+ if(tensor == nullptr){
+  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+   "Tensor with id " << tensor_id << " is not found in the tensor network!" << std::endl;
+  return false;
+ }
+ if(tensor->getNumLegs() > 0){
+  auto * output_tensor = this->getTensorConn(0);
+  assert(output_tensor != nullptr);
+  auto output_tensor_rank = output_tensor->getNumLegs();
+  const auto & legs = tensor->getTensorLegs();
+  for(const auto & leg: legs){
+   const auto other_tensor_id = leg.getTensorId();
+   const auto other_tensor_leg_id = leg.getDimensionId();
+   auto * other_tensor = this->getTensorConn(other_tensor_id);
+   assert(other_tensor != nullptr);
+   auto other_tensor_leg = other_tensor->getTensorLeg(other_tensor_leg_id);
+   other_tensor_leg.resetTensorId(0);
+   other_tensor_leg.resetDimensionId(output_tensor_rank);
+   other_tensor->resetLeg(other_tensor_leg_id,other_tensor_leg);
+   output_tensor->appendLeg(other_tensor->getDimSpaceAttr(other_tensor_leg_id),
+                            other_tensor->getDimExtent(other_tensor_leg_id),
+                            TensorLeg(
+                             other_tensor_id,
+                             other_tensor_leg_id,
+                             reverseLegDirection(other_tensor_leg.getDirection())
+                            )
+                           );
+   output_tensor_rank = output_tensor->getNumLegs();
+  }
+ }
+ //Delete the tensor:
+ assert(tensors_.erase(tensor_id) == 1);
  return true;
 }
 
