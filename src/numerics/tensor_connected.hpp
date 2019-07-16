@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/07/15
+REVISION: 2019/07/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,7 +73,9 @@ public:
                TensorLeg tensor_leg); //in: new leg configuration
 
  /** Deletes an existing tensor leg, reducing the tensor rank by one. **/
- void deleteLeg(unsigned int leg_id); //in: leg id to delete
+ void deleteLeg(unsigned int leg_id);  //in: leg id to delete
+ /** Deletes a set of existing tensor legs, reducing the tensor rank. **/
+ void deleteLegs(std::vector<unsigned int> & leg_ids); //inout: vector of leg ids to delete
 
  /** Appends a new tensor leg as the last leg, increasing the tensor rank by one. **/
  void appendLeg(std::pair<SpaceId,SubspaceId> subspace, //in: subspace defining the new leg

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/15
+REVISION: 2019/07/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -277,31 +277,37 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
  //Pair legs of the new tensor with the input tensors of the tensor network:
  if(tensor_rank > 0){ //true tensor
   std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders for legs
-  for(const auto & link: pairing){
-   const auto & output_tensor_leg_id = link.first;
-   const auto & tensor_leg_id = link.second;
-   auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
-   const auto input_tensor_id = output_tensor_leg.getTensorId();
-   const auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
-   auto * input_tensor = this->getTensorConn(input_tensor_id);
-   assert(input_tensor != nullptr);
-   auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
-   input_tensor_leg.resetTensorId(tensor_id);
-   input_tensor_leg.resetDimensionId(tensor_leg_id);
-   input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
-   new_tensor_legs[tensor_leg_id].resetTensorId(input_tensor_id);
-   new_tensor_legs[tensor_leg_id].resetDimensionId(input_tensor_leg_id);
-   if(dir_present){
-    new_tensor_legs[tensor_leg_id].resetDirection(leg_dir[tensor_leg_id]);
-    if(input_tensor_leg.getDirection() != reverseLegDirection(new_tensor_legs[tensor_leg_id].getDirection())){
-     std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Leg directions: Pairing leg direction mismatch!" << std::endl;
-     return false;
+  if(pairing.size() > 0){
+   std::vector<unsigned int> matched_output_legs(pairing.size(),0);
+   unsigned int mode = 0;
+   for(const auto & link: pairing){
+    const auto & output_tensor_leg_id = link.first;
+    const auto & tensor_leg_id = link.second;
+    auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
+    const auto input_tensor_id = output_tensor_leg.getTensorId();
+    const auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
+    auto * input_tensor = this->getTensorConn(input_tensor_id);
+    assert(input_tensor != nullptr);
+    auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
+    input_tensor_leg.resetTensorId(tensor_id);
+    input_tensor_leg.resetDimensionId(tensor_leg_id);
+    input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
+    new_tensor_legs[tensor_leg_id].resetTensorId(input_tensor_id);
+    new_tensor_legs[tensor_leg_id].resetDimensionId(input_tensor_leg_id);
+    if(dir_present){
+     new_tensor_legs[tensor_leg_id].resetDirection(leg_dir[tensor_leg_id]);
+     if(input_tensor_leg.getDirection() != reverseLegDirection(new_tensor_legs[tensor_leg_id].getDirection())){
+      std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Leg directions: Pairing leg direction mismatch!" << std::endl;
+      return false;
+     }
+    }else{
+     new_tensor_legs[tensor_leg_id].resetDirection(reverseLegDirection(input_tensor_leg.getDirection()));
     }
-   }else{
-    new_tensor_legs[tensor_leg_id].resetDirection(reverseLegDirection(input_tensor_leg.getDirection()));
+    matched_output_legs[mode++] = output_tensor_leg_id;
    }
-   output_tensor->deleteLeg(output_tensor_leg_id);
-   updateConnections(0); //update tensor network connections due to deletion of the output tensor leg
+   //Delete matched legs from the output tensor:
+   output_tensor->deleteLegs(matched_output_legs);
+   updateConnections(0); //update tensor network connections due to deletion of the matched output tensor legs
   }
   //Append unpaired legs of the new tensor to the output tensor of the network:
   output_rank = output_tensor->getNumLegs();
@@ -382,40 +388,41 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
   }
  }
  //Pair output legs of the primary tensor network with output legs of the appended (secondary) tensor network:
- for(const auto & link: pairing){
-  const auto & output0_leg_id = link.first;
-  const auto & output1_leg_id = link.second;
-  const auto & output0_leg = output0->getTensorLeg(output0_leg_id);
-  const auto & output1_leg = output1->getTensorLeg(output1_leg_id);
-  const auto input0_id = output0_leg.getTensorId();
-  const auto input0_leg_id = output0_leg.getDimensionId();
-  const auto input1_id = output1_leg.getTensorId();
-  const auto input1_leg_id = output1_leg.getDimensionId();
-  auto * input0 = this->getTensorConn(input0_id);
-  assert(input0 != nullptr);
-  auto * input1 = network.getTensorConn(input1_id);
-  assert(input1 != nullptr);
-  auto input0_leg = input0->getTensorLeg(input0_leg_id);
-  input0_leg.resetTensorId(input1_id);
-  input0_leg.resetDimensionId(input1_leg_id);
-  input0->resetLeg(input0_leg_id,input0_leg);
-  auto input1_leg = input1->getTensorLeg(input1_leg_id);
-  input1_leg.resetTensorId(input0_id);
-  input1_leg.resetDimensionId(input0_leg_id);
-  input1->resetLeg(input1_leg_id,input1_leg);
+ if(pairing.size() > 0){
+  for(const auto & link: pairing){
+   const auto & output0_leg_id = link.first;
+   const auto & output1_leg_id = link.second;
+   const auto & output0_leg = output0->getTensorLeg(output0_leg_id);
+   const auto & output1_leg = output1->getTensorLeg(output1_leg_id);
+   const auto input0_id = output0_leg.getTensorId();
+   const auto input0_leg_id = output0_leg.getDimensionId();
+   const auto input1_id = output1_leg.getTensorId();
+   const auto input1_leg_id = output1_leg.getDimensionId();
+   auto * input0 = this->getTensorConn(input0_id);
+   assert(input0 != nullptr);
+   auto * input1 = network.getTensorConn(input1_id);
+   assert(input1 != nullptr);
+   auto input0_leg = input0->getTensorLeg(input0_leg_id);
+   input0_leg.resetTensorId(input1_id);
+   input0_leg.resetDimensionId(input1_leg_id);
+   input0->resetLeg(input0_leg_id,input0_leg);
+   auto input1_leg = input1->getTensorLeg(input1_leg_id);
+   input1_leg.resetTensorId(input0_id);
+   input1_leg.resetDimensionId(input0_leg_id);
+   input1->resetLeg(input1_leg_id,input1_leg);
+  }
+  //Delete matched legs from both output tensors:
+  std::vector<unsigned int> matched_output_legs(pairing.size(),0);
+  for(unsigned int i = 0; i < pairing.size(); ++i) matched_output_legs[i] = pairing[i].first;
+  output0->deleteLegs(matched_output_legs);
+  this->updateConnections(0);
+  for(unsigned int i = 0; i < pairing.size(); ++i) matched_output_legs[i] = pairing[i].second;
+  output1->deleteLegs(matched_output_legs);
+  network.updateConnections(0);
  }
- //Delete matched legs from both output tensors:
- for(const auto & link: pairing){
-  const auto & output0_leg_id = link.first;
-  const auto & output1_leg_id = link.second;
-  output0->deleteLeg(output0_leg_id);
-  output1->deleteLeg(output1_leg_id);
- }
+ //Append unmatched legs of the output tensor from the appended tensor network to the output tensor from the primary tensor network:
  output0_rank = output0->getNumLegs();
  output1_rank = output1->getNumLegs();
- this->updateConnections(0);
- network.updateConnections(0);
- //Append unmatched legs of the output tensor from the appended tensor network to the output tensor from the primary tensor network:
  for(unsigned int i = 0; i < output1_rank; ++i){
   output0->appendLeg(output1->getDimSpaceAttr(i),
                      output1->getDimExtent(i),
@@ -431,6 +438,7 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
                    )
                   );
  }
+ this->updateConnections(0); //update connections in just appended input tensors
  finalized_ = 1; //implicit leg pairing always keeps the primary tensor network in a finalized state
  return true;
 }

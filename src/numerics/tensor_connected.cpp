@@ -1,10 +1,12 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/07/15
+REVISION: 2019/07/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
+
+#include <algorithm>
 
 #include <iostream>
 #include <assert.h>
@@ -78,6 +80,19 @@ void TensorConn::deleteLeg(unsigned int leg_id)
  assert(leg_id < legs_.size());
  legs_.erase(legs_.cbegin()+leg_id);
  tensor_->deleteDimension(leg_id);
+ return;
+}
+
+void TensorConn::deleteLegs(std::vector<unsigned int> & leg_ids)
+{
+ if(leg_ids.size() > 0){
+  std::sort(leg_ids.begin(),leg_ids.end());
+  unsigned int deleted = 0;
+  for(const auto & leg_id: leg_ids){
+   this->deleteLeg(leg_id-deleted);
+   ++deleted;
+  }
+ }
  return;
 }
 
