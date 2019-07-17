@@ -14,7 +14,6 @@ add_library(${LIBRARY_NAME}
 target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC .
-         boost
          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
          ${CMAKE_SOURCE_DIR}/src/exatn
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
@@ -33,10 +32,10 @@ else()
 endif()
 
 if(EXATN_BUILD_TESTS)
-  #add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
-file (GLOB HEADERS *.hpp boost/*.hpp)
+file (GLOB HEADERS *.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
