@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/07/16
+REVISION: 2019/07/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -98,6 +98,8 @@ public:
  /** Print. **/
  void printIt() const;
 
+ /** Get tensor name. **/
+ const std::string & getName() const;
  /** Get the tensor rank (order). **/
  unsigned int getRank() const;
  /** Get the tensor shape. **/

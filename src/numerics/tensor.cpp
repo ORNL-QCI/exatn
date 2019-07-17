@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/07/08
+REVISION: 2019/07/17
 
-Copyright (C) 2018-2018 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2018 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
 
@@ -90,6 +90,11 @@ void Tensor::printIt() const
 {
  std::cout << name_; signature_.printIt(); shape_.printIt();
  return;
+}
+
+const std::string & Tensor::getName() const
+{
+ return name_;
 }
 
 unsigned int Tensor::getRank() const

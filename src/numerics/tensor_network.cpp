@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/16
+REVISION: 2019/07/17
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -553,7 +553,7 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
    "Contracting tensors in an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
- //Merge two tensors together:
+ //Get tensor info:
  auto * left_tensor = this->getTensorConn(left_id);
  assert(left_tensor != nullptr);
  auto left_tensor_rank = left_tensor->getNumLegs();
@@ -562,10 +562,49 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
  assert(right_tensor != nullptr);
  auto right_tensor_rank = right_tensor->getNumLegs();
  const auto & right_legs = right_tensor->getTensorLegs();
+ //Count contracted and uncontracted legs:
  unsigned int num_contracted = 0;
  for(const auto & leg: left_legs){
   if(leg.getTensorId() == right_id) ++num_contracted;
  }
+ unsigned int num_uncontracted = (left_legs.size() + right_legs.size()) - num_contracted*2;
+ //Create the resulting legs and contraction pattern:
+ std::vector<TensorLeg> result_legs(num_uncontracted,TensorLeg(0,0)); //placeholders for tensor legs
+ std::vector<TensorLeg> pattern(left_legs.size()+right_legs.size(),TensorLeg(0,0)); //tensor contraction pattern (placeholder)
+ unsigned int mode = 0;
+ unsigned int res_mode = 0;
+ for(const auto & leg: left_legs){
+  if(leg.getTensorId() == right_id){ //contracted leg
+   pattern[mode++] = TensorLeg(2,leg.getDimensionId());
+  }else{ //uncontracted leg
+   pattern[mode++] = TensorLeg(0,res_mode);
+   result_legs[res_mode++] = leg;
+  }
+ }
+ for(const auto & leg: right_legs){
+  if(leg.getTensorId() == left_id){ //contracted leg
+   pattern[mode++] = TensorLeg(1,leg.getDimensionId());
+  }else{ //uncontracted leg
+   pattern[mode++] = TensorLeg(0,res_mode);
+   result_legs[res_mode++] = leg;
+  }
+ }
+ assert(res_mode == num_uncontracted);
+ //Append the tensor result:
+ tensors_.emplace(std::make_pair(
+                   result_id,
+                   TensorConn(
+                    std::make_shared<Tensor>(
+                     left_tensor->getTensor()->getName() + right_tensor->getTensor()->getName(),
+                     *(left_tensor->getTensor()),
+                     *(right_tensor->getTensor()),
+                     pattern
+                    ),
+                    result_id,
+                    result_legs
+                   )
+                  )
+                 );
  //`Finish
  return true;
 }
