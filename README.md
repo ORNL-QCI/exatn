@@ -1,3 +1,8 @@
+| Branch | Status |
+|:-------|:-------|
+|master | [![pipeline status](https://code.ornl.gov/qci/exatn/badges/master/pipeline.svg)](https://code.ornl.gov/qci/exatn/commits/master) |
+|devel | [![pipeline status](https://code.ornl.gov/qci/exatn/badges/devel/pipeline.svg)](https://code.ornl.gov/qci/exatn/commits/devel) |
+
 # ExaTN library: Exascale Tensor Networks
 
 ExaTN is a software library for expressing and processing
@@ -54,7 +59,7 @@ If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
 
 ## Mac OS X Build Instructions
-First install MPICH or OpenMPI from source. Refer to their installation guides for this. 
+First install MPICH or OpenMPI from source. Refer to their installation guides for this.
 Here's an example configure command that we've tested for MPICH:
 ```
 $ CC=gcc-8 CXX=g++-8 FC=gfortran-8 ./configure --prefix=/usr/local/mpich --enable-fortran=all
