@@ -79,4 +79,4 @@ usfunctionembedresources(TARGET
                          manifest.json)
 #exatn_enable_rpath(${LIBRARY_NAME})
 
-install(TARGETS ${LIBRARY_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
+#install(TARGETS ${LIBRARY_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
