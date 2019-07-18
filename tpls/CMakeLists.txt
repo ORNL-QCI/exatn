@@ -129,3 +129,16 @@ endif ()
 set(BUILD_SHARED_LIBS FALSE)
 set(BOOST_LIBS_OPTIONAL graph CACHE STRING "" FORCE)
 add_subdirectory(boost-cmake)
+
+
+add_custom_command(TARGET exatensor-build POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/lib* ${CMAKE_INSTALL_PREFIX}/lib/
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Installing ExaTensor Libs to Install Prefix..."
+)
+add_custom_command(TARGET exatensor-build POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_method.hpp ${CMAKE_INSTALL_PREFIX}/include/exatensor
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Installing ExaTensor tensor_method.hpp to Install Prefix..."
+)
