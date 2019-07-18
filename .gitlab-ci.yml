@@ -1,7 +1,9 @@
 stages:
   - build
 
-build_devel:
+build_master:
   stage: build
+  only:
+  - master
   script:
   - docker run hello-world
