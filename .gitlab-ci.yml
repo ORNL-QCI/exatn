@@ -1,0 +1,7 @@
+stages:
+  - build
+
+build_devel:
+  stage: build
+  script:
+  - docker run hello-world
