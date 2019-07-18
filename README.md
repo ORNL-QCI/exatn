@@ -36,11 +36,9 @@ $ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
 $ python -m pip install --upgrade cmake
 ```
 
-Note that, for now, developers must clone ExaTENSOR manually:
 ``` bash
-$ git clone --recursive https://code.ornl.gov/qci/exatn
+$ git clone --recursive https://github.com/qci/exatn
 $ cd exatn
-$ git clone https://gitlab.com/DmitryLyakh/ExaTensor tpls/ExaTensor
 $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
   (for Python API add) -DPYTHON_INCLUDE_DIR=/usr/include/python3.5 (or wherever Python.h lives)
@@ -54,9 +52,9 @@ If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
 
 ## Mac OS X Build Instructions
-First install MPICH or OpenMPI from source. Refer to their installation guides for this. 
+First install MPICH or OpenMPI from source. Refer to their installation guides for this.
 Here's an example configure command that we've tested for MPICH:
-```
+``` bash
 $ CC=gcc-8 CXX=g++-8 FC=gfortran-8 ./configure --prefix=/usr/local/mpich --enable-fortran=all
 ```
 Then install GCC via homebrew (version 8 due to a bug in version 9)
@@ -64,12 +62,14 @@ Then install GCC via homebrew (version 8 due to a bug in version 9)
 $ brew install gcc@8
 ```
 Now continue with configuring and building ExaTN
-```
+``` bash
+$ git clone --recursive https://github.com/qci/exatn
+$ cd exatn
 $ mkdir build && cd build
-$ FC=gfortran-8 CXX=g++-8 cmake .. 
-    -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++ 
-    -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90 
-    -DEXATN_BUILD_TESTS=TRUE 
+$ FC=gfortran-8 CXX=g++-8 cmake ..
+    -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++
+    -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90
+    -DEXATN_BUILD_TESTS=TRUE
     -DPYTHON_INCLUDE_DIR=$(python -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
 ```
