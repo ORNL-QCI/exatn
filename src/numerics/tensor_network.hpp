@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/16
+REVISION: 2019/07/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -159,13 +159,13 @@ public:
      it will be deleted completely, resulting in a reduced rank of the output tensor. **/
  bool deleteTensor(unsigned int tensor_id); //in: id of the tensor to be deleted
 
- /** Contracts two tensors in a finalized tensor network, producing another tensor:
-     result = left * right.
+ /** Merges two tensors in a finalized tensor network by replacing them by their contracted product:
+     result = left * right: All participating tensor ids must be distinct and not equal to 0.
      The uncontracted modes of the left tensor will precede in-order the uncontracted
      modes of the right tensor in the tensor-result. **/
- bool contractTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
-                      unsigned int right_id,   //in: right tensor id (present in the tensor network)
-                      unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+ bool mergeTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
+                   unsigned int right_id,   //in: right tensor id (present in the tensor network)
+                   unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
 
  /** Builds the tensor network from a template implemented by a custom tensor network builder.
      Note that the tensor network must already contain the explicit fully specified output tensor. **/

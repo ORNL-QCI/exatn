@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/17
+REVISION: 2019/07/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -218,7 +218,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
   ++mode;
  }
  //Append the tensor to the tensor network:
- auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
+ auto new_pos = tensors_.emplace(std::make_pair(
                                   tensor_id,TensorConn(tensor,tensor_id,connections)
                                  )
                                 );
@@ -324,7 +324,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    }
    ++mode;
   }
-  auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
+  auto new_pos = tensors_.emplace(std::make_pair(
                                    tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs)
                                   )
                                  );
@@ -334,7 +334,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    return false;
   }
  }else{ //scalar tensor
-  auto new_pos = tensors_.emplace(std::pair<unsigned int, TensorConn>(
+  auto new_pos = tensors_.emplace(std::make_pair(
                                    tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>())
                                   )
                                  );
@@ -536,21 +536,21 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
 }
 
 
-bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id, unsigned int result_id)
+bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, unsigned int result_id)
 {
  if(left_id == right_id || left_id == result_id || right_id == result_id){
-  std::cout << "#ERROR(TensorNetwork::contractTensors): Invalid arguments: Cannot be identical: " <<
+  std::cout << "#ERROR(TensorNetwork::mergeTensors): Invalid arguments: Cannot be identical: " <<
    left_id << " " << right_id << " " << result_id << std::endl;
   return false;
  }
  if(left_id == 0 || right_id == 0 || result_id == 0){
-  std::cout << "#ERROR(TensorNetwork::contractTensors): Invalid arguments: Output tensor #0 cannot participate: " <<
+  std::cout << "#ERROR(TensorNetwork::mergeTensors): Invalid arguments: Output tensor #0 cannot participate: " <<
    left_id << " " << right_id << " " << result_id << std::endl;
   return false;
  }
  if(finalized_ == 0){
-  std::cout << "#ERROR(TensorNetwork::contractTensors): Invalid request: " <<
-   "Contracting tensors in an unfinalized tensor network is forbidden!" << std::endl;
+  std::cout << "#ERROR(TensorNetwork::mergeTensors): Invalid request: " <<
+   "Merging tensors in an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
  //Get tensor info:
@@ -564,12 +564,10 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
  const auto & right_legs = right_tensor->getTensorLegs();
  //Count contracted and uncontracted legs:
  unsigned int num_contracted = 0;
- for(const auto & leg: left_legs){
-  if(leg.getTensorId() == right_id) ++num_contracted;
- }
+ for(const auto & leg: left_legs){if(leg.getTensorId() == right_id) ++num_contracted;}
  unsigned int num_uncontracted = (left_legs.size() + right_legs.size()) - num_contracted*2;
  //Create the resulting legs and contraction pattern:
- std::vector<TensorLeg> result_legs(num_uncontracted,TensorLeg(0,0)); //placeholders for tensor legs
+ std::vector<TensorLeg> result_legs(num_uncontracted,TensorLeg(0,0)); //placeholders for result-tensor legs
  std::vector<TensorLeg> pattern(left_legs.size()+right_legs.size(),TensorLeg(0,0)); //tensor contraction pattern (placeholder)
  unsigned int mode = 0;
  unsigned int res_mode = 0;
@@ -605,7 +603,11 @@ bool TensorNetwork::contractTensors(unsigned int left_id, unsigned int right_id,
                    )
                   )
                  );
- //`Finish
+ //Delete two original tensors:
+ assert(tensors_.erase(left_id) == 1);
+ assert(tensors_.erase(right_id) == 1);
+ //Update connections:
+ this->updateConnections(result_id);
  return true;
 }
 
