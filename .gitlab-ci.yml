@@ -1,9 +1,16 @@
 stages:
   - build
 
+build_devel:
+  stage: build
+  only:
+  - devel
+  script:
+  - cd docker/ci/ubuntu1804/devel && docker build -t exatn/devel . --no-cache
+
 build_master:
   stage: build
   only:
   - master
   script:
-  - docker run hello-world
+  - cd docker/ci/ubuntu1804/master && docker build -t exatn/master . --no-cache
