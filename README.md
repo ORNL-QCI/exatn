@@ -20,15 +20,15 @@ domain which heavily relies on large-scale numerical tensor algebra:
 
 ## Dependencies
 ```
-Compiler (C++11, Fortran-2003): GNU 8+, Intel 18+, IBM XL 16.1.1+
+Compiler (C++11, optional Fortran-2003 for ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
 MPI: OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
-BLAS: ATLAS, MKL, ACML, ESSL
+BLAS: ATLAS, MKL, ACML, ESSL (optional)
 CUDA 9+ (optional)
 CMake 3.9+ (for build)
 ```
 For TaProl Parser Development
 ```
-ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar
+ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/parser).
 ```
 
 ## Linux Build instructions
@@ -38,7 +38,7 @@ On Ubuntu 16+, for GCC 8+, OpenMPI 3+, and ATLAS BLAS, run the following:
 $ add-apt-repository ppa:ubuntu-toolchain-r/test
 $ apt-get update
 $ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
-$ python -m pip install --upgrade cmake
+$ python3 -m pip install --upgrade cmake
 ```
 
 ``` bash
@@ -75,7 +75,7 @@ $ FC=gfortran-8 CXX=g++-8 cmake ..
     -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++
     -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90
     -DEXATN_BUILD_TESTS=TRUE
-    -DPYTHON_INCLUDE_DIR=$(python -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+    -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
 ```
 
