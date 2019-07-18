@@ -1,3 +1,8 @@
+| Branch | Status |
+|:-------|:-------|
+|master | [![pipeline status](https://code.ornl.gov/qci/exatn/badges/master/pipeline.svg)](https://code.ornl.gov/qci/exatn/commits/master) |
+|devel | [![pipeline status](https://code.ornl.gov/qci/exatn/badges/devel/pipeline.svg)](https://code.ornl.gov/qci/exatn/commits/devel) |
+
 # ExaTN library: Exascale Tensor Networks
 
 ExaTN is a software library for expressing and processing
