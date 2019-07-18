@@ -24,4 +24,3 @@ endif()
 add_dependencies(client_test exatensor-build)
 add_dependencies(server_test exatensor-build)
 
-add_subdirectory(example-tensor-method)
