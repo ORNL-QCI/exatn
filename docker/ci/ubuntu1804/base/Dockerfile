@@ -1,6 +1,6 @@
 from ubuntu:18.04
 run apt-get -y update && apt-get install -y gcc-8 g++-8 gfortran-8 git wget \
-            libcurl4-openssl-dev libssl-dev python3 libunwind-dev \
+            libcurl4-openssl-dev libssl-dev python3 libunwind-dev libmpich-dev \
             libpython3-dev python3-pip libblas-dev liblapack-dev software-properties-common \
     && python3 -m pip install ipopo cmake \
     && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
