@@ -1,37 +1,48 @@
-#ifndef XACC_QUANTUM_GRAPH_HPP_
-#define XACC_QUANTUM_GRAPH_HPP_
+/** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
+REVISION: 2019/07/18
+
+Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+
+Rationale:
+ (a) Tensor graph is a directed acyclic graph in which vertices
+     represent tensor operations and directed edges represent
+     dependencies between them.
+
+**/
+
+#ifndef EXATN_RUNTIME_GRAPH_HPP_
+#define EXATN_RUNTIME_GRAPH_HPP_
 
 #include "Identifiable.hpp"
 #include "tensor_operation.hpp"
 
-#include <fstream>
 #include <iostream>
-#include <map>
-#include <sstream>
+#include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace exatn {
+//namespace runtime {
 
-// For now
-using TensorOp = int;
+// Tensor graph node
+struct TensorOpNode {
 
-class TensorOpNode {
-public:
   TensorOpNode() : op(nullptr) {}
-  TensorOpNode(std::shared_ptr<numerics::TensorOperation> o) : op(o) {}
-  std::shared_ptr<numerics::TensorOperation> op;
-  bool executed = false;
-  bool is_noop = false;
-  int id;
+  TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op) : op(tens_op) {}
+
+  std::shared_ptr<numerics::TensorOperation> op; //stored tensor operation
+  bool executed = false; //execution status of the tensor operation
+  bool is_noop = false; //
+  int id; //
   // Add any other info you need
 };
 
 // Public Graph API
 class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
 public:
-  // Add an edge between src and tgt, this is
-  // a directed edge
+  // Add an edge between src and tgt, this is a directed edge
   virtual void addEdge(const std::shared_ptr<TensorOpNode> &srcNode, const std::shared_ptr<TensorOpNode> &tgtNode) = 0;
 
   virtual void addVertex(std::shared_ptr<TensorOpNode> opNode) = 0;
@@ -75,5 +86,7 @@ public:
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 };
 
+//} // namespace runtime
 } // namespace exatn
-#endif
+
+#endif //EXATN_RUNTIME_GRAPH_HPP_

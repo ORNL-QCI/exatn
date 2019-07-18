@@ -27,15 +27,14 @@ Rationale:
 #ifndef EXATN_RUNTIME_TENSORRUNTIME_HPP_
 #define EXATN_RUNTIME_TENSORRUNTIME_HPP_
 
+#include "TensorGraph.hpp"
+#include "tensor_operation.hpp"
+#include "tensor_method.hpp"
+
 #include <iostream>
 #include <memory>
 #include <string>
 #include <mutex>
-
-#include "TensorGraph.hpp"
-#include "tensor.hpp"
-#include "tensor_operation.hpp"
-#include "tensor_method.hpp"
 
 namespace exatn {
 namespace runtime {
