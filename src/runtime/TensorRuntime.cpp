@@ -3,84 +3,96 @@
 
 namespace exatn {
 namespace runtime {
+
 void TensorRuntime::openScope(const std::string &scopeName) {
   assert(scopeName.length() > 0);
-  // save currentScope name
-  currentScope = scopeName;
-  // create new graph with name given by scope name
-  // store it in the dags map
-  dags[currentScope] = exatn::getService<TensorGraph>("boost-digraph");
+  // create new graph with name given by scope name and store it in the dags map
+  auto new_pos = dags.emplace(std::make_pair(
+                               scopeName,exatn::getService<TensorGraph>("boost-digraph")
+                              )
+                             );
+  assert(new_pos.second); // make sure there was no other scope with the same name
+  currentScope = scopeName; // change the name of the current scope
+  return;
 }
 
-void TensorRuntime::closeScope() { currentScope = ""; }
+void TensorRuntime::closeScope() {
+  //complete all operations in the current scope:
+  currentScope = "";
+}
 
 void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
-  //upate the output tensor executation table
-  int newop_outid = op->getTensorOperandId(0);
+  // upate the output tensor executation table
+  auto newop_outid = op->getTensorOperandId(0);
   mtx.lock();
-  std::map<std::string, std::map<int, int>>::iterator curTableIter = outTensorExecTbl.find(currentScope);
-  if(curTableIter != outTensorExecTbl.end())
-  {
-	
-	std::map<int, int> &cur_table = curTableIter->second;
-	if(cur_table.find(newop_outid)==cur_table.end())
-		cur_table[newop_outid]=1;
-	else
-		cur_table[newop_outid]+=1;
+  auto curTableIter = outTensorExecTbl.find(currentScope);
+  if(curTableIter != outTensorExecTbl.end()) {
+    auto &cur_table = curTableIter->second;
+    if(cur_table.find(newop_outid)==cur_table.end())
+      cur_table[newop_outid]=1;
+    else
+      cur_table[newop_outid]+=1;
   }
-  else
-	outTensorExecTbl[currentScope][newop_outid]=1;
-
+  else {
+    outTensorExecTbl[currentScope][newop_outid]=1;
+  }
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg=dags[currentScope];
-  int tg_sz=tg->size();
-  std::shared_ptr<TensorOpNode> op1=std::make_shared<TensorOpNode>(op);
+  auto tg_sz=tg->size();
+  auto op1=std::make_shared<TensorOpNode>(op);
   tg->addVertex(op1);
-  unsigned int num_op1_operands = op->getNumOperands();
+  auto num_op1_operands = op->getNumOperands();
   std::shared_ptr<TensorOpNode> op0;
-  for(int i=tg_sz-1; i>=0; i--)
-  {
-	op0=tg->getVertexProperties(i);
-	std::size_t op0_outid = op0->op->getTensorOperandId(0);
-	for(int j=1; j<num_op1_operands; j++) {
-		if(op0_outid == op1->op->getTensorOperandId(j))
-			tg->addEdge(op0,op1);
-	}
+  for(int i=tg_sz-1; i>=0; i--) {
+    op0=tg->getVertexProperties(i);
+    auto op0_outid = op0->op->getTensorOperandId(0);
+    for(int j=1; j<num_op1_operands; j++) {
+      if(op0_outid == op1->op->getTensorOperandId(j))
+        tg->addEdge(op0,op1);
+    }
   }
   mtx.unlock();
 }
 
-void TensorRuntime::sync(const std::shared_ptr<numerics::TensorOperation> &op) {
+bool TensorRuntime::sync(const numerics::TensorOperation &op, bool wait) {
   // sync on a particular tensor, everything related to tensor
-  bool syncing=true;
-  int op_outid = op->getTensorOperandId(0);
-  while(syncing)
-  {
-	mtx.lock();
-		if(outTensorExecTbl[currentScope][op_outid]==0)
-			syncing=false;
-	mtx.unlock();
+  const auto op_outid = op.getTensorOperandId(0);
+  mtx.lock();
+  bool completed = (outTensorExecTbl[currentScope][op_outid] == 0);
+  mtx.unlock();
+  if(wait) {
+    while(!completed) {
+      mtx.lock();
+      completed = (outTensorExecTbl[currentScope][op_outid] == 0);
+      mtx.unlock();
+    }
   }
+  return completed;
 }
 
-void TensorRuntime::sync(const exatn::numerics::Tensor &tensor) {
+bool TensorRuntime::sync(const numerics::Tensor &tensor, bool wait) {
   // sync on a particular tensor, everything related to tensor
-  bool syncing=true;
-  int tid = tensor.getTensorId();;
-  while(syncing)
-  {
-        mtx.lock();
-                if(outTensorExecTbl[currentScope][tid]==0)
-                        syncing=false;
-        mtx.unlock();
+  const auto op_outid = tensor.getTensorId();
+  mtx.lock();
+  bool completed = (outTensorExecTbl[currentScope][op_outid] == 0);
+  mtx.unlock();
+  if(wait) {
+    while(!completed) {
+      mtx.lock();
+      completed = (outTensorExecTbl[currentScope][op_outid] == 0);
+      mtx.unlock();
+    }
   }
+  return completed;
 }
 
-TensorDenseBlock
-TensorRuntime::getTensorData(const exatn::numerics::Tensor &tensor) {
+TensorDenseBlock TensorRuntime::getTensorData(const numerics::Tensor &tensor) {
+  // sync
+  assert(sync(tensor,true));
   // get tensor data after sync
   return TensorDenseBlock();
 }
+
 } // namespace runtime
 } // namespace exatn
