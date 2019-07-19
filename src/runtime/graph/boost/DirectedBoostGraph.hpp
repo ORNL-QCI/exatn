@@ -53,7 +53,7 @@ using d_edge_type = typename boost::graph_traits<adjacency_list<
 class DirectedBoostGraph : public TensorGraph {
 
 protected:
-  DirectedGraphType _graph;
+  DirectedGraphType graph_;
 
 public:
   DirectedBoostGraph();
