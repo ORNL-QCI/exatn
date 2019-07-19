@@ -58,7 +58,7 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg = dags[currentScope];
-  auto tg_sz = tg->size();
+  auto tg_sz = tg->order();
   auto op1 = std::make_shared<TensorOpNode>(op);
   tg->addVertex(op1);
   auto num_operands = op->getNumOperands();
