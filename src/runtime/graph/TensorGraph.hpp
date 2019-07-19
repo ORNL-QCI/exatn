@@ -62,6 +62,8 @@ public:
   // node has been executed
   virtual void setNodeExecuted(const int index) = 0;
 
+  virtual bool DirectedBoostGraph::nodeExecuted(const int index) = 0;
+
   // Return true if edge exists
   virtual bool edgeExists(const int srcIndex, const int tgtIndex) = 0;
 

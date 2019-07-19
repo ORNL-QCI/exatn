@@ -39,6 +39,10 @@ void DirectedBoostGraph::setNodeExecuted(const int index) {
   (*_graph.get())[index].properties->executed = true;
 }
 
+bool DirectedBoostGraph::nodeExecuted(const int index) {
+  return (*_graph.get())[index].properties->executed;
+}
+
 bool DirectedBoostGraph::edgeExists(const int srcIndex, const int tgtIndex) {
   auto v1 = vertex(srcIndex, *_graph.get());
   auto v2 = vertex(tgtIndex, *_graph.get());

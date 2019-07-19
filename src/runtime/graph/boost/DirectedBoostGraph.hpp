@@ -63,6 +63,7 @@ public:
 
   const std::shared_ptr<TensorOpNode> &getVertexProperties(const int index) override;
   void setNodeExecuted(const int index) override;
+  bool nodeExecuted(const int index) override;
 
   bool edgeExists(const int srcIndex, const int tgtIndex) override;
 
