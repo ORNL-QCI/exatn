@@ -19,8 +19,9 @@ public:
 
 protected:
 
-   virtual void exec_impl(TensorOp& op) = 0;
+   virtual void exec_impl(numerics::TensorOperation& op) = 0;
 
+   numerics::TensorOperation GraphExecutor::nextExecutableNode(TensorGraph& dag);
 };
 }
 } // namespace exatn
