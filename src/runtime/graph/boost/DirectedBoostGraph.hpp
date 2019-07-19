@@ -10,11 +10,10 @@
  * Contributors:
  *   Alexander J. McCaskey - initial API and implementation
  *******************************************************************************/
-#ifndef XACC_UTILS_IGRAPH_HPP_
-#define XACC_UTILS_IGRAPH_HPP_
+#ifndef EXATN_RUNTIME_DAG_HPP_
+#define EXATN_RUNTIME_DAG_HPP_
 
 #include "TensorGraph.hpp"
-#include <memory>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dag_shortest_paths.hpp>
@@ -26,8 +25,12 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/property_map/property_map.hpp>
 
+#include <memory>
+
 using namespace boost;
+
 namespace exatn {
+namespace runtime {
 
 class DirectedBoostVertex {
 public:
@@ -51,7 +54,7 @@ using d_edge_type = typename boost::graph_traits<adjacency_list<
 class DirectedBoostGraph : public TensorGraph {
 
 protected:
-  DirectedGraphType _graph;
+  DirectedGraphType graph_;
 
 public:
   DirectedBoostGraph();
@@ -84,6 +87,7 @@ public:
   }
 };
 
+} // namespace runtime
 } // namespace exatn
 
-#endif
+#endif //EXATN_RUNTIME_DAG_HPP_

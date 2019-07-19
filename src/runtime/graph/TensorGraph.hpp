@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/18
+REVISION: 2019/07/19
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -11,8 +11,8 @@ Rationale:
 
 **/
 
-#ifndef EXATN_RUNTIME_GRAPH_HPP_
-#define EXATN_RUNTIME_GRAPH_HPP_
+#ifndef EXATN_RUNTIME_TENSOR_GRAPH_HPP_
+#define EXATN_RUNTIME_TENSOR_GRAPH_HPP_
 
 #include "Identifiable.hpp"
 #include "tensor_operation.hpp"
@@ -24,7 +24,7 @@ Rationale:
 #include <map>
 
 namespace exatn {
-//namespace runtime {
+namespace runtime {
 
 // Tensor graph node
 struct TensorOpNode {
@@ -33,10 +33,9 @@ struct TensorOpNode {
   TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op) : op(tens_op) {}
 
   std::shared_ptr<numerics::TensorOperation> op; //stored tensor operation
-  bool executed = false; //execution status of the tensor operation
-  bool is_noop = false; //
-  int id; //
-  // Add any other info you need
+  bool is_noop = false; //TRUE if the stored tensor operation is NOOP
+  bool executed = false; //TRUE if the tensor operation has been completed
+  std::size_t id; //vertex id
 };
 
 // Public Graph API
@@ -88,7 +87,7 @@ public:
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 };
 
-//} // namespace runtime
+} // namespace runtime
 } // namespace exatn
 
-#endif //EXATN_RUNTIME_GRAPH_HPP_
+#endif //EXATN_RUNTIME_TENSOR_GRAPH_HPP_

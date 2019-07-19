@@ -12,7 +12,7 @@ void GraphExecutor::execute(TensorGraph& dag) {
 
 TensorOpNode GraphExecutor::nextExecutableNode(TensorGraph& dag, int &nodes_executed){
   auto num_nodes = dag->order();
-  decltype(num_nodes) i; 
+  decltype(num_nodes) i;
   for(i = 0; i < num_nodes; i++) {
     if(!dag->nodeExecuted(i)) {
       if(dag->degree(i)==0) {
@@ -37,12 +37,12 @@ TensorOpNode GraphExecutor::nextExecutableNode(TensorGraph& dag, int &nodes_exec
         }
       }
     }
-  } 
-  
+  }
+
   assert(i < num_nodes);
 
   return dag->getVertexProperties(i);
 }
 
-}
-}
+} //namespace runtime
+} //namespace exatn

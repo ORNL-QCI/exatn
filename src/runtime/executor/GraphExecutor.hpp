@@ -1,5 +1,5 @@
-#ifndef EXATN_RUNTIME_DAGOPT_HPP_
-#define EXATN_RUNTIME_DAGOPT_HPP_
+#ifndef EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
+#define EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
 
 #include "TensorGraph.hpp"
 #include "tensor_operation.hpp"
@@ -29,6 +29,8 @@ protected:
    std::mutex mtx;
 
 };
-}
-} // namespace exatn
-#endif
+
+} //namespace runtime
+} //namespace exatn
+
+#endif //EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_

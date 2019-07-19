@@ -10,6 +10,8 @@ class ExatensorExecutor : public GraphExecutor {
 protected:
    void exec_impl(numerics::TensorOperation& op) override;
 };
-}
-}
-#endif
+
+} //namespace runtime
+} //namespace exatn
+
+#endif //EXATN_RUNTIME_EXATENSOR_EXECUTOR_HPP_
