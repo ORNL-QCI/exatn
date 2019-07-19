@@ -14,6 +14,8 @@ public:
    virtual void optimize(Graph& dag) = 0;
 
 };
-}
+
+} // namespace runtime
 } // namespace exatn
-#endif
+
+#endif //EXATN_RUNTIME_DAGOPT_HPP_

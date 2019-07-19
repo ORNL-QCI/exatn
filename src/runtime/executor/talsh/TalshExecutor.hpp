@@ -10,6 +10,8 @@ class TalshExecutor : public GraphExecutor {
 protected:
    void exec_impl(TensorOp& op) override;
 };
-}
-}
-#endif
+
+} //namespace runtime
+} //namespace exatn
+
+#endif //EXATN_RUNTIME_TALSH_EXECUTOR_HPP_

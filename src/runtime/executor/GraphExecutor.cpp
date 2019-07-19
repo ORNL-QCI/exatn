@@ -6,5 +6,5 @@ namespace runtime {
 void GraphExecutor::execute(TensorGraph& dag) {
 }
 
-}
-}
+} //namespace runtime
+} //namespace exatn

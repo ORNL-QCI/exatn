@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/18
+REVISION: 2019/07/19
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -11,8 +11,8 @@ Rationale:
 
 **/
 
-#ifndef EXATN_RUNTIME_GRAPH_HPP_
-#define EXATN_RUNTIME_GRAPH_HPP_
+#ifndef EXATN_RUNTIME_TENSOR_GRAPH_HPP_
+#define EXATN_RUNTIME_TENSOR_GRAPH_HPP_
 
 #include "Identifiable.hpp"
 #include "tensor_operation.hpp"
@@ -24,7 +24,7 @@ Rationale:
 #include <map>
 
 namespace exatn {
-//namespace runtime {
+namespace runtime {
 
 // Tensor graph node
 struct TensorOpNode {
@@ -86,7 +86,7 @@ public:
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 };
 
-//} // namespace runtime
+} // namespace runtime
 } // namespace exatn
 
-#endif //EXATN_RUNTIME_GRAPH_HPP_
+#endif //EXATN_RUNTIME_TENSOR_GRAPH_HPP_

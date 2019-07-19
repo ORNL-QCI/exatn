@@ -1,4 +1,3 @@
-
 #include "DirectedBoostGraph.hpp"
 
 #include <numeric>
@@ -8,6 +7,7 @@
 using namespace boost;
 
 namespace exatn {
+namespace runtime {
 
 DirectedBoostGraph::DirectedBoostGraph() {
   _graph = std::make_shared<d_adj_list>();
@@ -98,4 +98,5 @@ void DirectedBoostGraph::computeShortestPath(int startIndex,
     paths.push_back(pi);
 }
 
+} // namespace runtime
 } // namespace exatn
