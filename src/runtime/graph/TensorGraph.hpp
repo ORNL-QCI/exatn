@@ -26,65 +26,72 @@ Rationale:
 namespace exatn {
 namespace runtime {
 
+using VertexIdType = std::size_t; //must match with boost::graph vertex descriptor type
+
+
 // Tensor graph node
-struct TensorOpNode {
-
-  TensorOpNode() : op(nullptr) {}
-  TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op) : op(tens_op) {}
-
+class TensorOpNode {
+public:
+  TensorOpNode(): op(nullptr), is_noop(true), executed(false) {}
+  TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op):
+   op(tens_op), is_noop(false), executed(false) {}
+  TensorOpNode(const TensorOpNode &) = default;
+  TensorOpNode & operator=(const TensorOpNode &) = default;
+  TensorOpNode(TensorOpNode &&) noexcept = default;
+  TensorOpNode & operator=(TensorOpNode &&) noexcept = default;
+  ~TensorOpNode() = default;
+  //Members:
   std::shared_ptr<numerics::TensorOperation> op; //stored tensor operation
-  bool is_noop = false; //TRUE if the stored tensor operation is NOOP
-  bool executed = false; //TRUE if the tensor operation has been completed
+  bool is_noop; //TRUE if the stored tensor operation is NOOP
+  bool executed; //TRUE if the tensor operation has been completed
   std::size_t id; //vertex id
 };
+
 
 // Public Graph API
 class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
 public:
-  // Add an edge between src and tgt, this is a directed edge
-  virtual void addEdge(const std::shared_ptr<TensorOpNode> &srcNode, const std::shared_ptr<TensorOpNode> &tgtNode) = 0;
 
-  virtual void addVertex(std::shared_ptr<TensorOpNode> opNode) = 0;
-  //virtual void addVertex(TensorOpNode &&opNode) = 0;
+  // Adds a new vertex to the DAG (tensor operation)
+  virtual VertexIdType addVertex(std::shared_ptr<numerics::TensorOperation> op) = 0;
 
-  // For now lets assume as you build it,
-  // you can't change the structure or the node values
-  // virtual void removeEdge(const TensorOpNode &srcNode, const TensorOpNode &tgtNode) = 0;
-  // virtual void setVertexProperties(const int index, TensorOpNode& opNode) =
-  // 0; virtual void setVertexProperties(const int index, TensorOpNode&& opNode)
-  // = 0;
+  // Adds a directed edge between dependent and dependee vertices: dependent depends on dependee
+  virtual void addEdge(VertexIdType dependent,
+                       VertexIdType dependee) = 0;
 
-  // Get the TensorOpNode at the given index
-  virtual const std::shared_ptr<TensorOpNode> &getVertexProperties(const int index) = 0;
+  // Returns the properties (TensorOpNode) of a given vertex
+  virtual const TensorOpNode & getVertexProperties(VertexIdType vertex_id) = 0;
 
-  // Flip the bool on the TensorOpNode to indicate this
-  // node has been executed
-  virtual void setNodeExecuted(const int index) = 0;
+  // Marks the vertex as executed
+  virtual void setNodeExecuted(VertexIdType vertex_id) = 0;
 
-  virtual bool nodeExecuted(const int index) = 0;
+  // Returns TRUE if the node has been executed to completion
+  virtual bool nodeExecuted(VertexIdType vertex_id) = 0;
 
-  // Return true if edge exists
-  virtual bool edgeExists(const int srcIndex, const int tgtIndex) = 0;
+  // Returns TRUE if there is a dependency between vertices (directed edge)
+  virtual bool edgeExists(VertexIdType vertex_id1,
+                          VertexIdType vertex_id2) = 0;
 
-  // Get how many vertices this vertex is connected to
-  virtual int degree(const int index) = 0;
+  // Returns the number of vertices this vertex is connected to
+  virtual std::size_t degree(VertexIdType vertex_id) = 0;
 
-  // Get all vertex indices this vertex is connected to
-  virtual std::vector<int> getNeighborList(const int index) = 0;
+  // Returns the total number of edges
+  virtual std::size_t size() = 0;
 
-  // n edges
-  virtual int size() = 0;
+  // Returns the total number of vertices
+  virtual std::size_t order() = 0;
 
-  // n vertices
-  virtual int order() = 0;
+  // Returns the list of vertices connected to the given vertex
+  virtual std::vector<VertexIdType> getNeighborList(VertexIdType vertex_id) = 0;
 
-  // Compute shortest path from start index
-  virtual void computeShortestPath(int startIndex,
-                                   std::vector<double> &distances,
-                                   std::vector<int> &paths) = 0;
+  // Computes the shortest path from the start index
+  virtual void computeShortestPath(VertexIdType startIndex,
+                                   std::vector<double> & distances,
+                                   std::vector<VertexIdType> & paths) = 0;
 
-  // needed for plugin registry
+  // Clones (needed for plugin registry)
   virtual std::shared_ptr<TensorGraph> clone() = 0;
+
 };
 
 } // namespace runtime
