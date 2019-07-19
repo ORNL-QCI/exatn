@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 #include "TensorGraph.hpp"
+#include "tensor_operation.hpp"
+#include "exatn.hpp"
 
 namespace exatn {
 namespace runtime {

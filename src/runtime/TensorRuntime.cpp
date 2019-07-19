@@ -62,12 +62,13 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   auto op1 = std::make_shared<TensorOpNode>(op);
   tg->addVertex(op1);
   auto num_operands = op->getNumOperands();
+  auto num_op1_operands = op->getNumOperands();
   std::shared_ptr<TensorOpNode> op0;
   for(int j=1; j<num_op1_operands; j++) {
     for(decltype(tg_sz) i = tg_sz-1; i >= 0; i--) {
       op0=tg->getVertexProperties(i);
       if(op0->op->getTensorOperandId(0) == op1->op->getTensorOperandId(j)) {
-        tg->addEdge(op0,op1);
+        tg->addEdge(op1,op0);
         break;
       } 
     } 
