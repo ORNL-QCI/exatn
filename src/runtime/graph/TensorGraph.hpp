@@ -33,10 +33,9 @@ struct TensorOpNode {
   TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op) : op(tens_op) {}
 
   std::shared_ptr<numerics::TensorOperation> op; //stored tensor operation
-  bool executed = false; //execution status of the tensor operation
-  bool is_noop = false; //
-  int id; //
-  // Add any other info you need
+  bool is_noop = false; //TRUE if the stored tensor operation is NOOP
+  bool executed = false; //TRUE if the tensor operation has been completed
+  std::size_t id; //vertex id
 };
 
 // Public Graph API
