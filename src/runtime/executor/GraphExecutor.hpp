@@ -1,12 +1,12 @@
 #ifndef EXATN_RUNTIME_DAGOPT_HPP_
 #define EXATN_RUNTIME_DAGOPT_HPP_
 
+#include "TensorGraph.hpp"
+#include "tensor_operation.hpp"
+
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include "TensorGraph.hpp"
-#include "tensor_operation.hpp"
-#include "exatn.hpp"
 
 namespace exatn {
 namespace runtime {
