@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include "TensorGraph.hpp"
 #include "tensor_operation.hpp"
 #include "exatn.hpp"
@@ -23,7 +24,10 @@ protected:
 
    virtual void exec_impl(numerics::TensorOperation& op) = 0;
 
-   numerics::TensorOperation GraphExecutor::nextExecutableNode(TensorGraph& dag);
+   TensorOpNode nextExecutableNode(TensorGraph& dag);
+
+   std::mutex mtx;
+
 };
 }
 } // namespace exatn

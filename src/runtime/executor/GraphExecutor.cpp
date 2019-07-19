@@ -7,17 +7,18 @@ void GraphExecutor::execute(TensorGraph& dag) {
   int nodes_executed=0;
   auto num_nodes = dag->order();
   while(nodes_executed <= num_nodes)
-    exec_impl(nextExecutableNode(dag,nodes_executed));
+    exec_impl(nextExecutableNode(dag,nodes_executed)->op);
 }
 
-
-numerics::TensorOperation GraphExecutor::nextExecutableNode(TensorGraph& dag, int &nodes_executed){
+TensorOpNode GraphExecutor::nextExecutableNode(TensorGraph& dag, int &nodes_executed){
   auto num_nodes = dag->order();
   decltype(num_nodes) i; 
   for(i = 0; i < num_nodes; i++) {
     if(!dag->nodeExecuted(i)) {
       if(dag->degree(i)==0) {
+        mtx.lock();
         dag->setNodeExecuted(i);
+        mtx.unlock();
         nodes_executed++;
         break;
       }
@@ -28,7 +29,9 @@ numerics::TensorOperation GraphExecutor::nextExecutableNode(TensorGraph& dag, in
           if(!dag->nodeExecuted(j))
             break;
         if(j>=n_list.size()) {
+          mtx.lock();
           dag->setNodeExecuted(i);
+          mtx.unlock();
           nodes_executed++;
           break;
         }
@@ -38,7 +41,7 @@ numerics::TensorOperation GraphExecutor::nextExecutableNode(TensorGraph& dag, in
   
   assert(i < num_nodes);
 
-  return dag->getVertexProperties(i)->op;
+  return dag->getVertexProperties(i);
 }
 
 }
