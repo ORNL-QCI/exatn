@@ -54,6 +54,7 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
     cur_table[newop_outid] = 1;
   else
     cur_table[newop_outid] += 1;
+
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg = dags[currentScope];
@@ -62,13 +63,14 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   tg->addVertex(op1);
   auto num_operands = op->getNumOperands();
   std::shared_ptr<TensorOpNode> op0;
-  for(decltype(tg_sz) i = tg_sz-1; i >= 0; i--) {
-    op0 = tg->getVertexProperties(i);
-    auto op0_outid = op0->op->getTensorOperandId(0);
-    for(int j = 1; j < num_operands; j++) {
-      if(op0_outid == op1->op->getTensorOperandId(j))
+  for(int j=1; j<num_op1_operands; j++) {
+    for(decltype(tg_sz) i = tg_sz-1; i >= 0; i--) {
+      op0=tg->getVertexProperties(i);
+      if(op0->op->getTensorOperandId(0) == op1->op->getTensorOperandId(j)) {
         tg->addEdge(op0,op1);
-    }
+        break;
+      } 
+    } 
   }
   mtx.unlock();
   return;
