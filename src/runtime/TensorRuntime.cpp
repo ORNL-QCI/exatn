@@ -64,14 +64,14 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg = dags[currentScope];
-  auto new_vertex_id = tg->addVertex(op);
-  auto tg_sz = tg->order();
+  auto new_vertex_id = tg->addOperation(op);
+  auto tg_sz = tg->getNumNodes();
   auto num_operands = op->getNumOperands();
   for(int j = 1; j < num_operands; j++) {
     for(decltype(tg_sz) i = tg_sz-1; i >= 0; i--) {
-      const auto & vertex_prop = tg->getVertexProperties(i);
+      const auto & vertex_prop = tg->getNodeProperties(i);
       if(vertex_prop.op->getTensorOperandId(0) == op->getTensorOperandId(j)) {
-        tg->addEdge(new_vertex_id,vertex_prop.id);
+        tg->addDependency(new_vertex_id,vertex_prop.id);
       }
     }
   }

@@ -10,26 +10,28 @@ DirectedBoostGraph::DirectedBoostGraph() {
 }
 
 
-VertexIdType DirectedBoostGraph::addVertex(std::shared_ptr<numerics::TensorOperation> op) {
+VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<numerics::TensorOperation> op) {
   auto vid = add_vertex(*graph_.get());
   (*graph_.get())[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
   (*graph_.get())[vid].properties->id = vid;
-  return vid;
+  return vid; //new node id in the DAG
 }
 
 
-void DirectedBoostGraph::addEdge(VertexIdType dependent, VertexIdType dependee) {
+void DirectedBoostGraph::addDependency(VertexIdType dependent, VertexIdType dependee) {
   add_edge(vertex(dependent,*graph_.get()), vertex(dependee,*graph_.get()), *graph_.get());
+  return;
 }
 
 
-const TensorOpNode & DirectedBoostGraph::getVertexProperties(VertexIdType vertex_id) {
+const TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
   return *((*graph_.get())[vertex_id].properties.get());
 }
 
 
 void DirectedBoostGraph::setNodeExecuted(VertexIdType vertex_id) {
   (*graph_.get())[vertex_id].properties->executed = true;
+  return;
 }
 
 
@@ -38,7 +40,7 @@ bool DirectedBoostGraph::nodeExecuted(VertexIdType vertex_id) {
 }
 
 
-bool DirectedBoostGraph::edgeExists(VertexIdType vertex_id1, VertexIdType vertex_id2) {
+bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType vertex_id2) {
   auto vid1 = vertex(vertex_id1, *graph_.get());
   auto vid2 = vertex(vertex_id2, *graph_.get());
   auto p = edge(vid1, vid2, *graph_.get());
@@ -51,12 +53,12 @@ std::size_t DirectedBoostGraph::degree(VertexIdType vertex_id) {
 }
 
 
-std::size_t DirectedBoostGraph::size() {
+std::size_t DirectedBoostGraph::getNumDependencies() {
   return num_edges(*graph_.get());
 }
 
 
-std::size_t DirectedBoostGraph::order() {
+std::size_t DirectedBoostGraph::getNumNodes() {
   return num_vertices(*graph_.get());
 }
 
@@ -99,6 +101,7 @@ void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
 
   for (const auto & di: d) distances.push_back(static_cast<double>(di));
   for (const auto & pi: p) paths.push_back(pi);
+  return;
 }
 
 } // namespace runtime

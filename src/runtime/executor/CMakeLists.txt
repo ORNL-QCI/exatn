@@ -1,6 +1,6 @@
 set(LIBRARY_NAME exatn-runtime-executor)
 
-file(GLOB SRC GraphExecutorActivator.cpp exatensor/ExatensorExecutor.cpp talsh/TalshExecutor.cpp)
+file(GLOB SRC *.cpp exatensor/ExatensorExecutor.cpp talsh/TalshExecutor.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)

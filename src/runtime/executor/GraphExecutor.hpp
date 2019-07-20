@@ -22,9 +22,9 @@ public:
 
 protected:
 
-   virtual void exec_impl(numerics::TensorOperation& op) = 0;
+   virtual void exec_impl(numerics::TensorOperation & op) = 0;
 
-   TensorOpNode nextExecutableNode(TensorGraph& dag);
+   TensorOpNode nextExecutableNode(TensorGraph & dag, int & nodes_executed);
 
    std::mutex mtx;
 

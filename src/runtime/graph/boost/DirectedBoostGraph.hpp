@@ -36,13 +36,12 @@ namespace runtime {
 
 class DirectedBoostVertex {
 public:
-  std::shared_ptr<TensorOpNode> properties;
+  std::shared_ptr<TensorOpNode> properties; //properties of the DAG node
 };
 
 
-using d_adj_list =
-      adjacency_list<vecS, vecS, directedS, DirectedBoostVertex,
-                     boost::property<boost::edge_weight_t, double>>;
+using d_adj_list = adjacency_list<vecS, vecS, directedS, DirectedBoostVertex,
+      boost::property<boost::edge_weight_t, double>>;
 
 using DirectedGraphType = std::shared_ptr<d_adj_list>;
 
@@ -67,25 +66,25 @@ public:
 
   DirectedBoostGraph();
 
-  VertexIdType addVertex(std::shared_ptr<numerics::TensorOperation> op) override;
+  VertexIdType addOperation(std::shared_ptr<numerics::TensorOperation> op) override;
 
-  void addEdge(VertexIdType dependent,
-               VertexIdType dependee) override;
+  void addDependency(VertexIdType dependent,
+                     VertexIdType dependee) override;
 
-  const TensorOpNode & getVertexProperties(VertexIdType vertex_id) override;
+  const TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
 
   void setNodeExecuted(VertexIdType vertex_id) override;
 
   bool nodeExecuted(VertexIdType vertex_id) override;
 
-  bool edgeExists(VertexIdType vertex_id1,
-                  VertexIdType vertex_id2) override;
+  bool dependencyExists(VertexIdType vertex_id1,
+                        VertexIdType vertex_id2) override;
 
   std::size_t degree(VertexIdType vertex_id) override;
 
-  std::size_t size() override;
+  std::size_t getNumDependencies() override;
 
-  std::size_t order() override;
+  std::size_t getNumNodes() override;
 
   std::vector<VertexIdType> getNeighborList(VertexIdType vertex_id) override;
 

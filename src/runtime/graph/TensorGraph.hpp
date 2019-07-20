@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/19
+REVISION: 2019/07/20
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -7,8 +7,9 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 Rationale:
  (a) Tensor graph is a directed acyclic graph in which vertices
      represent tensor operations and directed edges represent
-     dependencies between them.
-
+     dependencies between them: A directed edge from node1 to
+     node2 indicates that node1 depends on node2. Each DAG node
+     has its unique integer id returned when the node is added to DAG.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_GRAPH_HPP_
@@ -52,39 +53,41 @@ public:
 class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
 public:
 
-  // Adds a new vertex to the DAG (tensor operation)
-  virtual VertexIdType addVertex(std::shared_ptr<numerics::TensorOperation> op) = 0;
+  /** Adds a new node (tensor operation) to the DAG and returns its id **/
+  virtual VertexIdType addOperation(std::shared_ptr<numerics::TensorOperation> op) = 0;
 
-  // Adds a directed edge between dependent and dependee vertices: dependent depends on dependee
-  virtual void addEdge(VertexIdType dependent,
-                       VertexIdType dependee) = 0;
+  /** Adds a directed edge between dependent and dependee DAG nodes:
+      dependent depends on dependee **/
+  virtual void addDependency(VertexIdType dependent,
+                             VertexIdType dependee) = 0;
 
-  // Returns the properties (TensorOpNode) of a given vertex
-  virtual const TensorOpNode & getVertexProperties(VertexIdType vertex_id) = 0;
+  /** Returns the properties (TensorOpNode) of a given DAG node **/
+  virtual const TensorOpNode & getNodeProperties(VertexIdType vertex_id) = 0;
 
-  // Marks the vertex as executed
+  /** Marks the DAG node as executed to completion **/
   virtual void setNodeExecuted(VertexIdType vertex_id) = 0;
 
-  // Returns TRUE if the node has been executed to completion
+  /** Returns TRUE if the DAG node has been executed to completion **/
   virtual bool nodeExecuted(VertexIdType vertex_id) = 0;
 
-  // Returns TRUE if there is a dependency between vertices (directed edge)
-  virtual bool edgeExists(VertexIdType vertex_id1,
-                          VertexIdType vertex_id2) = 0;
+  /** Returns TRUE if there is a dependency between two DAG nodes:
+      If vertex_id1 node depends on vertex_id2 node **/
+  virtual bool dependencyExists(VertexIdType vertex_id1,
+                                VertexIdType vertex_id2) = 0;
 
-  // Returns the number of vertices this vertex is connected to
+  /** Returns the number of nodes the given node is connected to **/
   virtual std::size_t degree(VertexIdType vertex_id) = 0;
 
-  // Returns the total number of edges
-  virtual std::size_t size() = 0;
+  /** Returns the total number of dependencies (directed edges) in the DAG **/
+  virtual std::size_t getNumDependencies() = 0;
 
-  // Returns the total number of vertices
-  virtual std::size_t order() = 0;
+  /** Returns the total number of nodes in the DAG **/
+  virtual std::size_t getNumNodes() = 0;
 
-  // Returns the list of vertices connected to the given vertex
+  /** Returns the list of nodes connected to the given DAG node **/
   virtual std::vector<VertexIdType> getNeighborList(VertexIdType vertex_id) = 0;
 
-  // Computes the shortest path from the start index
+  /** Computes the shortest path from the start index **/
   virtual void computeShortestPath(VertexIdType startIndex,
                                    std::vector<double> & distances,
                                    std::vector<VertexIdType> & paths) = 0;
