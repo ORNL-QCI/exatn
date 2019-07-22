@@ -68,26 +68,21 @@ if(CUDA_FOUND)
   message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
   message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
 
-  if(CUDA_HOST_COMPILER)
-    add_custom_target(
-      exatensor-build
-      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
+
+  if(NOT CUDA_HOST_COMPILER)
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+  endif()
+
+  add_custom_target(
+     exatensor-build
+     COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
               PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
               PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER} EXATN_SERVICE=YES
               make
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
-  else()
-    add_custom_target(
-      exatensor-build
-      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
-              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
-              PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
-              PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-              PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CMAKE_CXX_COMPILER} EXATN_SERVICE=YES make
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
-  endif()
+
 else()
   add_custom_target(
     exatensor-build
