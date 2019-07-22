@@ -3,7 +3,7 @@
 namespace exatn {
 namespace runtime {
 
-void TalshExecutor::exec_impl(TensorOp& op) {
+void TalshExecutor::exec_impl(numerics::TensorOperation& op) {
 
 }
 

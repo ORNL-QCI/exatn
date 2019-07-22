@@ -3,7 +3,7 @@
 namespace exatn {
 namespace runtime {
     
-void ExatensorExecutor::exec_impl(TensorOp& op) {
+void ExatensorExecutor::exec_impl(numerics::TensorOperation& op) {
 
 }
 
