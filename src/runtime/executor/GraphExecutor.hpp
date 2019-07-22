@@ -24,7 +24,7 @@ protected:
 
    virtual void exec_impl(numerics::TensorOperation & op) = 0;
 
-   TensorOpNode nextExecutableNode(TensorGraph & dag, int & nodes_executed);
+   int nextExecutableNodeId(TensorGraph & dag);
 
    std::mutex mtx;
 
