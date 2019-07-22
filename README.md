@@ -46,7 +46,8 @@ $ git clone --recursive https://github.com/qci/exatn
 $ cd exatn
 $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
-  (for Python API add) -DPYTHON_INCLUDE_DIR=/usr/include/python3.5 (or wherever Python.h lives)
+  For Python API add:
+  -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
 ```
 Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible

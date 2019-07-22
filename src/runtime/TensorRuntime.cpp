@@ -9,11 +9,13 @@ void TensorRuntime::openScope(const std::string &scopeName) {
   // complete the current scope first
   if(currentScope.length() > 0) closeScope();
   // create new graph with name given by scope name and store it in the dags map
-  auto new_pos = dags.emplace(std::make_pair(
+  auto new_pos_dag = dags.emplace(std::make_pair(
                                scopeName,exatn::getService<TensorGraph>("boost-digraph")
                               )
                              );
-  assert(new_pos.second); // to make sure there was no other scope with the same name
+  assert(new_pos_dag.second); // to make sure there was no other scope with the same name
+  auto new_pos_tbl = outTensorExecTbl.emplace(std::make_pair(scopeName,std::map<std::size_t,int>{}));
+  assert(new_pos_tbl.second); // to make sure there was no other scope with the same name
   currentScope = scopeName; // change the name of the current scope
   return;
 }
@@ -36,8 +38,12 @@ void TensorRuntime::resumeScope(const std::string &scopeName) {
 
 
 void TensorRuntime::closeScope() {
-  //`complete all operations in the current scope:
-  currentScope = "";
+  if(currentScope.length() > 0){
+    //`complete all operations in the current scope:
+    assert(outTensorExecTbl.erase(currentScope) == 1);
+    assert(dags.erase(currentScope) == 1);
+    currentScope = "";
+  }
   return;
 }
 
@@ -58,20 +64,16 @@ void TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
   // work on graph at dags[currentScope]
   // add on to the graph
   std::shared_ptr<TensorGraph> tg = dags[currentScope];
-  auto tg_sz = tg->order();
-  auto op1 = std::make_shared<TensorOpNode>(op);
-  tg->addVertex(op1);
+  auto new_vertex_id = tg->addOperation(op);
+  auto tg_sz = tg->getNumNodes();
   auto num_operands = op->getNumOperands();
-  auto num_op1_operands = op->getNumOperands();
-  std::shared_ptr<TensorOpNode> op0;
-  for(int j=1; j<num_op1_operands; j++) {
+  for(int j = 1; j < num_operands; j++) {
     for(decltype(tg_sz) i = tg_sz-1; i >= 0; i--) {
-      op0=tg->getVertexProperties(i);
-      if(op0->op->getTensorOperandId(0) == op1->op->getTensorOperandId(j)) {
-        tg->addEdge(op1,op0);
-        break;
-      } 
-    } 
+      const auto & vertex_prop = tg->getNodeProperties(i);
+      if(vertex_prop.op->getTensorOperandId(0) == op->getTensorOperandId(j)) {
+        tg->addDependency(new_vertex_id,vertex_prop.id);
+      }
+    }
   }
   mtx.unlock();
   return;

@@ -15,9 +15,10 @@ target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC .
          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-         ${CMAKE_SOURCE_DIR}/src/exatn
+         ${CMAKE_SOURCE_DIR}/src/exatn/numerics
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   PRIVATE
+         ${CMAKE_SOURCE_DIR}/src/exatn
          ${CMAKE_SOURCE_DIR}/src/driver-rpc
   )
 

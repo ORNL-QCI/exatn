@@ -13,7 +13,8 @@ add_library(${LIBRARY_NAME}
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC . ${CMAKE_SOURCE_DIR}/src/exatn
+  PUBLIC .
+         #${CMAKE_SOURCE_DIR}/src/exatn
          ${CMAKE_SOURCE_DIR}/tpls/mpark-variant
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )

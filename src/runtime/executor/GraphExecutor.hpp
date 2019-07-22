@@ -1,12 +1,12 @@
-#ifndef EXATN_RUNTIME_DAGOPT_HPP_
-#define EXATN_RUNTIME_DAGOPT_HPP_
+#ifndef EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
+#define EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
+
+#include "TensorGraph.hpp"
+#include "tensor_operation.hpp"
 
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include "TensorGraph.hpp"
-#include "tensor_operation.hpp"
-#include "exatn.hpp"
 
 namespace exatn {
 namespace runtime {
@@ -22,13 +22,15 @@ public:
 
 protected:
 
-   virtual void exec_impl(numerics::TensorOperation& op) = 0;
+   virtual void exec_impl(numerics::TensorOperation & op) = 0;
 
-   TensorOpNode nextExecutableNode(TensorGraph& dag);
+   TensorOpNode nextExecutableNode(TensorGraph & dag, int & nodes_executed);
 
    std::mutex mtx;
 
 };
-}
-} // namespace exatn
-#endif
+
+} //namespace runtime
+} //namespace exatn
+
+#endif //EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_

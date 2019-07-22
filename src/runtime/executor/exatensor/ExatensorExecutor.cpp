@@ -7,5 +7,5 @@ void ExatensorExecutor::exec_impl(numerics::TensorOperation& op) {
 
 }
 
-}
-}
+} //namespace runtime
+} //namespace exatn
