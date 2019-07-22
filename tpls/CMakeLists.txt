@@ -54,44 +54,58 @@ message(STATUS "CUDA Host Compiler: ${CMAKE_CXX_COMPILER}")
 
 if (APPLE)
 message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
+  if(NOT MPI_LIB)
+    set(MPI_LIB MPICH)
+  endif()
+
   add_custom_target(
     exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=MPICH BLASLIB=NONE
+    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=NONE
             PATH_MPICH_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
             PATH_MPICH_LIB=${MPI_ROOT_DIR}/lib
             PATH_MPICH_BIN=${MPI_BIN_PATH} EXA_OS=NO_LINUX GPU_CUDA=NOCUDA EXA_TALSH_ONLY=YES EXATN_SERVICE=YES make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
 else()
-if(CUDA_FOUND)
-  message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")
-  message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
-  message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
+  #Check that MPI and BLAS libraries were set at configuration
+  #these are the same regardless of whether or not the CUDA compiler is set
 
-
-  if(NOT CUDA_HOST_COMPILER)
-    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+  if(NOT MPI_LIB)
+    set(MPI_LIB OPENMPI)
+  endif()
+  if(NOT BLAS_LIB)
+    set(BLAS_LIB ATLAS)
   endif()
 
-  add_custom_target(
-     exatensor-build
-     COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 GPU_CUDA=CUDA
-              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=OPENMPI BLASLIB=ATLAS
+  if(CUDA_FOUND)
+    message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")
+    message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
+    message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
+
+
+    if(NOT CUDA_HOST_COMPILER)
+      set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    endif()
+
+    add_custom_target(
+       exatensor-build
+       COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} GPU_CUDA=CUDA
+                PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
+                PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
+                PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
+                PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER} EXATN_SERVICE=YES
+                make
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+
+  else()
+      add_custom_target(
+      exatensor-build
+      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
               PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
               PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-              PATH_OPENMPI_BIN=${MPI_BIN_PATH} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER} EXATN_SERVICE=YES
-              make
+              PATH_OPENMPI_BIN=${MPI_BIN_PATH} EXATN_SERVICE=YES make
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
-
-else()
-  add_custom_target(
-    exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=g++-8 CC_GNU=gcc-8 FC_GNU=gfortran-8 MPILIB=OPENMPI BLASLIB=ATLAS
-            PATH_OPENMPI_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
-            PATH_OPENMPI_LIB=${MPI_ROOT_DIR}/lib
-            PATH_OPENMPI_BIN=${MPI_BIN_PATH} EXATN_SERVICE=YES make
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
-endif()
+  endif()
 endif()
 
 # Compiler-specific C++11 activation (FROM ANTLR4).

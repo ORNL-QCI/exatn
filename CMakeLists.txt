@@ -21,6 +21,8 @@ project(exatn LANGUAGES CXX Fortran)
 
 option(CUDA_HOST_COMPILER "Provide the host compiler for nvcc" "")
 option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
+option(BLAS_LIB "Provide the BLAS libraries location" "")
+option(MPI_LIB "Provide the MPI libraries location" "")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(
