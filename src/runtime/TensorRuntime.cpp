@@ -36,7 +36,6 @@ void TensorRuntime::resumeScope(const std::string &scopeName) {
   return;
 }
 
-
 void TensorRuntime::closeScope() {
   if(currentScope.length() > 0){
     //`complete all operations in the current scope:

@@ -4,13 +4,15 @@ namespace exatn {
 namespace runtime {
 
 void GraphExecutor::execute(TensorGraph & dag) {
-  int nodes_executed=0, nextnode_id;
+  int nodes_executed=0, execnode_id;
   auto num_nodes = dag.getNumNodes();
+
   while(nodes_executed <= num_nodes) {
-    nextnode_id = nextExecutableNodeId(dag);
-    exec_impl(*((dag.getNodeProperties(nextnode_id)).op));
+    execnode_id = nextExecutableNodeId(dag);
+    exec_impl(*((dag.getNodeProperties(execnode_id)).op));
     mtx.lock();
-    dag.setNodeExecuted(nextnode_id);
+    //TODO: update output tensor execution table
+    dag.setNodeExecuted(execnode_id);
     mtx.unlock();
     nodes_executed++;
     num_nodes = dag.getNumNodes();
