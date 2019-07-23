@@ -1,4 +1,4 @@
-#include "DirectedBoostGraph.hpp"
+#include "directed_boost_graph.hpp"
 
 using namespace boost;
 
@@ -10,10 +10,10 @@ DirectedBoostGraph::DirectedBoostGraph() {
 }
 
 
-VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<numerics::TensorOperation> op) {
+VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> op) {
   auto vid = add_vertex(*dag_);
   (*dag_)[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
-  (*dag_)[vid].properties->setId(vid);
+  (*dag_)[vid].properties->setId(vid); //DAG node id is stored in the node properties
   return vid; //new node id in the DAG
 }
 
@@ -35,8 +35,8 @@ void DirectedBoostGraph::setNodeExecuting(VertexIdType vertex_id) {
 }
 
 
-void DirectedBoostGraph::setNodeExecuted(VertexIdType vertex_id) {
-  (*dag_)[vertex_id].properties->setExecuted();
+void DirectedBoostGraph::setNodeExecuted(VertexIdType vertex_id, int error_code) {
+  (*dag_)[vertex_id].properties->setExecuted(error_code);
   return;
 }
 
@@ -60,7 +60,8 @@ bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType 
 
 
 std::size_t DirectedBoostGraph::degree(VertexIdType vertex_id) {
-  return getNeighborList(vertex_id).size(); // boost::degree(vertex(index, *dag_), *dag_);
+//return boost::degree(vertex(vertex_id, *dag_), *dag_);
+  return getNeighborList(vertex_id).size();
 }
 
 
@@ -83,7 +84,7 @@ std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType verte
   typedef typename boost::graph_traits<d_adj_list>::adjacency_iterator adjacency_iterator;
 
   std::pair<adjacency_iterator, adjacency_iterator> neighbors =
-    boost::adjacent_vertices(vertex(vertex_id,*dag_), *dag_);
+    boost::adjacent_vertices(vertex(vertex_id, *dag_), *dag_);
 
   for (; neighbors.first != neighbors.second; ++neighbors.first) {
     VertexIdType neighborIdx = indexMap[*neighbors.first];

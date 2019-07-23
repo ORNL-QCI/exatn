@@ -8,7 +8,7 @@ namespace runtime {
 
 class ExatensorExecutor : public GraphExecutor {
 protected:
-  void exec_impl(numerics::TensorOperation & op) override;
+  void exec_impl(TensorOperation & op) override;
 };
 
 } //namespace runtime

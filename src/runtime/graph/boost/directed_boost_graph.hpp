@@ -1,19 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2019 UT-Battelle, LLC.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v1.0 which accompanies this
- * distribution. The Eclipse Public License is available at
- * http://www.eclipse.org/legal/epl-v10.html and the Eclipse Distribution
- *License is available at https://eclipse.org/org/documents/edl-v10.php
- *
- * Contributors:
- *   Alexander J. McCaskey - initial API and implementation
- *******************************************************************************/
 #ifndef EXATN_RUNTIME_DAG_HPP_
 #define EXATN_RUNTIME_DAG_HPP_
 
-#include "TensorGraph.hpp"
+#include "tensor_graph.hpp"
 #include "tensor_operation.hpp"
 #include "tensor.hpp"
 
@@ -28,15 +16,16 @@
 #include <boost/property_map/property_map.hpp>
 
 #include <type_traits>
+#include <string>
 #include <memory>
+#include <mutex>
 
 using namespace boost;
 
 namespace exatn {
 namespace runtime {
 
-class DirectedBoostVertex {
-public:
+struct DirectedBoostVertex {
   std::shared_ptr<TensorOpNode> properties; //properties of the DAG node
 };
 
@@ -59,15 +48,15 @@ static_assert(std::is_same<d_vertex_type,VertexIdType>::value,"Vertex id type mi
 
 class DirectedBoostGraph : public TensorGraph {
 
-protected:
-
-  DirectedGraphType dag_; //std::shared_ptr<d_adj_list>;
-
 public:
-
   DirectedBoostGraph();
+  DirectedBoostGraph(const DirectedBoostGraph &) = delete;
+  DirectedBoostGraph & operator=(const DirectedBoostGraph &) = delete;
+  DirectedBoostGraph(DirectedBoostGraph &&) noexcept = default;
+  DirectedBoostGraph & operator=(DirectedBoostGraph &&) noexcept = default;
+  ~DirectedBoostGraph() = default;
 
-  VertexIdType addOperation(std::shared_ptr<numerics::TensorOperation> op) override;
+  VertexIdType addOperation(std::shared_ptr<TensorOperation> op) override;
 
   void addDependency(VertexIdType dependent,
                      VertexIdType dependee) override;
@@ -76,7 +65,8 @@ public:
 
   void setNodeExecuting(VertexIdType vertex_id) override;
 
-  void setNodeExecuted(VertexIdType vertex_id) override;
+  void setNodeExecuted(VertexIdType vertex_id,
+                       int error_code = 0) override;
 
   bool nodeExecuting(VertexIdType vertex_id) override;
 
@@ -109,6 +99,12 @@ public:
     return std::make_shared<DirectedBoostGraph>();
   }
 
+  inline void lock() {mtx_.lock();}
+  inline void unlock() {mtx_.unlock();}
+
+protected:
+  DirectedGraphType dag_; //std::shared_ptr<d_adj_list>
+  std::recursive_mutex mtx_; //object access mutex
 };
 
 } // namespace runtime

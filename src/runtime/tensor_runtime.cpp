@@ -1,4 +1,4 @@
-#include "TensorRuntime.hpp"
+#include "tensor_runtime.hpp"
 #include "exatn.hpp"
 
 namespace exatn {
@@ -49,37 +49,31 @@ void TensorRuntime::closeScope() {
 }
 
 
-VertexIdType TensorRuntime::submit(std::shared_ptr<numerics::TensorOperation> op) {
+VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(currentScope_.length() > 0);
   auto newop_outid = op->getTensorOperandHash(0);
-  currentDag_->lock();
   
-  currentDag_->unlock();
   return 0; //???
 }
 
 
-bool TensorRuntime::sync(const numerics::TensorOperation & op, bool wait) {
+bool TensorRuntime::sync(const TensorOperation & op, bool wait) {
   assert(currentScope_.length() > 0);
   bool completed = false;
   const auto op_outid = op.getTensorOperandHash(0);
-  currentDag_->lock();
   
-  currentDag_->unlock();
   return completed;
 }
 
-bool TensorRuntime::sync(const numerics::Tensor & tensor, bool wait) {
+bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
   assert(currentScope_.length() > 0);
   bool completed = false;
   const auto op_outid = tensor.getTensorHash();
-  currentDag_->lock();
   
-  currentDag_->unlock();
   return completed;
 }
 
-TensorDenseBlock TensorRuntime::getTensorData(const numerics::Tensor & tensor) {
+TensorDenseBlock TensorRuntime::getTensorData(const Tensor & tensor) {
   // sync
   assert(sync(tensor,true));
   // get tensor data after sync

@@ -1,12 +1,10 @@
 #ifndef EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
 #define EXATN_RUNTIME_GRAPH_EXECUTOR_HPP_
 
-#include "TensorGraph.hpp"
+#include "tensor_graph.hpp"
 #include "tensor_operation.hpp"
 
-#include <iostream>
 #include <memory>
-#include <mutex>
 
 namespace exatn {
 namespace runtime {
@@ -19,12 +17,9 @@ public:
 
 protected:
 
-  virtual void exec_impl(numerics::TensorOperation & op) = 0;
+  virtual void exec_impl(TensorOperation & op) = 0;
 
   int nextExecutableNodeId(TensorGraph & dag);
-
-  std::mutex mtx;
-
 };
 
 } //namespace runtime

@@ -1,6 +1,9 @@
 set(LIBRARY_NAME exatn-runtime-graph)
 
-file(GLOB SRC boost/DirectedBoostGraph.cpp GraphActivator.cpp)
+file(GLOB SRC
+     tensor_exec_state.cpp
+     boost/directed_boost_graph.cpp
+     graph_activator.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)

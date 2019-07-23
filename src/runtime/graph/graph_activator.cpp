@@ -1,4 +1,4 @@
-#include "DirectedBoostGraph.hpp"
+#include "directed_boost_graph.hpp"
 
 #include "cppmicroservices/BundleActivator.h"
 #include "cppmicroservices/BundleContext.h"
