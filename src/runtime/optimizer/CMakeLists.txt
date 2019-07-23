@@ -52,4 +52,3 @@ file (GLOB HEADERS *.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
 install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
-

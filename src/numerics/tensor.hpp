@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/07/17
+REVISION: 2019/07/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,6 +47,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+using TensorHashType = std::size_t;
 
 class Tensor{
 public:
@@ -126,7 +128,7 @@ public:
  void appendDimension(DimExtent dim_extent);
 
  /** Get the unique integer tensor id. **/
- std::size_t getTensorId() const;
+ TensorHashType getTensorHash() const;
 
 private:
 

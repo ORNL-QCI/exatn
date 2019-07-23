@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/18
+REVISION: 2019/07/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -46,9 +46,9 @@ unsigned int TensorOperation::getNumOperandsSet() const
  return static_cast<unsigned int>(operands_.size());
 }
 
-std::size_t TensorOperation::getTensorOperandId(unsigned int op_num) const
+TensorHashType TensorOperation::getTensorOperandHash(unsigned int op_num) const
 {
- return ((this->getTensorOperand(op_num)).get())->getTensorId();
+ return this->getTensorOperand(op_num)->getTensorHash();
 }
 
 std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num) const

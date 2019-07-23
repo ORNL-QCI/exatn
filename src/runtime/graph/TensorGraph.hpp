@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/20
+REVISION: 2019/07/22
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -10,6 +10,7 @@ Rationale:
      dependencies between them: A directed edge from node1 to
      node2 indicates that node1 depends on node2. Each DAG node
      has its unique integer id returned when the node is added to DAG.
+ (b) Each tensor graph has its execution state.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_GRAPH_HPP_
@@ -17,40 +18,83 @@ Rationale:
 
 #include "Identifiable.hpp"
 #include "tensor_operation.hpp"
+#include "tensor.hpp"
 
 #include <iostream>
-#include <memory>
-#include <string>
+#include <unordered_map>
+#include <deque>
 #include <vector>
-#include <map>
+#include <string>
+#include <memory>
+#include <mutex>
 
 namespace exatn {
 namespace runtime {
 
+// Graph node id:
 using VertexIdType = std::size_t; //must match with boost::graph vertex descriptor type
+
+// Tensor hash:
+using numerics::TensorHashType;
 
 
 // Tensor graph node
 class TensorOpNode {
+
 public:
-  TensorOpNode(): op(nullptr), is_noop(true), executed(false) {}
+
+  TensorOpNode():
+   op_(nullptr), is_noop_(true), executing_(false), executed_(false) {}
+
   TensorOpNode(std::shared_ptr<numerics::TensorOperation> tens_op):
-   op(tens_op), is_noop(false), executed(false) {}
+   op_(tens_op), is_noop_(false), executing_(false), executed_(false) {}
+
   TensorOpNode(const TensorOpNode &) = default;
   TensorOpNode & operator=(const TensorOpNode &) = default;
   TensorOpNode(TensorOpNode &&) noexcept = default;
   TensorOpNode & operator=(TensorOpNode &&) noexcept = default;
   ~TensorOpNode() = default;
-  //Members:
-  std::shared_ptr<numerics::TensorOperation> op; //stored tensor operation
-  bool is_noop; //TRUE if the stored tensor operation is NOOP
-  bool executed; //TRUE if the tensor operation has been completed
-  std::size_t id; //vertex id
+
+  inline std::shared_ptr<numerics::TensorOperation> & getOperation() {return op_;}
+  inline VertexIdType getId() const {return id_;}
+  inline bool isDummy() const {return is_noop_;}
+  inline bool isExecuting() const {return executing_;}
+  inline bool isExecuted() const {return executed_;}
+
+  inline void setId(VertexIdType id) {
+    id_ = id; return;
+  }
+
+  inline void setExecuting() {
+    assert(executing_ == false && executed_ == false);
+    executing_ = true;
+    return;
+  }
+
+  inline void setExecuted() {
+    assert(executing_ == true && executed_ == false);
+    executed_ = true; executing_ = false;
+    return;
+  }
+
+  inline void lock() {mtx_.lock();}
+  inline void unlock() {mtx_.unlock();}
+
+protected:
+
+  std::shared_ptr<numerics::TensorOperation> op_; //stored tensor operation
+  bool is_noop_;    //TRUE if the stored tensor operation is NOOP (dummy node)
+  bool executing_;  //TRUE if the stored tensor operation is currently being executed
+  bool executed_;   //TRUE if the stored tensor operation has been executed to completion
+  VertexIdType id_; //vertex id
+  std::mutex mtx_;  //mutex
+
 };
 
 
-// Public Graph API
+// Public Tensor Graph API
 class TensorGraph : public Identifiable, public Cloneable<TensorGraph> {
+
 public:
 
   /** Adds a new node (tensor operation) to the DAG and returns its id **/
@@ -62,10 +106,16 @@ public:
                              VertexIdType dependee) = 0;
 
   /** Returns the properties (TensorOpNode) of a given DAG node **/
-  virtual const TensorOpNode & getNodeProperties(VertexIdType vertex_id) = 0;
+  virtual TensorOpNode & getNodeProperties(VertexIdType vertex_id) = 0;
+
+  /** Marks the DAG node as being executed **/
+  virtual void setNodeExecuting(VertexIdType vertex_id) = 0;
 
   /** Marks the DAG node as executed to completion **/
   virtual void setNodeExecuted(VertexIdType vertex_id) = 0;
+
+  /** Returns TRUE if the DAG node is currently being executed **/
+  virtual bool nodeExecuting(VertexIdType vertex_id) = 0;
 
   /** Returns TRUE if the DAG node has been executed to completion **/
   virtual bool nodeExecuted(VertexIdType vertex_id) = 0;
@@ -94,6 +144,23 @@ public:
 
   // Clones (needed for plugin registry)
   virtual std::shared_ptr<TensorGraph> clone() = 0;
+
+  inline void lock() {mtx_.lock();}
+  inline void unlock() {mtx_.unlock();}
+
+protected:
+
+  /** Table for tracking the execution status on a given tensor:
+      Tensor Hash --> Number of outstanding update operations **/
+  std::unordered_map<TensorHashType,int> tensor_update_cnt_;
+  /** Table for tracking last read or write access on a given tensor:
+      Tensor Hash --> Last node of DAG performing read or write on this tensor **/
+  std::unordered_map<TensorHashType,VertexIdType> tensor_last_read_;
+  std::unordered_map<TensorHashType,VertexIdType> tensor_last_write_;
+  /** List of (some) dependency-free DAG nodes **/
+  std::deque<VertexIdType> nodes_ready_;
+  /** Access mutex **/
+  std::mutex mtx_;
 
 };
 

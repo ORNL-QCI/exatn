@@ -33,7 +33,7 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices PRIVATE exatn-runtime-graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn PRIVATE exatn-runtime-graph)
 
 if(APPLE)
    set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib;@loader_path")
