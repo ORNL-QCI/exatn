@@ -67,7 +67,7 @@ message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
 else()
-  #Check that MPI and BLAS libraries were set at configuration
+  #Check that MPI and BLAS libraries were set at configuration - if not set to default
   #these are the same regardless of whether or not the CUDA compiler is set
   if(NOT MPI_LIB)
     set(MPI_LIB OPENMPI)
