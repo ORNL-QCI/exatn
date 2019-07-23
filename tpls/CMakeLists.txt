@@ -69,7 +69,6 @@ message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
 else()
   #Check that MPI and BLAS libraries were set at configuration
   #these are the same regardless of whether or not the CUDA compiler is set
-
   if(NOT MPI_LIB)
     set(MPI_LIB OPENMPI)
   endif()
