@@ -22,10 +22,10 @@ public:
    */
   void Start(BundleContext context) {
 
-    auto g = std::make_shared<exatn::runtime::TalshExecutor>();
+    auto g1 = std::make_shared<exatn::runtime::TalshExecutor>();
     auto g2 = std::make_shared<exatn::runtime::ExatensorExecutor>();
 
-    context.RegisterService<exatn::runtime::GraphExecutor>(g);
+    context.RegisterService<exatn::runtime::GraphExecutor>(g1);
     context.RegisterService<exatn::runtime::GraphExecutor>(g2);
   }
 

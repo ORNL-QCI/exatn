@@ -6,60 +6,71 @@ namespace exatn {
 namespace runtime {
 
 DirectedBoostGraph::DirectedBoostGraph() {
-  graph_ = std::make_shared<d_adj_list>();
+  dag_ = std::make_shared<d_adj_list>();
 }
 
 
 VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<numerics::TensorOperation> op) {
-  auto vid = add_vertex(*graph_.get());
-  (*graph_.get())[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
-  (*graph_.get())[vid].properties->id = vid;
+  auto vid = add_vertex(*dag_);
+  (*dag_)[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
+  (*dag_)[vid].properties->setId(vid);
   return vid; //new node id in the DAG
 }
 
 
 void DirectedBoostGraph::addDependency(VertexIdType dependent, VertexIdType dependee) {
-  add_edge(vertex(dependent,*graph_.get()), vertex(dependee,*graph_.get()), *graph_.get());
+  add_edge(vertex(dependent,*dag_), vertex(dependee,*dag_), *dag_);
   return;
 }
 
 
-const TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
-  return *((*graph_.get())[vertex_id].properties.get());
+TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
+  return *((*dag_)[vertex_id].properties);
+}
+
+
+void DirectedBoostGraph::setNodeExecuting(VertexIdType vertex_id) {
+  (*dag_)[vertex_id].properties->setExecuting();
+  return;
 }
 
 
 void DirectedBoostGraph::setNodeExecuted(VertexIdType vertex_id) {
-  (*graph_.get())[vertex_id].properties->executed = true;
+  (*dag_)[vertex_id].properties->setExecuted();
   return;
 }
 
 
+bool DirectedBoostGraph::nodeExecuting(VertexIdType vertex_id) {
+  return (*dag_)[vertex_id].properties->isExecuting();
+}
+
+
 bool DirectedBoostGraph::nodeExecuted(VertexIdType vertex_id) {
-  return (*graph_.get())[vertex_id].properties->executed;
+  return (*dag_)[vertex_id].properties->isExecuted();
 }
 
 
 bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType vertex_id2) {
-  auto vid1 = vertex(vertex_id1, *graph_.get());
-  auto vid2 = vertex(vertex_id2, *graph_.get());
-  auto p = edge(vid1, vid2, *graph_.get());
+  auto vid1 = vertex(vertex_id1, *dag_);
+  auto vid2 = vertex(vertex_id2, *dag_);
+  auto p = edge(vid1, vid2, *dag_);
   return p.second;
 }
 
 
 std::size_t DirectedBoostGraph::degree(VertexIdType vertex_id) {
-  return getNeighborList(vertex_id).size(); // boost::degree(vertex(index, *graph_.get()), *graph_.get());
+  return getNeighborList(vertex_id).size(); // boost::degree(vertex(index, *dag_), *dag_);
 }
 
 
 std::size_t DirectedBoostGraph::getNumDependencies() {
-  return num_edges(*graph_.get());
+  return num_edges(*dag_);
 }
 
 
 std::size_t DirectedBoostGraph::getNumNodes() {
-  return num_vertices(*graph_.get());
+  return num_vertices(*dag_);
 }
 
 
@@ -67,12 +78,12 @@ std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType verte
   std::vector<VertexIdType> l;
 
   typedef typename boost::property_map<d_adj_list, boost::vertex_index_t>::type IndexMap;
-  IndexMap indexMap = get(boost::vertex_index, *graph_.get());
+  IndexMap indexMap = get(boost::vertex_index, *dag_);
 
   typedef typename boost::graph_traits<d_adj_list>::adjacency_iterator adjacency_iterator;
 
   std::pair<adjacency_iterator, adjacency_iterator> neighbors =
-    boost::adjacent_vertices(vertex(vertex_id,*graph_.get()), *graph_.get());
+    boost::adjacent_vertices(vertex(vertex_id,*dag_), *dag_);
 
   for (; neighbors.first != neighbors.second; ++neighbors.first) {
     VertexIdType neighborIdx = indexMap[*neighbors.first];
@@ -87,17 +98,17 @@ void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
                                              std::vector<double> & distances,
                                              std::vector<VertexIdType> & paths) {
   typename property_map<d_adj_list, edge_weight_t>::type weightmap =
-           get(edge_weight, *graph_.get());
-  std::vector<VertexIdType> p(num_vertices(*graph_.get()));
-  std::vector<std::size_t> d(num_vertices(*graph_.get()));
-  d_vertex_type s = vertex(startIndex, *graph_.get());
+           get(edge_weight, *dag_);
+  std::vector<VertexIdType> p(num_vertices(*dag_));
+  std::vector<std::size_t> d(num_vertices(*dag_));
+  d_vertex_type s = vertex(startIndex, *dag_);
 
   dijkstra_shortest_paths(
-      *graph_.get(), s,
+      *dag_, s,
       predecessor_map(boost::make_iterator_property_map(
-                             p.begin(), get(boost::vertex_index, *graph_.get())))
+                             p.begin(), get(boost::vertex_index, *dag_)))
           .distance_map(boost::make_iterator_property_map(
-                               d.begin(), get(boost::vertex_index, *graph_.get()))));
+                               d.begin(), get(boost::vertex_index, *dag_))));
 
   for (const auto & di: d) distances.push_back(static_cast<double>(di));
   for (const auto & pi: p) paths.push_back(pi);

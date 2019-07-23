@@ -11,22 +11,19 @@
 namespace exatn {
 namespace runtime {
 
-// temp
-using TensorOp = int;
-
 class GraphExecutor {
 
 public:
 
-   void execute(TensorGraph& dag);
+  void execute(TensorGraph & dag);
 
 protected:
 
-   virtual void exec_impl(numerics::TensorOperation & op) = 0;
+  virtual void exec_impl(numerics::TensorOperation & op) = 0;
 
-   int nextExecutableNodeId(TensorGraph & dag);
+  int nextExecutableNodeId(TensorGraph & dag);
 
-   std::mutex mtx;
+  std::mutex mtx;
 
 };
 

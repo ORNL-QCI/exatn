@@ -9,7 +9,7 @@ void GraphExecutor::execute(TensorGraph & dag) {
 
   while(nodes_executed <= num_nodes) {
     execnode_id = nextExecutableNodeId(dag);
-    exec_impl(*((dag.getNodeProperties(execnode_id)).op));
+    exec_impl(*((dag.getNodeProperties(execnode_id)).getOperation()));
     mtx.lock();
     //TODO: update output tensor execution table
     dag.setNodeExecuted(execnode_id);

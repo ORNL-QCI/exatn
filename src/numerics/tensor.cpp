@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/07/17
+REVISION: 2019/07/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -157,9 +157,9 @@ void Tensor::appendDimension(DimExtent dim_extent)
  return;
 }
 
-std::size_t Tensor::getTensorId() const
+TensorHashType Tensor::getTensorHash() const
 {
- return reinterpret_cast<std::size_t>(this);
+ return reinterpret_cast<TensorHashType>(this);
 }
 
 } //namespace numerics

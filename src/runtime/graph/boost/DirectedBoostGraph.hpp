@@ -15,6 +15,7 @@
 
 #include "TensorGraph.hpp"
 #include "tensor_operation.hpp"
+#include "tensor.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dag_shortest_paths.hpp>
@@ -60,7 +61,7 @@ class DirectedBoostGraph : public TensorGraph {
 
 protected:
 
-  DirectedGraphType graph_;
+  DirectedGraphType dag_; //std::shared_ptr<d_adj_list>;
 
 public:
 
@@ -71,9 +72,13 @@ public:
   void addDependency(VertexIdType dependent,
                      VertexIdType dependee) override;
 
-  const TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
+  TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
+
+  void setNodeExecuting(VertexIdType vertex_id) override;
 
   void setNodeExecuted(VertexIdType vertex_id) override;
+
+  bool nodeExecuting(VertexIdType vertex_id) override;
 
   bool nodeExecuted(VertexIdType vertex_id) override;
 

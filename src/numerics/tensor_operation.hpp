@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/18
+REVISION: 2019/07/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,7 +51,7 @@ public:
  unsigned int getNumOperandsSet() const;
 
  /** Returns a unique integer tensor operand identifier. **/
- std::size_t getTensorOperandId(unsigned int op_num) const;
+ TensorHashType getTensorOperandHash(unsigned int op_num) const;
 
  /** Returns a co-owned pointer to a specific tensor operand, or nullptr if not yet set. **/
  std::shared_ptr<Tensor> getTensorOperand(unsigned int op_num) const;
