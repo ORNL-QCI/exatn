@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Execution layer for tensor operations
-REVISION: 2019/07/22
+REVISION: 2019/07/23
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -27,11 +27,10 @@ Rationale:
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 #define EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 
-#include "TensorGraph.hpp"
+#include "tensor_graph.hpp"
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
-#include <iostream>
 #include <map>
 #include <string>
 #include <memory>
@@ -42,7 +41,6 @@ namespace runtime {
 class TensorRuntime {
 
 public:
-
   TensorRuntime() = default;
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
@@ -65,30 +63,28 @@ public:
   void closeScope();
 
   /** Submits a tensor operation into the current execution graph and returns its integer id.  **/
-  VertexIdType submit(std::shared_ptr<numerics::TensorOperation> op);
+  VertexIdType submit(std::shared_ptr<TensorOperation> op);
 
   /** Tests for completion of a given tensor operation.
       If wait = TRUE, it will block until completion. **/
-  bool sync(const numerics::TensorOperation & op,
+  bool sync(const TensorOperation & op,
             bool wait = false);
 
   /** Tests for completion of all outstanding update operations on a given tensor.
       If wait = TRUE, it will block until completion. **/
-  bool sync(const numerics::Tensor & tensor,
+  bool sync(const Tensor & tensor,
             bool wait = false);
 
   /** Returns an accessor to the elements of a given tensor. **/
-  TensorDenseBlock getTensorData(const numerics::Tensor & tensor);
+  TensorDenseBlock getTensorData(const Tensor & tensor);
 
 protected:
-
   /** Active execution graphs (DAGs) **/
   std::map<std::string, std::shared_ptr<TensorGraph>> dags_;
   /** Name of the current scope (current DAG) **/
   std::string currentScope_;
   /** Current DAG **/
-  TensorGraph * currentDag_;
-
+  TensorGraph * currentDag_; //non-ownining pointer to the current DAG
 };
 
 } // namespace runtime

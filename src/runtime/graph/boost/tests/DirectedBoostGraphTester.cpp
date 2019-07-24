@@ -11,14 +11,14 @@
  *   Alexander J. McCaskey - initial API and implementation
  *******************************************************************************/
 #include <gtest/gtest.h>
-#include "DirectedBoostGraph.hpp"
+#include "directed_boost_graph.hpp"
 
 using namespace boost;
 using namespace exatn;
 
 TEST(DirectedGraphTester, checkConstruction) {
 
-  // Implement this when we have TensorOp
+  // Implement this when we have TensorOperation
 }
 
 int main(int argc, char **argv) {
