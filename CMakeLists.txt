@@ -47,11 +47,23 @@ find_package(OpenMP REQUIRED)
 find_package(CUDAExaTN)
 find_package(BLAS)
 
-
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
+#If BLAS implementation not user specified, try to import
+#Otherwise proceed with "none"
+if(NOT BLAS_LIB)
+  if(BLAS_FOUND)
+    set(BLAS_LIB ${BLA_VENDOR})
+  endif()
+endif()
+
+
+#If MPI not user specified, default to no MPI
+if(NOT MPI_LIB)
+  set(MPI_LIB NONE)
+endif()
 
 message(STATUS "MPIRUN: ${MPIEXEC_EXECUTABLE}")
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
