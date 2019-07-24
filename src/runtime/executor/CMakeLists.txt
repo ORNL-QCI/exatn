@@ -1,6 +1,11 @@
 set(LIBRARY_NAME exatn-runtime-executor)
 
-file(GLOB SRC *.cpp exatensor/ExatensorExecutor.cpp talsh/TalshExecutor.cpp)
+file(GLOB SRC
+     #*.cpp
+     node_executors/talsh/node_executor_talsh.cpp
+     node_executors/exatensor/node_executor_exatensor.cpp
+     graph_executors/eager/graph_executor_eager.cpp
+     graph_executors/lazy/graph_executor_lazy.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)
@@ -12,7 +17,8 @@ add_library(${LIBRARY_NAME}
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC . talsh exatensor
+  PUBLIC . node_executors/talsh node_executors/exatensor
+           graph_executors/eager graph_executors/lazy
          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
          ${CMAKE_SOURCE_DIR}/src/exatn/numerics
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
@@ -51,4 +57,3 @@ file (GLOB HEADERS *.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
 install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
-

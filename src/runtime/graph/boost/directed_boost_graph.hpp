@@ -1,3 +1,21 @@
+/** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
+REVISION: 2019/07/24
+
+Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+
+Rationale:
+ (a) Tensor graph is a directed acyclic graph in which vertices
+     represent tensor operations and directed edges represent
+     dependencies between them: A directed edge from node1 to
+     node2 indicates that node1 depends on node2. Each DAG node
+     has its unique integer vertex id (VertexIdType) returned
+     when the node is added to the DAG.
+ (b) The tensor graph contains:
+     1. The DAG implementation (in the directed Boost graph subclass);
+     2. The DAG execution state (TensorExecState data member).
+**/
+
 #ifndef EXATN_RUNTIME_DAG_HPP_
 #define EXATN_RUNTIME_DAG_HPP_
 

@@ -1,5 +1,5 @@
-#include "TalshExecutor.hpp"
-#include "ExatensorExecutor.hpp"
+#include "graph_executor_eager.hpp"
+#include "graph_executor_lazy.hpp"
 
 #include "cppmicroservices/BundleActivator.h"
 #include "cppmicroservices/BundleContext.h"
@@ -22,11 +22,11 @@ public:
    */
   void Start(BundleContext context) {
 
-    auto g1 = std::make_shared<exatn::runtime::TalshExecutor>();
-    auto g2 = std::make_shared<exatn::runtime::ExatensorExecutor>();
+    auto g1 = std::make_shared<exatn::runtime::EagerGraphExecutor>();
+    auto g2 = std::make_shared<exatn::runtime::LazyGraphExecutor>();
 
-    context.RegisterService<exatn::runtime::GraphExecutor>(g1);
-    context.RegisterService<exatn::runtime::GraphExecutor>(g2);
+    context.RegisterService<exatn::runtime::TensorGraphExecutor>(g1);
+    context.RegisterService<exatn::runtime::TensorGraphExecutor>(g2);
   }
 
   /**

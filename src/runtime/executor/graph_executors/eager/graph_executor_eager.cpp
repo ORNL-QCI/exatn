@@ -1,15 +1,15 @@
-#include "GraphExecutor.hpp"
+#include "graph_executor_eager.hpp"
 
 namespace exatn {
 namespace runtime {
 
-void GraphExecutor::execute(TensorGraph & dag) {
+void EagerGraphExecutor::execute(TensorGraph & dag) {
   int nodes_executed=0, execnode_id;
   auto num_nodes = dag.getNumNodes();
 
   while(nodes_executed <= num_nodes) {
     execnode_id = nextExecutableNodeId(dag);
-    exec_impl(*((dag.getNodeProperties(execnode_id)).getOperation()));
+    node_executor_->execute(*((dag.getNodeProperties(execnode_id)).getOperation()));
     //TODO: update output tensor execution table
     dag.setNodeExecuted(execnode_id);
     nodes_executed++;
@@ -17,7 +17,7 @@ void GraphExecutor::execute(TensorGraph & dag) {
   }
 }
 
-int GraphExecutor::nextExecutableNodeId(TensorGraph & dag){
+int EagerGraphExecutor::nextExecutableNodeId(TensorGraph & dag){
   auto num_nodes = dag.getNumNodes();
   int i;
   for(i = 0; i < num_nodes; i++) {

@@ -3,7 +3,6 @@
 
 #include "tensor_graph.hpp"
 
-#include <iostream>
 #include <memory>
 
 namespace exatn {

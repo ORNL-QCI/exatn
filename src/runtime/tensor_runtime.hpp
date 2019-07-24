@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Execution layer for tensor operations
-REVISION: 2019/07/23
+REVISION: 2019/07/24
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -27,6 +27,7 @@ Rationale:
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 #define EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 
+#include "tensor_graph_executor.hpp"
 #include "tensor_graph.hpp"
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
