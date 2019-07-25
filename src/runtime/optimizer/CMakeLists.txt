@@ -1,7 +1,7 @@
 set(LIBRARY_NAME exatn-runtime-optimizer)
 
 
-file(GLOB SRC OptimizerActivator.cpp)
+file(GLOB SRC optimizer_activator.cpp)
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)
