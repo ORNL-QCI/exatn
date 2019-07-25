@@ -1,5 +1,7 @@
 #include "graph_executor_eager.hpp"
 #include "graph_executor_lazy.hpp"
+#include "node_executor_exatensor.hpp"
+#include "node_executor_talsh.hpp"
 
 #include "cppmicroservices/BundleActivator.h"
 #include "cppmicroservices/BundleContext.h"
