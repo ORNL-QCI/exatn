@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/24
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -36,7 +36,6 @@ Rationale:
 #include <type_traits>
 #include <string>
 #include <memory>
-#include <mutex>
 
 using namespace boost;
 
@@ -117,12 +116,8 @@ public:
     return std::make_shared<DirectedBoostGraph>();
   }
 
-  inline void lock() {mtx_.lock();}
-  inline void unlock() {mtx_.unlock();}
-
 protected:
   DirectedGraphType dag_; //std::shared_ptr<d_adj_list>
-  std::recursive_mutex mtx_; //object access mutex
 };
 
 } // namespace runtime

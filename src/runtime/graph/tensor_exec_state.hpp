@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/07/23
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -25,7 +25,6 @@ Rationale:
 #include <unordered_map>
 #include <list>
 #include <memory>
-#include <mutex>
 
 namespace exatn {
 namespace runtime {
@@ -76,9 +75,6 @@ public:
   /** Extracts an executed DAG node from the list. **/
   bool extractExecutingNode(VertexIdType * node_id);
 
-  inline void lock() {mtx_.lock();}
-  inline void unlock() {mtx_.unlock();}
-
 private:
   /** Table for tracking the execution status on a given tensor:
       Tensor Hash --> Number of outstanding update operations on the Tensor **/
@@ -91,8 +87,6 @@ private:
   std::list<VertexIdType> nodes_ready_;
   /** List of the currently executed DAG nodes **/
   std::list<VertexIdType> nodes_executing_;
-  /** Object access mutex **/
-  std::recursive_mutex mtx_;
 };
 
 } // namespace runtime

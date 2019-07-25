@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/23
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -84,7 +84,7 @@ protected:
   bool executed_;   //TRUE if the stored tensor operation has been executed to completion
   int error_;       //execution error code (0:success)
   VertexIdType id_; //vertex id
-  std::recursive_mutex mtx_; //mutex
+  std::recursive_mutex mtx_; //object access mutex
 };
 
 
@@ -148,8 +148,12 @@ public:
   // Clones an empty subclass instance (needed for plugin registry)
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 
+  inline void lock() {mtx_.lock();}
+  inline void unlock() {mtx_.unlock();}
+
 protected:
   TensorExecState exec_state_; //tensor graph execution state
+  std::recursive_mutex mtx_; //object access mutex
 };
 
 } // namespace runtime
