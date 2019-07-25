@@ -1,7 +1,7 @@
 set(LIBRARY_NAME exatn-runtime-executor)
 
 file(GLOB SRC
-     #*.cpp
+     ExecutorActivator.cpp
      node_executors/talsh/node_executor_talsh.cpp
      node_executors/exatensor/node_executor_exatensor.cpp
      graph_executors/eager/graph_executor_eager.cpp

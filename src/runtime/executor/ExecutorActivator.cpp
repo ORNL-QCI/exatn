@@ -13,10 +13,10 @@ namespace {
 
 /**
  */
-class US_ABI_LOCAL GraphExecutorActivator : public BundleActivator {
+class US_ABI_LOCAL ExecutorActivator : public BundleActivator {
 
 public:
-  GraphExecutorActivator() {}
+  ExecutorActivator() {}
 
   /**
    */
@@ -27,6 +27,12 @@ public:
 
     context.RegisterService<exatn::runtime::TensorGraphExecutor>(g1);
     context.RegisterService<exatn::runtime::TensorGraphExecutor>(g2);
+
+    auto n1 = std::make_shared<exatn::runtime::TalshNodeExecutor>();
+    auto n2 = std::make_shared<exatn::runtime::ExatensorNodeExecutor>();
+
+    context.RegisterService<exatn::runtime::TensorNodeExecutor>(n1);
+    context.RegisterService<exatn::runtime::TensorNodeExecutor>(n2);
   }
 
   /**
@@ -36,4 +42,4 @@ public:
 
 } // namespace
 
-CPPMICROSERVICES_EXPORT_BUNDLE_ACTIVATOR(GraphExecutorActivator)
+CPPMICROSERVICES_EXPORT_BUNDLE_ACTIVATOR(ExecutorActivator)
