@@ -44,37 +44,30 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor/include/talshxx.hpp")
   set(TALSHXX_EXISTS "YES")
 endif()
 
-list(GET MPI_Fortran_INCLUDE_PATH 0 MPI_FORTRAN_INCLUDE)
-get_filename_component(MPI_ROOT_DIR ${MPI_FORTRAN_INCLUDE} DIRECTORY)
-get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
+if(MPI_FOUND)
+  list(GET MPI_Fortran_INCLUDE_PATH 0 MPI_FORTRAN_INCLUDE)
+  get_filename_component(MPI_ROOT_DIR ${MPI_FORTRAN_INCLUDE} DIRECTORY)
+  get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
+endif()
 
 message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
 message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
 message(STATUS "CUDA Host Compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "The MPI_LIB implementation is set to ${MPI_LIB}")
+message(STATUS "The BLAS_LIB implementation is set to ${BLAS_LIB}")
 
 if (APPLE)
-message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
-  if(NOT MPI_LIB)
-    set(MPI_LIB MPICH)
-  endif()
+  message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
 
   add_custom_target(
     exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=NONE
+    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
             PATH_MPICH_INC=${MPI_ROOT_DIR}/include EXA_NO_BUILD=${TALSHXX_EXISTS}
             PATH_MPICH_LIB=${MPI_ROOT_DIR}/lib
             PATH_MPICH_BIN=${MPI_BIN_PATH} EXA_OS=NO_LINUX GPU_CUDA=NOCUDA EXA_TALSH_ONLY=YES EXATN_SERVICE=YES make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
 else()
-  #Check that MPI and BLAS libraries were set at configuration - if not set to default
-  #these are the same regardless of whether or not the CUDA compiler is set
-  if(NOT MPI_LIB)
-    set(MPI_LIB OPENMPI)
-  endif()
-  if(NOT BLAS_LIB)
-    set(BLAS_LIB ATLAS)
-  endif()
 
   if(CUDA_FOUND)
     message(STATUS "CUDA ROOT: ${CUDA_TOOLKIT_ROOT_DIR}")

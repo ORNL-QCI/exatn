@@ -1,5 +1,8 @@
 
-add_subdirectory(mpi)
+
+if(MPI_FOUND)
+  add_subdirectory(mpi)
+endif()
 
 file (GLOB HEADERS *.hpp)
 

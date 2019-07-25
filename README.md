@@ -48,8 +48,8 @@ $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
   For Python API add:
   -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
-  To specify MPI and/or BLAS library paths add:
-  -DBLAS_LIB=<PATH_TO_BLASLIB> -DMPI_LIB=<PATH_TO_MPILIB>
+  If different from OPENMPI or ATLAS, specify the name of the implementation with:
+  -DBLAS_LIB=<BLAS_IMPLEMENTATION> -DMPI_LIB=<MPI_IMPLEMENTATION>
 $ make install
 ```
 Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible
