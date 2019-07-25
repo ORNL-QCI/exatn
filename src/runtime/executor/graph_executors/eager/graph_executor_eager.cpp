@@ -22,7 +22,7 @@ int EagerGraphExecutor::nextExecutableNodeId(TensorGraph & dag){
   int i;
   for(i = 0; i < num_nodes; i++) {
     if(!dag.nodeExecuted(i)) {
-      if(dag.degree(i)==0)
+      if(dag.getNodeDegree(i)==0)
         break;
       else {
         auto n_list = dag.getNeighborList(i);

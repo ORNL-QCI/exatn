@@ -129,7 +129,7 @@ public:
                                 VertexIdType vertex_id2) = 0;
 
   /** Returns the number of nodes the given node is connected to **/
-  virtual std::size_t degree(VertexIdType vertex_id) = 0;
+  virtual std::size_t getNodeDegree(VertexIdType vertex_id) = 0;
 
   /** Returns the total number of dependencies (directed edges) in the DAG **/
   virtual std::size_t getNumDependencies() = 0;
@@ -145,7 +145,7 @@ public:
                                    std::vector<double> & distances,
                                    std::vector<VertexIdType> & paths) = 0;
 
-  // Clones an empty subclass instance (needed for plugin registry)
+  /** Clones an empty subclass instance (needed for plugin registry) **/
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 
   inline void lock() {mtx_.lock();}

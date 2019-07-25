@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Execution layer for tensor operations
-REVISION: 2019/07/24
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -22,6 +22,8 @@ Rationale:
  (c) submit(TensorOperation): Submits a tensor operation for (generally deferred) execution.
      sync(TensorOperation): Tests for completion of a specific tensor operation.
      sync(tensor): Tests for completion of all submitted update operations on a given tensor.
+ (d) Upon creation, the TensorRuntime object spawns an execution thread which will be executing
+     DAGs created on the fly. The execution thread will be joined upon TensorRuntime destruction.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
@@ -35,6 +37,8 @@ Rationale:
 #include <map>
 #include <string>
 #include <memory>
+#include <thread>
+#include <atomic>
 
 namespace exatn {
 namespace runtime {
@@ -42,12 +46,14 @@ namespace runtime {
 class TensorRuntime {
 
 public:
-  TensorRuntime() = default;
+  TensorRuntime();
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
   TensorRuntime(TensorRuntime &&) noexcept = default;
   TensorRuntime & operator=(TensorRuntime &&) noexcept = default;
-  ~TensorRuntime() = default;
+
+  /** Launches the execution thread which will be executing DAGs on the fly. **/
+  void launchExecutionThread();
 
   /** Opens a new scope represented by a new execution graph (DAG). **/
   void openScope(const std::string & scopeName);
@@ -80,12 +86,23 @@ public:
   TensorDenseBlock getTensorData(const Tensor & tensor);
 
 protected:
+  ~TensorRuntime();
+
+  /** The execution thread lives here **/
+  void executionThreadWorkflow();
+
   /** Active execution graphs (DAGs) **/
   std::map<std::string, std::shared_ptr<TensorGraph>> dags_;
-  /** Name of the current scope (current DAG) **/
-  std::string currentScope_;
+  /** Name of the current scope (current DAG name) **/
+  std::string current_scope_;
   /** Current DAG **/
-  TensorGraph * currentDag_; //non-ownining pointer to the current DAG
+  TensorGraph * current_dag_; //non-ownining pointer to the current DAG
+  /** Current executing status (whether or not the execution thread is active) **/
+  std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
+  /** End of life flag **/
+  std::atomic<bool> alive_;
+  /** Execution thread **/
+  std::thread exec_thread_;
 };
 
 } // namespace runtime

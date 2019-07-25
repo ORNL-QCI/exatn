@@ -59,7 +59,7 @@ bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType 
 }
 
 
-std::size_t DirectedBoostGraph::degree(VertexIdType vertex_id) {
+std::size_t DirectedBoostGraph::getNodeDegree(VertexIdType vertex_id) {
 //return boost::degree(vertex(vertex_id, *dag_), *dag_);
   return getNeighborList(vertex_id).size();
 }

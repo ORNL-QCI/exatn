@@ -92,7 +92,7 @@ public:
   bool dependencyExists(VertexIdType vertex_id1,
                         VertexIdType vertex_id2) override;
 
-  std::size_t degree(VertexIdType vertex_id) override;
+  std::size_t getNodeDegree(VertexIdType vertex_id) override;
 
   std::size_t getNumDependencies() override;
 
