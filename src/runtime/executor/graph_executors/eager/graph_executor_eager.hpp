@@ -13,8 +13,6 @@ Rationale:
 
 #include "tensor_graph_executor.hpp"
 
-#include <memory>
-
 namespace exatn {
 namespace runtime {
 
@@ -24,6 +22,10 @@ public:
 
   /** Traverses the DAG and executes all its nodes. **/
   void execute(TensorGraph & dag) override;
+
+  const std::string name() const override {return "eager-dag-executor";}
+  const std::string description() const override {return "Eager tensor graph executor";}
+  std::shared_ptr<TensorGraphExecutor> clone() override {return std::make_shared<EagerGraphExecutor>();}
 
 protected:
 

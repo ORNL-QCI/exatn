@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2019/07/24
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -13,8 +13,6 @@ Rationale:
 
 #include "tensor_graph_executor.hpp"
 
-#include <memory>
-
 namespace exatn {
 namespace runtime {
 
@@ -24,6 +22,10 @@ public:
 
   /** Traverses the DAG and executes all its nodes. **/
   void execute(TensorGraph & dag) override;
+
+  const std::string name() const override {return "lazy-dag-executor";}
+  const std::string description() const override {return "Lazy tensor graph executor";}
+  std::shared_ptr<TensorGraphExecutor> clone() override {return std::make_shared<LazyGraphExecutor>();}
 
 protected:
 

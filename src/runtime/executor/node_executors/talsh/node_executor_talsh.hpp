@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/07/24
+REVISION: 2019/07/25
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -23,6 +23,10 @@ public:
   NodeExecHandleType execute(TensorOperation & op) override;
 
   bool sync(NodeExecHandleType op_handle, bool wait) override;
+
+  const std::string name() const override {return "talsh-node-executor";}
+  const std::string description() const override {return "TALSH tensor graph node executor";}
+  std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
 protected:
  //`TALSH executor state

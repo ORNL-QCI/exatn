@@ -24,17 +24,17 @@ public:
    */
   void Start(BundleContext context) {
 
-    auto g1 = std::make_shared<exatn::runtime::EagerGraphExecutor>();
-    auto g2 = std::make_shared<exatn::runtime::LazyGraphExecutor>();
+    auto gex1 = std::make_shared<exatn::runtime::EagerGraphExecutor>();
+    auto gex2 = std::make_shared<exatn::runtime::LazyGraphExecutor>();
 
-    context.RegisterService<exatn::runtime::TensorGraphExecutor>(g1);
-    context.RegisterService<exatn::runtime::TensorGraphExecutor>(g2);
+    context.RegisterService<exatn::runtime::TensorGraphExecutor>(gex1);
+    context.RegisterService<exatn::runtime::TensorGraphExecutor>(gex2);
 
-    auto n1 = std::make_shared<exatn::runtime::TalshNodeExecutor>();
-    auto n2 = std::make_shared<exatn::runtime::ExatensorNodeExecutor>();
+    auto nex1 = std::make_shared<exatn::runtime::TalshNodeExecutor>();
+    auto nex2 = std::make_shared<exatn::runtime::ExatensorNodeExecutor>();
 
-    context.RegisterService<exatn::runtime::TensorNodeExecutor>(n1);
-    context.RegisterService<exatn::runtime::TensorNodeExecutor>(n2);
+    context.RegisterService<exatn::runtime::TensorNodeExecutor>(nex1);
+    context.RegisterService<exatn::runtime::TensorNodeExecutor>(nex2);
   }
 
   /**

@@ -91,6 +91,8 @@ protected:
   /** The execution thread lives here **/
   void executionThreadWorkflow();
 
+  /** Current tensor graph (DAG) executor **/
+  std::shared_ptr<TensorGraphExecutor> graph_executor_;
   /** Active execution graphs (DAGs) **/
   std::map<std::string, std::shared_ptr<TensorGraph>> dags_;
   /** Name of the current scope (current DAG name) **/
