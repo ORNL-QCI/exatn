@@ -13,7 +13,7 @@ TensorRuntime::TensorRuntime():
 TensorRuntime::~TensorRuntime()
 {
   if(alive_.load()){
-    alive_ = false; //signal to the execution thread to finish
+    alive_.store(false); //signal to the execution thread to finish
     exec_thread_.join(); //wait until the execution thread has finished
   }
 }
@@ -21,7 +21,7 @@ TensorRuntime::~TensorRuntime()
 
 void TensorRuntime::launchExecutionThread()
 {
-  alive_ = true;
+  alive_.store(true);
   exec_thread_ = std::thread(&TensorRuntime::executionThreadWorkflow,this);
   return;
 }
@@ -82,9 +82,7 @@ void TensorRuntime::closeScope() {
 
 VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(current_scope_.length() > 0);
-  auto newop_outid = op->getTensorOperandHash(0);
-  
-  return 0; //???
+  return current_dag_->addOperation(op);
 }
 
 

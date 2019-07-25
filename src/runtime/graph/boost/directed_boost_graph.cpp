@@ -11,9 +11,31 @@ DirectedBoostGraph::DirectedBoostGraph() {
 
 
 VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> op) {
+  this->lock();
   auto vid = add_vertex(*dag_);
   (*dag_)[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
   (*dag_)[vid].properties->setId(vid); //DAG node id is stored in the node properties
+  auto output_tensor = op->getTensorOperand(0); //output tensor operand
+  if(output_tensor) exec_state_.incrTensorUpdate(*output_tensor);
+  VertexIdType node_id;
+  bool dependent = false;
+  if(exec_state_.getLastTensorRead(*output_tensor,&node_id)){
+    addDependency(vid,node_id); dependent = true;
+  }
+  if(exec_state_.getLastTensorWrite(*output_tensor,&node_id)){
+    addDependency(vid,node_id); dependent = true;
+  }
+  exec_state_.updateLastTensorWrite(*output_tensor,vid);
+  unsigned int num_operands = op->getNumOperands();
+  for(unsigned int i = 1; i < num_operands; ++i){ //input tensor operands
+    auto tensor = op->getTensorOperand(i);
+    if(exec_state_.getLastTensorWrite(*tensor,&node_id)){
+      addDependency(vid,node_id); dependent = true;
+    }
+    exec_state_.updateLastTensorRead(*tensor,vid);
+  }
+  if(!dependent) exec_state_.registerDependencyFreeNode(vid);
+  this->unlock();
   return vid; //new node id in the DAG
 }
 

@@ -55,6 +55,12 @@ public:
       Returns the updated outstanding update count on the tensor. **/
   int decrTensorUpdate(const Tensor & tensor);
 
+  /** Returns the last DAG node id performing a read on a given tensor.
+      False on return means no such node exists. **/
+  bool getLastTensorRead(const Tensor & tensor, VertexIdType * node_id);
+  /** Returns the last DAG node id performing a write on a given tensor.
+      False on return means no such node exists. **/
+  bool getLastTensorWrite(const Tensor & tensor, VertexIdType * node_id);
   /** Updates the last DAG node id performing a read on a given tensor. **/
   void updateLastTensorRead(const Tensor & tensor, VertexIdType node_id);
   /** Updates the last DAG node id performing a write on a given tensor. **/

@@ -35,6 +35,28 @@ int TensorExecState::decrTensorUpdate(const Tensor & tensor)
   return count;
 }
 
+bool TensorExecState::getLastTensorRead(const Tensor & tensor, VertexIdType * node_id)
+{
+  auto tens_hash = tensor.getTensorHash();
+  auto iter = tensor_last_read_.find(tens_hash);
+  if(iter != tensor_last_read_.end()){
+    *node_id = iter->second;
+    return true;
+  }
+  return false;
+}
+
+bool TensorExecState::getLastTensorWrite(const Tensor & tensor, VertexIdType * node_id)
+{
+  auto tens_hash = tensor.getTensorHash();
+  auto iter = tensor_last_write_.find(tens_hash);
+  if(iter != tensor_last_write_.end()){
+    *node_id = iter->second;
+    return true;
+  }
+  return false;
+}
+
 void TensorExecState::updateLastTensorRead(const Tensor & tensor, VertexIdType node_id)
 {
   auto tens_hash = tensor.getTensorHash();
