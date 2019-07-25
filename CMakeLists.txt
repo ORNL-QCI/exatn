@@ -23,6 +23,20 @@ option(CUDA_HOST_COMPILER "Provide the host compiler for nvcc" "")
 option(EXATN_BUILD_TESTS "Build ExaTN tests" OFF)
 option(BLAS_LIB "Provide the BLAS implementation" "")
 option(MPI_LIB "Provide the MPI implementation" "")
+option(MPI_ROOT_DIR "Provide the MPI ROOT directory" "")
+option (MPI_BIN_PATH "Provide the MPI bin path" "")
+
+if(MPI_LIB)
+  if(NOT MPI_ROOT_DIR OR NOT MPI_BIN_PATH)
+    message( FATAL_ERROR "If you specify the MPI implementation, please also specify both the root and bin paths for the MPI installation. CMake is exiting.")
+  endif()
+else()
+  if(MPI_ROOT_DIR OR MPI_BIN_PATH)
+    message( FATAL_ERROR "If you don't specify the MPI implementation, please also don't specify the root and bin paths for MPI. CMake is exiting.")
+
+  endif()
+endif()
+
 
 if(NOT CMAKE_BUILD_TYPE)
   set(
@@ -57,12 +71,17 @@ if(NOT BLAS_LIB)
   if(BLAS_FOUND)
     set(BLAS_LIB ${BLA_VENDOR})
   endif()
+  #If BLAS implementation can't be found, default to ATLAS
+  if(BLAS_LIB STREQUAL "All")
+    set(BLAS_LIB ATLAS)
+  endif()
 endif()
 
-
+set(EXA_TALSH_ONLY "NO")
 #If MPI not user specified, default to no MPI
 if(NOT MPI_LIB)
   set(MPI_LIB NONE)
+  set(EXA_TALSH_ONLY "YES")
 endif()
 
 message(STATUS "MPIRUN: ${MPIEXEC_EXECUTABLE}")
