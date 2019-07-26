@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Execution layer for tensor operations
-REVISION: 2019/07/25
+REVISION: 2019/07/26
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -23,7 +23,12 @@ Rationale:
      sync(TensorOperation): Tests for completion of a specific tensor operation.
      sync(tensor): Tests for completion of all submitted update operations on a given tensor.
  (d) Upon creation, the TensorRuntime object spawns an execution thread which will be executing
-     DAGs created on the fly. The execution thread will be joined upon TensorRuntime destruction.
+     operations in the course of DAG traversal. The execution thread will be joined upon TensorRuntime
+     destruction. The main thread will return control to the client which will then be able to submit
+     new operations into the current DAG. The submitted operations will be continuously executed by
+     the execution thread. The DAG execution policy is specified by the polymorphic TensorGraphExecutor
+     object. Correspondingly, the TensorGraphExecutor contains the polymorphic TensorNodeExecutor
+     object which will actually execute stored operations via its associated computational backend.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
@@ -46,7 +51,7 @@ namespace runtime {
 class TensorRuntime {
 
 public:
-  TensorRuntime();
+  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor");
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
   TensorRuntime(TensorRuntime &&) noexcept = default;
@@ -56,25 +61,29 @@ public:
   void launchExecutionThread();
 
   /** Opens a new scope represented by a new execution graph (DAG). **/
-  void openScope(const std::string & scopeName);
+  void openScope(const std::string & scope_name);
 
   /** Pauses the current scope by completing all outstanding tensor operations
-      and pausing the further progress of the current execution graph until resume. **/
+      and pausing the further progress of the current execution graph until resume.
+      Returns TRUE upon successful pausing, FALSE otherwise. **/
   void pauseScope();
 
   /** Resumes the execution of a previously paused scope (execution graph). **/
-  void resumeScope(const std::string & scopeName);
+  void resumeScope(const std::string & scope_name);
 
   /** Closes the current scope, fully completing all tensor operations
       in the current execution graph. **/
   void closeScope();
+
+  /** Returns TRUE if there is the current scope is set. **/
+  inline bool currentScopeIsSet() const {return !(current_scope_.empty());}
 
   /** Submits a tensor operation into the current execution graph and returns its integer id.  **/
   VertexIdType submit(std::shared_ptr<TensorOperation> op);
 
   /** Tests for completion of a given tensor operation.
       If wait = TRUE, it will block until completion. **/
-  bool sync(const TensorOperation & op,
+  bool sync(TensorOperation & op,
             bool wait = false);
 
   /** Tests for completion of all outstanding update operations on a given tensor.
@@ -102,7 +111,7 @@ protected:
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** End of life flag **/
-  std::atomic<bool> alive_;
+  std::atomic<bool> alive_; //TRUE while the main thread is accepting new operations from client
   /** Execution thread **/
   std::thread exec_thread_;
 };
