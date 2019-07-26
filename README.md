@@ -48,8 +48,6 @@ $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
   For Python API add:
   -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
-  If different from OPENMPI or ATLAS, specify the name of the implementation with:
-  -DBLAS_LIB=<BLAS_IMPLEMENTATION> -DMPI_LIB=<MPI_IMPLEMENTATION>
 $ make install
 ```
 Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible
@@ -58,6 +56,22 @@ GCC 7, so if your default `g++` is version 8, then you will need to
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
+
+
+Options can also be passed to specify the implementation of BLAS and/or MPI with the following during cmake run time:
+```bash
+$ -DMPI_LIB=<MPI_IMPLEMENTATION> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT> -DBLAS_LIB=<BLAS_IMPLEMENTATION>
+```
+Note that if an MPI implementation is specified, you must also provide the root path for the installation.
+If ```MPI_LIB``` is not specified, ExaTN will compile and run without an MPI implementation.
+If ```BLAS_LIB``` is not specified, ExaTN defaults to no BLAS implementation.
+
+
+To use python capabilities after compilation, export the library to your to your `PYTHONPATH`
+```
+$ export PYTHONPATH=$PYTHONPATH:~/.exatn
+```
+It can also be helpful to have mpi4py installed.
 
 ## Mac OS X Build Instructions
 First install MPICH or OpenMPI from source. Refer to their installation guides for this.
@@ -75,8 +89,7 @@ $ git clone --recursive https://github.com/qci/exatn
 $ cd exatn
 $ mkdir build && cd build
 $ FC=gfortran-8 CXX=g++-8 cmake ..
-    -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++
-    -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90
+    -DMPI_ROOT_DIR=<PATH_TO_MPI_INSTALL>
     -DEXATN_BUILD_TESTS=TRUE
     -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
