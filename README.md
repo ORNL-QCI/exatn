@@ -60,12 +60,18 @@ the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
 
 Options can also be passed to specify the implementation of BLAS and/or MPI with the following during cmake run time:
 ```bash
-$ -DMPI_LIB=<MPI_IMPLEMENTATION> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT> -DMPI_BIN_PATH=<PATH_TO_MPI_BIN> -DBLAS_LIB=<BLAS_IMPLEMENTATION>
+$ -DMPI_LIB=<MPI_IMPLEMENTATION> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT> -DBLAS_LIB=<BLAS_IMPLEMENTATION>
 ```
-Note that if an MPI implementation is specified, you must also provide the root and bin paths for the installation.
+Note that if an MPI implementation is specified, you must also provide the root path for the installation.
 If ```MPI_LIB``` is not specified, ExaTN will compile and run without an MPI implementation.
-If ```BLAS_LIB``` is not specified, ExaTN will try and find the proper implementation for your environment.
-If this can't be found, ```BLAS_LIB``` defaults to the ATLAS implementation.
+If ```BLAS_LIB``` is not specified, ExaTN defaults to no BLAS implementation.
+
+
+To use python capabilities after compilation, export the library to your to your `PYTHONPATH`
+```
+$ export PYTHONPATH=$PYTHONPATH:~/.exatn
+```
+It can also be helpful to have mpi4py installed.
 
 ## Mac OS X Build Instructions
 First install MPICH or OpenMPI from source. Refer to their installation guides for this.
@@ -83,8 +89,7 @@ $ git clone --recursive https://github.com/qci/exatn
 $ cd exatn
 $ mkdir build && cd build
 $ FC=gfortran-8 CXX=g++-8 cmake ..
-    -DMPI_CXX_COMPILER=/usr/local/mpich/bin/mpic++
-    -DMPI_Fortran_COMPILER=/usr/local/mpich/bin/mpif90
+    -DMPI_ROOT_DIR=<PATH_TO_MPI_INSTALL>
     -DEXATN_BUILD_TESTS=TRUE
     -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install

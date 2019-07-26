@@ -1,6 +1,6 @@
 
 
-if(MPI_FOUND)
+if(NOT ${MPI_LIB} STREQUAL "NONE")
   add_subdirectory(mpi)
 endif()
 

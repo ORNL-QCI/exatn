@@ -26,14 +26,14 @@ option(MPI_LIB "Provide the MPI implementation" "")
 option(MPI_ROOT_DIR "Provide the MPI ROOT directory" "")
 option (MPI_BIN_PATH "Provide the MPI bin path" "")
 
+#Check to make sure that both the MPI implementation and root installation path were supplied
 if(MPI_LIB)
-  if(NOT MPI_ROOT_DIR OR NOT MPI_BIN_PATH)
-    message( FATAL_ERROR "If you specify the MPI implementation, please also specify both the root and bin paths for the MPI installation. CMake is exiting.")
+  if(NOT MPI_ROOT_DIR)
+    message( FATAL_ERROR "If you specify the MPI implementation, please also specify both the root path for the MPI installation. CMake is exiting.")
   endif()
 else()
-  if(MPI_ROOT_DIR OR MPI_BIN_PATH)
+  if(MPI_ROOT_DIR)
     message( FATAL_ERROR "If you don't specify the MPI implementation, please also don't specify the root and bin paths for MPI. CMake is exiting.")
-
   endif()
 endif()
 
@@ -65,22 +65,16 @@ if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
-#If BLAS implementation not user specified, try to import
-#Otherwise proceed with "none"
+#If BLAS implementation not user specified, proceed with "NONE"
 if(NOT BLAS_LIB)
-  if(BLAS_FOUND)
-    set(BLAS_LIB ${BLA_VENDOR})
-  endif()
-  #If BLAS implementation can't be found, default to ATLAS
-  if(BLAS_LIB STREQUAL "All")
-    set(BLAS_LIB ATLAS)
-  endif()
+ set(BLAS_LIB NONE)
 endif()
 
 set(EXA_TALSH_ONLY "NO")
 #If MPI not user specified, default to no MPI
 if(NOT MPI_LIB)
   set(MPI_LIB NONE)
+  set(MPI_ROOT_DIR "")
   set(EXA_TALSH_ONLY "YES")
 endif()
 
