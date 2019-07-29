@@ -19,6 +19,9 @@ Rationale:
      of the DAG structure (by Client thread) and its execution state (by Execution thread).
      Additionally each node of the TensorGraph (TensorOpNode object) provides more fine grain
      locking mechanism (lock/unlock methods) for providing exclusive access to individual DAG nodes.
+     Public virtual methods of TensorGraph implemented in DirectedBoostGraph subclass perform
+     locking/unlocking from there. Other (non-virtual) public methods of TensorGraph perform
+     locking/unlocking from here.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_GRAPH_HPP_
@@ -32,6 +35,7 @@ Rationale:
 
 #include <vector>
 #include <memory>
+#include <atomic>
 #include <mutex>
 
 namespace exatn {
@@ -58,10 +62,11 @@ public:
   inline std::shared_ptr<TensorOperation> & getOperation() {return op_;}
   inline VertexIdType getId() const {return id_;}
   inline bool isDummy() const {return is_noop_;}
-  inline bool isExecuting() {return executing_;}
+  inline bool isExecuting() {return executing_.load();}
   inline bool isExecuted(int * error_code = nullptr) {
-    if(error_code != nullptr) *error_code = error_;
-    return executed_;
+    bool ans = executed_.load();
+    if(error_code != nullptr && ans) *error_code = error_;
+    return ans;
   }
 
   inline void setId(VertexIdType id) {
@@ -70,15 +75,15 @@ public:
   }
 
   inline void setExecuting() {
-    assert(executing_ == false && executed_ == false);
-    executing_ = true;
+    assert(!executing_.load() && !executed_.load());
+    executing_.store(true);
     return;
   }
 
   inline void setExecuted(int error_code = 0) {
-    assert(executing_ == true && executed_ == false);
-    executed_ = true; executing_ = false;
+    assert(executing_.load() && !executed_.load());
     error_ = error_code;
+    executed_.store(true); executing_.store(false);
     return;
   }
 
@@ -87,11 +92,13 @@ public:
 
 protected:
   std::shared_ptr<TensorOperation> op_; //stored tensor operation
-  bool is_noop_;    //TRUE if the stored tensor operation is NOOP (dummy node)
-  bool executing_;  //TRUE if the stored tensor operation is currently being executed
-  bool executed_;   //TRUE if the stored tensor operation has been executed to completion
-  int error_;       //execution error code (0:success)
   VertexIdType id_; //vertex id
+  int error_;       //execution error code (0:success)
+  bool is_noop_;    //TRUE if the stored tensor operation is NOOP (dummy node)
+  std::atomic<bool> executing_;  //TRUE if the stored tensor operation is currently being executed
+  std::atomic<bool> executed_;   //TRUE if the stored tensor operation has been executed to completion
+
+private:
   std::recursive_mutex mtx_; //object access mutex
 };
 
@@ -143,6 +150,7 @@ public:
   /** Clones an empty subclass instance (needed for plugin registry) **/
   virtual std::shared_ptr<TensorGraph> clone() = 0;
 
+
   /** Marks the DAG node as being executed **/
   void setNodeExecuting(VertexIdType vertex_id) {
     return getNodeProperties(vertex_id).setExecuting();
@@ -166,28 +174,43 @@ public:
 
   /** Returns the current outstanding update count on the tensor in the DAG. **/
   inline std::size_t getTensorUpdateCount(const Tensor & tensor) {
-    return exec_state_.getTensorUpdateCount(tensor);
+    lock();
+    auto upd_cnt = exec_state_.getTensorUpdateCount(tensor);
+    unlock();
+    return upd_cnt;
   }
 
   /** Registers a DAG node without dependencies. **/
   inline void registerDependencyFreeNode(VertexIdType node_id) {
-    return exec_state_.registerDependencyFreeNode(node_id);
+    lock();
+    exec_state_.registerDependencyFreeNode(node_id);
+    unlock();
+    return;
   }
 
   /** Extracts a dependency-free node from the list.
       Returns FALSE if no such node exists. **/
   inline bool extractDependencyFreeNode(VertexIdType * node_id) {
-    return exec_state_.extractDependencyFreeNode(node_id);
+    lock();
+    auto avail = exec_state_.extractDependencyFreeNode(node_id);
+    unlock();
+    return avail;
   }
 
   /** Registers a DAG node as being executed. **/
   inline void registerExecutingNode(VertexIdType node_id) {
-    return exec_state_.registerExecutingNode(node_id);
+    lock();
+    exec_state_.registerExecutingNode(node_id);
+    unlock();
+    return;
   }
 
   /** Extracts an executed DAG node from the list of executing nodes. **/
   inline bool extractExecutingNode(VertexIdType * node_id) {
-    return exec_state_.extractExecutingNode(node_id);
+    lock();
+    auto avail = exec_state_.extractExecutingNode(node_id);
+    unlock();
+    return avail;
   }
 
   inline void lock() {mtx_.lock();}
@@ -195,6 +218,8 @@ public:
 
 protected:
   TensorExecState exec_state_; //tensor graph execution state
+
+private:
   std::recursive_mutex mtx_; //object access mutex
 };
 

@@ -18,6 +18,7 @@ const std::vector<VertexIdType> * TensorExecState::getTensorEpochNodes(const Ten
   auto tens_hash = tensor.getTensorHash();
   auto iter = tensor_info_.find(tens_hash);
   if(iter == tensor_info_.end()) return nullptr;
+  *epoch = (iter->second).rw_epoch;
   return &((iter->second).rw_epoch_nodes);
 }
 
@@ -30,11 +31,11 @@ int TensorExecState::registerTensorRead(const Tensor & tensor, VertexIdType node
     iter = pos.first;
   }
   auto & tens_info = iter->second;
-  if(tens_info.rw_epoch < 0){
+  if(tens_info.rw_epoch < 0){ //write epoch
     tens_info.rw_epoch_nodes.clear();
     tens_info.rw_epoch = 0;
   }
-  tens_info.rw_epoch_nodes.push_back(node_id);
+  tens_info.rw_epoch_nodes.emplace_back(node_id);
   return ++(tens_info.rw_epoch);
 }
 
@@ -47,13 +48,13 @@ int TensorExecState::registerTensorWrite(const Tensor & tensor, VertexIdType nod
     iter = pos.first;
   }
   auto & tens_info = iter->second;
-  if(tens_info.rw_epoch != 0){
+  if(tens_info.rw_epoch != 0){ //either read or write epoch
     tens_info.rw_epoch_nodes.clear();
     tens_info.rw_epoch = 0;
   }
-  tens_info.rw_epoch_nodes.push_back(node_id);
+  tens_info.rw_epoch_nodes.emplace_back(node_id);
   ++(tens_info.update_count);
-  return --(tens_info.rw_epoch);
+  return --(tens_info.rw_epoch); //-1
 }
 
 std::size_t TensorExecState::registerWriteCompletion(const Tensor & tensor)

@@ -12,7 +12,7 @@ DirectedBoostGraph::DirectedBoostGraph():
 
 
 VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> op) {
-  this->lock();
+  lock();
   auto vid = add_vertex(*dag_);
   (*dag_)[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
   (*dag_)[vid].properties->setId(vid); //DAG node id is stored in the node properties
@@ -20,7 +20,7 @@ VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> o
   bool dependent = false; int epoch;
   const auto * nodes = exec_state_.getTensorEpochNodes(*output_tensor,&epoch);
   if(nodes != nullptr){
-    for(const auto & node_id: *nodes) addDependency(vid,node_id);
+    for(const auto & node_id: *nodes) addDependency(vid,node_id); //Write-after-Read & Write-after-Write
     dependent = true;
   }
   exec_state_.registerTensorWrite(*output_tensor,vid);
@@ -28,28 +28,32 @@ VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> o
   for(unsigned int i = 1; i < num_operands; ++i){ //input tensor operands
     auto tensor = op->getTensorOperand(i);
     nodes = exec_state_.getTensorEpochNodes(*tensor,&epoch);
-    if(epoch < 0){
+    if(epoch < 0){ //write epoch: Read-after-Write
       for(const auto & node_id: *nodes) addDependency(vid,node_id);
       dependent = true;
     }
     exec_state_.registerTensorRead(*tensor,vid);
   }
   if(!dependent) exec_state_.registerDependencyFreeNode(vid);
-  this->unlock();
+  unlock();
   return vid; //new node id in the DAG
 }
 
 
 void DirectedBoostGraph::addDependency(VertexIdType dependent, VertexIdType dependee) {
+  lock();
   add_edge(vertex(dependent,*dag_), vertex(dependee,*dag_), *dag_);
+  unlock();
   return;
 }
 
 
 bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType vertex_id2) {
+  lock();
   auto vid1 = vertex(vertex_id1, *dag_);
   auto vid2 = vertex(vertex_id2, *dag_);
   auto p = edge(vid1, vid2, *dag_);
+  unlock();
   return p.second;
 }
 
@@ -60,23 +64,34 @@ TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
 
 
 std::size_t DirectedBoostGraph::getNodeDegree(VertexIdType vertex_id) {
+  lock();
 //return boost::degree(vertex(vertex_id, *dag_), *dag_);
-  return getNeighborList(vertex_id).size();
+  std::size_t ns = getNeighborList(vertex_id).size();
+  unlock();
+  return ns;
 }
 
 
 std::size_t DirectedBoostGraph::getNumNodes() {
-  return num_vertices(*dag_);
+  lock();
+  std::size_t n = num_vertices(*dag_);
+  unlock();
+  return n;
 }
 
 
 std::size_t DirectedBoostGraph::getNumDependencies() {
-  return num_edges(*dag_);
+  lock();
+  std::size_t m = num_edges(*dag_);
+  unlock();
+  return m;
 }
 
 
 std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType vertex_id) {
   std::vector<VertexIdType> l;
+
+  lock();
 
   typedef typename boost::property_map<d_adj_list, boost::vertex_index_t>::type IndexMap;
   IndexMap indexMap = get(boost::vertex_index, *dag_);
@@ -91,6 +106,7 @@ std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType verte
     l.push_back(neighborIdx);
   }
 
+  unlock();
   return l;
 }
 
@@ -98,6 +114,8 @@ std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType verte
 void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
                                              std::vector<double> & distances,
                                              std::vector<VertexIdType> & paths) {
+  lock();
+
   typename property_map<d_adj_list, edge_weight_t>::type weightmap =
            get(edge_weight, *dag_);
   std::vector<VertexIdType> p(num_vertices(*dag_));
@@ -113,6 +131,8 @@ void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
 
   for (const auto & di: d) distances.push_back(static_cast<double>(di));
   for (const auto & pi: p) paths.push_back(pi);
+
+  unlock();
   return;
 }
 
