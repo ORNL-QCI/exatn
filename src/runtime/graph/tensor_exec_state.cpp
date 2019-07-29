@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/07/25
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -12,87 +12,64 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 namespace exatn {
 namespace runtime {
 
-int TensorExecState::incrTensorUpdate(const Tensor & tensor)
+const std::vector<VertexIdType> * TensorExecState::getTensorEpochNodes(const Tensor & tensor, int * epoch)
+{
+  *epoch = 0;
+  auto tens_hash = tensor.getTensorHash();
+  auto iter = tensor_info_.find(tens_hash);
+  if(iter == tensor_info_.end()) return nullptr;
+  return &((iter->second).rw_epoch_nodes);
+}
+
+int TensorExecState::registerTensorRead(const Tensor & tensor, VertexIdType node_id)
 {
   auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_update_cnt_.find(tens_hash);
-  if(iter == tensor_update_cnt_.end()){
-    auto pos = tensor_update_cnt_.emplace(std::make_pair(tens_hash,0));
+  auto iter = tensor_info_.find(tens_hash);
+  if(iter == tensor_info_.end()){
+    auto pos = tensor_info_.emplace(std::make_pair(tens_hash,TensorExecInfo()));
     iter = pos.first;
   }
-  auto & count = iter->second;
-  ++count;
-  return count;
-}
-
-int TensorExecState::decrTensorUpdate(const Tensor & tensor)
-{
-  auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_update_cnt_.find(tens_hash);
-  assert(iter != tensor_update_cnt_.end());
-  auto & count = iter->second;
-  --count;
-  return count;
-}
-
-bool TensorExecState::getLastTensorRead(const Tensor & tensor, VertexIdType * node_id)
-{
-  auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_last_read_.find(tens_hash);
-  if(iter != tensor_last_read_.end()){
-    *node_id = iter->second;
-    return true;
+  auto & tens_info = iter->second;
+  if(tens_info.rw_epoch < 0){
+    tens_info.rw_epoch_nodes.clear();
+    tens_info.rw_epoch = 0;
   }
-  return false;
+  tens_info.rw_epoch_nodes.push_back(node_id);
+  return ++(tens_info.rw_epoch);
 }
 
-bool TensorExecState::getLastTensorWrite(const Tensor & tensor, VertexIdType * node_id)
+int TensorExecState::registerTensorWrite(const Tensor & tensor, VertexIdType node_id)
 {
   auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_last_write_.find(tens_hash);
-  if(iter != tensor_last_write_.end()){
-    *node_id = iter->second;
-    return true;
+  auto iter = tensor_info_.find(tens_hash);
+  if(iter == tensor_info_.end()){
+    auto pos = tensor_info_.emplace(std::make_pair(tens_hash,TensorExecInfo()));
+    iter = pos.first;
   }
-  return false;
-}
-
-void TensorExecState::updateLastTensorRead(const Tensor & tensor, VertexIdType node_id)
-{
-  auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_last_read_.find(tens_hash);
-  if(iter == tensor_last_read_.end()){
-    auto pos = tensor_last_read_.emplace(std::make_pair(tens_hash,node_id));
-  }else{
-    iter->second = node_id;
+  auto & tens_info = iter->second;
+  if(tens_info.rw_epoch != 0){
+    tens_info.rw_epoch_nodes.clear();
+    tens_info.rw_epoch = 0;
   }
-  return;
+  tens_info.rw_epoch_nodes.push_back(node_id);
+  ++(tens_info.update_count);
+  return --(tens_info.rw_epoch);
 }
 
-void TensorExecState::updateLastTensorWrite(const Tensor & tensor, VertexIdType node_id)
+std::size_t TensorExecState::registerWriteCompletion(const Tensor & tensor)
 {
   auto tens_hash = tensor.getTensorHash();
-  auto iter = tensor_last_write_.find(tens_hash);
-  if(iter == tensor_last_write_.end()){
-    auto pos = tensor_last_write_.emplace(std::make_pair(tens_hash,node_id));
-  }else{
-    iter->second = node_id;
-  }
-  return;
+  auto iter = tensor_info_.find(tens_hash);
+  assert(iter != tensor_info_.end());
+  return --((iter->second).update_count);
 }
 
-void TensorExecState::clearLastTensorRead(const Tensor & tensor)
+std::size_t TensorExecState::getTensorUpdateCount(const Tensor & tensor)
 {
   auto tens_hash = tensor.getTensorHash();
-  assert(tensor_last_read_.erase(tens_hash) == 1);
-  return;
-}
-
-void TensorExecState::clearLastTensorWrite(const Tensor & tensor)
-{
-  auto tens_hash = tensor.getTensorHash();
-  assert(tensor_last_write_.erase(tens_hash) == 1);
-  return;
+  auto iter = tensor_info_.find(tens_hash);
+  if(iter == tensor_info_.end()) return 0;
+  return (iter->second).update_count;
 }
 
 void TensorExecState::registerDependencyFreeNode(VertexIdType node_id)

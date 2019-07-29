@@ -95,20 +95,23 @@ void TensorRuntime::closeScope() {
 VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(currentScopeIsSet());
   auto node_id = current_dag_->addOperation(op);
+  op->setId(node_id);
   executing_.store(true); //signal to the execution thread to execute the DAG
   return node_id;
 }
 
 
 bool TensorRuntime::sync(TensorOperation & op, bool wait) {
-  return sync(*(op.getTensorOperand(0)),wait);
+  bool completed = current_dag_->nodeExecuted(op.getId());
+  while(wait && (!completed)) completed = current_dag_->nodeExecuted(op.getId());
+  return completed;
 }
 
 bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
   assert(currentScopeIsSet());
   bool completed = false;
   const auto output_tensor_hash = tensor.getTensorHash();
-  // `Finish
+  //`Finish
   return completed;
 }
 
@@ -116,7 +119,7 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 TensorDenseBlock TensorRuntime::getTensorData(const Tensor & tensor) {
   // Complete all submitted update operations on the tensor
   assert(sync(tensor,true));
-  // `Get access to tensor data
+  //`Get access to tensor data
   return TensorDenseBlock();
 }
 

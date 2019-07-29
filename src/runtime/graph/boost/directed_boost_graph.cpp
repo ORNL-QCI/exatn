@@ -16,23 +16,22 @@ VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> o
   (*dag_)[vid].properties = std::move(std::make_shared<TensorOpNode>(op));
   (*dag_)[vid].properties->setId(vid); //DAG node id is stored in the node properties
   auto output_tensor = op->getTensorOperand(0); //output tensor operand
-  if(output_tensor) exec_state_.incrTensorUpdate(*output_tensor);
-  VertexIdType node_id;
-  bool dependent = false;
-  if(exec_state_.getLastTensorRead(*output_tensor,&node_id)){
-    addDependency(vid,node_id); dependent = true;
+  bool dependent = false; int epoch;
+  const auto * nodes = exec_state_.getTensorEpochNodes(*output_tensor,&epoch);
+  if(nodes != nullptr){
+    for(const auto & node_id: *nodes) addDependency(vid,node_id);
+    dependent = true;
   }
-  if(exec_state_.getLastTensorWrite(*output_tensor,&node_id)){
-    addDependency(vid,node_id); dependent = true;
-  }
-  exec_state_.updateLastTensorWrite(*output_tensor,vid);
+  exec_state_.registerTensorWrite(*output_tensor,vid);
   unsigned int num_operands = op->getNumOperands();
   for(unsigned int i = 1; i < num_operands; ++i){ //input tensor operands
     auto tensor = op->getTensorOperand(i);
-    if(exec_state_.getLastTensorWrite(*tensor,&node_id)){
-      addDependency(vid,node_id); dependent = true;
+    nodes = exec_state_.getTensorEpochNodes(*tensor,&epoch);
+    if(epoch < 0){
+      for(const auto & node_id: *nodes) addDependency(vid,node_id);
+      dependent = true;
     }
-    exec_state_.updateLastTensorRead(*tensor,vid);
+    exec_state_.registerTensorRead(*tensor,vid);
   }
   if(!dependent) exec_state_.registerDependencyFreeNode(vid);
   this->unlock();
