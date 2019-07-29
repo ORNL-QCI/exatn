@@ -34,7 +34,7 @@ void TensorRuntime::launchExecutionThread()
 void TensorRuntime::executionThreadWorkflow()
 {
   while(alive_.load()){
-    if(executing_.load()){ //executing_ is set to TRUE by the main thread
+    if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
     }
@@ -44,7 +44,7 @@ void TensorRuntime::executionThreadWorkflow()
 
 
 void TensorRuntime::openScope(const std::string & scope_name) {
-  assert(scope_name.length() > 0);
+  assert(!scope_name.empty());
   // Complete the current scope first:
   if(currentScopeIsSet()){
     assert(scope_name != current_scope_);
@@ -57,23 +57,24 @@ void TensorRuntime::openScope(const std::string & scope_name) {
                                )
                               );
   assert(new_dag.second); // make sure there was no other scope with the same name
-  current_dag_ = (new_dag.first)->second.get(); //storing a non-owning raw pointer
+  current_dag_ = (new_dag.first)->second.get(); //storing a non-owning raw pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
   return;
 }
 
 
 void TensorRuntime::pauseScope() {
-  graph_executor_->stopExecution(); //execution thread will reset executing_ to FALSE
+  graph_executor_->stopExecution(); //execution thread will pause and reset executing_ to FALSE
   return;
 }
 
 
 void TensorRuntime::resumeScope(const std::string & scope_name) {
-  assert(scope_name.length() > 0);
+  assert(!scope_name.empty());
   // Pause the current scope first:
   if(currentScopeIsSet()) pauseScope();
-  current_dag_ = dags_[scope_name].get(); //storing a non-owning raw pointer
+  while(executing_.load()){}; //wait until the execution thread stops executing previous DAG
+  current_dag_ = dags_[scope_name].get(); //storing a non-owning raw pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
   executing_.store(true); //will trigger DAG execution by the execution thread
   return;
@@ -102,16 +103,20 @@ VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
 
 
 bool TensorRuntime::sync(TensorOperation & op, bool wait) {
-  bool completed = current_dag_->nodeExecuted(op.getId());
-  while(wait && (!completed)) completed = current_dag_->nodeExecuted(op.getId());
+  assert(currentScopeIsSet());
+  executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+  auto opid = op.getId();
+  bool completed = current_dag_->nodeExecuted(opid);
+  while(wait && (!completed)) completed = current_dag_->nodeExecuted(opid);
   return completed;
 }
 
+
 bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
   assert(currentScopeIsSet());
-  bool completed = false;
-  const auto output_tensor_hash = tensor.getTensorHash();
-  //`Finish
+  executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+  bool completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+  while(wait && (!completed)) completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
   return completed;
 }
 

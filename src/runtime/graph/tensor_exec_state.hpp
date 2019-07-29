@@ -10,20 +10,24 @@ Rationale:
      dependencies between them: A directed edge from node1 to
      node2 indicates that node1 depends on node2. Each DAG node
      has its unique integer vertex id (VertexIdType) returned
-     when the node is added to the DAG.
+     when the node is added into the DAG.
  (b) The tensor graph contains:
-     1. The DAG implementation (in the DirectedBoostGraph subclass);
+     1. The DAG implementation (DirectedBoostGraph subclass);
      2. The DAG execution state (TensorExecState data member).
- (c) The execution state of each Tensor is either of the following:
+ (c) The execution state of each Tensor in the DAG is either of the following:
      1. None (no outstanding reads or writes on the Tensor);
      2. Read (one or more most recently submitted tensor operations
-        involving the Tensor perform a read on it). This is the READ
+        involving the Tensor perform reads on it). This is the READ
         epoch characterized by a positive integer equal to the number
         of outstanding reads on the Tensor in the current (read) epoch.
      3. Write (most recent tensor operation on the Tensor is a write).
-        This is the WRITE epoch characterized a negative integer -1
-        denoting a single outstanding write on the Tensor in the
+        This is the WRITE epoch characterized by a negative integer -1
+        denoting the single outstanding write on the Tensor in the
         current (write) epoch.
+     The execution state of a Tensor is progressing through alternating
+     read and write epochs, introducing read-after-write, write-after-write,
+     and write-after-read dependencies between tensor nodes sharing the same
+     data (Tensor).
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_EXEC_STATE_HPP_
@@ -75,16 +79,17 @@ public:
 
   /** Returns the list of nodes participating in the current R/W epoch:
       epoch > 0: This is the number of reads in the current Read epoch;
-      epoch = -1: This is a single write in the current Write epoch. **/
+      epoch = -1: This is the single write in the current Write epoch. **/
   const std::vector<VertexIdType> * getTensorEpochNodes(const Tensor & tensor,
                                                         int * epoch);
-  /** Registers a new read on a Tensor. Returns the current epoch. **/
+  /** Registers a new read on a Tensor. Returns the current epoch R/W counter. **/
   int registerTensorRead(const Tensor & tensor,
                          VertexIdType node_id);
-  /** Registers a new write on a Tensor. Returns the current epoch. **/
+  /** Registers a new write on a Tensor. Returns the current epoch R/W counter. **/
   int registerTensorWrite(const Tensor & tensor,
                           VertexIdType node_id);
-  /** Registers a completion of an outstanding write on a Tensor.
+
+  /** Registers completion of an outstanding write on a Tensor.
       Returns the updated outstanding update count on the Tensor. **/
   std::size_t registerWriteCompletion(const Tensor & tensor);
   /** Returns the current outstanding update count on the tensor in the DAG. **/

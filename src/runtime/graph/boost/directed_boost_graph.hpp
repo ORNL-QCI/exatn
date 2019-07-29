@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/25
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -71,32 +71,23 @@ public:
   DirectedBoostGraph & operator=(const DirectedBoostGraph &) = delete;
   DirectedBoostGraph(DirectedBoostGraph &&) noexcept = default;
   DirectedBoostGraph & operator=(DirectedBoostGraph &&) noexcept = default;
-  ~DirectedBoostGraph() = default;
+  virtual ~DirectedBoostGraph() = default;
 
   VertexIdType addOperation(std::shared_ptr<TensorOperation> op) override;
 
   void addDependency(VertexIdType dependent,
                      VertexIdType dependee) override;
 
-  TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
-
-  void setNodeExecuting(VertexIdType vertex_id) override;
-
-  void setNodeExecuted(VertexIdType vertex_id,
-                       int error_code = 0) override;
-
-  bool nodeExecuting(VertexIdType vertex_id) override;
-
-  bool nodeExecuted(VertexIdType vertex_id) override;
-
   bool dependencyExists(VertexIdType vertex_id1,
                         VertexIdType vertex_id2) override;
 
+  TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
+
   std::size_t getNodeDegree(VertexIdType vertex_id) override;
 
-  std::size_t getNumDependencies() override;
-
   std::size_t getNumNodes() override;
+
+  std::size_t getNumDependencies() override;
 
   std::vector<VertexIdType> getNeighborList(VertexIdType vertex_id) override;
 

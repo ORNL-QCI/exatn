@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2019/07/26
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -60,8 +60,8 @@ public:
 
 protected:
   std::shared_ptr<TensorNodeExecutor> node_executor_;
-  std::atomic<bool> stopping_;
-  std::atomic<bool> active_;
+  std::atomic<bool> stopping_; //signal to pause the execution thread
+  std::atomic<bool> active_; //TRUE while the execution thread is executing DAG operations
 };
 
 } //namespace runtime

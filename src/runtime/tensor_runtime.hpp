@@ -1,34 +1,44 @@
-/** ExaTN:: Tensor Runtime: Execution layer for tensor operations
+/** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
 REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
- (a) The execution space consists of one or more DAGs in which
-     nodes represent tensor operations and directed edges represent
+ (a) The execution space consists of one or more DAGs in which nodes
+     represent tensor operations (tasks) and directed edges represent
      dependencies between the corresponding nodes (tensor operations).
-     Each DAG is associated with a uniquely named TAProL scope.
+     Each DAG is associated with a uniquely named TAProL scope such that
+     all tensor operations submitted by the Client to the ExaTN numerics
+     server are forwarded into the DAG associated with the TaProL scope
+     in which the Client currently resides.
  (b) The DAG lifecycle:
      openScope(name): Opens a new TAProL scope and creates its associated empty DAG.
                       The .submit method can then be used to append new tensor
                       operations into the current DAG. The actual execution
                       of the submitted tensor operations may start at any time
-                      after submission.
+                      after submission (asynchronously).
      pauseScope(): Completes the actual execution of all started tensor operations in the
                    current DAG and defers the execution of the rest of the DAG for later.
-     resumeScope(name): Resumes the execution of a previously paused DAG, making it current.
+     resumeScope(name): Pauses the execution of the currently active DAG (if any) and
+                        resumes the execution of a previously paused DAG, making it current.
      closeScope(): Completes all tensor operations in the current DAG and destroys it.
  (c) submit(TensorOperation): Submits a tensor operation for (generally deferred) execution.
      sync(TensorOperation): Tests for completion of a specific tensor operation.
      sync(tensor): Tests for completion of all submitted update operations on a given tensor.
- (d) Upon creation, the TensorRuntime object spawns an execution thread which will be executing
+ (d) Upon creation, the TensorRuntime object spawns an execution thread which will be executing tensor
      operations in the course of DAG traversal. The execution thread will be joined upon TensorRuntime
      destruction. The main thread will return control to the client which will then be able to submit
-     new operations into the current DAG. The submitted operations will be continuously executed by
-     the execution thread. The DAG execution policy is specified by the polymorphic TensorGraphExecutor
-     object. Correspondingly, the TensorGraphExecutor contains the polymorphic TensorNodeExecutor
-     object which will actually execute stored operations via its associated computational backend.
+     new operations into the current DAG. The submitted operations will be autonomously executed by
+     the execution thread. The DAG execution policy is specified by a polymorphic TensorGraphExecutor
+     provided during the construction of the TensorRuntime. Correspondingly, the TensorGraphExecutor
+     contains a polymorphic TensorNodeExecutor responsible for the actual execution of stored tensor
+     operations via an associated computational backend. The concrete TensorNodeExecutor is also
+     specified during the construction of the TensorRuntime oject.
+ (e) DEVELOPERS ONLY: The TensorGraph object provides lock/unlock methods for concurrent update
+     of the DAG structure (by Client thread) and its execution state (by Execution thread).
+     Additionally each node of the TensorGraph (TensorOpNode object) provides more fine grain
+     locking mechanism (lock/unlock methods) for providing exclusive access to individual DAG nodes.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
@@ -51,12 +61,13 @@ namespace runtime {
 class TensorRuntime {
 
 public:
-  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",
-                const std::string & node_executor_name = "talsh-node-executor");
+  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+                const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
   TensorRuntime(TensorRuntime &&) noexcept = default;
   TensorRuntime & operator=(TensorRuntime &&) noexcept = default;
+  ~TensorRuntime();
 
   /** Launches the execution thread which will be executing DAGs on the fly. **/
   void launchExecutionThread();
@@ -96,8 +107,6 @@ public:
   TensorDenseBlock getTensorData(const Tensor & tensor);
 
 protected:
-  ~TensorRuntime();
-
   /** The execution thread lives here **/
   void executionThreadWorkflow();
 
@@ -112,7 +121,7 @@ protected:
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** End of life flag **/
-  std::atomic<bool> alive_; //TRUE while the main thread is accepting new operations from client
+  std::atomic<bool> alive_; //TRUE while the main thread is accepting new operations from Client
   /** Execution thread **/
   std::thread exec_thread_;
 };

@@ -5,8 +5,9 @@ using namespace boost;
 namespace exatn {
 namespace runtime {
 
-DirectedBoostGraph::DirectedBoostGraph() {
-  dag_ = std::make_shared<d_adj_list>();
+DirectedBoostGraph::DirectedBoostGraph():
+ dag_(std::make_shared<d_adj_list>())
+{
 }
 
 
@@ -45,38 +46,16 @@ void DirectedBoostGraph::addDependency(VertexIdType dependent, VertexIdType depe
 }
 
 
-TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
-  return *((*dag_)[vertex_id].properties);
-}
-
-
-void DirectedBoostGraph::setNodeExecuting(VertexIdType vertex_id) {
-  (*dag_)[vertex_id].properties->setExecuting();
-  return;
-}
-
-
-void DirectedBoostGraph::setNodeExecuted(VertexIdType vertex_id, int error_code) {
-  (*dag_)[vertex_id].properties->setExecuted(error_code);
-  return;
-}
-
-
-bool DirectedBoostGraph::nodeExecuting(VertexIdType vertex_id) {
-  return (*dag_)[vertex_id].properties->isExecuting();
-}
-
-
-bool DirectedBoostGraph::nodeExecuted(VertexIdType vertex_id) {
-  return (*dag_)[vertex_id].properties->isExecuted();
-}
-
-
 bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType vertex_id2) {
   auto vid1 = vertex(vertex_id1, *dag_);
   auto vid2 = vertex(vertex_id2, *dag_);
   auto p = edge(vid1, vid2, *dag_);
   return p.second;
+}
+
+
+TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
+  return *((*dag_)[vertex_id].properties);
 }
 
 
@@ -86,13 +65,13 @@ std::size_t DirectedBoostGraph::getNodeDegree(VertexIdType vertex_id) {
 }
 
 
-std::size_t DirectedBoostGraph::getNumDependencies() {
-  return num_edges(*dag_);
+std::size_t DirectedBoostGraph::getNumNodes() {
+  return num_vertices(*dag_);
 }
 
 
-std::size_t DirectedBoostGraph::getNumNodes() {
-  return num_vertices(*dag_);
+std::size_t DirectedBoostGraph::getNumDependencies() {
+  return num_edges(*dag_);
 }
 
 
