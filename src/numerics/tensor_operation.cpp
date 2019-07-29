@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/22
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,7 +13,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOperation::TensorOperation(TensorOpCode opcode, unsigned int num_operands, unsigned int num_scalars):
- num_operands_(num_operands), num_scalars_(num_scalars), opcode_(opcode),
+ num_operands_(num_operands), num_scalars_(num_scalars), opcode_(opcode), id_(0),
  scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
  operands_.reserve(num_operands);
@@ -98,6 +98,17 @@ void TensorOperation::setIndexPattern(const std::string & pattern)
  assert(operands_.size() == num_operands_ && scalars_.size() == num_scalars_);
  pattern_ = pattern;
  return;
+}
+
+void TensorOperation::setId(std::size_t id)
+{
+ id_ = id;
+ return;
+}
+
+std::size_t TensorOperation::getId() const
+{
+ return id_;
 }
 
 } //namespace numerics

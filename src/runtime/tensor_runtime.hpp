@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Execution layer for tensor operations
-REVISION: 2019/07/26
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -51,7 +51,8 @@ namespace runtime {
 class TensorRuntime {
 
 public:
-  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor");
+  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",
+                const std::string & node_executor_name = "talsh-node-executor");
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
   TensorRuntime(TensorRuntime &&) noexcept = default;

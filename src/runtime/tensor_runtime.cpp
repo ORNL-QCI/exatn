@@ -4,10 +4,11 @@
 namespace exatn {
 namespace runtime {
 
-TensorRuntime::TensorRuntime(const std::string & graph_executor_name):
+TensorRuntime::TensorRuntime(const std::string & graph_executor_name, const std::string & node_executor_name):
  current_dag_(nullptr), executing_(false), alive_(false)
 {
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name);
+  graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name));
 }
 
 

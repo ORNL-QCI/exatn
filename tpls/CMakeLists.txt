@@ -44,22 +44,36 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor/include/talshxx.hpp")
   set(TALSHXX_EXISTS "YES")
 endif()
 
+if(NOT MPI_LIB)
+  set(EXA_TALSH_ONLY "YES")
+endif()
 
-message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
-message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
-message(STATUS "CUDA Host Compiler: ${CMAKE_CXX_COMPILER}")
+if(NOT CUDA_HOST_COMPILER)
+  set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+endif()
+
+
 message(STATUS "The MPI_LIB implementation is set to ${MPI_LIB}")
+message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
+message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
 message(STATUS "The BLAS_LIB implementation is set to ${BLAS_LIB}")
+message(STATUS "CUDA Host Compiler: ${CUDA_HOST_COMPILER}")
+
 
 if (APPLE)
-  message(STATUS "THIS IS APPLE, BUILDING EXATENSOR ${CMAKE_Fortran_COMPILER}")
+  message(STATUS "This is Apple, building TAL-SH CPU only with ${CMAKE_Fortran_COMPILER}")
 
   add_custom_target(
-     exatensor-build
-    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
+    exatensor-build
+    COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER}
+            GPU_CUDA=NOCUDA
+            MPILIB=${MPI_LIB}
+            BLASLIB=${BLAS_LIB}
             EXA_NO_BUILD=${TALSHXX_EXISTS}
-            PATH_MPICH=${MPI_ROOT_DIR}
-            EXA_OS=NO_LINUX GPU_CUDA=NOCUDA EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES make
+            PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+            EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
+            EXA_OS=NO_LINUX
+            make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
 else()
@@ -69,30 +83,29 @@ else()
     message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
     message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
 
-
-    if(NOT CUDA_HOST_COMPILER)
-      set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    endif()
-
     add_custom_target(
        exatensor-build
-       COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} GPU_CUDA=CUDA
-                PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
+       COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER}
+                GPU_CUDA=CUDA PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR} CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                MPILIB=${MPI_LIB}
+                BLASLIB=${BLAS_LIB}
                 EXA_NO_BUILD=${TALSHXX_EXISTS}
-                PATH_OPENMPI=${MPI_ROOT_DIR}
-                CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER} EXATN_SERVICE=YES
-                EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
+                PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+                EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
                 make
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
   else()
       add_custom_target(
       exatensor-build
-      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER} MPILIB=${MPI_LIB} BLASLIB=${BLAS_LIB}
+      COMMAND ${CMAKE_COMMAND} -E env CPP_GNU=${CMAKE_CXX_COMPILER} CC_GNU=${CMAKE_C_COMPILER} FC_GNU=${CMAKE_Fortran_COMPILER}
+              GPU_CUDA=NOCUDA
+              MPILIB=${MPI_LIB}
+              BLASLIB=${BLAS_LIB}
               EXA_NO_BUILD=${TALSHXX_EXISTS}
-              PATH_OPENMPI=${MPI_ROOT_DIR}
-              EXATN_SERVICE=YES make
-              EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
+              PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+              EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
+              make
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
 endif()
@@ -130,13 +143,13 @@ add_subdirectory(boost-cmake)
 
 
 add_custom_command(TARGET exatensor-build POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/lib* ${CMAKE_INSTALL_PREFIX}/lib/
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/lib* ${CMAKE_INSTALL_PREFIX}/lib/
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Installing ExaTensor Libs to Install Prefix..."
 )
 add_custom_command(TARGET exatensor-build POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_method.hpp ${CMAKE_INSTALL_PREFIX}/include/exatensor
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_method.hpp ${CMAKE_INSTALL_PREFIX}/include/exatensor
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Installing ExaTensor tensor_method.hpp to Install Prefix..."
 )

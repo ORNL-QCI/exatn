@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/22
+REVISION: 2019/07/29
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,6 +79,12 @@ public:
      The tensor operation must have all its tensor/scalar operands set at this point.**/
  void setIndexPattern(const std::string & pattern);
 
+ /** Sets the unique integer identifier of the tensor operation. **/
+ void setId(std::size_t id);
+
+ /** Returns the unique integer identifier of the tensor operation. **/
+ std::size_t getId() const;
+
 protected:
 
  std::string pattern_; //symbolic index pattern
@@ -87,7 +93,7 @@ protected:
  unsigned int num_operands_; //number of required tensor operands
  unsigned int num_scalars_; //number of required scalar arguments
  TensorOpCode opcode_; //tensor operation code
-
+ std::size_t id_; //tensor operation id (unique integer identifier)
 };
 
 using createTensorOpFn = std::unique_ptr<TensorOperation> (*)(void);
