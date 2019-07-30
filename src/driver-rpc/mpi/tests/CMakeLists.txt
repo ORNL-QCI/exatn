@@ -9,12 +9,12 @@ else()
    target_include_directories(server_test PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
 endif()
 
-target_link_libraries(client_test PUBLIC exatn ${MPI_CXX_LIBRARIES})
+target_link_libraries(client_test PUBLIC exatn exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES})
 
 set_target_properties(client_test PROPERTIES FOLDER tests)
 target_link_libraries(client_test PRIVATE gtest gmock gtest_main)
 
-target_link_libraries(server_test PUBLIC exatn exatn-taprol-parser ${MPI_CXX_LIBRARIES})
+target_link_libraries(server_test PUBLIC exatn exatn-taprol-parser exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES})
 
 if (NOT APPLE)
 get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)

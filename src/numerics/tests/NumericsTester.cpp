@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "exatn.hpp"
 #include "numerics.hpp"
 
 #include <iostream>
@@ -33,6 +34,8 @@ TEST(NumericsTester, checkSimple)
 
 TEST(NumericsTester, checkNumServer)
 {
+ exatn::initialize();
+
  NumServer num_server;
 
  const VectorSpace * space1;
@@ -66,6 +69,8 @@ TEST(NumericsTester, checkNumServer)
  const Subspace * subspace = num_server.getSubspace("S11");
  subspace->printIt();
  std::cout << std::endl;
+
+ exatn::finalize();
 }
 
 int main(int argc, char **argv) {

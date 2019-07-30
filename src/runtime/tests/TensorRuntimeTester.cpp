@@ -21,9 +21,9 @@ TEST(TensorRuntimeTester, checkSimple) {
 }
 
 int main(int argc, char **argv) {
-  exatn::Initialize();
+  exatn::initialize();
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();
-  exatn::Finalize();
+  exatn::finalize();
   return ret;
 }

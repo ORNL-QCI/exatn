@@ -4,19 +4,21 @@ namespace exatn {
 
 bool exatnFrameworkInitialized = false;
 
-std::shared_ptr<ServiceRegistry> serviceRegistry =
-    std::make_shared<ServiceRegistry>();
+std::shared_ptr<ServiceRegistry> serviceRegistry = std::make_shared<ServiceRegistry>();
 
-void Initialize() {
-  if (!exatnFrameworkInitialized) {
+void initialize() {
+  if(!exatnFrameworkInitialized) {
     serviceRegistry->initialize();
-    exatnFrameworkInitialized =true;
+    exatnFrameworkInitialized = true;
   }
 }
-bool isInitialize() {
-    return exatnFrameworkInitialized;
+
+bool isInitialized() {
+  return exatnFrameworkInitialized;
 }
 
-void Finalize() { exatnFrameworkInitialized = false; }
+void finalize() {
+  exatnFrameworkInitialized = false;
+}
 
 } // namespace exatn

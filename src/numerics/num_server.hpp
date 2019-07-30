@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/06/06
+REVISION: 2019/07/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,6 +28,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_operation.hpp"
 #include "tensor_network.hpp"
 
+#include "tensor_runtime.hpp"
+
 #include "tensor_method.hpp"
 #include "Identifiable.hpp"
 
@@ -42,6 +44,9 @@ namespace exatn{
 
 namespace numerics{
 
+using exatn::runtime::TensorRuntime;
+
+
 class NumServer{
 
 public:
@@ -52,6 +57,10 @@ public:
  NumServer(NumServer &&) noexcept = default;
  NumServer & operator=(NumServer &&) noexcept = default;
  ~NumServer() = default;
+
+ /** Reconfigures tensor runtime implementation. **/
+ void reconfigureTensorRuntime(const std::string & dag_executor_name,
+                               const std::string & node_executor_name);
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method);
@@ -105,11 +114,12 @@ public:
 
 
  /** Submits an individual tensor operation for processing. **/
- int submit(std::shared_ptr<TensorOperation> operation);
+ void submit(std::shared_ptr<TensorOperation> operation);
  /** Submits a tensor network for processing (evaluating the tensor-result). **/
- int submit(std::shared_ptr<TensorNetwork> network);
+ void submit(TensorNetwork & network);
+ void submit(std::shared_ptr<TensorNetwork> network);
 
- /** Synchronizes all tensor operations on a given tensor. **/
+ /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
            bool wait = false);
  /** Synchronizes execution of a specific tensor operation. **/
@@ -129,6 +139,7 @@ private:
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
+ std::shared_ptr<TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 
 } //namespace numerics

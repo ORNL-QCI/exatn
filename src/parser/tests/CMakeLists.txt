@@ -7,4 +7,6 @@ target_include_directories(TAProLInterpreterTester
                             )
 
 target_link_libraries(TAProLInterpreterTester PRIVATE
-                        exatn-taprol-parser)
+                      exatn-taprol-parser
+                      exatn-numerics
+                      exatn-runtime)

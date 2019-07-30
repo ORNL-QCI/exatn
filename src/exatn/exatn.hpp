@@ -12,8 +12,8 @@ namespace exatn {
 extern bool exatnFrameworkInitialized;
 extern std::shared_ptr<ServiceRegistry> serviceRegistry;
 
-void Initialize();
-bool isInitialize();
+void initialize();
+bool isInitialized();
 
 template <typename Service>
 std::shared_ptr<Service> getService(const std::string &serviceName) {
@@ -37,7 +37,7 @@ template <typename Service> bool hasService(const std::string &serviceName) {
   return serviceRegistry->hasService<Service>(serviceName);
 }
 
-void Finalize();
+void finalize();
 
 } // namespace exatn
 #endif
