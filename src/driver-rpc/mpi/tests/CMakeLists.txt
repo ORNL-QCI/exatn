@@ -1,20 +1,26 @@
 add_executable(client_test client.cpp)
 add_executable(server_test server.cpp)
 
+set(TALSH_LIB ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.so)
+if (APPLE)
+  set(TALSH_LIB ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/lib/libtalsh.a)
+endif()
+
 if (CUDA_FOUND)
    target_include_directories(client_test PRIVATE ${CUDA_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
    target_include_directories(server_test PRIVATE ${CUDA_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
+   target_link_libraries(client_test PUBLIC exatn exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES} ${TALSH_LIB} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
+   set_target_properties(client_test PROPERTIES FOLDER tests)
+   target_link_libraries(client_test PRIVATE gtest gmock gtest_main)
+   target_link_libraries(server_test PUBLIC exatn exatn-taprol-parser exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES} ${TALSH_LIB} ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 else()
    target_include_directories(client_test PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
    target_include_directories(server_test PRIVATE ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include ${MPI_CXX_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/driver-rpc ${CMAKE_SOURCE_DIR}/src)
+   target_link_libraries(client_test PUBLIC exatn exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES} ${TALSH_LIB})
+   set_target_properties(client_test PROPERTIES FOLDER tests)
+   target_link_libraries(client_test PRIVATE gtest gmock gtest_main)
+   target_link_libraries(server_test PUBLIC exatn exatn-taprol-parser exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES} ${TALSH_LIB})
 endif()
-
-target_link_libraries(client_test PUBLIC exatn exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES})
-
-set_target_properties(client_test PROPERTIES FOLDER tests)
-target_link_libraries(client_test PRIVATE gtest gmock gtest_main)
-
-target_link_libraries(server_test PUBLIC exatn exatn-taprol-parser exatn-numerics exatn-runtime ${MPI_CXX_LIBRARIES})
 
 if (NOT APPLE)
 get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
@@ -23,4 +29,3 @@ get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
 endif()
 add_dependencies(client_test exatensor-build)
 add_dependencies(server_test exatensor-build)
-

@@ -15,6 +15,19 @@ add_library(${LIBRARY_NAME}
             ${SRC}
             )
 
+if(CUDA_FOUND)
+target_include_directories(
+  ${LIBRARY_NAME}
+  PUBLIC .
+         node_executors/talsh node_executors/exatensor
+         graph_executors/eager graph_executors/lazy
+         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
+         ${CMAKE_SOURCE_DIR}/src/exatn/numerics
+         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
+  PRIVATE
+         ${CUDA_INCLUDE_DIRS}
+  )
+else()
 target_include_directories(
   ${LIBRARY_NAME}
   PUBLIC .
@@ -24,6 +37,7 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/src/exatn/numerics
          ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
   )
+endif()
 
 
 set(_bundle_name exatn_runtime_executor)

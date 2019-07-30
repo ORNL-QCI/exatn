@@ -1,6 +1,6 @@
 exatn_add_test(NumericsTester NumericsTester.cpp)
 target_include_directories(NumericsTester
-                           PRIVATE
+                          PRIVATE
                            exatn
                            ${CMAKE_SOURCE_DIR}/src/driver-rpc
                            ${CMAKE_SOURCE_DIR}/src/numerics
@@ -26,7 +26,8 @@ if(CUDA_FOUND)
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
                         gfortran
-                        gomp)
+                        gomp
+                       )
 else()
   target_link_libraries(NumericsTester
                        PRIVATE
@@ -38,5 +39,6 @@ else()
                         MPI::MPI_CXX
                         MPI::MPI_Fortran
                         gfortran
-                        gomp)
+                        gomp
+                       )
 endif()

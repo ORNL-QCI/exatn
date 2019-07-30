@@ -29,7 +29,7 @@ if(CUDA_FOUND)
            exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
-	   ${TALSH_LIB}
+           ${TALSH_LIB}
            ${CUDA_LIBRARIES}
            ${CUDA_CUBLAS_LIBRARIES})
 
@@ -49,7 +49,7 @@ else()
            exatn-taprol-parser
            ${MPI_CXX_LIBRARIES}
            CppMicroServices
- 	   ${TALSH_LIB})
+           ${TALSH_LIB})
 
 endif()
 
