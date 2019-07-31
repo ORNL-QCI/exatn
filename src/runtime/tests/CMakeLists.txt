@@ -1,3 +1,2 @@
-
 exatn_add_test(TensorRuntimeTester TensorRuntimeTester.cpp)
 target_link_libraries(TensorRuntimeTester PRIVATE exatn-runtime exatn-numerics exatn)

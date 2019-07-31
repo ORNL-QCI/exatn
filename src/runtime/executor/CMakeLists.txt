@@ -15,30 +15,13 @@ add_library(${LIBRARY_NAME}
             ${SRC}
             )
 
-if(CUDA_FOUND)
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC .
+  PUBLIC . ..
          node_executors/talsh node_executors/exatensor
          graph_executors/eager graph_executors/lazy
-         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-         ${CMAKE_SOURCE_DIR}/src/exatn/numerics
-         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
-  PRIVATE
-         ${CUDA_INCLUDE_DIRS}
+         ../graph ${CMAKE_SOURCE_DIR}/src/exatn
   )
-else()
-target_include_directories(
-  ${LIBRARY_NAME}
-  PUBLIC .
-         node_executors/talsh node_executors/exatensor
-         graph_executors/eager graph_executors/lazy
-         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-         ${CMAKE_SOURCE_DIR}/src/exatn/numerics
-         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
-  )
-endif()
-
 
 set(_bundle_name exatn_runtime_executor)
 set_target_properties(${LIBRARY_NAME}
@@ -54,15 +37,9 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn PRIVATE exatn-runtime-graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime PRIVATE ExaTensor::Talsh)
 
-if(APPLE)
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib;@loader_path")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-else()
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib;$ORIGIN")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-shared")
-endif()
+exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 if(EXATN_BUILD_TESTS)
   #add_subdirectory(boost/tests)

@@ -1,7 +1,6 @@
 set(LIBRARY_NAME exatn-runtime-graph)
 
 file(GLOB SRC
-     tensor_exec_state.cpp
      boost/directed_boost_graph.cpp
      graph_activator.cpp)
 
@@ -15,12 +14,8 @@ add_library(${LIBRARY_NAME}
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC .
-         boost
-         ${CMAKE_SOURCE_DIR}/src/exatn
-         ${CMAKE_SOURCE_DIR}/src/numerics
-         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
-  )
+  PUBLIC . .. ${CMAKE_SOURCE_DIR}/src/exatn
+         boost)
 
 
 set(_bundle_name exatn_runtime_graph)
@@ -37,15 +32,9 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices PRIVATE Boost::graph)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime PRIVATE Boost::graph)
 
-if(APPLE)
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-else()
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-shared")
-endif()
+exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(boost/tests)

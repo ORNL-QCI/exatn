@@ -1,6 +1,8 @@
 #include "TAProLInterpreter.hpp"
 #include <gtest/gtest.h>
 
+#include "exatn.hpp"
+
 using namespace exatn::parser;
 
 TEST(TAProLInterpreterTester, checkSimple) {
@@ -28,7 +30,9 @@ end scope main)src";
 }
 
 int main(int argc, char **argv) {
+  exatn::initialize();
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();
+  exatn::finalize();
   return ret;
 }
