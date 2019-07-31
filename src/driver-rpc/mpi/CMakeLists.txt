@@ -18,7 +18,7 @@ target_link_libraries(
     ${LIBRARY_NAME}
     PUBLIC exatn
            exatn-taprol-parser
-           ${MPI_CXX_LIBRARIES})
+           MPI::MPI_CXX)
 
 set(_bundle_name exatn_mpi_rpc)
 set_target_properties(${LIBRARY_NAME}

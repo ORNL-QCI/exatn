@@ -13,6 +13,7 @@ int MPIServer::SHUTDOWN_TAG = 3;
 
 void MPIServer::start() {
 
+  parser = std::make_shared<exatn::parser::TAProLInterpreter>();
   // FIXME Provide hook for specifying this at runtime
 //   backend = exatn::getService<exatn::numerics::Backend>("talsh");
 

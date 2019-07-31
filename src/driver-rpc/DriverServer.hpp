@@ -16,7 +16,7 @@ protected:
   std::shared_ptr<exatn::parser::TAProLInterpreter> parser;
 
 public:
-  DriverServer() : parser(std::make_shared<exatn::parser::TAProLInterpreter>()) {}
+  DriverServer() {}
   virtual void start() = 0;
   virtual void stop() = 0;
 };

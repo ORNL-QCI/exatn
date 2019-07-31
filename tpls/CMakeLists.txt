@@ -52,6 +52,12 @@ if(NOT CUDA_HOST_COMPILER)
   set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
+if (MPI_ROOT_DIR)
+set(MPI_BIN_PATH ${MPI_ROOT_DIR}/bin)
+if (PATH_MPI_BIN)
+  set(MPI_BIN_PATH ${PATH_MPI_BIN})
+endif()
+endif()
 
 message(STATUS "The MPI_LIB implementation is set to ${MPI_LIB}")
 message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
@@ -104,8 +110,10 @@ else()
               BLASLIB=${BLAS_LIB}
               EXA_NO_BUILD=${TALSHXX_EXISTS}
               PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+              PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+              PATH_BLAS_${BLASLIB}=${BLAS_PATH}
               EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
-              make
+              make VERBOSE=1
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
 endif()

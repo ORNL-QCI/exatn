@@ -61,13 +61,29 @@ find_package(OpenMP REQUIRED)
 find_package(CUDAExaTN)
 find_package(BLAS)
 
+message(STATUS "BLAS LIBRARIES ${BLAS_LIBRARIES}")
+get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
+message(STATUS "BLAS LIBRARIES ${BLAS_PATH}")
+
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
 #If BLAS implementation not user specified, proceed with "NONE"
 if(NOT BLAS_LIB)
- set(BLAS_LIB NONE)
+
+ if (BLAS_FOUND)
+   set(BLAS_LIB ATLAS)
+   get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
+ else()
+   set(BLAS_LIB NONE)
+   set(BLAS_PATH "")
+ endif()
+
+else()
+  if (NOT BLAS_PATH)
+    message(FATAL_ERROR "If you provide BLAS_LIB, you must provide BLAS_PATH")
+  endif()
 endif()
 
 set(EXA_TALSH_ONLY "NO")
