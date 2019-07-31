@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include "/home/cades/dev/exatn/src/exatn/exatn.hpp"
 #include "exatn.hpp"
 #include "numerics.hpp"
 
