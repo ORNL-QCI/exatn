@@ -53,10 +53,10 @@ if(NOT CUDA_HOST_COMPILER)
 endif()
 
 if (MPI_ROOT_DIR)
-set(MPI_BIN_PATH ${MPI_ROOT_DIR}/bin)
-if (PATH_MPI_BIN)
-  set(MPI_BIN_PATH ${PATH_MPI_BIN})
-endif()
+  set(MPI_BIN_PATH ${MPI_ROOT_DIR}/bin)
+  if (PATH_MPI_BIN)
+    set(MPI_BIN_PATH ${PATH_MPI_BIN})
+  endif()
 endif()
 
 message(STATUS "The MPI_LIB implementation is set to ${MPI_LIB}")
@@ -79,6 +79,8 @@ if (APPLE)
             PATH_${MPI_LIB}=${MPI_ROOT_DIR}
             EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
             EXA_OS=NO_LINUX
+            PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+            PATH_BLAS_${BLASLIB}=${BLAS_PATH}
             make
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
@@ -98,6 +100,8 @@ else()
                 EXA_NO_BUILD=${TALSHXX_EXISTS}
                 PATH_${MPI_LIB}=${MPI_ROOT_DIR}
                 EXA_TALSH_ONLY=${EXA_TALSH_ONLY} EXATN_SERVICE=YES
+                PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+                PATH_BLAS_${BLASLIB}=${BLAS_PATH}
                 make
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 

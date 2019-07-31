@@ -23,7 +23,7 @@ add_library(${LIBRARY_NAME}
             tensor_network.cpp)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC .)
-target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::Talsh)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 

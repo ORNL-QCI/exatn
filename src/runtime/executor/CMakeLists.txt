@@ -37,7 +37,7 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime PRIVATE ExaTensor::Talsh)
+target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime PRIVATE ExaTensor::ExaTensor)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
