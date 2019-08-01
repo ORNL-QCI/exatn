@@ -25,16 +25,28 @@ option(BLAS_LIB "Provide the BLAS implementation" "")
 option(MPI_LIB "Provide the MPI implementation" "")
 option(MPI_ROOT_DIR "Provide the MPI ROOT directory" "")
 option (MPI_BIN_PATH "Provide the MPI bin path" "")
+option(BLAS_PATH "Provide the path to the BLAS directory" "")
 
-#Check to make sure that both the MPI implementation and root installation path were supplied
+#Check to make sure that both the MPI implementation and root installation/bin path were supplied
 if(MPI_LIB)
-  if(NOT MPI_ROOT_DIR)
+  if(NOT MPI_ROOT_DIR OR MPI_BIN_PATH)
     message( FATAL_ERROR "If you specify the MPI implementation, please also specify both the root path for the MPI installation. CMake is exiting.")
   endif()
 else()
-  if(MPI_ROOT_DIR)
+  if(MPI_ROOT_DIR AND MPI_BIN_PATH)
     message( FATAL_ERROR "If you don't specify the MPI implementation, please also don't specify the root and bin paths for MPI. CMake is exiting.")
   endif()
+endif()
+
+#Check to make sure that both the BLAS implementation and installation path were supplied
+if(BLAS_LIB)
+  if(NOT BLAS_PATH)
+    message(FATAL_ERROR "If you specify the BLAS implementation, please also specify the path to the install directory. CMake is exiting.")
+  endif()
+else()
+    if(BLAS_PATH)
+      message(FATAL_ERROR "If you specify the BLAS install path, please also specify the implementation you would like to use. CMake is exiting.")
+    endif()
 endif()
 
 
@@ -59,31 +71,26 @@ include(CTest)
 find_package(MPI)
 find_package(OpenMP REQUIRED)
 find_package(CUDAExaTN)
-find_package(BLAS)
+
+if(BLAS_LIB AND BLAS_PATH)
+  find_package(BLAS)
+endif()
 
 message(STATUS "BLAS LIBRARIES ${BLAS_LIBRARIES}")
-get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
-message(STATUS "BLAS LIBRARIES ${BLAS_PATH}")
+if(BLAS_LIB AND BLAS_PATH)
+  get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
+endif()
+message(STATUS "BLAS path: ${BLAS_PATH}")
+message(STATUS "BLAS_LIBRARIES ${BLAS_LIBRARIES}")
 
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
 #If BLAS implementation not user specified, proceed with "NONE"
-if(NOT BLAS_LIB)
-
- if (BLAS_FOUND)
-   set(BLAS_LIB ATLAS)
-   get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
- else()
-   set(BLAS_LIB NONE)
-   set(BLAS_PATH "")
- endif()
-
-else()
-  if (NOT BLAS_PATH)
-    message(FATAL_ERROR "If you provide BLAS_LIB, you must provide BLAS_PATH")
-  endif()
+if(NOT BLAS_LIB OR NOT BLAS_PATH)
+  set(BLAS_LIB NONE)
+  set(BLAS_PATH "")
 endif()
 
 set(EXA_TALSH_ONLY "NO")
