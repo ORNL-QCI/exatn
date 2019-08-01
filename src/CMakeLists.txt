@@ -11,8 +11,11 @@ if(CUDA_FOUND)
 endif()
 
 if (BLAS_LIB AND BLAS_PATH)
+   find_library(BLAS_LIBRARY blas HINTS ${BLAS_PATH})
+
+   message(STATUS "Appending ${BLAS_LIBRARY} to ExaTensor Libraries")
    set(REQUIRED_EXATENSOR_LIBS
-      "${REQUIRED_EXATENSOR_LIBS};${BLAS_LIBRARIES}")
+      "${REQUIRED_EXATENSOR_LIBS};${BLAS_LIBRARY}")
 endif()
 
 if(MPI_ROOT_DIR)

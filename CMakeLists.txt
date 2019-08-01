@@ -49,7 +49,6 @@ else()
     endif()
 endif()
 
-
 if(NOT CMAKE_BUILD_TYPE)
   set(
     CMAKE_BUILD_TYPE "Release"
@@ -71,17 +70,6 @@ include(CTest)
 find_package(MPI)
 find_package(OpenMP REQUIRED)
 find_package(CUDAExaTN)
-
-if(BLAS_LIB AND BLAS_PATH)
-  find_package(BLAS)
-endif()
-
-message(STATUS "BLAS LIBRARIES ${BLAS_LIBRARIES}")
-if(BLAS_LIB AND BLAS_PATH)
-  get_filename_component(BLAS_PATH ${BLAS_LIBRARIES} DIRECTORY)
-endif()
-message(STATUS "BLAS path: ${BLAS_PATH}")
-message(STATUS "BLAS_LIBRARIES ${BLAS_LIBRARIES}")
 
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
