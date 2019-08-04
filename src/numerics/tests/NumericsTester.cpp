@@ -4,6 +4,8 @@
 #include <iostream>
 #include <utility>
 
+#include <assert.h>
+
 using namespace exatn;
 using namespace exatn::numerics;
 
@@ -28,6 +30,50 @@ TEST(NumericsTester, checkSimple)
   leg.printIt();
   std::cout << std::endl;
  }
+}
+
+TEST(NumericsTester, checkTensorNetwork)
+{
+ //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
+ //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
+ // 0      1         2           3         4             5         6           7
+ TensorNetwork network("{0,1} 3-site MPS closure",
+                       std::make_shared<Tensor>("Z0"),
+                       {} //closed tensor network
+                      );
+ network.appendTensor(1,
+                      std::make_shared<Tensor>("T0",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{4,0}, TensorLeg{2,0}}
+                     );
+ network.appendTensor(2,
+                      std::make_shared<Tensor>("T1",std::vector<std::size_t>{2,2,2}),
+                      {TensorLeg{1,1}, TensorLeg{4,1}, TensorLeg{3,0}}
+                     );
+ network.appendTensor(3,
+                      std::make_shared<Tensor>("T2",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{2,2}, TensorLeg{7,1}}
+                     );
+ network.appendTensor(4,
+                      std::make_shared<Tensor>("H0",std::vector<std::size_t>{2,2,2,2}),
+                      {TensorLeg{1,0}, TensorLeg{2,1}, TensorLeg{5,0}, TensorLeg{6,1}}
+                     );
+ network.appendTensor(5,
+                      std::make_shared<Tensor>("S0",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{4,2}, TensorLeg{6,0}}
+                     );
+ network.appendTensor(6,
+                      std::make_shared<Tensor>("S1",std::vector<std::size_t>{2,2,2}),
+                      {TensorLeg{5,1}, TensorLeg{4,3}, TensorLeg{7,0}}
+                     );
+ network.appendTensor(7,
+                      std::make_shared<Tensor>("S2",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{6,2}, TensorLeg{3,1}}
+                     );
+ network.finalize(true);
+ network.printIt();
+ //Remove tensor #6 to create the optimization environment for MPS tensor S1:
+ network.deleteTensor(6);
+ network.printIt();
 }
 
 int main(int argc, char **argv) {

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/07/29
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -38,6 +38,8 @@ Rationale:
 #include <atomic>
 #include <mutex>
 
+#include <assert.h>
+
 namespace exatn {
 namespace runtime {
 
@@ -75,13 +77,17 @@ public:
   }
 
   inline void setExecuting() {
-    assert(!executing_.load() && !executed_.load());
+    auto executing = executing_.load();
+    auto executed = executed_.load();
+    assert(!executing && !executed);
     executing_.store(true);
     return;
   }
 
   inline void setExecuted(int error_code = 0) {
-    assert(executing_.load() && !executed_.load());
+    auto executing = executing_.load();
+    auto executed = executed_.load();
+    assert(executing && !executed);
     error_ = error_code;
     executed_.store(true); executing_.store(false);
     return;
