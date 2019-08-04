@@ -1,5 +1,5 @@
 #include "tensor_runtime.hpp"
-#include "exatn.hpp" //exatn::getService<T>
+#include "exatn_service.hpp"
 
 namespace exatn {
 namespace runtime {

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/07/30
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,10 +10,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
-namespace numerics{
+std::shared_ptr<NumServer> numericalServer = std::make_shared<NumServer>();
 
 NumServer::NumServer():
- tensor_rt_(std::make_shared<TensorRuntime>())
+ tensor_rt_(std::make_shared<runtime::TensorRuntime>())
 {
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
 }
@@ -21,7 +21,7 @@ NumServer::NumServer():
 void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
- tensor_rt_ = std::move(std::make_shared<TensorRuntime>(dag_executor_name,node_executor_name));
+ tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(dag_executor_name,node_executor_name));
  return;
 }
 
@@ -63,6 +63,7 @@ ScopeId NumServer::openScope(const std::string & scope_name)
 
 ScopeId NumServer::closeScope()
 {
+ assert(!scopes_.empty());
  const auto & prev_scope = scopes_.top();
  ScopeId prev_scope_id = std::get<1>(prev_scope);
  scopes_.pop();
@@ -177,7 +178,5 @@ bool NumServer::sync(TensorNetwork & network, bool wait)
  assert(false);//`Finish
  return false;
 }
-
-} //namespace numerics
 
 } //namespace exatn

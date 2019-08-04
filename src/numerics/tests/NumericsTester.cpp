@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
-
 #include "exatn.hpp"
-#include "numerics.hpp"
 
 #include <iostream>
 #include <utility>

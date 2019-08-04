@@ -1,5 +1,6 @@
 #ifndef PARSER_TAPROLPARSER_HPP_
 #define PARSER_TAPROLPARSER_HPP_
+
 #include "antlr4-runtime.h"
 #include "num_server.hpp"
 
@@ -27,17 +28,8 @@ public:
  */
 class TAProLInterpreter {
 public:
-  std::shared_ptr<exatn::numerics::NumServer> numerics_server;
-
-  TAProLInterpreter() : numerics_server(std::make_shared<exatn::numerics::NumServer>()) {}
-// NumServer(const NumServer &) = delete;
-//  NumServer & operator=(const NumServer &) = delete;
-//  NumServer(NumServer &&) noexcept = default;
-//  NumServer & operator=(NumServer &&) noexcept = default;
-//  ~NumServer() = default;
-  void interpret(const std::string &src);
-
   virtual ~TAProLInterpreter() {}
+  void interpret(const std::string &src);
 };
 
 } // namespace parser

@@ -1,6 +1,5 @@
 #include "TAProLInterpreter.hpp"
 #include <gtest/gtest.h>
-
 #include "exatn.hpp"
 
 using namespace exatn::parser;

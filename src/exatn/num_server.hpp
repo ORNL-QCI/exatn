@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/07/30
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -42,12 +42,17 @@ using exatn::Identifiable;
 
 namespace exatn{
 
-namespace numerics{
+using numerics::VectorSpace;
+using numerics::Subspace;
+using numerics::TensorShape;
+using numerics::TensorSignature;
+using numerics::TensorLeg;
+using numerics::Tensor;
+using numerics::TensorOperation;
+using numerics::TensorNetwork;
 
-using exatn::runtime::TensorRuntime;
 
-
-class NumServer{
+class NumServer final {
 
 public:
 
@@ -131,7 +136,7 @@ public:
 
 private:
 
- SpaceRegister space_register_; //register of vector spaces and their named subspaces
+ numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
  std::map<std::string,std::shared_ptr<TensorMethod<Identifiable>>> ext_methods_; //external tensor methods
@@ -139,10 +144,10 @@ private:
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
- std::shared_ptr<TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
+ std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 
-} //namespace numerics
+extern std::shared_ptr<NumServer> numericalServer;
 
 } //namespace exatn
 

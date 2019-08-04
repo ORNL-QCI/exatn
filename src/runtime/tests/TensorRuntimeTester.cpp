@@ -11,8 +11,8 @@
  *   Alexander J. McCaskey - initial API and implementation
  *******************************************************************************/
 #include <gtest/gtest.h>
+#include "exatn_service.hpp"
 #include "tensor_runtime.hpp"
-#include "exatn.hpp"
 
 TEST(TensorRuntimeTester, checkSimple) {
 
