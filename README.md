@@ -20,7 +20,7 @@ domain which heavily relies on large-scale numerical tensor algebra:
 
 ## Dependencies
 ```
-Compiler (C++11, optional Fortran-2003 for ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
+Compiler (C++11, optional Fortran-2003 for multi-node ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
 MPI: OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
 BLAS: ATLAS, MKL, ACML, ESSL (optional)
 CUDA 9+ (optional)
@@ -34,7 +34,7 @@ ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/
 ## Linux Build instructions
 ```
 On Ubuntu 16+, for GCC 8+, OpenMPI 3+, and ATLAS BLAS, run the following:
-```bash
+``` bash
 $ add-apt-repository ppa:ubuntu-toolchain-r/test
 $ apt-get update
 $ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
@@ -42,54 +42,52 @@ $ python3 -m pip install --upgrade cmake
 ```
 
 ``` bash
-$ git clone --recursive https://github.com/qci/exatn
+$ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
-$ cmake .. -DEXATN_BUILD_TESTS=TRUE -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
-  For Python API add:
+$ cmake .. -DEXATN_BUILD_TESTS=TRUE
+  For Python API append:
   -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+  For GPU execution via very recent CUDA versions append:
+  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
+  For CPU accelerated matrix algebra via a CPU BLAS library append:
+  -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
+  where the choices are ATLAS, MKL, ACML, ESSL.
+  For multi-node execution via MPI (ExaTENSOR backend) append:
+  -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
+  where the choices are OPENMPI or MPICH. You may also need to set
+  -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
 $ make install
 ```
-Setting the CUDA_HOST_COMPILER is necessary if your default `g++` is not compatible
-with the CUDA nvcc compiler on your system. For example, CUDA 10 only supports up to
-GCC 7, so if your default `g++` is version 8, then you will need to
+For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
+not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only
+supports up to GCC 7, so if your default `g++` is version 8, then you will need to
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
-
-
-Options can also be passed to specify the implementation of BLAS and/or MPI with the following during cmake run time:
-```bash
-$ -DMPI_LIB=<MPI_IMPLEMENTATION> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT> -DBLAS_LIB=<BLAS_IMPLEMENTATION>
 ```
-Note that if an MPI implementation is specified, you must also provide the root path for the installation.
-If ```MPI_LIB``` is not specified, ExaTN will compile and run without an MPI implementation.
-If ```BLAS_LIB``` is not specified, ExaTN defaults to no BLAS implementation.
-
-
-To use python capabilities after compilation, export the library to your to your `PYTHONPATH`
+When requesting the multi-node MPI build, the tensor algebra library ExaTENSOR
+is used as the default multi-node execution backend. Due to numerous bugs in
+Fortran compilers and MPI libraries, the only tested choices are the following:
+gcc-8 compiler, intel-18+ compiler, openmpi-3.1.0 library, mpich-3.2.1 library or later.
+```
+To use python capabilities after compilation, export the library to your `PYTHONPATH`.
 ```
 $ export PYTHONPATH=$PYTHONPATH:~/.exatn
 ```
-It can also be helpful to have mpi4py installed.
+It may also be helpful to have mpi4py installed.
 
 ## Mac OS X Build Instructions
-First install MPICH or OpenMPI from source. Refer to their installation guides for this.
-Here's an example configure command that we've tested for MPICH:
-``` bash
-$ CC=gcc-8 CXX=g++-8 FC=gfortran-8 ./configure --prefix=/usr/local/mpich --enable-fortran=all
-```
-Then install GCC via homebrew (version 8 due to a bug in version 9)
+First install GCC via homebrew (version 8 due to a bug in version 9)
 ```
 $ brew install gcc@8
 ```
 Now continue with configuring and building ExaTN
 ``` bash
-$ git clone --recursive https://github.com/qci/exatn
+$ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
 $ FC=gfortran-8 CXX=g++-8 cmake ..
-    -DMPI_ROOT_DIR=<PATH_TO_MPI_INSTALL>
     -DEXATN_BUILD_TESTS=TRUE
     -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
@@ -98,7 +96,7 @@ $ make install
 ## Testing instructions
 From build directory:
 ```bash
-$ ctest (or ./src/numerics/tests/NumericsTester to run the executable)
+$ ctest
 ```
 
 ## License
