@@ -91,6 +91,7 @@ if(APPLE)
                             EXA_OS=NO_LINUX
                             PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                             PATH_BLAS_${BLASLIB}=${BLAS_PATH}
+                            PATH_INTEL=${BLAS_PATH}
                             make
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
@@ -119,6 +120,7 @@ else()
                               EXATN_SERVICE=YES
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                               PATH_BLAS_${BLASLIB}=${BLAS_PATH}
+                              PATH_INTEL=${BLAS_PATH}
                               make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
 
@@ -139,6 +141,7 @@ else()
                               PATH_BLAS_${BLASLIB}=${BLAS_PATH}
                               EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
                               EXATN_SERVICE=YES
+                              PATH_INTEL=${BLAS_PATH}
                               make
                               VERBOSE=1
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)

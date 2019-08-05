@@ -17,10 +17,36 @@ if(CUDA_FOUND)
 endif()
 
 if(BLAS_LIB AND BLAS_PATH)
-  find_library(BLAS_LIBRARY blas HINTS ${BLAS_PATH})
 
-  message(STATUS "Appending ${BLAS_LIBRARY} to ExaTensor Libraries")
-  set(REQUIRED_EXATENSOR_LIBS "${REQUIRED_EXATENSOR_LIBS};${BLAS_LIBRARY}")
+  set(BLAS_LIBRARIES "")
+
+  if (BLAS_LIB STREQUAL "ATLAS")
+
+    find_library(BLAS_LIBRARY blas HINTS ${BLAS_PATH})
+    set(BLAS_LIBRARIES "${BLAS_LIBRARY}")
+
+  elseif(BLAS_LIB STREQUAL "MKL")
+
+    find_library(lp64 mkl_intel_lp64 HINTS ${BLAS_PATH}/mkl/lib/intel64)
+    find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH}/mkl/lib/intel64)
+    find_library(core mkl_core HINTS ${BLAS_PATH}/mkl/lib/intel64)
+    set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
+
+  elseif(BLAS_LIB STREQUAL "ACML")
+    find_library(acml_mp acml_mp HINTS ${BLAS_PATH})
+    set(BLAS_LIBRARIES "${acml_mp}")
+
+  elseif(BLAS_LIB STREQUAL "ESSL")
+
+    find_library(essl essl HINTS ${BLAS_PATH})
+    find_library(xlf90_r xlf90_r HINTS ${BLAS_PATH})
+    find_library(xlfmath xlfmath HINTS ${BLAS_PATH})
+    set(BLAS_LIBRARIES "${essl};${xlf90_r};${xlfmath}")
+
+  endif()
+
+  message(STATUS "Appending ${BLAS_LIBRARIES} to ExaTensor Libraries")
+  set(REQUIRED_EXATENSOR_LIBS "${REQUIRED_EXATENSOR_LIBS};${BLAS_LIBRARIES}")
 endif()
 
 if(MPI_ROOT_DIR)
