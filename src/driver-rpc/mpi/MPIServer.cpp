@@ -1,6 +1,8 @@
 #include "MPIServer.hpp"
-#include <future>
 #include "exatn.hpp"
+#include "num_server.hpp"
+
+#include <future>
 
 namespace exatn {
 namespace rpc {
@@ -13,6 +15,7 @@ int MPIServer::SHUTDOWN_TAG = 3;
 
 void MPIServer::start() {
 
+  parser = std::make_shared<exatn::parser::TAProLInterpreter>();
   // FIXME Provide hook for specifying this at runtime
 //   backend = exatn::getService<exatn::numerics::Backend>("talsh");
 
@@ -115,7 +118,7 @@ void MPIServer::start() {
 
         auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
         tensor_method->unpack(packet);
-        parser->numerics_server->registerTensorMethod(tensor_method);
+        exatn::numericalServer->registerTensorMethod(tensor_method);
 
         std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
 

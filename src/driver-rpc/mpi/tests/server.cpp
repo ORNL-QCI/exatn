@@ -7,7 +7,7 @@ using namespace exatn::rpc;
 int main(int argc, char** argv) {
 
     MPI_Init(&argc,&argv);
-    exatn::Initialize();
+    exatn::initialize();
 
     // Create the server and
     // start it up, this kicks off the
@@ -19,6 +19,8 @@ int main(int argc, char** argv) {
     // client has shutdown the server
 
     std::cout << "[server] Exiting server.cpp\n";
+
+    exatn::finalize();
 
     MPI_Finalize();
 

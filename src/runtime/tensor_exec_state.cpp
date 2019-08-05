@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/07/29
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -8,6 +8,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 #include "tensor_exec_state.hpp"
 
 #include <iostream>
+#include <assert.h>
 
 namespace exatn {
 namespace runtime {

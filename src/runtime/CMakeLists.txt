@@ -1,37 +1,25 @@
 add_subdirectory(graph)
-add_subdirectory(optimizer)
+#add_subdirectory(optimizer)
 add_subdirectory(executor)
 
 set(LIBRARY_NAME exatn-runtime)
 
-file(GLOB SRC *.cpp)
+file(GLOB SRC tensor_runtime.cpp tensor_exec_state.cpp)
 
 add_library(${LIBRARY_NAME}
             SHARED
             ${SRC}
             )
+add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 target_include_directories(
   ${LIBRARY_NAME}
-  PUBLIC . graph optimizer executor
-         ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-         ${CMAKE_SOURCE_DIR}/src/exatn/numerics
-         ${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include
-  PRIVATE
-         ${CMAKE_SOURCE_DIR}/src/exatn
-         ${CMAKE_SOURCE_DIR}/src/driver-rpc
-  )
+  PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn )
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics
-                                      PRIVATE exatn-runtime-executor exatn-runtime-graph Boost::graph)
+                                      PRIVATE Boost::graph)
 
-if(APPLE)
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "@loader_path")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-else()
-   set_target_properties(${LIBRARY_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
-   set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "-shared")
-endif()
+exatn_configure_library_rpath(${LIBRARY_NAME})
 
 if(EXATN_BUILD_TESTS)
   add_subdirectory(tests)

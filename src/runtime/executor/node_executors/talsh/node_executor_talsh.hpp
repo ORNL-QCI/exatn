@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/07/25
+REVISION: 2019/07/30
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -12,6 +12,11 @@ Rationale:
 #define EXATN_RUNTIME_TALSH_NODE_EXECUTOR_HPP_
 
 #include "tensor_node_executor.hpp"
+
+#include "talshxx.hpp"
+
+#include <unordered_map>
+#include <memory>
 
 namespace exatn {
 namespace runtime {
@@ -29,7 +34,10 @@ public:
   std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
 protected:
- //`TALSH executor state
+  /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
+  std::unordered_map<TensorHashType,talsh::Tensor> tensors_;
+  /** Active handles associated with tensor operations currently executed by TAL-SH **/
+  std::unordered_map<NodeExecHandleType,talsh::TensorTask> tasks_;
 };
 
 } //namespace runtime

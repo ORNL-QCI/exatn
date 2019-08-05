@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/18
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -53,8 +53,11 @@ TensorNetwork::TensorNetwork(const std::string & name,
 
 void TensorNetwork::printIt() const
 {
- std::cout << "TensorNetwork[" << name_ << "](" << this->getNumTensors() << "){" << std::endl;
- for(const auto & kv: tensors_) kv.second.printIt();
+ std::cout << "TensorNetwork(" << name_ << ")[size = " << this->getNumTensors() << "]{" << std::endl;
+ for(const auto & kv: tensors_){
+  std::cout << " ";
+  kv.second.printIt();
+ }
  std::cout << "}" << std::endl;
  return;
 }
@@ -531,7 +534,8 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
  }
  //Delete the tensor from the network:
  tensor = nullptr;
- assert(tensors_.erase(tensor_id) == 1);
+ auto num_deleted = tensors_.erase(tensor_id);
+ assert(num_deleted == 1);
  return true;
 }
 
@@ -604,8 +608,10 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
                   )
                  );
  //Delete two original tensors:
- assert(tensors_.erase(left_id) == 1);
- assert(tensors_.erase(right_id) == 1);
+ auto num_deleted = tensors_.erase(left_id);
+ assert(num_deleted == 1);
+ num_deleted = tensors_.erase(right_id);
+ assert(num_deleted == 1);
  //Update connections:
  this->updateConnections(result_id);
  return true;

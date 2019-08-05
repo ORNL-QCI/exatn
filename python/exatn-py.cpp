@@ -1,5 +1,4 @@
-
-#include "exatn.hpp"
+#include "exatn_service.hpp"
 #include "DriverClient.hpp"
 #include "numerics.hpp"
 
@@ -416,13 +415,11 @@ py::class_<exatn::numerics::BasisVector>(
     .def(py::init<SubspaceId>())
     .def("printIt", &exatn::numerics::BasisVector::printIt, "");
 
-
-
-  m.def("Initialize", (void (*)()) & exatn::Initialize,
+  m.def("Initialize", (void (*)()) & exatn::initialize,
         "Initialize the exatn framework.");
   m.def("getDriverClient",[](const std::string name) -> std::shared_ptr<exatn::rpc::DriverClient> {
       return exatn::getService<exatn::rpc::DriverClient>(name);
       }, "");
-  m.def("Finalize", &exatn::Finalize, "Finalize the framework");
+  m.def("Finalize", &exatn::finalize, "Finalize the framework");
 
 }

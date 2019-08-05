@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/06/06
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,11 +10,19 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
-namespace numerics{
+std::shared_ptr<NumServer> numericalServer = std::make_shared<NumServer>();
 
-NumServer::NumServer()
+NumServer::NumServer():
+ tensor_rt_(std::make_shared<runtime::TensorRuntime>())
 {
- scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open
+ scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
+}
+
+void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
+                                         const std::string & node_executor_name)
+{
+ tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(dag_executor_name,node_executor_name));
+ return;
 }
 
 void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method)
@@ -55,6 +63,7 @@ ScopeId NumServer::openScope(const std::string & scope_name)
 
 ScopeId NumServer::closeScope()
 {
+ assert(!scopes_.empty());
  const auto & prev_scope = scopes_.top();
  ScopeId prev_scope_id = std::get<1>(prev_scope);
  scopes_.pop();
@@ -135,41 +144,39 @@ const Subspace * NumServer::getSubspace(const std::string & subspace_name) const
  return space_register_.getSubspace(space_name,subspace_name);
 }
 
-
-int NumServer::submit(std::shared_ptr<TensorOperation> operation)
+void NumServer::submit(std::shared_ptr<TensorOperation> operation)
 {
- assert(false);
- //`Finish
- return 0;
+ assert(operation);
+ tensor_rt_->submit(operation);
+ return;
 }
 
-int NumServer::submit(std::shared_ptr<TensorNetwork> network)
+void NumServer::submit(TensorNetwork & network)
 {
- assert(false);
- //`Finish
- return 0;
+ assert(false);//`Finish
+ return;
+}
+
+void NumServer::submit(std::shared_ptr<TensorNetwork> network)
+{
+ assert(network);
+ return submit(*network);
 }
 
 bool NumServer::sync(const Tensor & tensor, bool wait)
 {
- assert(false);
- //`Finish
- return false;
+ return tensor_rt_->sync(tensor,wait);
 }
 
 bool NumServer::sync(TensorOperation & operation, bool wait)
 {
- if(operation.getNumOperands() > 0) return this->sync(*(operation.getTensorOperand(0)),wait);
- return true;
+ return tensor_rt_->sync(operation,wait);
 }
 
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
- assert(false);
- //`Finish
+ assert(false);//`Finish
  return false;
 }
-
-} //namespace numerics
 
 } //namespace exatn

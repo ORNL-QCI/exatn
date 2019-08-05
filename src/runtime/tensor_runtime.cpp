@@ -1,5 +1,5 @@
 #include "tensor_runtime.hpp"
-#include "exatn.hpp" //exatn::getService<T>
+#include "exatn_service.hpp"
 
 namespace exatn {
 namespace runtime {
@@ -7,8 +7,8 @@ namespace runtime {
 TensorRuntime::TensorRuntime(const std::string & graph_executor_name, const std::string & node_executor_name):
  current_dag_(nullptr), executing_(false), alive_(false)
 {
-  graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name);
-  graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name));
+//   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name);
+//   graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name));
 }
 
 
@@ -87,7 +87,8 @@ void TensorRuntime::closeScope() {
     while(executing_.load()){}; //wait until the execution thread has completed execution of the current DAG
     current_scope_ = "";
     current_dag_ = nullptr;
-    assert(dags_.erase(scope_name) == 1);
+    auto num_deleted = dags_.erase(scope_name);
+    assert(num_deleted == 1);
   }
   return;
 }
@@ -123,7 +124,8 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 
 TensorDenseBlock TensorRuntime::getTensorData(const Tensor & tensor) {
   // Complete all submitted update operations on the tensor
-  assert(sync(tensor,true));
+  auto synced = sync(tensor,true);
+  assert(synced);
   //`Get access to tensor data
   return TensorDenseBlock();
 }

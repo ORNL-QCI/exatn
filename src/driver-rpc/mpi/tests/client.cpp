@@ -24,7 +24,7 @@ end scope main)src";
 
 TEST(client_test, checkSimple) {
 
-  exatn::Initialize();
+  exatn::initialize();
 
   auto tm = exatn::getService<TensorMethod<exatn::Identifiable>>("HamiltonianTest");
 
@@ -63,7 +63,7 @@ TEST(client_test, checkSimple) {
   // also tells the server to shutdown.
   client->shutdown();
 
-  exatn::Finalize();
+  exatn::finalize();
 
 }
 

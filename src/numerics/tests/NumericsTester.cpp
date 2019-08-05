@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
-
-#include "numerics.hpp"
+#include "exatn.hpp"
 
 #include <iostream>
 #include <utility>
+
+#include <assert.h>
 
 using namespace exatn;
 using namespace exatn::numerics;
@@ -31,41 +32,48 @@ TEST(NumericsTester, checkSimple)
  }
 }
 
-TEST(NumericsTester, checkNumServer)
+TEST(NumericsTester, checkTensorNetwork)
 {
- NumServer num_server;
-
- const VectorSpace * space1;
- auto space1_id = num_server.createVectorSpace("Space1",1024,&space1);
- space1->printIt();
- std::cout << std::endl;
-
- const VectorSpace * space2;
- auto space2_id = num_server.createVectorSpace("Space2",2048,&space2);
- space2->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace1;
- auto subspace1_id = num_server.createSubspace("S11","Space1",{13,246},&subspace1);
- subspace1->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace2;
- auto subspace2_id = num_server.createSubspace("S21","Space2",{1056,1068},&subspace2);
- subspace2->printIt();
- std::cout << std::endl;
-
- const VectorSpace * space = num_server.getVectorSpace("");
- space->printIt();
- std::cout << std::endl;
-
- space = num_server.getVectorSpace("Space2");
- space->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace = num_server.getSubspace("S11");
- subspace->printIt();
- std::cout << std::endl;
+ //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
+ //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
+ // 0      1         2           3         4             5         6           7
+ TensorNetwork network("{0,1} 3-site MPS closure",
+                       std::make_shared<Tensor>("Z0"),
+                       {} //closed tensor network
+                      );
+ network.appendTensor(1,
+                      std::make_shared<Tensor>("T0",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{4,0}, TensorLeg{2,0}}
+                     );
+ network.appendTensor(2,
+                      std::make_shared<Tensor>("T1",std::vector<std::size_t>{2,2,2}),
+                      {TensorLeg{1,1}, TensorLeg{4,1}, TensorLeg{3,0}}
+                     );
+ network.appendTensor(3,
+                      std::make_shared<Tensor>("T2",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{2,2}, TensorLeg{7,1}}
+                     );
+ network.appendTensor(4,
+                      std::make_shared<Tensor>("H0",std::vector<std::size_t>{2,2,2,2}),
+                      {TensorLeg{1,0}, TensorLeg{2,1}, TensorLeg{5,0}, TensorLeg{6,1}}
+                     );
+ network.appendTensor(5,
+                      std::make_shared<Tensor>("S0",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{4,2}, TensorLeg{6,0}}
+                     );
+ network.appendTensor(6,
+                      std::make_shared<Tensor>("S1",std::vector<std::size_t>{2,2,2}),
+                      {TensorLeg{5,1}, TensorLeg{4,3}, TensorLeg{7,0}}
+                     );
+ network.appendTensor(7,
+                      std::make_shared<Tensor>("S2",std::vector<std::size_t>{2,2}),
+                      {TensorLeg{6,2}, TensorLeg{3,1}}
+                     );
+ network.finalize(true);
+ network.printIt();
+ //Remove tensor #6 to create the optimization environment for MPS tensor S1:
+ network.deleteTensor(6);
+ network.printIt();
 }
 
 int main(int argc, char **argv) {

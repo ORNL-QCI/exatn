@@ -11,8 +11,8 @@
  *   Alexander J. McCaskey - initial API and implementation
  *******************************************************************************/
 #include <gtest/gtest.h>
+#include "exatn_service.hpp"
 #include "tensor_runtime.hpp"
-#include "exatn.hpp"
 
 TEST(TensorRuntimeTester, checkSimple) {
 
@@ -21,9 +21,9 @@ TEST(TensorRuntimeTester, checkSimple) {
 }
 
 int main(int argc, char **argv) {
-  exatn::Initialize();
+  exatn::initialize();
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();
-  exatn::Finalize();
+  exatn::finalize();
   return ret;
 }

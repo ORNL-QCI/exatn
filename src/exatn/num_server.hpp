@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/06/06
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,6 +28,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_operation.hpp"
 #include "tensor_network.hpp"
 
+#include "tensor_runtime.hpp"
+
 #include "tensor_method.hpp"
 #include "Identifiable.hpp"
 
@@ -40,9 +42,17 @@ using exatn::Identifiable;
 
 namespace exatn{
 
-namespace numerics{
+using numerics::VectorSpace;
+using numerics::Subspace;
+using numerics::TensorShape;
+using numerics::TensorSignature;
+using numerics::TensorLeg;
+using numerics::Tensor;
+using numerics::TensorOperation;
+using numerics::TensorNetwork;
 
-class NumServer{
+
+class NumServer final {
 
 public:
 
@@ -52,6 +62,10 @@ public:
  NumServer(NumServer &&) noexcept = default;
  NumServer & operator=(NumServer &&) noexcept = default;
  ~NumServer() = default;
+
+ /** Reconfigures tensor runtime implementation. **/
+ void reconfigureTensorRuntime(const std::string & dag_executor_name,
+                               const std::string & node_executor_name);
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method);
@@ -105,11 +119,12 @@ public:
 
 
  /** Submits an individual tensor operation for processing. **/
- int submit(std::shared_ptr<TensorOperation> operation);
+ void submit(std::shared_ptr<TensorOperation> operation);
  /** Submits a tensor network for processing (evaluating the tensor-result). **/
- int submit(std::shared_ptr<TensorNetwork> network);
+ void submit(TensorNetwork & network);
+ void submit(std::shared_ptr<TensorNetwork> network);
 
- /** Synchronizes all tensor operations on a given tensor. **/
+ /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
            bool wait = false);
  /** Synchronizes execution of a specific tensor operation. **/
@@ -121,7 +136,7 @@ public:
 
 private:
 
- SpaceRegister space_register_; //register of vector spaces and their named subspaces
+ numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
  std::map<std::string,std::shared_ptr<TensorMethod<Identifiable>>> ext_methods_; //external tensor methods
@@ -129,9 +144,10 @@ private:
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
+ std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 
-} //namespace numerics
+extern std::shared_ptr<NumServer> numericalServer;
 
 } //namespace exatn
 

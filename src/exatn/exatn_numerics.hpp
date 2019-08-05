@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/05/31
+REVISION: 2019/08/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,8 +21,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
         any index label can only refer to a single registered (named) subspace it is associated with.
 **/
 
-#ifndef EXATN_NUMERICS_NUMERICS_HPP_
-#define EXATN_NUMERICS_NUMERICS_HPP_
+#ifndef EXATN_NUMERICS_HPP_
+#define EXATN_NUMERICS_HPP_
 
 #include "num_server.hpp"
 
@@ -31,8 +31,6 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 
 namespace exatn{
-
-namespace numerics{
 
 /** Opens a new (child) TAProL scope and returns its id. **/
 ScopeId openScope(const std::string & scope_name); //new scope name
@@ -62,8 +60,6 @@ SubspaceId createSubspace(const std::string & subspace_name,           //in: sub
 void destroySubspace(const std::string & subspace_name); //in: name of the subspace to destroy
 void destroySubspace(SubspaceId subspace_id);            //in: id of the subspace to destroy
 
-} //namespace numerics
-
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_NUMERICS_HPP_
+#endif //EXATN_NUMERICS_HPP_

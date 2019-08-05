@@ -25,18 +25,29 @@ option(BLAS_LIB "Provide the BLAS implementation" "")
 option(MPI_LIB "Provide the MPI implementation" "")
 option(MPI_ROOT_DIR "Provide the MPI ROOT directory" "")
 option (MPI_BIN_PATH "Provide the MPI bin path" "")
+option(BLAS_PATH "Provide the path to the BLAS directory" "")
 
-#Check to make sure that both the MPI implementation and root installation path were supplied
+#Check to make sure that both the MPI implementation and root installation/bin path were supplied
 if(MPI_LIB)
-  if(NOT MPI_ROOT_DIR)
+  if(NOT MPI_ROOT_DIR OR MPI_BIN_PATH)
     message( FATAL_ERROR "If you specify the MPI implementation, please also specify both the root path for the MPI installation. CMake is exiting.")
   endif()
 else()
-  if(MPI_ROOT_DIR)
+  if(MPI_ROOT_DIR AND MPI_BIN_PATH)
     message( FATAL_ERROR "If you don't specify the MPI implementation, please also don't specify the root and bin paths for MPI. CMake is exiting.")
   endif()
 endif()
 
+#Check to make sure that both the BLAS implementation and installation path were supplied
+if(BLAS_LIB)
+  if(NOT BLAS_PATH)
+    message(FATAL_ERROR "If you specify the BLAS implementation, please also specify the path to the install directory. CMake is exiting.")
+  endif()
+else()
+    if(BLAS_PATH)
+      message(FATAL_ERROR "If you specify the BLAS install path, please also specify the implementation you would like to use. CMake is exiting.")
+    endif()
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(
@@ -59,15 +70,15 @@ include(CTest)
 find_package(MPI)
 find_package(OpenMP REQUIRED)
 find_package(CUDAExaTN)
-find_package(BLAS)
 
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
 
 #If BLAS implementation not user specified, proceed with "NONE"
-if(NOT BLAS_LIB)
- set(BLAS_LIB NONE)
+if(NOT BLAS_LIB OR NOT BLAS_PATH)
+  set(BLAS_LIB NONE)
+  set(BLAS_PATH "")
 endif()
 
 set(EXA_TALSH_ONLY "NO")
@@ -83,7 +94,17 @@ include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/framework/include)
 include_directories(${CMAKE_SOURCE_DIR}/tpls/cppmicroservices/framework/include)
 
-macro(exatn_enable_rpath LIBNAME)
+macro(exatn_configure_library_rpath LIBNAME)
+  if(APPLE)
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path")
+    set_target_properties(${LIBNAME}
+                          PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  else()
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${LIBNAME} PROPERTIES LINK_FLAGS "-shared")
+  endif()
+endmacro()
+macro(exatn_configure_plugin_rpath LIBNAME)
   if(APPLE)
     set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
     set_target_properties(${LIBNAME}

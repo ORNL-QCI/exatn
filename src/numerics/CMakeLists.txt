@@ -20,24 +20,12 @@ add_library(${LIBRARY_NAME}
             tensor_op_factory.cpp
             network_builder_mps.cpp
             network_build_factory.cpp
-            tensor_network.cpp
-            num_server.cpp)
+            tensor_network.cpp)
 
-if (CUDA_FOUND)
-target_include_directories(${LIBRARY_NAME}
-                           PUBLIC .
-                           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-                           ${CMAKE_SOURCE_DIR}/src/exatn
-                           PRIVATE
-                           ${CUDA_INCLUDE_DIRS})
-else()
-target_include_directories(${LIBRARY_NAME}
-                           PUBLIC .
-                           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include
-                           ${CMAKE_SOURCE_DIR}/src/exatn)
-endif()
+target_include_directories(${LIBRARY_NAME} PUBLIC .)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor)
 
-exatn_enable_rpath(${LIBRARY_NAME})
+exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 

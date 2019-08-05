@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/07/26
+REVISION: 2019/07/30
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -14,6 +14,7 @@ Rationale:
 #include "Identifiable.hpp"
 
 #include "tensor_operation.hpp"
+#include "tensor.hpp"
 
 #include <memory>
 
@@ -21,12 +22,12 @@ namespace exatn {
 namespace runtime {
 
 // Tensor implementation:
-using numerics::TensorHashType; //each numerics::Tensor has its unique integer hash
+using numerics::TensorHashType; //each numerics::Tensor has its unique integer hash (size_t)
 using numerics::Tensor;
 using numerics::TensorOperation;
 
 // DAG node execution handle (tensor operation execution handle):
-using NodeExecHandleType = std::size_t;
+using NodeExecHandleType = numerics::TensorHashType;
 
 
 class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecutor> {
