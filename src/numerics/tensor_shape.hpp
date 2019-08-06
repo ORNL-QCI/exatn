@@ -99,7 +99,7 @@ extents_(extents.size())
  }
 
  int i = 0;
- for(const auto & extent: extents) extents_[i++] = DimExtent{extent};
+ for(const auto & extent: extents) extents_[i++] = DimExtent(extent);
 }
 
 } //namespace numerics
