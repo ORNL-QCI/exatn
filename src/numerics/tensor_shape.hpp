@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/07/08
+REVISION: 2019/08/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -99,7 +99,7 @@ extents_(extents.size())
  }
 
  int i = 0;
- for(const auto & extent: extents) extents_[i++] = DimExtent(extent);
+ for(const auto & extent: extents) extents_[i++] = static_cast<DimExtent>(extent);
 }
 
 } //namespace numerics
