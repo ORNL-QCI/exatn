@@ -1,18 +1,16 @@
-#include "exatn_service.hpp"
 #include "DriverClient.hpp"
-#include "numerics.hpp"
+#include "exatn.hpp"
 
 #include <pybind11/complex.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-#include <pybind11/eigen.h>
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 
 namespace py = pybind11;
 using namespace exatn;
-using namespace numerics;
+using namespace exatn::numerics;
 using namespace pybind11::literals;
 
 
@@ -144,22 +142,28 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("isSet", &exatn::numerics::TensorOpTransform::isSet, "")
       .def("createNew", &exatn::numerics::TensorOpTransform::createNew, "");
 
-  py::class_<exatn::numerics::TensorNetwork, std::shared_ptr<exatn::numerics::TensorNetwork>>(
-      m, "TensorNetwork","")
+  py::class_<exatn::numerics::TensorNetwork,
+             std::shared_ptr<exatn::numerics::TensorNetwork>>(
+      m, "TensorNetwork", "")
       .def(py::init<>())
       .def(py::init<const std::string>())
       .def(py::init<const std::string, std::shared_ptr<exatn::numerics::Tensor>, const std::vector<exatn::numerics::TensorLeg>>())
       .def("printIt", &exatn::numerics::TensorNetwork::printIt, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
+      .def("isEmpty", &exatn::numerics::TensorNetwork::isEmpty, "")
+      .def("isExplicit", &exatn::numerics::TensorNetwork::isExplicit, "")
+      .def("finalize", &exatn::numerics::TensorNetwork::finalize, "check_validity"_a = false, "")
       .def("isFinalized", &exatn::numerics::TensorNetwork::isFinalized, "")
       .def("getNumTensors", &exatn::numerics::TensorNetwork::getNumTensors, "")
+      .def("getName", &exatn::numerics::TensorNetwork::getName, "")
       .def("getTensor", &exatn::numerics::TensorNetwork::getTensor, "")
-      .def("appendTensor", (bool (exatn::numerics::TensorNetwork::*)(unsigned int, std::shared_ptr<exatn::numerics::Tensor>, const std::vector<exatn::numerics::TensorLeg>&))
+      .def("appendTensor", (bool (exatn::numerics::TensorNetwork::*)(unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
+                                  const std::vector<exatn::numerics::TensorLeg>&))
                             &exatn::numerics::TensorNetwork::appendTensor, "")
-      .def("appendTensor", (bool (exatn::numerics::TensorNetwork::*)(unsigned int, std::shared_ptr<exatn::numerics::Tensor>, const std::vector<std::pair<unsigned int, unsigned int>>&,
-                            const std::vector<exatn::LegDirection>&)) &exatn::numerics::TensorNetwork::appendTensor, "")
-      //need to write a lambda wrapper for double && tensornetwork argument
-      //.def("appendTensorNetwork", &exatn::numerics::TensorNetwork::appendTensorNetwork, "")
+      .def("appendTensor", (bool (exatn::numerics::TensorNetwork::*)(unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
+                                  const std::vector<std::pair<unsigned int, unsigned int>>&,
+                                  const std::vector<exatn::LegDirection>&))
+                            &exatn::numerics::TensorNetwork::appendTensor, "")
       .def("reoderOutputModes", &exatn::numerics::TensorNetwork::reoderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
       .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "")
@@ -171,7 +175,8 @@ py::class_<exatn::numerics::VectorSpace>(
     .def(py::init<DimExtent, const std::string>())
     .def(py::init<DimExtent, const std::string, const std::vector<SymmetryRange>>())
     .def("getDimension", &exatn::numerics::VectorSpace::getDimension, "")
-    .def("printIt", &exatn::numerics::VectorSpace::printIt,"")
+    .def("printIt", &exatn::numerics::VectorSpace::printIt, "")
+    .def("getName", &exatn::numerics::VectorSpace::getName, "")
     .def("getSymmetrySubranges", &exatn::numerics::VectorSpace::getSymmetrySubranges, "")
     .def("registerSymmetrySubrange", &exatn::numerics::VectorSpace::registerSymmetrySubrange, "")
     .def("getRegisteredId", &exatn::numerics::VectorSpace::getRegisteredId, "");
@@ -187,18 +192,21 @@ py::class_<exatn::numerics::Subspace>(
     .def("printIt", &exatn::numerics::Subspace::printIt, "")
     .def("getLowerBound", &exatn::numerics::Subspace::getLowerBound, "")
     .def("getUpperBound", &exatn::numerics::Subspace::getUpperBound, "")
+    .def("getBounds", &exatn::numerics::Subspace::getBounds, "")
+    .def("getName", &exatn::numerics::Subspace::getName, "")
     .def("getVectorSpace", &exatn::numerics::Subspace::getVectorSpace, "")
     .def("getRegisteredId", &exatn::numerics::Subspace::getRegisteredId, "");
 
 
 
-py::class_<exatn::numerics::Tensor>(
+py::class_<exatn::numerics::Tensor, std::shared_ptr<exatn::numerics::Tensor>>(
     m, "Tensor","")
     .def(py::init<std::string>())
     .def(py::init<std::string, exatn::numerics::TensorShape, exatn::numerics::TensorSignature>())
     .def(py::init<std::string, exatn::numerics::TensorShape>())
     .def(py::init<std::string, exatn::numerics::Tensor, exatn::numerics::Tensor, std::vector<exatn::numerics::TensorLeg>>())
-    //templated constructor requires integral type for TensorShape - need a definition for each templated constructor and integral type
+    //templated constructor requires integral type for TensorShape -
+    //need a definition for each templated constructor and (common) integral type
     .def(py::init<std::string, std::initializer_list<int>, std::initializer_list<std::pair<SpaceId,SubspaceId>>>())
     .def(py::init<std::string, std::initializer_list<short>, std::initializer_list<std::pair<SpaceId,SubspaceId>>>())
     .def(py::init<std::string, std::initializer_list<long>, std::initializer_list<std::pair<SpaceId,SubspaceId>>>())
@@ -224,6 +232,7 @@ py::class_<exatn::numerics::Tensor>(
     .def(py::init<std::string, std::initializer_list<unsigned short>>())
     .def(py::init<std::string, std::initializer_list<unsigned long>>())
     .def("printIt", &exatn::numerics::Tensor::printIt, "")
+    .def("getName", &exatn::numerics::Tensor::getName, "")
     .def("getRank", &exatn::numerics::Tensor::getRank, "")
     .def("getShape", &exatn::numerics::Tensor::getShape, "")
     .def("getSignature", &exatn::numerics::Tensor::getSignature, "")
@@ -233,8 +242,10 @@ py::class_<exatn::numerics::Tensor>(
     .def("getDimSubspaceId", &exatn::numerics::Tensor::getDimSubspaceId, "")
     .def("getDimSpaceAttr", &exatn::numerics::Tensor::getDimSpaceAttr, "")
     .def("deleteDimension", &exatn::numerics::Tensor::deleteDimension, "")
-    .def("appendDimension", (void (exatn::numerics::Tensor::*)(std::pair<SpaceId, SubspaceId>, DimExtent)) &exatn::numerics::Tensor::appendDimension, "")
-    .def("appendDimension", (void (exatn::numerics::Tensor::*)(DimExtent)) &exatn::numerics::Tensor::appendDimension, "")
+    .def("appendDimension", (void (exatn::numerics::Tensor::*)(std::pair<SpaceId, SubspaceId>, DimExtent))
+         &exatn::numerics::Tensor::appendDimension, "")
+    .def("appendDimension", (void (exatn::numerics::Tensor::*)(DimExtent))
+         &exatn::numerics::Tensor::appendDimension, "")
     .def("getTensorHash", &exatn::numerics::Tensor::getTensorHash, "");
 
 py::enum_<exatn::LegDirection>(
@@ -254,14 +265,14 @@ py::enum_<exatn::TensorOpCode>(
     .value("CONTRACT", exatn::TensorOpCode::CONTRACT)
     .export_values();
 
-py::class_<exatn::numerics::TensorLeg>(
+py::class_<exatn::numerics::TensorLeg, std::shared_ptr<exatn::numerics::TensorLeg>>(
     m, "TensorLeg","")
-    //Specify the default argument for this constructor
+    //Specify the default LegDirection argument for this constructor
     .def(py::init<unsigned int, unsigned int, exatn::LegDirection>(),
          "tensor_id"_a, "dimensn_id"_a, "direction"_a=exatn::LegDirection::UNDIRECT)
     .def(py::init<const TensorLeg>())
     .def("printIt", &exatn::numerics::TensorLeg::printIt, "")
-    .def("getTensorId", &exatn::numerics::TensorLeg::getTensorId,"")
+    .def("getTensorId", &exatn::numerics::TensorLeg::getTensorId, "")
     .def("getDimensionId", &exatn::numerics::TensorLeg::getDimensionId, "")
     .def("getDirection", &exatn::numerics::TensorLeg::getDirection, "")
     .def("resetConnection", &exatn::numerics::TensorLeg::resetConnection, "")
@@ -271,34 +282,28 @@ py::class_<exatn::numerics::TensorLeg>(
 
 
 
-py::class_<exatn::numerics::NumServer, std::shared_ptr<exatn::numerics::NumServer>>(
+py::class_<exatn::NumServer, std::shared_ptr<exatn::NumServer>>(
     m, "NumServer","")
     .def(py::init<>())
-    .def("registerTensorMethod", &exatn::numerics::NumServer::registerTensorMethod, "")
-    .def("getTensorMethod", &exatn::numerics::NumServer::getTensorMethod, "")
-    .def("registerExternalData", &exatn::numerics::NumServer::registerExternalData, "")
-    .def("getExternalData", &exatn::numerics::NumServer::getExternalData, "")
-    .def("openScope", &exatn::numerics::NumServer::openScope, "")
-    .def("closeScope", &exatn::numerics::NumServer::closeScope, "")
-    .def("createVectorSpace",
-         [](const std::string & space_name, DimExtent space_dim,
-            const exatn::numerics::VectorSpace *space_ptr){
-                return true;
-           }
-    )
-
-    .def("getVectorSpace", &exatn::numerics::NumServer::getVectorSpace, "")
-    .def("destroyVectorSpace", (void (exatn::numerics::NumServer::*)(const std::string &)) &exatn::numerics::NumServer::destroyVectorSpace, "")
-    .def("destroyVectorSpace", (void (exatn::numerics::NumServer::*)(SpaceId)) &exatn::numerics::NumServer::destroyVectorSpace, "")
-    //.def("createSubspace", &exatn::numerics::NumServer::createSubspace, "")
-    .def("getSubspace", &exatn::numerics::NumServer::getSubspace, "")
-    .def("destroySubspace", (void (exatn::numerics::NumServer::*)(const std::string &)) &exatn::numerics::NumServer::destroySubspace, "")
-    .def("destroySubspace", (void (exatn::numerics::NumServer::*)(SubspaceId)) &exatn::numerics::NumServer::destroySubspace, "")
-    .def("submit", (int (exatn::numerics::NumServer::*)(std::shared_ptr<TensorOperation>)) &exatn::numerics::NumServer::submit, "")
-    .def("submit", (int (exatn::numerics::NumServer::*)(std::shared_ptr<TensorNetwork>)) &exatn::numerics::NumServer::submit, "")
-    .def("sync", (bool (exatn::numerics::NumServer::*)(const exatn::numerics::Tensor &, bool)) &exatn::numerics::NumServer::sync, "")
-    .def("sync", (bool (exatn::numerics::NumServer::*)(exatn::numerics::TensorOperation &, bool)) &exatn::numerics::NumServer::sync, "")
-    .def("sync", (bool (exatn::numerics::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::numerics::NumServer::sync, "");
+    .def("reconfigureTensorRuntime", &exatn::NumServer::reconfigureTensorRuntime, "")
+    .def("registerTensorMethod", &exatn::NumServer::registerTensorMethod, "")
+    .def("getTensorMethod", &exatn::NumServer::getTensorMethod, "")
+    .def("registerExternalData", &exatn::NumServer::registerExternalData, "")
+    .def("getExternalData", &exatn::NumServer::getExternalData, "")
+    .def("openScope", &exatn::NumServer::openScope, "")
+    .def("closeScope", &exatn::NumServer::closeScope, "")
+    .def("getVectorSpace", &exatn::NumServer::getVectorSpace, "")
+    .def("destroyVectorSpace", (void (exatn::NumServer::*)(const std::string &)) &exatn::NumServer::destroyVectorSpace, "")
+    .def("destroyVectorSpace", (void (exatn::NumServer::*)(SpaceId)) &exatn::NumServer::destroyVectorSpace, "")
+    .def("getSubspace", &exatn::NumServer::getSubspace, "")
+    .def("destroySubspace", (void (exatn::NumServer::*)(const std::string &)) &exatn::NumServer::destroySubspace, "")
+    .def("destroySubspace", (void (exatn::NumServer::*)(SubspaceId)) &exatn::NumServer::destroySubspace, "")
+    .def("submit", (void (exatn::NumServer::*)(std::shared_ptr<exatn::numerics::TensorOperation>)) &exatn::NumServer::submit, "")
+    .def("submit", (void (exatn::NumServer::*)(exatn::numerics::TensorNetwork &)) &exatn::NumServer::submit, "")
+    .def("submit", (void (exatn::NumServer::*)(std::shared_ptr<exatn::numerics::TensorNetwork>)) &exatn::NumServer::submit, "")
+    .def("sync", (bool (exatn::NumServer::*)(const exatn::numerics::Tensor &, bool)) &exatn::NumServer::sync, "")
+    .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorOperation &, bool)) &exatn::NumServer::sync, "")
+    .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::NumServer::sync, "");
 
 
 
@@ -309,15 +314,17 @@ py::class_<exatn::numerics::TensorConn>(
     .def("getNumLegs", &exatn::numerics::TensorConn::getNumLegs, "")
     .def("getTensorId", &exatn::numerics::TensorConn::getTensorId, "")
     .def("getTensor", &exatn::numerics::TensorConn::getTensor, "")
+    .def("getTensorLeg", &exatn::numerics::TensorConn::getTensorLeg, "")
     .def("getTensorLegs", &exatn::numerics::TensorConn::getTensorLegs, "")
     .def("getDimExtent", &exatn::numerics::TensorConn::getDimExtent, "")
     .def("getDimSpaceAttr", &exatn::numerics::TensorConn::getDimSpaceAttr, "")
     .def("resetLeg", &exatn::numerics::TensorConn::resetLeg, "")
     .def("deleteLeg", &exatn::numerics::TensorConn::deleteLeg, "")
     .def("deleteLegs", &exatn::numerics::TensorConn::deleteLegs, "")
-    .def("appendLeg", (void(exatn::numerics::TensorConn::*)(std::pair<SpaceId, SubspaceId>, DimExtent, exatn::numerics::TensorLeg)) &exatn::numerics::TensorConn::appendLeg,"")
-    .def("appendLeg", (void(exatn::numerics::TensorConn::*)(DimExtent, exatn::numerics::TensorLeg)) &exatn::numerics::TensorConn::appendLeg, "")
-    ;
+    .def("appendLeg", (void(exatn::numerics::TensorConn::*)(std::pair<SpaceId, SubspaceId>, DimExtent, exatn::numerics::TensorLeg))
+         &exatn::numerics::TensorConn::appendLeg, "")
+    .def("appendLeg", (void(exatn::numerics::TensorConn::*)(DimExtent, exatn::numerics::TensorLeg))
+         &exatn::numerics::TensorConn::appendLeg, "");
 
 py::class_<exatn::numerics::TensorShape>(
     m, "TensorShape", "")
@@ -359,45 +366,28 @@ py::class_<exatn::numerics::TensorSignature>(
     .def("appendDimension", &exatn::numerics::TensorSignature::appendDimension, "")
     .def("getDimSpaceAttr", &exatn::numerics::TensorSignature::getDimSpaceAttr, "");
 
-
-
 py::class_<exatn::numerics::SubspaceRegEntry>(
     m, "SubspaceRegEntry")
     .def(py::init<std::shared_ptr<Subspace>>());
 
-
-
 py::class_<exatn::numerics::SubspaceRegister>(
     m, "SubspaceRegister", "")
     .def(py::init<>())
-    .def("registerSubspace", &exatn::numerics::SubspaceRegister::registerSubspace, "")
-    ;
-
-
+    .def("registerSubspace", &exatn::numerics::SubspaceRegister::registerSubspace, "");
 
 py::class_<exatn::numerics::SpaceRegEntry>(
     m, "SpaceRegEntry")
     .def(py::init<std::shared_ptr<exatn::numerics::VectorSpace>>());
 
-
-
 py::class_<exatn::numerics::SpaceRegister>(
     m, "SpaceRegister")
     .def(py::init<>())
     .def("registerSpace", &exatn::numerics::SpaceRegister::registerSpace, "")
-    //.def("getSpace", (const exatn::numerics::VectorSpace (exatn::numerics::SpaceRegister::*)(SpaceId)) &exatn::numerics::SpaceRegister::getSpace, "")
-    //.def("getSpace", (exatn::numerics::VectorSpace* (exatn::numerics::SpaceRegister::*)(const std::string &)) &exatn::numerics::SpaceRegister::getSpace,"")
     .def("registerSubspace", &exatn::numerics::SpaceRegister::registerSubspace, "")
-    .def("getSubspace", &exatn::numerics::SpaceRegister::getSubspace, "")
-   ;
-
-
-
-
+    .def("getSubspace", &exatn::numerics::SpaceRegister::getSubspace, "");
 
 py::class_<exatn::numerics::SymmetryRange>(
     m, "SymmetryRange");
-
 
 py::class_<exatn::numerics::SpaceBasis>(
     m, "SpaceBasis")
@@ -406,20 +396,41 @@ py::class_<exatn::numerics::SpaceBasis>(
     .def("printIt", &exatn::numerics::SpaceBasis::printIt, "")
     .def("getDimension", &exatn::numerics::SpaceBasis::getDimension, "")
     .def("getSymmetrySubranges", &exatn::numerics::SpaceBasis::getSymmetrySubranges, "")
-    .def("registerSymmetrySubrange", &exatn::numerics::SpaceBasis::registerSymmetrySubrange, "")
-    ;
-
+    .def("registerSymmetrySubrange", &exatn::numerics::SpaceBasis::registerSymmetrySubrange, "");
 
 py::class_<exatn::numerics::BasisVector>(
     m, "BasisVector")
     .def(py::init<SubspaceId>())
     .def("printIt", &exatn::numerics::BasisVector::printIt, "");
 
-  m.def("Initialize", (void (*)()) & exatn::initialize,
-        "Initialize the exatn framework.");
-  m.def("getDriverClient",[](const std::string name) -> std::shared_ptr<exatn::rpc::DriverClient> {
+/**
+ ExaTN module definitions
+*/
+m.def("Initialize", (void (*)()) & exatn::initialize,
+      "Initialize the exatn framework.");
+m.def("getDriverClient", [](const std::string name) -> std::shared_ptr<exatn::rpc::DriverClient> {
       return exatn::getService<exatn::rpc::DriverClient>(name);
       }, "");
-  m.def("Finalize", &exatn::finalize, "Finalize the framework");
+m.def("Finalize", &exatn::finalize, "Finalize the framework");
+
+m.def("getNumServer", [](){ return exatn::numericalServer;}, py::return_value_policy::reference, "");
+
+m.def("createVectorSpace", [](const std::string & space_name, DimExtent space_dim){
+      const VectorSpace *space;
+      return exatn::numericalServer->createVectorSpace(space_name, space_dim, &space);
+      }, py::return_value_policy::reference, "");
+
+m.def("getVectorSpace", []( const std::string & space_name){
+      return exatn::numericalServer->getVectorSpace(space_name);
+      }, py::return_value_policy::reference, "");
+
+m.def("createSubspace", [](const std::string & subspace_name, const std::string & space_name,
+                           std::pair<DimOffset,DimOffset> bounds){
+      const Subspace *subspace;
+      return numericalServer->createSubspace(subspace_name, space_name, bounds, &subspace);
+      }, py::return_value_policy::reference, "");
+m.def("getSubspace", [](const std::string &subspace_name){
+      return exatn::numericalServer->getSubspace(subspace_name);
+      }, py::return_value_policy::reference, "");
 
 }

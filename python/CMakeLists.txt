@@ -20,7 +20,6 @@ add_library(_pyexatn SHARED exatn-py.cpp)
 
 set_target_properties(_pyexatn PROPERTIES PREFIX "")
 
-include_directories(/usr/include/eigen3)
 
 
 target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn)
