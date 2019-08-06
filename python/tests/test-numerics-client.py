@@ -56,6 +56,19 @@ network.finalize()
 network.printIt()
 
 
+#make another TensorNetwork to test the appendTensorNetwork functionality
+append_network = exatn.TensorNetwork("{0,1} 3-site MPS closure", exatn.Tensor("Z1"),[])
+append_network.appendTensor(1, exatn.Tensor("T3", [2,2]),
+                     [exatn.TensorLeg(4,0), exatn.TensorLeg(2,0)])
+append_network.appendTensor(4, exatn.Tensor("H1", [2,2,2,2]),
+                     [exatn.TensorLeg(1,0), exatn.TensorLeg(2,1),
+                      exatn.TensorLeg(5,0), exatn.TensorLeg(6,1)])
+append_network.finalize()
+
+#Because of pybind capabilities/limitations, appendTensorNetwork must be
+#registered as a lambda function of ExaTN
+appendcheck = exatn.appendTensorNetwork(network, append_network, [[0,5],[0,4]])
+
 
 #Corresponds to NumericsTester.checkNumServer
 #Create and register VectorSpaces and Subspaces with the exatn::NumServer
