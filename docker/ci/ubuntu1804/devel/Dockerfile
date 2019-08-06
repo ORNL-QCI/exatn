@@ -9,5 +9,5 @@ run update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50 \
                 -DEXATN_BUILD_TESTS=TRUE -DBLAS_LIB=ATLAS \
                 -DBLAS_PATH=/usr/lib/x86_64-linux-gnu \
                 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/lib/mpich \
-                -DMPI_BIN_PATH=/usr/bin
+                -DMPI_BIN_PATH=/usr/bin \
     && make -j$(nproc) install && ctest --output-on-failure
