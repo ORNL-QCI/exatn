@@ -48,7 +48,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor/include/talshxx.hpp")
   set(TALSHXX_EXISTS "YES")
 endif()
 
-if(NOT MPI_LIB)
+set(EXA_TALSH_ONLY "NO")
+if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
   set(EXA_TALSH_ONLY "YES")
 endif()
 
@@ -56,26 +57,24 @@ if(NOT CUDA_HOST_COMPILER)
   set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
-if(MPI_ROOT_DIR)
-  set(MPI_BIN_PATH ${MPI_ROOT_DIR}/bin)
-  if(PATH_MPI_BIN)
-    set(MPI_BIN_PATH ${PATH_MPI_BIN})
-  endif()
-endif()
-
-message(STATUS "The MPI_LIB implementation is set to ${MPI_LIB}")
-message(STATUS "MPI root path: ${MPI_ROOT_DIR}")
-message(STATUS "MPI bin path: ${MPI_BIN_PATH}")
-message(STATUS "The BLAS_LIB implementation is set to ${BLAS_LIB}")
-message(STATUS "CUDA Host Compiler: ${CUDA_HOST_COMPILER}")
+message(STATUS "The MPI implementation is set to ${MPI_LIB}")
+message(STATUS "The MPI root path is set to ${MPI_ROOT_DIR}")
+message(STATUS "The MPI bin path is set to ${MPI_BIN_PATH}")
+message(STATUS "The BLAS implementation is set to ${BLAS_LIB}")
+message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
+message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
+message(STATUS "Solely TAL-SH backend single-node build: ${EXA_TALSH_ONLY}")
 
 if(APPLE)
-  message(
-    STATUS
-      "This is Apple, building TAL-SH CPU only with ${CMAKE_Fortran_COMPILER}")
+  message(STATUS "This is Mac OS build, building TAL-SH CPU backend only")
 
-  add_custom_target(exatensor-build
-                    COMMAND ${CMAKE_COMMAND}
+  if(BLAS_LIB STREQUAL "ACML" OR BLAS_LIB STREQUAL "ESSL")
+    message(FATAL_ERROR "Mac OS build does not support ACML or ESSL BLAS libraries!")
+  endif()
+
+  if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
+    add_custom_target(exatensor-build
+                      COMMAND ${CMAKE_COMMAND}
                             -E
                             env
                             CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -85,15 +84,56 @@ if(APPLE)
                             MPILIB=${MPI_LIB}
                             BLASLIB=${BLAS_LIB}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
+                            EXA_TALSH_ONLY=YES
+                            EXATN_SERVICE=YES
+                            EXA_OS=NO_LINUX
+                            PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                            PATH_INTEL=${PATH_INTEL_ROOT}
+                            make
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+  elseif(MPI_LIB STREQUAL "OPENMPI")
+    add_custom_target(exatensor-build
+                      COMMAND ${CMAKE_COMMAND}
+                            -E
+                            env
+                            OMPI_CXX=${CMAKE_CXX_COMPILER}
+                            OMPI_CC=${CMAKE_C_COMPILER}
+                            OMPI_FC=${CMAKE_Fortran_COMPILER}
+                            GPU_CUDA=NOCUDA
+                            MPILIB=${MPI_LIB}
+                            BLASLIB=${BLAS_LIB}
+                            EXA_NO_BUILD=${TALSHXX_EXISTS}
                             PATH_${MPI_LIB}=${MPI_ROOT_DIR}
-                            EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
+                            EXA_TALSH_ONLY=NO
                             EXATN_SERVICE=YES
                             EXA_OS=NO_LINUX
                             PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
-                            PATH_BLAS_${BLASLIB}=${BLAS_PATH}
-                            PATH_INTEL=${BLAS_PATH}
+                            PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                            PATH_INTEL=${PATH_INTEL_ROOT}
                             make
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+  elseif(MPI_LIB STREQUAL "MPICH")
+    add_custom_target(exatensor-build
+                      COMMAND ${CMAKE_COMMAND}
+                            -E
+                            env
+                            MPICH_CXX=${CMAKE_CXX_COMPILER}
+                            MPICH_CC=${CMAKE_C_COMPILER}
+                            MPICH_FC=${CMAKE_Fortran_COMPILER}
+                            GPU_CUDA=NOCUDA
+                            MPILIB=${MPI_LIB}
+                            BLASLIB=${BLAS_LIB}
+                            EXA_NO_BUILD=${TALSHXX_EXISTS}
+                            PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+                            EXA_TALSH_ONLY=NO
+                            EXATN_SERVICE=YES
+                            EXA_OS=NO_LINUX
+                            PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+                            PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                            PATH_INTEL=${PATH_INTEL_ROOT}
+                            make
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+  endif()
 
 else()
 
@@ -102,8 +142,9 @@ else()
     message(STATUS "CUDA LIBRARIES: ${CUDA_LIBRARIES}")
     message(STATUS "CUDA BLAS LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
 
-    add_custom_target(exatensor-build
-                      COMMAND ${CMAKE_COMMAND}
+    if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
                               -E
                               env
                               CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -115,18 +156,63 @@ else()
                               MPILIB=${MPI_LIB}
                               BLASLIB=${BLAS_LIB}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
+                              EXA_TALSH_ONLY=YES
+                              EXATN_SERVICE=YES
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
+                              make
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    elseif(MPI_LIB STREQUAL "OPENMPI")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
+                              -E
+                              env
+                              OMPI_CXX=${CMAKE_CXX_COMPILER}
+                              OMPI_CC=${CMAKE_C_COMPILER}
+                              OMPI_FC=${CMAKE_Fortran_COMPILER}
+                              GPU_CUDA=CUDA
+                              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
+                              CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                              MPILIB=${MPI_LIB}
+                              BLASLIB=${BLAS_LIB}
+                              EXA_NO_BUILD=${TALSHXX_EXISTS}
                               PATH_${MPI_LIB}=${MPI_ROOT_DIR}
-                              EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
+                              EXA_TALSH_ONLY=NO
                               EXATN_SERVICE=YES
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
-                              PATH_BLAS_${BLASLIB}=${BLAS_PATH}
-                              PATH_INTEL=${BLAS_PATH}
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
                               make
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    elseif(MPI_LIB STREQUAL "MPICH")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
+                              -E
+                              env
+                              MPICH_CXX=${CMAKE_CXX_COMPILER}
+                              MPICH_CC=${CMAKE_C_COMPILER}
+                              MPICH_FC=${CMAKE_Fortran_COMPILER}
+                              GPU_CUDA=CUDA
+                              PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
+                              CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                              MPILIB=${MPI_LIB}
+                              BLASLIB=${BLAS_LIB}
+                              EXA_NO_BUILD=${TALSHXX_EXISTS}
+                              PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+                              EXA_TALSH_ONLY=NO
+                              EXATN_SERVICE=YES
+                              PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
+                              make
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    endif()
 
   else()
-    add_custom_target(exatensor-build
-                      COMMAND ${CMAKE_COMMAND}
+
+    if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
                               -E
                               env
                               CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -136,15 +222,54 @@ else()
                               MPILIB=${MPI_LIB}
                               BLASLIB=${BLAS_LIB}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
-                              PATH_${MPI_LIB}=${MPI_ROOT_DIR}
-                              PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
-                              PATH_BLAS_${BLASLIB}=${BLAS_PATH}
-                              EXA_TALSH_ONLY=${EXA_TALSH_ONLY}
+                              EXA_TALSH_ONLY=YES
                               EXATN_SERVICE=YES
-                              PATH_INTEL=${BLAS_PATH}
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
                               make
-                              VERBOSE=1
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    elseif(MPI_LIB STREQUAL "OPENMPI")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
+                              -E
+                              env
+                              OMPI_CXX=${CMAKE_CXX_COMPILER}
+                              OMPI_CC=${CMAKE_C_COMPILER}
+                              OMPI_FC=${CMAKE_Fortran_COMPILER}
+                              GPU_CUDA=NOCUDA
+                              MPILIB=${MPI_LIB}
+                              BLASLIB=${BLAS_LIB}
+                              EXA_NO_BUILD=${TALSHXX_EXISTS}
+                              PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+                              EXA_TALSH_ONLY=NO
+                              EXATN_SERVICE=YES
+                              PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
+                              make
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    elseif(MPI_LIB STREQUAL "MPICH")
+      add_custom_target(exatensor-build
+                        COMMAND ${CMAKE_COMMAND}
+                              -E
+                              env
+                              MPICH_CXX=${CMAKE_CXX_COMPILER}
+                              MPICH_CC=${CMAKE_C_COMPILER}
+                              MPICH_FC=${CMAKE_Fortran_COMPILER}
+                              GPU_CUDA=NOCUDA
+                              MPILIB=${MPI_LIB}
+                              BLASLIB=${BLAS_LIB}
+                              EXA_NO_BUILD=${TALSHXX_EXISTS}
+                              PATH_${MPI_LIB}=${MPI_ROOT_DIR}
+                              EXA_TALSH_ONLY=NO
+                              EXATN_SERVICE=YES
+                              PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
+                              PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
+                              PATH_INTEL=${PATH_INTEL_ROOT}
+                              make
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
+    endif()
+
   endif()
 endif()
 
@@ -178,8 +303,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"
   else()
     add_subdirectory(antlr)
   endif()
-  # You can use libc++ to compile this project when g++ is NOT greater than or
-  # equal to 5.0.
+  # You can use libc++ to compile this project when g++ is NOT greater than or equal to 5.0.
   if(WITH_LIBCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   endif()

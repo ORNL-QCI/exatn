@@ -27,9 +27,9 @@ if(BLAS_LIB AND BLAS_PATH)
 
   elseif(BLAS_LIB STREQUAL "MKL")
 
-    find_library(lp64 mkl_intel_lp64 HINTS ${BLAS_PATH}/mkl/lib/intel64)
-    find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH}/mkl/lib/intel64)
-    find_library(core mkl_core HINTS ${BLAS_PATH}/mkl/lib/intel64)
+    find_library(lp64 mkl_intel_lp64 HINTS ${BLAS_PATH})
+    find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH})
+    find_library(core mkl_core HINTS ${BLAS_PATH})
     set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
 
   elseif(BLAS_LIB STREQUAL "ACML")
@@ -39,8 +39,8 @@ if(BLAS_LIB AND BLAS_PATH)
   elseif(BLAS_LIB STREQUAL "ESSL")
 
     find_library(essl essl HINTS ${BLAS_PATH})
-    find_library(xlf90_r xlf90_r HINTS ${BLAS_PATH})
-    find_library(xlfmath xlfmath HINTS ${BLAS_PATH})
+    find_library(xlf90_r xlf90_r HINTS ${PATH_IBM_XL_FOR})
+    find_library(xlfmath xlfmath HINTS ${PATH_IBM_XL_FOR})
     set(BLAS_LIBRARIES "${essl};${xlf90_r};${xlfmath}")
 
   endif()
