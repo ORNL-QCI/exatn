@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/08/06
+REVISION: 2019/08/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,8 +40,11 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
    if(tensor.find("|") != std::string::npos) label_direction = LegDirection::OUTWARD;
    auto i = left_par_pos + 1;
    auto label_begin = i;
+   bool spaces_allowed = true;
    while(i <= right_par_pos){
-    if(tensor[i] == ',' || tensor[i] == '|' || tensor[i] == ')'){ //index separator
+    if(tensor[i] == ' '){
+     if(!spaces_allowed) return false;
+    }else if(tensor[i] == ',' || tensor[i] == '|' || tensor[i] == ')'){ //index separator
      auto label_end = (i-1);
      if(label_end < label_begin) return false;
      indices.emplace_back(IndexLabel{tensor.substr(label_begin,label_end-label_begin+1),label_direction});
@@ -55,10 +58,56 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
      }else if(tensor[i] == ')'){
       if(i != right_par_pos) return false;
      }
+     spaces_allowed = true;
+    }else{
+     label_begin = i;
+     spaces_allowed = false;
     }
     ++i;
    }
   }
+ }else{
+  return false;
+ }
+ return true;
+}
+
+
+bool parse_tensor_network(const std::string & network,        //in: tensor network as a string
+                          std::vector<std::string> & tensors) //out: parsed (symbolic) tensors
+{
+ if(network.empty()) return false;
+ tensors.clear();
+ //Find the output tensor (l.h.s. tensor):
+ int net_len = network.length();
+ auto equal_pos = network.find("=");
+ if(equal_pos == std::string::npos) return false;
+ if(equal_pos < 3) return false; //l.h.s. (output) tensor consists of at least three characters
+ //Extract the output tensor:
+ auto output_end = equal_pos - 1;
+ if(network[output_end] == '+') --output_end; //+= equality sign
+ auto trim_range = trim_spaces_off(network,std::pair<int,int>{0,output_end});
+ if(trim_range.first > trim_range.second) return false;
+ tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
+ //Extract the input tensors:
+ int input_beg = equal_pos + 1;
+ bool input_tensor_found = true;
+ while(input_tensor_found){
+  auto mult_pos = network.find("*",input_beg);
+  input_tensor_found = (mult_pos != std::string::npos);
+  if(input_tensor_found){
+   int input_end = mult_pos - 1;
+   trim_range = trim_spaces_off(network,std::pair<int,int>{input_beg,input_end});
+   if(trim_range.first > trim_range.second) return false;
+   tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
+   input_beg = mult_pos + 1;
+  }
+ }
+ //Extract the last tensor:
+ if(input_beg < net_len){
+  trim_range = trim_spaces_off(network,std::pair<int,int>{input_beg,net_len-1});
+  if(trim_range.first > trim_range.second) return false;
+  tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
  }else{
   return false;
  }

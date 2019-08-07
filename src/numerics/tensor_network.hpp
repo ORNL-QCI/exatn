@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/07/18
+REVISION: 2019/08/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -81,6 +81,10 @@ public:
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: fully specified output tensor of the tensor network
                const std::vector<TensorLeg> & output_legs); //in: fully specified output tensor legs
+ /** Builds a tensor network from a template implemented by a custom tensor network builder. **/
+ TensorNetwork(const std::string & name,                    //in: tensor network name
+               std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
+               NetworkBuilder & builder);                   //in: specific tensor network builder
 
  TensorNetwork(const TensorNetwork &) = default;
  TensorNetwork & operator=(const TensorNetwork &) = default;
@@ -166,10 +170,6 @@ public:
  bool mergeTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                    unsigned int right_id,   //in: right tensor id (present in the tensor network)
                    unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
-
- /** Builds the tensor network from a template implemented by a custom tensor network builder.
-     Note that the tensor network must already contain the explicit fully specified output tensor. **/
- bool buildFromTemplate(NetworkBuilder & builder);
 
 protected:
 

@@ -166,8 +166,7 @@ PYBIND11_MODULE(_pyexatn, m) {
                             &exatn::numerics::TensorNetwork::appendTensor, "")
       .def("reoderOutputModes", &exatn::numerics::TensorNetwork::reoderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
-      .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "")
-      .def("buildFromTemplate", &exatn::numerics::TensorNetwork::buildFromTemplate, "");
+      .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "");
 
 py::class_<exatn::numerics::VectorSpace>(
     m, "VectorSpace","")

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/04
+REVISION: 2019/08/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,6 +48,24 @@ TensorNetwork::TensorNetwork(const std::string & name,
                    TensorConn(output_tensor,0U,output_legs)
                   )
                  );
+}
+
+
+TensorNetwork::TensorNetwork(const std::string & name,
+                             std::shared_ptr<Tensor> output_tensor,
+                             NetworkBuilder & builder):
+ explicit_output_(0), finalized_(0), name_(name)
+{
+ tensors_.emplace( //output tensor (id = 0)
+                  std::make_pair(
+                   0U,
+                   TensorConn(output_tensor,
+                              0U,
+                              std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0)) //dummy legs
+                             )
+                  )
+                 );
+ builder.build(*this);
 }
 
 
@@ -614,23 +632,6 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  assert(num_deleted == 1);
  //Update connections:
  this->updateConnections(result_id);
- return true;
-}
-
-
-bool TensorNetwork::buildFromTemplate(NetworkBuilder & builder)
-{
- if(explicit_output_ == 0){
-  std::cout << "#ERROR(TensorNetwork::buildFromTemplate): Invalid request: " <<
-   "Trying to build a tensor network from a template while missing a full output tensor!" << std::endl;
-  return false;
- }
- if(finalized_ != 0){
-  std::cout << "#ERROR(TensorNetwork::buildFromTemplate): Invalid request: " <<
-   "Trying to build a tensor network from a template while the tensor network is already finalized!" << std::endl;
-  return false;
- }
- builder.build(*this);
  return true;
 }
 
