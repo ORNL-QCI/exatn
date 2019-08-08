@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/08/04
+REVISION: 2019/08/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,9 +32,9 @@ class TensorLeg{
 public:
 
  /** Create a tensor leg by specifying the id of the connected tensor [0:*] and its corresponding dimension [0:*]. **/
- explicit TensorLeg(unsigned int tensor_id,
-                    unsigned int dimensn_id,
-                    LegDirection direction = LegDirection::UNDIRECT);
+ TensorLeg(unsigned int tensor_id,
+           unsigned int dimensn_id,
+           LegDirection direction = LegDirection::UNDIRECT);
 
  TensorLeg(const TensorLeg & tens_leg) = default;
  TensorLeg & operator=(const TensorLeg & tens_leg) = default;
