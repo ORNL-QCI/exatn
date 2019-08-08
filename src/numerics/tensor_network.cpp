@@ -1,13 +1,18 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/07
+REVISION: 2019/08/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_network.hpp"
+#include "tensor_symbol.hpp"
 
 #include <iostream>
 #include <assert.h>
+
+#include <string>
+#include <vector>
+#include <map>
 
 namespace exatn{
 
@@ -56,7 +61,34 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              const std::vector<std::shared_ptr<Tensor>> & tensors):
  explicit_output_(0), finalized_(0), name_(name)
 {
- //`Finish
+ std::map<std::string,std::vector<TensorLeg>> index_map; //index label --> list of tensor legs associated with this index label
+ std::map<std::string,unsigned int> tensor_ids; //tensor name --> tensor id in the network
+ std::vector<std::string> stensors; //individual tensors of the tensor network
+ if(parse_tensor_network(tensor_network,stensors)){
+  std::string tensor_name;
+  std::vector<IndexLabel> indices;
+  for(unsigned int i = 0; i < stensors.size(); ++i){
+   bool conjugated;
+   if(parse_tensor(stensors[i],tensor_name,indices,conjugated)){
+    auto res = tensor_ids.emplace(std::make_pair(tensor_name,i));
+    if(!res.second){
+     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Multiple tensors with the same name detected: " <<
+      tensor_network << std::endl;
+    }
+    //`Finish
+   }else{
+    std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid tensor in symbolic tensor network specification: " <<
+     stensors[i] << std::endl;
+    assert(false);
+   }
+   indices.clear();
+   tensor_name.clear();
+  }
+ }else{
+  std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid symbolic tensor network specification: " <<
+   tensor_network << std::endl;
+  assert(false);
+ }
  finalized_ = 1;
 }
 
@@ -69,13 +101,15 @@ TensorNetwork::TensorNetwork(const std::string & name,
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
                    0U,
-                   TensorConn(output_tensor,
-                              0U,
-                              std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0)) //dummy legs
-                             )
+                   TensorConn(
+                    output_tensor,
+                    0U,
+                    std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0)) //dummy legs
+                   )
                   )
                  );
  builder.build(*this);
+ finalized_ = 1;
 }
 
 
