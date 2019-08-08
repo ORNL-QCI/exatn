@@ -5,6 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/numerics)
 include_directories(${PYTHON_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tpls/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH)
+include_directories(${CMAKE_SOURCE_DIR}/tpls/eigen)
 
 if (CUDA_FOUND)
   include_directories(${CUDA_INCLUDE_DIRS})
