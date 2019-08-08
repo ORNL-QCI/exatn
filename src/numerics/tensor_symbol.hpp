@@ -94,19 +94,20 @@ inline bool is_alphanumeric(const std::string & identifier)
 }
 
 /** Returns the string view range without leading and trailing spaces. **/
-inline std::pair<int,int> trim_spaces_off(const std::string & str,
-                                          std::pair<int,int> view)
+inline std::pair<int,int> trim_spaces_off(const std::string & str, //in: full string container
+                                          std::pair<int,int> view) //in: input string view
 {
  int sbeg = view.first;
  int send = view.second;
- if(sbeg > send) return std::make_pair(sbeg,send);
- while(send >= sbeg){
-  if(!is_space(str[send])) break;
-  --send;
- }
- while(sbeg <= send){
-  if(!is_space(str[sbeg])) break;
-  ++sbeg;
+ if(sbeg <= send){
+  while(send >= sbeg){ //remove trailing white spaces
+   if(!is_space(str[send])) break;
+   --send;
+  }
+  while(sbeg <= send){ //remove leading white spaces
+   if(!is_space(str[sbeg])) break;
+   ++sbeg;
+  }
  }
  return std::make_pair(sbeg,send);
 }

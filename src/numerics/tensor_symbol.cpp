@@ -26,29 +26,38 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
  if(left_par_pos >= right_par_pos) return false;
  if(left_par_pos > 0){ //tensor name must be non-empty
   //Check for tensor complex conjugation:
-  if(tensor[left_par_pos-1] == '+'){ //complex conjugation
-   if(left_par_pos < 2) return false;
+  auto trim_range = trim_spaces_off(tensor,std::pair<int,int>{0,static_cast<int>(left_par_pos-1)});
+  if(trim_range.first > trim_range.second) return false;
+  if(tensor[trim_range.second] == '+'){ //complex conjugation
+   if(trim_range.second < trim_range.first + 1) return false;
    complex_conjugated = true;
-   tensor_name = tensor.substr(0,left_par_pos-1);
   }else{
    complex_conjugated = false;
-   tensor_name = tensor.substr(0,left_par_pos);
   }
+  tensor_name = tensor.substr(trim_range.first,trim_range.second-trim_range.first+1);
+  if(!is_alphanumeric(tensor_name)) return false;
   //Extract tensor indices:
-  if(right_par_pos > (left_par_pos + 1)){
+  if(right_par_pos > (left_par_pos + 1)){ //indices present
    auto label_direction = LegDirection::UNDIRECT;
    if(tensor.find("|") != std::string::npos) label_direction = LegDirection::OUTWARD;
    auto i = left_par_pos + 1;
    auto label_begin = i;
-   bool spaces_allowed = true;
+   auto label_end = label_begin - 1;
+   bool label_started = false;
+   bool label_finished = false;
    while(i <= right_par_pos){
     if(tensor[i] == ' '){
-     if(!spaces_allowed) return false;
+     if(label_started) label_finished = true;
     }else if(tensor[i] == ',' || tensor[i] == '|' || tensor[i] == ')'){ //index separator
-     auto label_end = (i-1);
+     if(label_started){
+      label_finished = true;
+     }else{
+      return false;
+     }
      if(label_end < label_begin) return false;
-     indices.emplace_back(IndexLabel{tensor.substr(label_begin,label_end-label_begin+1),label_direction});
-     label_begin = (i+1);
+     trim_range = trim_spaces_off(tensor,std::pair<int,int>{static_cast<int>(label_begin),static_cast<int>(label_end)});
+     indices.emplace_back(IndexLabel{tensor.substr(trim_range.first,trim_range.second-trim_range.first+1),label_direction});
+     if(!is_alphanumeric(indices.back().label)) return false;
      if(tensor[i] == '|'){
       if(label_direction == LegDirection::OUTWARD){
        label_direction = LegDirection::INWARD;
@@ -58,10 +67,15 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
      }else if(tensor[i] == ')'){
       if(i != right_par_pos) return false;
      }
-     spaces_allowed = true;
+     label_started = false;
+     label_finished = false;
     }else{
-     label_begin = i;
-     spaces_allowed = false;
+     if(label_finished) return false;
+     if(!label_started){
+      label_started = true;
+      label_begin = i;
+     }
+     label_end = i;
     }
     ++i;
    }
@@ -79,14 +93,14 @@ bool parse_tensor_network(const std::string & network,        //in: tensor netwo
  if(network.empty()) return false;
  tensors.clear();
  //Find the output tensor (l.h.s. tensor):
- int net_len = network.length();
+ auto net_len = network.length();
  auto equal_pos = network.find("=");
  if(equal_pos == std::string::npos) return false;
  if(equal_pos < 3) return false; //l.h.s. (output) tensor consists of at least three characters
  //Extract the output tensor:
  auto output_end = equal_pos - 1;
- if(network[output_end] == '+') --output_end; //+= equality sign
- auto trim_range = trim_spaces_off(network,std::pair<int,int>{0,output_end});
+ if(network[output_end] == '+') --output_end; //"+=" equality sign use instead of "="
+ auto trim_range = trim_spaces_off(network,std::pair<int,int>{0,static_cast<int>(output_end)});
  if(trim_range.first > trim_range.second) return false;
  tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
  //Extract the input tensors:
@@ -105,7 +119,7 @@ bool parse_tensor_network(const std::string & network,        //in: tensor netwo
  }
  //Extract the last tensor:
  if(input_beg < net_len){
-  trim_range = trim_spaces_off(network,std::pair<int,int>{input_beg,net_len-1});
+  trim_range = trim_spaces_off(network,std::pair<int,int>{input_beg,static_cast<int>(net_len-1)});
   if(trim_range.first > trim_range.second) return false;
   tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
  }else{

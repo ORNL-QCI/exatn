@@ -81,7 +81,11 @@ public:
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: fully specified output tensor of the tensor network
                const std::vector<TensorLeg> & output_legs); //in: fully specified output tensor legs
- /** Builds a tensor network from a template implemented by a custom tensor network builder. **/
+ /** Creates a named tensor network from a symbolic tensor network expression and vector of tensors. **/
+ TensorNetwork(const std::string & name,                              //in: tensor network name
+               const std::string & tensor_network,                    //in: tensor network expression (symbolic math expression)
+               const std::vector<std::shared_ptr<Tensor>> & tensors); //in: participating tensors identified by their names
+ /** Builds a named tensor network from a template implemented by a custom tensor network builder. **/
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
                NetworkBuilder & builder);                   //in: specific tensor network builder

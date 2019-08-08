@@ -52,6 +52,16 @@ TensorNetwork::TensorNetwork(const std::string & name,
 
 
 TensorNetwork::TensorNetwork(const std::string & name,
+                             const std::string & tensor_network,
+                             const std::vector<std::shared_ptr<Tensor>> & tensors):
+ explicit_output_(0), finalized_(0), name_(name)
+{
+ //`Finish
+ finalized_ = 1;
+}
+
+
+TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
  explicit_output_(0), finalized_(0), name_(name)
