@@ -8,4 +8,4 @@ target_include_directories(TAProLInterpreterTester
 
 target_link_libraries(TAProLInterpreterTester PRIVATE
                       exatn-taprol-parser
-                      exatn)
+                      exatn ${ANTLR_LIB})
