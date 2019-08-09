@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/07
+REVISION: 2019/08/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,6 +58,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "network_build_factory.hpp"
 
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 #include <memory>
@@ -84,7 +85,7 @@ public:
  /** Creates a named tensor network from a symbolic tensor network expression and vector of tensors. **/
  TensorNetwork(const std::string & name,                              //in: tensor network name
                const std::string & tensor_network,                    //in: tensor network expression (symbolic math expression)
-               const std::vector<std::shared_ptr<Tensor>> & tensors); //in: participating tensors identified by their names
+               const std::map<std::string,std::shared_ptr<Tensor>> & tensors); //in: participating tensors identified by their names
  /** Builds a named tensor network from a template implemented by a custom tensor network builder. **/
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network

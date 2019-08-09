@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/08
+REVISION: 2019/08/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,11 +58,10 @@ TensorNetwork::TensorNetwork(const std::string & name,
 
 TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
-                             const std::vector<std::shared_ptr<Tensor>> & tensors):
+                             const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
  explicit_output_(0), finalized_(0), name_(name)
 {
  std::map<std::string,std::vector<TensorLeg>> index_map; //index label --> list of tensor legs associated with this index label
- std::map<std::string,unsigned int> tensor_ids; //tensor name --> tensor id in the network
  std::vector<std::string> stensors; //individual tensors of the tensor network
  if(parse_tensor_network(tensor_network,stensors)){
   std::string tensor_name;
@@ -70,11 +69,6 @@ TensorNetwork::TensorNetwork(const std::string & name,
   for(unsigned int i = 0; i < stensors.size(); ++i){
    bool conjugated;
    if(parse_tensor(stensors[i],tensor_name,indices,conjugated)){
-    auto res = tensor_ids.emplace(std::make_pair(tensor_name,i));
-    if(!res.second){
-     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Multiple tensors with the same name detected: " <<
-      tensor_network << std::endl;
-    }
     //`Finish
    }else{
     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid tensor in symbolic tensor network specification: " <<
