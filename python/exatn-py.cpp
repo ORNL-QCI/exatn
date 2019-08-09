@@ -7,6 +7,7 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
+#include <pybind11/eigen.h>
 
 namespace py = pybind11;
 using namespace exatn;
@@ -73,7 +74,6 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("registerTensorMethod", &exatn::rpc::DriverClient::registerTensorMethod, "")
       .def("getResults", &exatn::rpc::DriverClient::getResults, "")
       .def("shutdown", &exatn::rpc::DriverClient::shutdown, "");
-
 
 
 /**
@@ -344,8 +344,6 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("deleteDimension", &exatn::numerics::TensorShape::deleteDimension, "")
       .def("appendDimension", &exatn::numerics::TensorShape::appendDimension, "");
 
-
-
   py::class_<exatn::numerics::TensorSignature>(
       m, "TensorSignature", "")
       .def(py::init<>())
@@ -368,7 +366,11 @@ PYBIND11_MODULE(_pyexatn, m) {
   py::class_<exatn::numerics::SubspaceRegister>(
       m, "SubspaceRegister", "")
       .def(py::init<>())
-      .def("registerSubspace", &exatn::numerics::SubspaceRegister::registerSubspace, "");
+      .def("registerSubspace", &exatn::numerics::SubspaceRegister::registerSubspace, "")
+      .def("getSubspace", (const exatn::numerics::Subspace* (exatn::numerics::SubspaceRegister::*)
+                          (SubspaceId) const) &exatn::numerics::SubspaceRegister::getSubspace, "")
+      .def("getSubspace", (const exatn::numerics::Subspace* (exatn::numerics::SubspaceRegister::*)
+                          (const std::string &) const) &exatn::numerics::SubspaceRegister::getSubspace, "");
 
   py::class_<exatn::numerics::SpaceRegEntry>(
       m, "SpaceRegEntry")
@@ -379,7 +381,11 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def(py::init<>())
       .def("registerSpace", &exatn::numerics::SpaceRegister::registerSpace, "")
       .def("registerSubspace", &exatn::numerics::SpaceRegister::registerSubspace, "")
-      .def("getSubspace", &exatn::numerics::SpaceRegister::getSubspace, "");
+      .def("getSubspace", &exatn::numerics::SpaceRegister::getSubspace, "")
+      .def("getSpace", (const exatn::numerics::VectorSpace* (exatn::numerics::SpaceRegister::*)
+                       (SpaceId) const) &exatn::numerics::SpaceRegister::getSpace, "")
+      .def("getSpace", (const exatn::numerics::VectorSpace* (exatn::numerics::SpaceRegister::*)
+                       (const std::string &) const) &exatn::numerics::SpaceRegister::getSpace, "");
 
   py::class_<exatn::numerics::SymmetryRange>(
       m, "SymmetryRange");
