@@ -64,12 +64,21 @@ TensorNetwork::TensorNetwork(const std::string & name,
  std::map<std::string,std::vector<TensorLeg>> index_map; //index label --> list of tensor legs associated with this index label
  std::vector<std::string> stensors; //individual tensors of the tensor network
  if(parse_tensor_network(tensor_network,stensors)){
+  //Construct index correspondence map:
   std::string tensor_name;
   std::vector<IndexLabel> indices;
   for(unsigned int i = 0; i < stensors.size(); ++i){
    bool conjugated;
    if(parse_tensor(stensors[i],tensor_name,indices,conjugated)){
-    //`Finish
+    for(unsigned int j = 0; j < indices.size(); ++j){
+     auto pos = index_map.find(indices[j].label);
+     if(pos == index_map.end()){
+      auto res = index_map.emplace(std::make_pair(indices[j].label,std::vector<TensorLeg>{}));
+      assert(res.second);
+      pos = res.first;
+     }
+     pos->second.emplace_back(TensorLeg(i,j,indices[j].direction));
+    }
    }else{
     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid tensor in symbolic tensor network specification: " <<
      stensors[i] << std::endl;
@@ -77,6 +86,19 @@ TensorNetwork::TensorNetwork(const std::string & name,
    }
    indices.clear();
    tensor_name.clear();
+  }
+  //Build the tensor network:
+  for(unsigned int i = 0; i < stensors.size(); ++i){
+   bool conjugated;
+   if(parse_tensor(stensors[i],tensor_name,indices,conjugated)){
+    auto tensor = tensors.find(tensor_name);
+    std::vector<TensorLeg> legs;
+    for(unsigned int j = 0; j < indices.size(); ++j){
+     auto pos = index_map.find(indices[j].label);
+     assert(pos != index_map.end());
+     //`Finish
+    }
+   }
   }
  }else{
   std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid symbolic tensor network specification: " <<
