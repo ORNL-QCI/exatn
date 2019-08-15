@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/07/30
+REVISION: 2019/08/15
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -13,7 +13,7 @@ Rationale:
 
 #include "Identifiable.hpp"
 
-#include "tensor_operation.hpp"
+#include "tensor_op_factory.hpp"
 #include "tensor.hpp"
 
 #include <memory>
@@ -35,13 +35,16 @@ class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecu
 public:
 
   /** Executes the tensor operation found in a DAG node. **/
-  virtual NodeExecHandleType execute(TensorOperation & op) = 0;
+  virtual NodeExecHandleType execute(numerics::TensorOpCreate & op) = 0;
+  virtual NodeExecHandleType execute(numerics::TensorOpDestroy & op) = 0;
+  virtual NodeExecHandleType execute(numerics::TensorOpTransform & op) = 0;
+  virtual NodeExecHandleType execute(numerics::TensorOpAdd & op) = 0;
+  virtual NodeExecHandleType execute(numerics::TensorOpContract & op) = 0;
 
   /** Synchronizes the execution of a tensor operation. **/
   virtual bool sync(NodeExecHandleType op_handle, bool wait = false) = 0;
 
   virtual std::shared_ptr<TensorNodeExecutor> clone() = 0;
-
 };
 
 } //namespace runtime

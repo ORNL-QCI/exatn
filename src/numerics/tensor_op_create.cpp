@@ -1,10 +1,14 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2019/06/03
+REVISION: 2019/08/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
+#include "exatn_service.hpp"
+
 #include "tensor_op_create.hpp"
+
+#include "tensor_node_executor.hpp"
 
 namespace exatn{
 
@@ -18,6 +22,12 @@ TensorOpCreate::TensorOpCreate():
 bool TensorOpCreate::isSet() const
 {
  return (this->getNumOperandsSet() == this->getNumOperands());
+}
+
+void TensorOpCreate::accept(runtime::TensorNodeExecutor & node_executor)
+{
+ node_executor.execute(*this);
+ return;
 }
 
 std::unique_ptr<TensorOperation> TensorOpCreate::createNew()

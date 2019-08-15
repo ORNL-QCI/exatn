@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/29
+REVISION: 2019/08/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,6 +21,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+namespace runtime{
+ class TensorNodeExecutor;
+}
+
 namespace numerics{
 
 class TensorOperation{ //abstract
@@ -40,6 +44,9 @@ public:
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const = 0;
+
+ /** Accepts tensor node executor (visitor pattern). **/
+ virtual void accept(runtime::TensorNodeExecutor & node_executor) = 0;
 
  /** Prints. **/
  virtual void printIt() const;

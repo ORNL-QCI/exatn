@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2019/07/25
+REVISION: 2019/08/15
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -20,7 +20,11 @@ class ExatensorNodeExecutor : public TensorNodeExecutor {
 
 public:
 
-  NodeExecHandleType execute(TensorOperation & op) override;
+  NodeExecHandleType execute(numerics::TensorOpCreate & op) override;
+  NodeExecHandleType execute(numerics::TensorOpDestroy & op) override;
+  NodeExecHandleType execute(numerics::TensorOpTransform & op) override;
+  NodeExecHandleType execute(numerics::TensorOpAdd & op) override;
+  NodeExecHandleType execute(numerics::TensorOpContract & op) override;
 
   bool sync(NodeExecHandleType op_handle, bool wait) override;
 

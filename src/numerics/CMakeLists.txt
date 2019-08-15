@@ -23,7 +23,11 @@ add_library(${LIBRARY_NAME}
             network_build_factory.cpp
             tensor_network.cpp)
 
-target_include_directories(${LIBRARY_NAME} PUBLIC .)
+target_include_directories(${LIBRARY_NAME}
+                    PUBLIC .
+                    PRIVATE
+                           ${CMAKE_SOURCE_DIR}/src/runtime/executor
+                           ${CMAKE_SOURCE_DIR}/src/exatn)
 target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
