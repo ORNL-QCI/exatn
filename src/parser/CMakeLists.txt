@@ -10,12 +10,15 @@ target_include_directories(${LIBRARY_NAME}
                             ${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src
                             )
 
-add_dependencies(${LIBRARY_NAME} antlr4_shared)
+
+set(ANTLR_LIB ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.so)
 if (APPLE)
-  target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.dylib)
-else()
-  target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.so)
+  set(ANTLR_LIB ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.dylib)
 endif()
+
+add_dependencies(${LIBRARY_NAME} antlr4_shared)
+
+target_link_libraries(${LIBRARY_NAME} PUBLIC exatn ${ANTLR_LIB})
 
 exatn_configure_library_rpath(${LIBRARY_NAME})
 
