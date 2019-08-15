@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/09
+REVISION: 2019/08/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,10 +59,13 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
- explicit_output_(0), finalized_(0), name_(name)
+ explicit_output_(1), finalized_(0), name_(name)
 {
+ //Convert tensor hypernetwork into regular tensor network, if needed:
+ //`Finish
+ //Build a regular tensor network according the the provided symbolic specification:
  std::map<std::string,std::vector<TensorLeg>> index_map; //index label --> list of tensor legs associated with this index label
- std::vector<std::string> stensors; //individual tensors of the tensor network
+ std::vector<std::string> stensors; //individual tensors of the tensor network (symbolic)
  if(parse_tensor_network(tensor_network,stensors)){
   //Construct index correspondence map:
   std::string tensor_name;
@@ -77,7 +80,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
       assert(res.second);
       pos = res.first;
      }
-     pos->second.emplace_back(TensorLeg(i,j,indices[j].direction));
+     pos->second.emplace_back(TensorLeg(i,j,indices[j].direction)); //directed index #j of tensor #i
     }
    }else{
     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Invalid tensor in symbolic tensor network specification: " <<
@@ -87,16 +90,37 @@ TensorNetwork::TensorNetwork(const std::string & name,
    indices.clear();
    tensor_name.clear();
   }
-  //Build the tensor network:
+  //Build the tensor network object:
   for(unsigned int i = 0; i < stensors.size(); ++i){
    bool conjugated;
    if(parse_tensor(stensors[i],tensor_name,indices,conjugated)){
     auto tensor = tensors.find(tensor_name);
-    std::vector<TensorLeg> legs;
-    for(unsigned int j = 0; j < indices.size(); ++j){
-     auto pos = index_map.find(indices[j].label);
-     assert(pos != index_map.end());
-     //`Finish
+    if(tensor != tensors.end()){
+     std::vector<TensorLeg> legs;
+     for(unsigned int j = 0; j < indices.size(); ++j){
+      auto pos = index_map.find(indices[j].label);
+      assert(pos != index_map.end());
+      const auto & inds = pos->second;
+      for(const auto & ind: inds){
+       if(ind.getTensorId() != i || ind.getDimensionId() != j){
+        legs.emplace_back(ind);
+       }
+      }
+     }
+     if(i == 0){
+       tensors_.emplace( //output tensor (id = 0)
+                        std::make_pair(
+                         0U,
+                         TensorConn(tensor->second,0U,legs)
+                        )
+                       );
+     }else{ //input tensor
+      this->appendTensor(i,tensor->second,legs);
+     }
+    }else{
+     std::cout << "#ERROR(TensorNetwork::TensorNetwork): Unable to find tensor named " <<
+      tensor_name << std::endl;
+     assert(false);
     }
    }
   }
@@ -105,7 +129,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
    tensor_network << std::endl;
   assert(false);
  }
- finalized_ = 1;
+ bool finalized = this->finalize();
+ assert(finalized);
 }
 
 
