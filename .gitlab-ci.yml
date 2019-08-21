@@ -6,11 +6,11 @@ build_devel:
   only:
   - devel
   script:
-  - cd docker/ci/ubuntu1804/devel && docker build -t exatn/devel . --no-cache
+  - cd docker/ci/ubuntu1804/devel && nvidia-docker build -t exatn/devel . --no-cache
 
 build_master:
   stage: build
   only:
   - master
   script:
-  - cd docker/ci/ubuntu1804/master && docker build -t exatn/master . --no-cache
+  - cd docker/ci/ubuntu1804/master && nvidia-docker build -t exatn/master . --no-cache
