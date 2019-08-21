@@ -1,4 +1,4 @@
-from xacc/ubuntu:18.04
+from code.ornl.gov:4567/qci/exatn/base_cuda:10.0
 run update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50 \
     && update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-8 50 \
@@ -9,5 +9,5 @@ run update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50 \
                 -DEXATN_BUILD_TESTS=TRUE -DBLAS_LIB=ATLAS \
                 -DBLAS_PATH=/usr/lib/x86_64-linux-gnu \
                 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/lib/mpich \
-                -DMPI_BIN_PATH=/usr/bin \
+                -DMPI_BIN_PATH=/usr/bin -DCUDA_HOST_COMPILER=g++-7 \
     && make -j$(nproc) install && ctest --output-on-failure
