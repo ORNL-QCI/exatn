@@ -1,23 +1,26 @@
 add_subdirectory(graph)
-#add_subdirectory(optimizer)
+add_subdirectory(optimizer)
 add_subdirectory(executor)
 
 set(LIBRARY_NAME exatn-runtime)
 
-file(GLOB SRC tensor_runtime.cpp tensor_exec_state.cpp)
+file(GLOB SRC
+     tensor_runtime.cpp
+    )
 
 add_library(${LIBRARY_NAME}
             SHARED
             ${SRC}
-            )
+           )
+
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
-target_include_directories(
-  ${LIBRARY_NAME}
-  PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn )
+target_include_directories(${LIBRARY_NAME}
+  PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics
-                                      PRIVATE Boost::graph)
+target_link_libraries(${LIBRARY_NAME}
+                      PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph exatn-runtime-optimizer
+                      PRIVATE Boost::graph)
 
 exatn_configure_library_rpath(${LIBRARY_NAME})
 
