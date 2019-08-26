@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/08/04
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,8 +19,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      means ensuring that the tensor-result (output tensor) has been fully computed.
 **/
 
-#ifndef EXATN_NUMERICS_NUM_SERVER_HPP_
-#define EXATN_NUMERICS_NUM_SERVER_HPP_
+#ifndef EXATN_NUM_SERVER_HPP_
+#define EXATN_NUM_SERVER_HPP_
 
 #include "tensor_basic.hpp"
 #include "space_register.hpp"
@@ -147,8 +147,9 @@ private:
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 
+/** Numerical service singleton (numerical server) **/
 extern std::shared_ptr<NumServer> numericalServer;
 
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_NUM_SERVER_HPP_
+#endif //EXATN_NUM_SERVER_HPP_

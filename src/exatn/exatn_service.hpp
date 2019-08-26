@@ -11,10 +11,6 @@ namespace exatn {
 extern bool exatnFrameworkInitialized;
 extern std::shared_ptr<ServiceRegistry> serviceRegistry;
 
-void initialize();
-bool isInitialized();
-void finalize();
-
 template <typename Service>
 std::shared_ptr<Service> getService(const std::string &serviceName) {
   if (!exatn::exatnFrameworkInitialized) {

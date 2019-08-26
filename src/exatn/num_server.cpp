@@ -1,16 +1,18 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/08/04
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 
-#include "assert.h"
+#include <cassert>
 
 namespace exatn{
 
-std::shared_ptr<NumServer> numericalServer = std::make_shared<NumServer>();
+/** Numerical server (singleton) **/
+std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::initialize()
+
 
 NumServer::NumServer():
  tensor_rt_(std::make_shared<runtime::TensorRuntime>())

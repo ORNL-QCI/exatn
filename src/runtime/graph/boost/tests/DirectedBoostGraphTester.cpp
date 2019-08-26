@@ -18,7 +18,7 @@ using namespace exatn;
 
 TEST(DirectedGraphTester, checkConstruction) {
 
-  // Implement this when we have TensorOperation
+  //`Implement this when we have TensorOperation
 }
 
 int main(int argc, char **argv) {
