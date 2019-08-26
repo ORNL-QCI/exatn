@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/07/29
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -10,7 +10,7 @@ Rationale:
      dependencies between them: A directed edge from node1 to
      node2 indicates that node1 depends on node2. Each DAG node
      has its unique integer vertex id (VertexIdType) returned
-     when the node is added into the DAG.
+     when the node is appended into the DAG.
  (b) The tensor graph contains:
      1. The DAG implementation (DirectedBoostGraph subclass);
      2. The DAG execution state (TensorExecState data member).
@@ -26,8 +26,8 @@ Rationale:
         current (write) epoch.
      The execution state of a Tensor is progressing through alternating
      read and write epochs, introducing read-after-write, write-after-write,
-     and write-after-read dependencies between tensor nodes sharing the same
-     data (Tensor).
+     and write-after-read dependencies between tensor nodes with stored
+     tensor operations operating on the same data (Tensor).
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_EXEC_STATE_HPP_
@@ -39,6 +39,7 @@ Rationale:
 #include <unordered_map>
 #include <list>
 #include <memory>
+#include <atomic>
 
 namespace exatn {
 namespace runtime {
@@ -57,19 +58,20 @@ class TensorExecState {
 protected:
 
   struct TensorExecInfo {
-    std::size_t update_count; //total number of outstanding updates on a given Tensor in the current DAG
-    int rw_epoch; //>0: number of current epoch reads; -1: current epoch write (single)
-    std::vector<VertexIdType> rw_epoch_nodes; //nodes participating in the current R/W epoch
+    std::atomic<std::size_t> update_count;    //total number of outstanding updates on a given Tensor in the current DAG
+    std::atomic<int> rw_epoch;                //>0: number of current epoch reads; -1: current epoch write (single)
+    std::vector<VertexIdType> rw_epoch_nodes; //nodes participating in the current R/W epoch (either read or write)
 
     TensorExecInfo(): update_count(0), rw_epoch(0) {}
-    TensorExecInfo(const TensorExecInfo &) = default;
-    TensorExecInfo & operator=(const TensorExecInfo &) = default;
-    TensorExecInfo(TensorExecInfo &&) noexcept = default;
-    TensorExecInfo & operator=(TensorExecInfo &&) noexcept = default;
+    TensorExecInfo(const TensorExecInfo &) = delete;
+    TensorExecInfo & operator=(const TensorExecInfo &) = delete;
+    TensorExecInfo(TensorExecInfo &&) noexcept = delete;
+    TensorExecInfo & operator=(TensorExecInfo &&) noexcept = delete;
     ~TensorExecInfo() = default;
   };
 
 public:
+
   TensorExecState() = default;
   TensorExecState(const TensorExecState &) = delete;
   TensorExecState & operator=(const TensorExecState &) = delete;
@@ -109,10 +111,10 @@ public:
 private:
   /** Table for tracking the execution status of a given tensor:
       Tensor Hash --> TensorExecInfo **/
-  std::unordered_map<TensorHashType,TensorExecInfo> tensor_info_;
+  std::unordered_map<TensorHashType,std::shared_ptr<TensorExecInfo>> tensor_info_;
   /** List of dependency-free unexecuted DAG nodes **/
   std::list<VertexIdType> nodes_ready_;
-  /** List of the currently executed DAG nodes **/
+  /** List of the DAG nodes being currently executed **/
   std::list<VertexIdType> nodes_executing_;
 };
 

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/07/29
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -10,9 +10,9 @@ Rationale:
      dependencies between them: A directed edge from node1 to
      node2 indicates that node1 depends on node2. Each DAG node
      has its unique integer vertex id (VertexIdType) returned
-     when the node is added to the DAG.
+     when the node is appended to the DAG.
  (b) The tensor graph contains:
-     1. The DAG implementation (in the directed Boost graph subclass);
+     1. The DAG implementation (DirectedBoostGraph subclass);
      2. The DAG execution state (TensorExecState data member).
 **/
 

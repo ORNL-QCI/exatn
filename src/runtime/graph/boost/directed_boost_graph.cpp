@@ -107,6 +107,7 @@ std::vector<VertexIdType> DirectedBoostGraph::getNeighborList(VertexIdType verte
   }
 
   unlock();
+
   return l;
 }
 
@@ -133,6 +134,7 @@ void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
   for (const auto & pi: p) paths.push_back(pi);
 
   unlock();
+
   return;
 }
 

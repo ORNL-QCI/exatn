@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/07/29
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -9,15 +9,15 @@ Rationale:
      represent tensor operations (tasks) and directed edges represent
      dependencies between the corresponding nodes (tensor operations).
      Each DAG is associated with a uniquely named TAProL scope such that
-     all tensor operations submitted by the Client to the ExaTN numerics
+     all tensor operations submitted by the Client to the ExaTN numerical
      server are forwarded into the DAG associated with the TaProL scope
      in which the Client currently resides.
  (b) The DAG lifecycle:
      openScope(name): Opens a new TAProL scope and creates its associated empty DAG.
                       The .submit method can then be used to append new tensor
-                      operations into the current DAG. The actual execution
-                      of the submitted tensor operations may start at any time
-                      after submission (asynchronously).
+                      operations or whole tensor networks into the current DAG.
+                      The actual execution of the submitted tensor operations
+                      is asynchronous and may start any time after submission.
      pauseScope(): Completes the actual execution of all started tensor operations in the
                    current DAG and defers the execution of the rest of the DAG for later.
      resumeScope(name): Pauses the execution of the currently active DAG (if any) and
@@ -28,14 +28,14 @@ Rationale:
      sync(tensor): Tests for completion of all submitted update operations on a given tensor.
  (d) Upon creation, the TensorRuntime object spawns an execution thread which will be executing tensor
      operations in the course of DAG traversal. The execution thread will be joined upon TensorRuntime
-     destruction. The main thread will return control to the client which will then be able to submit
-     new operations into the current DAG. The submitted operations will be autonomously executed by
-     the execution thread. The DAG execution policy is specified by a polymorphic TensorGraphExecutor
-     provided during the construction of the TensorRuntime. Correspondingly, the TensorGraphExecutor
-     contains a polymorphic TensorNodeExecutor responsible for the actual execution of stored tensor
-     operations via an associated computational backend. The concrete TensorNodeExecutor is also
-     specified during the construction of the TensorRuntime oject.
- (e) DEVELOPERS ONLY: The TensorGraph object provides lock/unlock methods for concurrent update
+     destruction. After spawning the execution thread, the main thread returns control to the client
+     which will then be able to submit new operations into the current DAG. The submitted operations
+     will be autonomously executed by the execution thread. The DAG execution policy is specified by
+     a polymorphic TensorGraphExecutor provided during the construction of the TensorRuntime.
+     Correspondingly, the TensorGraphExecutor contains a polymorphic TensorNodeExecutor responsible
+     for the actual execution of submitted tensor operations via an associated computational backend.
+     The concrete TensorNodeExecutor is specified during the construction of the TensorRuntime oject.
+ (e) DEVELOPERS ONLY: The TensorGraph object (DAG) provides lock/unlock methods for concurrent update
      of the DAG structure (by Client thread) and its execution state (by Execution thread).
      Additionally each node of the TensorGraph (TensorOpNode object) provides more fine grain
      locking mechanism (lock/unlock methods) for providing exclusive access to individual DAG nodes.
@@ -58,7 +58,7 @@ Rationale:
 namespace exatn {
 namespace runtime {
 
-class TensorRuntime {
+class TensorRuntime final {
 
 public:
   TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
