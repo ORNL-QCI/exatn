@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2019/07/24
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,7 +29,7 @@ public:
 
 protected:
 
-  int nextExecutableNodeId(TensorGraph & dag);
+  VertexIdType nextExecutableNodeId(TensorGraph & dag);
 
 };
 

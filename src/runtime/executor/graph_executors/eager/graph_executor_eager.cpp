@@ -4,11 +4,11 @@ namespace exatn {
 namespace runtime {
 
 void EagerGraphExecutor::execute(TensorGraph & dag) {
-  int nodes_executed=0, execnode_id;
   auto num_nodes = dag.getNumNodes();
+  decltype(num_nodes) nodes_executed = 0;
 
   while(nodes_executed <= num_nodes) {
-    execnode_id = nextExecutableNodeId(dag);
+    auto execnode_id = nextExecutableNodeId(dag);
     dag.getNodeProperties(execnode_id).getOperation()->accept(*node_executor_);
     //TODO: update output tensor execution table
     dag.setNodeExecuted(execnode_id);
@@ -17,28 +17,27 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
   }
 }
 
-int EagerGraphExecutor::nextExecutableNodeId(TensorGraph & dag){
+VertexIdType EagerGraphExecutor::nextExecutableNodeId(TensorGraph & dag){
   auto num_nodes = dag.getNumNodes();
-  int i;
-  for(i = 0; i < num_nodes; i++) {
+  VertexIdType vertex = num_nodes;
+  for(VertexIdType i = 0; i < num_nodes; ++i) {
     if(!dag.nodeExecuted(i)) {
-      if(dag.getNodeDegree(i)==0)
+      if(dag.getNodeDegree(i) == 0){
+        vertex = i;
         break;
-      else {
+      }else{
         auto n_list = dag.getNeighborList(i);
-        int j;
-        for(j = 0; j < n_list.size(); j++)
-          if(!dag.nodeExecuted(j))
-            break;
-        if(j >= n_list.size())
-          break;
+        for(const auto & vert: n_list){
+          if(!dag.nodeExecuted(vert)) break;
+        }
+        vertex = i;
       }
     }
   }
 
-  assert(i < num_nodes);
+  assert(vertex < num_nodes);
 
-  return i;
+  return vertex;
 }
 
 } //namespace runtime

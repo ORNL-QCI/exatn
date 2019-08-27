@@ -1,11 +1,16 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2019/08/15
+REVISION: 2019/08/26
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
-
+ (a) Tensor graph executor traverses the tensor graph (DAG) and
+     executes all its nodes while respecting node dependencies.
+     Each DAG node is executed by a concrete tensor node executor
+     (tensor operation stored in the DAG node accepts a polymorphic
+     tensor node executor which then executes that tensor operation).
+     The execution of each DAG node is generally asynchronous.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_GRAPH_EXECUTOR_HPP_
@@ -32,8 +37,8 @@ public:
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
   TensorGraphExecutor & operator=(const TensorGraphExecutor &) = delete;
-  TensorGraphExecutor(TensorGraphExecutor &&) noexcept = default;
-  TensorGraphExecutor & operator=(TensorGraphExecutor &&) noexcept = default;
+  TensorGraphExecutor(TensorGraphExecutor &&) noexcept = delete;
+  TensorGraphExecutor & operator=(TensorGraphExecutor &&) noexcept = delete;
   ~TensorGraphExecutor() = default;
 
   /** Resets the DAG node executor (tensor operation executor). **/
@@ -50,7 +55,7 @@ public:
   virtual std::shared_ptr<TensorGraphExecutor> clone() = 0;
 
   /** Signals to stop execution of the DAG until later resume
-      and waits until the execution is actually stopped.
+      and waits until the execution has actually stopped.
       [THREAD: This function is executed by the main thread] **/
   void stopExecution() {
     stopping_.store(true);   //this signal will be picked by the execution thread

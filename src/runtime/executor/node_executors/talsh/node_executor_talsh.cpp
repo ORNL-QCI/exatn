@@ -3,42 +3,44 @@
 namespace exatn {
 namespace runtime {
 
-NodeExecHandleType TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
+TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
 {
  //`Implement
  return 0;
 }
 
 
-NodeExecHandleType TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
+TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
 {
  //`Implement
  return 0;
 }
 
 
-NodeExecHandleType TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
+TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
 {
  //`Implement
  return 0;
 }
 
 
-NodeExecHandleType TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
+TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
 {
  //`Implement
  return 0;
 }
 
 
-NodeExecHandleType TalshNodeExecutor::execute(numerics::TensorOpContract & op)
+TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
 {
  //`Implement
  return 0;
 }
 
 
-bool TalshNodeExecutor::sync(NodeExecHandleType op_handle, bool wait)
+bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
+                             int * error_code,
+                             bool wait)
 {
  //`Implement
  return false;
