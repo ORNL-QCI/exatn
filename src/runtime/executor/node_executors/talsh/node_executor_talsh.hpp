@@ -41,9 +41,9 @@ public:
 
 protected:
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
-  std::unordered_map<numerics::TensorHashType,talsh::Tensor> tensors_;
+  std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
-  std::unordered_map<TensorOpExecHandle,talsh::TensorTask> tasks_;
+  std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
 };
 
 } //namespace runtime
