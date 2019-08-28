@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2019/08/15
+REVISION: 2019/08/28
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,7 +38,17 @@ public:
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
 
+ /** Resets the tensor element type. **/
+ void resetTensorElementType(TensorElementType element_type);
+
+ /** Returns the tensor element type. **/
+ inline TensorElementType getTensorElementType() const {
+  return element_type_;
+ }
+
 private:
+
+ TensorElementType element_type_; //tensor element type
 
 };
 

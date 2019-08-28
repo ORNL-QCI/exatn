@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/08/26
+REVISION: 2019/08/28
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -44,7 +44,22 @@ protected:
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
+  /** TAL-SH initialization status **/
+  static bool talsh_initialized_;
 };
+
+
+inline int get_talsh_tensor_element_kind(TensorElementType element_type)
+{
+ int talsh_data_kind = NO_TYPE;
+ switch(element_type){
+  case TensorElementType::REAL32: talsh_data_kind = R4; break;
+  case TensorElementType::REAL64: talsh_data_kind = R8; break;
+  case TensorElementType::COMPLEX32: talsh_data_kind = C4; break;
+  case TensorElementType::COMPLEX64: talsh_data_kind = C8; break;
+ }
+ return talsh_data_kind;
+}
 
 } //namespace runtime
 } //namespace exatn

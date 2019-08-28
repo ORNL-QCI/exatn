@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/06/05
+REVISION: 2019/08/28
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -42,6 +42,15 @@ enum class TensorOpCode{
  TRANSFORM,      //tensor transformation/initialization
  ADD,            //tensor addition
  CONTRACT        //tensor contraction
+};
+
+enum class TensorElementType{
+ REAL16,
+ REAL32,
+ REAL64,
+ COMPLEX16,
+ COMPLEX32,
+ COMPLEX64
 };
 
 } //namespace exatn
