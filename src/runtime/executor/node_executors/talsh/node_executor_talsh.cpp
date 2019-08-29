@@ -20,7 +20,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
  auto res = tensors_.emplace(std::make_pair(tensor_hash,
                              std::make_shared<talsh::Tensor>(extents,data_kind,talsh_tens_no_init)));
  if(!res.second){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): Attempt to create the same tensor twice for tensor: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CREATE: Attempt to create the same tensor twice: " << std::endl;
   tensor.printIt();
   assert(false);
  }
@@ -35,7 +35,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
  const auto tensor_hash = tensor.getTensorHash();
  auto num_deleted = tensors_.erase(tensor_hash);
  if(num_deleted != 1){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): Attempt to destroy non-existing tensor for tensor: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): DESTROY: Attempt to destroy non-existing tensor: " << std::endl;
   tensor.printIt();
   assert(false);
  }
@@ -54,16 +54,94 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
 {
  assert(op.isSet());
- //`Implement
- return op.getId();
+ const auto & tensor0 = *(op.getTensorOperand(0));
+ const auto tensor0_hash = tensor0.getTensorHash();
+ auto tens0_pos = tensors_.find(tensor0_hash);
+ if(tens0_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens0 = *(tens0_pos->second);
+
+ const auto & tensor1 = *(op.getTensorOperand(1));
+ const auto tensor1_hash = tensor1.getTensorHash();
+ auto tens1_pos = tensors_.find(tensor1_hash);
+ if(tens1_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 1 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens1 = *(tens1_pos->second);
+
+ TensorOpExecHandle exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+
+ auto error_code = tens0.accumulate((task_res.first)->second.get(),
+                                    op.getIndexPattern(),
+                                    tens1,
+                                    DEV_HOST,0,
+                                    op.getScalar(0));
+ assert(error_code == TALSH_SUCCESS);
+ return exec_handle;
 }
 
 
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
 {
  assert(op.isSet());
- //`Implement
- return op.getId();
+ const auto & tensor0 = *(op.getTensorOperand(0));
+ const auto tensor0_hash = tensor0.getTensorHash();
+ auto tens0_pos = tensors_.find(tensor0_hash);
+ if(tens0_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens0 = *(tens0_pos->second);
+
+ const auto & tensor1 = *(op.getTensorOperand(1));
+ const auto tensor1_hash = tensor1.getTensorHash();
+ auto tens1_pos = tensors_.find(tensor1_hash);
+ if(tens1_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 1 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens1 = *(tens1_pos->second);
+
+ const auto & tensor2 = *(op.getTensorOperand(2));
+ const auto tensor2_hash = tensor2.getTensorHash();
+ auto tens2_pos = tensors_.find(tensor2_hash);
+ if(tens2_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 2 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens2 = *(tens2_pos->second);
+
+ TensorOpExecHandle exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+
+ auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
+                                            op.getIndexPattern(),
+                                            tens1,tens2,
+                                            DEV_HOST,0,
+                                            op.getScalar(0));
+ assert(error_code == TALSH_SUCCESS);
+ return exec_handle;
 }
 
 
@@ -76,12 +154,14 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
  auto iter = tasks_.find(op_handle);
  if(iter != tasks_.end()){
   auto & task = *(iter->second);
-  assert(!task.isEmpty());
-  if(wait){
-   synced = task.wait();
-  }else{
-   int sts;
-   synced = task.test(&sts);
+  if(!task.isEmpty()){
+   if(wait){
+    synced = task.wait();
+   }else{
+    int sts;
+    synced = task.test(&sts);
+    if(synced && sts == TALSH_TASK_ERROR) *error_code = TALSH_TASK_ERROR;
+   }
   }
   if(synced) tasks_.erase(iter);
  }
