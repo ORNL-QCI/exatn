@@ -5,11 +5,22 @@
 namespace exatn {
 namespace runtime {
 
-bool TalshNodeExecutor::talsh_initialized_ = 0;
+bool TalshNodeExecutor::talsh_initialized_ = false;
+
+inline void check_initialize_talsh()
+{
+ if(!TalshNodeExecutor::talsh_initialized_){
+  auto error_code = talsh::initialize();
+  if(error_code == TALSH_SUCCESS) TalshNodeExecutor::talsh_initialized_ = true;
+ }
+ return;
+}
+
 
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
 {
  assert(op.isSet());
+ check_initialize_talsh();
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_rank = tensor.getRank();
  const auto tensor_hash = tensor.getTensorHash();
@@ -31,6 +42,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
 {
  assert(op.isSet());
+ check_initialize_talsh();
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
  auto num_deleted = tensors_.erase(tensor_hash);
@@ -46,6 +58,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
 {
  assert(op.isSet());
+ check_initialize_talsh();
  //`Implement
  return op.getId();
 }
@@ -54,6 +67,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
 {
  assert(op.isSet());
+ check_initialize_talsh();
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
  auto tens0_pos = tensors_.find(tensor0_hash);
@@ -96,6 +110,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
 TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
 {
  assert(op.isSet());
+ check_initialize_talsh();
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
  auto tens0_pos = tensors_.find(tensor0_hash);
@@ -149,6 +164,7 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
                              int * error_code,
                              bool wait)
 {
+ check_initialize_talsh();
  *error_code = 0;
  bool synced = true;
  auto iter = tasks_.find(op_handle);

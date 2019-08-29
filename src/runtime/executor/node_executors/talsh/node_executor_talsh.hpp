@@ -39,6 +39,8 @@ public:
   const std::string description() const override {return "TALSH tensor graph node executor";}
   std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
+  friend void check_initialize_talsh();
+
 protected:
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
