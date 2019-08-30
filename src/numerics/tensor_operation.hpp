@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/08/15
+REVISION: 2019/08/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,6 +22,9 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace runtime{
+ // Tensor operation execution handle:
+ using TensorOpExecHandle = std::size_t;
+ // Forward for TensorNodeExecutor:
  class TensorNodeExecutor;
 }
 
@@ -45,8 +48,12 @@ public:
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const = 0;
 
- /** Accepts tensor node executor (visitor pattern). **/
- virtual void accept(runtime::TensorNodeExecutor & node_executor) = 0;
+ /** Accepts tensor node executor (visitor pattern) which will actually
+     execute the tensor operation in an asynchronous fashion, requiring
+     subsequent synchronization via exec_handle. Returns an integer
+     error code (0:Success). **/
+ virtual int accept(runtime::TensorNodeExecutor & node_executor,
+                    runtime::TensorOpExecHandle * exec_handle) = 0;
 
  /** Prints. **/
  virtual void printIt() const;

@@ -9,7 +9,8 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
 
   while(nodes_executed <= num_nodes) {
     auto execnode_id = nextExecutableNodeId(dag);
-    dag.getNodeProperties(execnode_id).getOperation()->accept(*node_executor_);
+    TensorOpExecHandle exec_handle;
+    auto error_code = dag.getNodeProperties(execnode_id).getOperation()->accept(*node_executor_,&exec_handle);
     //TODO: update output tensor execution table
     dag.setNodeExecuted(execnode_id);
     nodes_executed++;

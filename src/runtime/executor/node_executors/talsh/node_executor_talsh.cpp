@@ -17,7 +17,8 @@ inline void check_initialize_talsh()
 }
 
 
-TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
+int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
+                               TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
  check_initialize_talsh();
@@ -35,11 +36,13 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpCreate & op)
   tensor.printIt();
   assert(false);
  }
- return op.getId();
+ *exec_handle = op.getId();
+ return 0;
 }
 
 
-TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
+int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
+                               TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
  check_initialize_talsh();
@@ -51,20 +54,24 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpDestroy & op)
   tensor.printIt();
   assert(false);
  }
- return op.getId();
+ *exec_handle = op.getId();
+ return 0;
 }
 
 
-TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpTransform & op)
+int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
+                               TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
  check_initialize_talsh();
  //`Implement
- return op.getId();
+ *exec_handle = op.getId();
+ return 0;
 }
 
 
-TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
+int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
+                               TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
  check_initialize_talsh();
@@ -88,8 +95,8 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
  }
  auto & tens1 = *(tens1_pos->second);
 
- TensorOpExecHandle exec_handle = op.getId();
- auto task_res = tasks_.emplace(std::make_pair(exec_handle,
+ *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
                                 std::make_shared<talsh::TensorTask>()));
  if(!task_res.second){
   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Attempt to execute the same operation twice: " << std::endl;
@@ -102,12 +109,12 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpAdd & op)
                                     tens1,
                                     DEV_HOST,0,
                                     op.getScalar(0));
- assert(error_code == TALSH_SUCCESS);
- return exec_handle;
+ return error_code;
 }
 
 
-TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
+int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
+                               TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
  check_initialize_talsh();
@@ -141,8 +148,8 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
  }
  auto & tens2 = *(tens2_pos->second);
 
- TensorOpExecHandle exec_handle = op.getId();
- auto task_res = tasks_.emplace(std::make_pair(exec_handle,
+ *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
                                 std::make_shared<talsh::TensorTask>()));
  if(!task_res.second){
   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Attempt to execute the same operation twice: " << std::endl;
@@ -155,8 +162,7 @@ TensorOpExecHandle TalshNodeExecutor::execute(numerics::TensorOpContract & op)
                                             tens1,tens2,
                                             DEV_HOST,0,
                                             op.getScalar(0));
- assert(error_code == TALSH_SUCCESS);
- return exec_handle;
+ return error_code;
 }
 
 

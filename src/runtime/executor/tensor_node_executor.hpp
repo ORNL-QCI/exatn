@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/08/26
+REVISION: 2019/08/30
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -28,20 +28,24 @@ Rationale:
 namespace exatn {
 namespace runtime {
 
-// Tensor operation execution handle:
-using TensorOpExecHandle = std::size_t;
-
-
 class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecutor> {
 
 public:
 
-  /** Executes the tensor operation found in a DAG node. **/
-  virtual TensorOpExecHandle execute(numerics::TensorOpCreate & op) = 0;
-  virtual TensorOpExecHandle execute(numerics::TensorOpDestroy & op) = 0;
-  virtual TensorOpExecHandle execute(numerics::TensorOpTransform & op) = 0;
-  virtual TensorOpExecHandle execute(numerics::TensorOpAdd & op) = 0;
-  virtual TensorOpExecHandle execute(numerics::TensorOpContract & op) = 0;
+  /** Executes the tensor operation found in a DAG node asynchronously,
+      returning the execution handle in exec_handle that can later be
+      used for testing for completion of the operation execution.
+      Returns an integer error code (0:Success). **/
+  virtual int execute(numerics::TensorOpCreate & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpDestroy & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpTransform & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpAdd & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpContract & op,
+                      TensorOpExecHandle * exec_handle) = 0;
 
   /** Synchronizes the execution of a previously submitted tensor operation. **/
   virtual bool sync(TensorOpExecHandle op_handle,

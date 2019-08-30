@@ -3,35 +3,40 @@
 namespace exatn {
 namespace runtime {
 
-TensorOpExecHandle ExatensorNodeExecutor::execute(numerics::TensorOpCreate & op)
+int ExatensorNodeExecutor::execute(numerics::TensorOpCreate & op,
+                                   TensorOpExecHandle * exec_handle)
 {
  //`Implement
  return 0;
 }
 
 
-TensorOpExecHandle ExatensorNodeExecutor::execute(numerics::TensorOpDestroy & op)
+int ExatensorNodeExecutor::execute(numerics::TensorOpDestroy & op,
+                                   TensorOpExecHandle * exec_handle)
 {
  //`Implement
  return 0;
 }
 
 
-TensorOpExecHandle ExatensorNodeExecutor::execute(numerics::TensorOpTransform & op)
+int ExatensorNodeExecutor::execute(numerics::TensorOpTransform & op,
+                                   TensorOpExecHandle * exec_handle)
 {
  //`Implement
  return 0;
 }
 
 
-TensorOpExecHandle ExatensorNodeExecutor::execute(numerics::TensorOpAdd & op)
+int ExatensorNodeExecutor::execute(numerics::TensorOpAdd & op,
+                                   TensorOpExecHandle * exec_handle)
 {
  //`Implement
  return 0;
 }
 
 
-TensorOpExecHandle ExatensorNodeExecutor::execute(numerics::TensorOpContract & op)
+int ExatensorNodeExecutor::execute(numerics::TensorOpContract & op,
+                                   TensorOpExecHandle * exec_handle)
 {
  //`Implement
  return 0;
