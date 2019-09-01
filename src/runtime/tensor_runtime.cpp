@@ -1,6 +1,8 @@
 #include "tensor_runtime.hpp"
 #include "exatn_service.hpp"
 
+#include <iostream>
+
 namespace exatn {
 namespace runtime {
 
@@ -9,6 +11,7 @@ TensorRuntime::TensorRuntime(const std::string & graph_executor_name, const std:
 {
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name);
   graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name));
+  launchExecutionThread();
 }
 
 
@@ -16,7 +19,9 @@ TensorRuntime::~TensorRuntime()
 {
   if(alive_.load()){
     alive_.store(false); //signal for the execution thread to finish
+    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Waiting Execution Thread ... ";
     exec_thread_.join(); //wait until the execution thread has finished
+    std::cout << "Joined" << std::endl;
   }
 }
 
@@ -25,7 +30,9 @@ void TensorRuntime::launchExecutionThread()
 {
   if(!(alive_.load())){
     alive_.store(true);
+    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Launching Execution Thread ... ";
     exec_thread_ = std::thread(&TensorRuntime::executionThreadWorkflow,this);
+    std::cout << "Done" << std::endl;
   }
   return; //only the main thread returns to the client
 }

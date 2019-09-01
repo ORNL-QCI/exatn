@@ -69,9 +69,6 @@ public:
   TensorRuntime & operator=(TensorRuntime &&) noexcept = delete;
   ~TensorRuntime();
 
-  /** Launches the execution thread which will be executing DAGs on the fly. **/
-  void launchExecutionThread();
-
   /** Opens a new scope represented by a new execution graph (DAG). **/
   void openScope(const std::string & scope_name);
 
@@ -107,6 +104,8 @@ public:
   TensorDenseBlock getTensorData(const Tensor & tensor);
 
 protected:
+  /** Launches the execution thread which will be executing DAGs on the fly. **/
+  void launchExecutionThread();
   /** The execution thread lives here **/
   void executionThreadWorkflow();
 
