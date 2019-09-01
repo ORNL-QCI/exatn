@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/08/26
+REVISION: 2019/09/01
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -65,8 +65,8 @@ public:
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
-  TensorRuntime(TensorRuntime &&) noexcept = default;
-  TensorRuntime & operator=(TensorRuntime &&) noexcept = default;
+  TensorRuntime(TensorRuntime &&) noexcept = delete;
+  TensorRuntime & operator=(TensorRuntime &&) noexcept = delete;
   ~TensorRuntime();
 
   /** Launches the execution thread which will be executing DAGs on the fly. **/
