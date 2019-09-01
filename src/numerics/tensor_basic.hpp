@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/08/28
+REVISION: 2019/09/01
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -45,6 +45,7 @@ enum class TensorOpCode{
 };
 
 enum class TensorElementType{
+ VOID,
  REAL16,
  REAL32,
  REAL64,

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/08/30
+REVISION: 2019/09/01
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -25,6 +25,13 @@ class TalshNodeExecutor : public TensorNodeExecutor {
 
 public:
 
+  TalshNodeExecutor();
+  TalshNodeExecutor(const TalshNodeExecutor &) = delete;
+  TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
+  TalshNodeExecutor(TalshNodeExecutor &&) noexcept = delete;
+  TalshNodeExecutor & operator=(TalshNodeExecutor &&) noexcept = delete;
+  ~TalshNodeExecutor();
+
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;
   int execute(numerics::TensorOpDestroy & op,
@@ -44,28 +51,39 @@ public:
   const std::string description() const override {return "TALSH tensor graph node executor";}
   std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
-  friend void check_initialize_talsh();
-
 protected:
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
   /** TAL-SH initialization status **/
-  static bool talsh_initialized_;
+  static int talsh_initialized_; //number of active TAL-SH node executors
 };
 
 
+/** ExaTN tensor element kind --> TAL-SH tensor element kind converter **/
 inline int get_talsh_tensor_element_kind(TensorElementType element_type)
 {
- int talsh_data_kind = NO_TYPE;
- switch(element_type){
-  case TensorElementType::REAL32: talsh_data_kind = R4; break;
-  case TensorElementType::REAL64: talsh_data_kind = R8; break;
-  case TensorElementType::COMPLEX32: talsh_data_kind = C4; break;
-  case TensorElementType::COMPLEX64: talsh_data_kind = C8; break;
- }
- return talsh_data_kind;
+  int talsh_data_kind = NO_TYPE;
+  switch(element_type){
+    case TensorElementType::REAL32: talsh_data_kind = R4; break;
+    case TensorElementType::REAL64: talsh_data_kind = R8; break;
+    case TensorElementType::COMPLEX32: talsh_data_kind = C4; break;
+    case TensorElementType::COMPLEX64: talsh_data_kind = C8; break;
+  }
+  return talsh_data_kind;
+}
+
+/** TAL-SH tensor element kind --> ExaTN tensor element kind converter **/
+inline TensorElementType get_exatn_tensor_element_kind(int element_type)
+{
+  switch(element_type){
+    case R4: return TensorElementType::REAL32;
+    case R8: return TensorElementType::REAL64;
+    case C4: return TensorElementType::COMPLEX32;
+    case C8: return TensorElementType::COMPLEX64;
+  }
+  return TensorElementType::VOID;
 }
 
 } //namespace runtime

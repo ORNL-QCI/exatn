@@ -47,6 +47,7 @@ bool ExatensorNodeExecutor::sync(TensorOpExecHandle op_handle,
                                  int * error_code,
                                  bool wait)
 {
+ *error_code = 0;
  //`Implement
  return false;
 }

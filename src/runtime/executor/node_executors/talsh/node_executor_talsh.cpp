@@ -1,19 +1,49 @@
 #include "node_executor_talsh.hpp"
 
+#include <mutex>
 #include <cassert>
 
 namespace exatn {
 namespace runtime {
 
-bool TalshNodeExecutor::talsh_initialized_ = false;
+int TalshNodeExecutor::talsh_initialized_ = 0;
 
-inline void check_initialize_talsh()
+std::mutex talsh_init_lock;
+
+
+TalshNodeExecutor::TalshNodeExecutor()
 {
- if(!TalshNodeExecutor::talsh_initialized_){
-  auto error_code = talsh::initialize();
-  if(error_code == TALSH_SUCCESS) TalshNodeExecutor::talsh_initialized_ = true;
+ talsh_init_lock.lock();
+ if(talsh_initialized_ == 0){
+  std::size_t host_buffer_size = 1024*1024*1024; //`Get max Host memory from OS
+  auto error_code = talsh::initialize(&host_buffer_size);
+  if(error_code == TALSH_SUCCESS){
+   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
+    host_buffer_size << " Bytes" << std::endl;
+  }else{
+   std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to initialize TAL-SH!" << std::endl;
+   assert(false);
+  }
  }
- return;
+ ++talsh_initialized_;
+ talsh_init_lock.unlock();
+}
+
+
+TalshNodeExecutor::~TalshNodeExecutor()
+{
+ talsh_init_lock.lock();
+ --talsh_initialized_;
+ if(talsh_initialized_ == 0){
+  auto error_code = talsh::shutdown();
+  if(error_code == TALSH_SUCCESS){
+   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl;
+  }else{
+   std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;
+   assert(false);
+  }
+ }
+ talsh_init_lock.unlock();
 }
 
 
@@ -21,7 +51,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- check_initialize_talsh();
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_rank = tensor.getRank();
  const auto tensor_hash = tensor.getTensorHash();
@@ -45,7 +74,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- check_initialize_talsh();
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
  auto num_deleted = tensors_.erase(tensor_hash);
@@ -63,7 +91,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- check_initialize_talsh();
  //`Implement
  *exec_handle = op.getId();
  return 0;
@@ -74,7 +101,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- check_initialize_talsh();
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
  auto tens0_pos = tensors_.find(tensor0_hash);
@@ -117,7 +143,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- check_initialize_talsh();
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
  auto tens0_pos = tensors_.find(tensor0_hash);
@@ -170,7 +195,6 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
                              int * error_code,
                              bool wait)
 {
- check_initialize_talsh();
  *error_code = 0;
  bool synced = true;
  auto iter = tasks_.find(op_handle);

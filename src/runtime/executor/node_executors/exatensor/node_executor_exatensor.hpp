@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2019/08/30
+REVISION: 2019/09/01
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -19,6 +19,13 @@ namespace runtime {
 class ExatensorNodeExecutor : public TensorNodeExecutor {
 
 public:
+
+  ExatensorNodeExecutor() = default;
+  ExatensorNodeExecutor(const ExatensorNodeExecutor &) = delete;
+  ExatensorNodeExecutor & operator=(const ExatensorNodeExecutor &) = delete;
+  ExatensorNodeExecutor(ExatensorNodeExecutor &&) noexcept = delete;
+  ExatensorNodeExecutor & operator=(ExatensorNodeExecutor &&) noexcept = delete;
+  ~ExatensorNodeExecutor() = default;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;
