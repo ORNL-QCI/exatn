@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/08/26
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,8 +59,8 @@ public:
  NumServer();
  NumServer(const NumServer &) = delete;
  NumServer & operator=(const NumServer &) = delete;
- NumServer(NumServer &&) noexcept = default;
- NumServer & operator=(NumServer &&) noexcept = default;
+ NumServer(NumServer &&) noexcept = delete;
+ NumServer & operator=(NumServer &&) noexcept = delete;
  ~NumServer() = default;
 
  /** Reconfigures tensor runtime implementation. **/

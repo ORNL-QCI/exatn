@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2019/08/26
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -41,9 +41,10 @@ public:
   TensorGraphExecutor & operator=(TensorGraphExecutor &&) noexcept = delete;
   ~TensorGraphExecutor() = default;
 
-  /** Resets the DAG node executor (tensor operation executor). **/
+  /** Sets/resets the DAG node executor (tensor operation executor). **/
   void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor) {
     node_executor_ = node_executor;
+    if(node_executor_) node_executor_->initialize();
     return;
   }
 

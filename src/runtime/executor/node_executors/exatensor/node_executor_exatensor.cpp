@@ -3,6 +3,12 @@
 namespace exatn {
 namespace runtime {
 
+void ExatensorNodeExecutor::initialize()
+{
+ return;
+}
+
+
 int ExatensorNodeExecutor::execute(numerics::TensorOpCreate & op,
                                    TensorOpExecHandle * exec_handle)
 {

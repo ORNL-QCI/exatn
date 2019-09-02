@@ -62,6 +62,7 @@ TEST(TensorRuntimeTester, checkSimple) {
   exatn::numericalServer->submit(create_tensor1);
   exatn::numericalServer->submit(create_tensor2);
   exatn::numericalServer->submit(contract_tensors);
+  auto synced = exatn::numericalServer->sync(*tensor0,true); assert(synced);
   exatn::numericalServer->submit(destroy_tensor2);
   exatn::numericalServer->submit(destroy_tensor1);
   exatn::numericalServer->submit(destroy_tensor0);

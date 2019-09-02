@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/01
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -109,6 +109,10 @@ protected:
   /** The execution thread lives here **/
   void executionThreadWorkflow();
 
+  /** Tensor graph (DAG) executor name **/
+  std::string graph_executor_name_;
+  /** Tensor graph (DAG) node executor name **/
+  std::string node_executor_name_;
   /** Current tensor graph (DAG) executor **/
   std::shared_ptr<TensorGraphExecutor> graph_executor_;
   /** Active execution graphs (DAGs) **/

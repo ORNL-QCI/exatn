@@ -6,40 +6,44 @@
 namespace exatn {
 namespace runtime {
 
-int TalshNodeExecutor::talsh_initialized_ = 0;
+bool TalshNodeExecutor::talsh_initialized_ = false;
+int TalshNodeExecutor::talsh_node_exec_count_ = 0;
 
 std::mutex talsh_init_lock;
 
 
-TalshNodeExecutor::TalshNodeExecutor()
+void TalshNodeExecutor::initialize()
 {
  talsh_init_lock.lock();
- if(talsh_initialized_ == 0){
+ if(!talsh_initialized_){
   std::size_t host_buffer_size = 1024*1024*1024; //`Get max Host memory from OS
   auto error_code = talsh::initialize(&host_buffer_size);
   if(error_code == TALSH_SUCCESS){
-   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
-    host_buffer_size << " Bytes" << std::endl;
+   //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
+    //host_buffer_size << " Bytes" << std::endl << std::flush;
+   talsh_initialized_ = true;
   }else{
-   std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to initialize TAL-SH!" << std::endl;
+   std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to initialize TAL-SH!" << std::endl;
    assert(false);
   }
  }
- ++talsh_initialized_;
+ ++talsh_node_exec_count_;
  talsh_init_lock.unlock();
+ return;
 }
 
 
 TalshNodeExecutor::~TalshNodeExecutor()
 {
  talsh_init_lock.lock();
- --talsh_initialized_;
- if(talsh_initialized_ == 0){
+ --talsh_node_exec_count_;
+ if(talsh_initialized_ && talsh_node_exec_count_ == 0){
   auto error_code = talsh::shutdown();
   if(error_code == TALSH_SUCCESS){
-   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl;
+   //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;
+   talsh_initialized_ = false;
   }else{
-   std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;
+   std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;
    assert(false);
   }
  }

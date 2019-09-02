@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/09/01
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -25,12 +25,14 @@ class TalshNodeExecutor : public TensorNodeExecutor {
 
 public:
 
-  TalshNodeExecutor();
+  TalshNodeExecutor() = default;
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor(TalshNodeExecutor &&) noexcept = delete;
   TalshNodeExecutor & operator=(TalshNodeExecutor &&) noexcept = delete;
   ~TalshNodeExecutor();
+
+  void initialize() override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;
@@ -57,7 +59,9 @@ protected:
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
   /** TAL-SH initialization status **/
-  static int talsh_initialized_; //number of active TAL-SH node executors
+  static bool talsh_initialized_;
+  /** Number of instances of TAL-SH node executors **/
+  static int talsh_node_exec_count_;
 };
 
 

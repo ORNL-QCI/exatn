@@ -6,11 +6,14 @@
 namespace exatn {
 namespace runtime {
 
-TensorRuntime::TensorRuntime(const std::string & graph_executor_name, const std::string & node_executor_name):
+TensorRuntime::TensorRuntime(const std::string & graph_executor_name,
+                             const std::string & node_executor_name):
+ graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), executing_(false), alive_(false)
 {
-  graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name);
-  graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name));
+  graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
+  std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
+            << graph_executor_name_ << "+" << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
 }
 
@@ -19,9 +22,9 @@ TensorRuntime::~TensorRuntime()
 {
   if(alive_.load()){
     alive_.store(false); //signal for the execution thread to finish
-    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Waiting Execution Thread ... ";
+    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Waiting Execution Thread ... " << std::flush;
     exec_thread_.join(); //wait until the execution thread has finished
-    std::cout << "Joined" << std::endl;
+    std::cout << "Joined" << std::endl << std::flush;
   }
 }
 
@@ -30,9 +33,9 @@ void TensorRuntime::launchExecutionThread()
 {
   if(!(alive_.load())){
     alive_.store(true);
-    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Launching Execution Thread ... ";
+    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Launching Execution Thread ... " << std::flush;
     exec_thread_ = std::thread(&TensorRuntime::executionThreadWorkflow,this);
-    std::cout << "Done" << std::endl;
+    std::cout << "Done" << std::endl << std::flush;
   }
   return; //only the main thread returns to the client
 }
@@ -40,12 +43,18 @@ void TensorRuntime::launchExecutionThread()
 
 void TensorRuntime::executionThreadWorkflow()
 {
+  graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name_));
+  //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
+            //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){
     if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
     }
   }
+  graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr));
+  //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
+            //<< std::endl << std::flush;
   return; //end of execution thread life
 }
 

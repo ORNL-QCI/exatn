@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/08/30
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -31,6 +31,9 @@ namespace runtime {
 class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecutor> {
 
 public:
+
+  /** Explicitly initializes the underlying numerical service, if needed **/
+  virtual void initialize() = 0;
 
   /** Executes the tensor operation found in a DAG node asynchronously,
       returning the execution handle in exec_handle that can later be

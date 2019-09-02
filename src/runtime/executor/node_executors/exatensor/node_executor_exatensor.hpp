@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2019/09/01
+REVISION: 2019/09/02
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -26,6 +26,8 @@ public:
   ExatensorNodeExecutor(ExatensorNodeExecutor &&) noexcept = delete;
   ExatensorNodeExecutor & operator=(ExatensorNodeExecutor &&) noexcept = delete;
   ~ExatensorNodeExecutor() = default;
+
+  void initialize() override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;
