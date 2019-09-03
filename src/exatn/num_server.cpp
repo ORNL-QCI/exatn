@@ -21,6 +21,12 @@ NumServer::NumServer():
  tensor_rt_->openScope("GLOBAL");
 }
 
+NumServer::~NumServer()
+{
+ tensor_rt_->closeScope();
+ scopes_.pop();
+}
+
 void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {

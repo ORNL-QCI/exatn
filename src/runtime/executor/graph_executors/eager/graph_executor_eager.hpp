@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2019/08/26
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -26,11 +26,6 @@ public:
   const std::string name() const override {return "eager-dag-executor";}
   const std::string description() const override {return "Eager tensor graph executor";}
   std::shared_ptr<TensorGraphExecutor> clone() override {return std::make_shared<EagerGraphExecutor>();}
-
-protected:
-
-  VertexIdType nextExecutableNodeId(TensorGraph & dag);
-
 };
 
 } //namespace runtime

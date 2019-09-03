@@ -46,9 +46,9 @@ void TensorRuntime::executionThreadWorkflow()
   graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name_));
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
             //<< node_executor_name_ << std::endl << std::flush;
-  while(alive_.load()){
+  while(alive_.load()){ //alive_ is set by the main thread
     if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
-      //graph_executor_->execute(*current_dag_);
+      graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
     }
   }
@@ -114,7 +114,7 @@ VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(currentScopeIsSet());
   auto node_id = current_dag_->addOperation(op);
   op->setId(node_id);
-  current_dag_->printIt(); //debug
+  //current_dag_->printIt(); //debug
   executing_.store(true); //signal to the execution thread to execute the DAG
   return node_id;
 }

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/02
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -61,7 +61,7 @@ public:
  NumServer & operator=(const NumServer &) = delete;
  NumServer(NumServer &&) noexcept = delete;
  NumServer & operator=(NumServer &&) noexcept = delete;
- ~NumServer() = default;
+ ~NumServer();
 
  /** Reconfigures tensor runtime implementation. **/
  void reconfigureTensorRuntime(const std::string & dag_executor_name,

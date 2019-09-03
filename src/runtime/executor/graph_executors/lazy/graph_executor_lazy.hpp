@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2019/07/25
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,6 +29,7 @@ public:
 
 protected:
 
+  VertexIdType nextExecutableNodeId(TensorGraph & dag);
 };
 
 } //namespace runtime
