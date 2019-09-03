@@ -58,6 +58,16 @@ $ cmake .. -DEXATN_BUILD_TESTS=TRUE
   where the choices are OPENMPI or MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
 $ make install
+
+Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib)
+as well as CUDA (this is a single command line below):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DCUDA_HOST_COMPILER=/usr/bin/g++
+-DBLAS_LIB=ATLAS
+-DBLAS_PATH=/usr/lib
 ```
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
 not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only

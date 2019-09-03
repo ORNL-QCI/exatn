@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/08/26
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,6 +18,7 @@ NumServer::NumServer():
  tensor_rt_(std::make_shared<runtime::TensorRuntime>())
 {
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
+ tensor_rt_->openScope("GLOBAL");
 }
 
 void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,

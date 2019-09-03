@@ -48,7 +48,7 @@ void TensorRuntime::executionThreadWorkflow()
             //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){
     if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
-      graph_executor_->execute(*current_dag_);
+      //graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
     }
   }
@@ -114,6 +114,7 @@ VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(currentScopeIsSet());
   auto node_id = current_dag_->addOperation(op);
   op->setId(node_id);
+  current_dag_->printIt(); //debug
   executing_.store(true); //signal to the execution thread to execute the DAG
   return node_id;
 }

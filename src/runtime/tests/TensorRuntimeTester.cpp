@@ -56,17 +56,15 @@ TEST(TensorRuntimeTester, checkSimple) {
   std::shared_ptr<TensorOperation> destroy_tensor0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
   destroy_tensor0->setTensorOperand(tensor0);
 
-#if 0
-  //Execute all tensor operations via numerical server:
+  //Execute all tensor operations via the ExaTN numerical server:
   exatn::numericalServer->submit(create_tensor0);
   exatn::numericalServer->submit(create_tensor1);
   exatn::numericalServer->submit(create_tensor2);
   exatn::numericalServer->submit(contract_tensors);
-  auto synced = exatn::numericalServer->sync(*tensor0,true); assert(synced);
+  //auto synced = exatn::numericalServer->sync(*tensor0,true); assert(synced);
   exatn::numericalServer->submit(destroy_tensor2);
   exatn::numericalServer->submit(destroy_tensor1);
   exatn::numericalServer->submit(destroy_tensor0);
-#endif
 
 }
 
