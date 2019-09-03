@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/08/30
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -57,6 +57,9 @@ public:
 
  /** Prints. **/
  virtual void printIt() const;
+
+ /** Returns the tensor operation code (opcode). **/
+ TensorOpCode getOpcode() const;
 
  /** Returns the number of tensor operands required for the tensor operation. **/
  unsigned int getNumOperands() const;

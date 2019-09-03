@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/07/29
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,6 +34,11 @@ void TensorOperation::printIt() const
  if(scalars_.size() > 0) std::cout << std::endl;
  std::cout << "}" << std::endl;
  return;
+}
+
+TensorOpCode TensorOperation::getOpcode() const
+{
+ return opcode_;
 }
 
 unsigned int TensorOperation::getNumOperands() const

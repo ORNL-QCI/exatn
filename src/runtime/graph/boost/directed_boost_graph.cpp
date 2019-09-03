@@ -1,5 +1,7 @@
 #include "directed_boost_graph.hpp"
 
+#include <iostream>
+
 using namespace boost;
 
 namespace exatn {
@@ -136,6 +138,23 @@ void DirectedBoostGraph::computeShortestPath(VertexIdType startIndex,
   unlock();
 
   return;
+}
+
+
+void DirectedBoostGraph::printIt()
+{
+ lock();
+ std::cout << "#MSG: Printing DAG:" << std::endl;
+ auto num_nodes = num_vertices(*dag_);
+ for(VertexIdType i = 0; i < num_nodes; ++i){
+  auto deps = getNeighborList(i);
+  std::cout << "Node " << i << ": Depends on { ";
+  for(const auto & node_id: deps) std::cout << node_id << " ";
+  std::cout << "}" << std::endl;
+ }
+ std::cout << "#END MSG" << std::endl;
+ unlock();
+ return;
 }
 
 } // namespace runtime

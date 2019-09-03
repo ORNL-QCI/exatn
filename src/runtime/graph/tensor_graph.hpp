@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/08/26
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -171,6 +171,9 @@ public:
   virtual void computeShortestPath(VertexIdType startIndex,
                                    std::vector<double> & distances,
                                    std::vector<VertexIdType> & paths) = 0;
+
+  /** Prints the DAG **/
+  virtual void printIt() = 0;
 
   /** Clones an empty subclass instance (needed for plugin registry). **/
   virtual std::shared_ptr<TensorGraph> clone() = 0;
