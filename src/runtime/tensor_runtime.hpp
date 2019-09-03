@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/02
+REVISION: 2019/09/03
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -103,7 +103,7 @@ public:
   /** Returns an accessor to the elements of a given tensor. **/
   TensorDenseBlock getTensorData(const Tensor & tensor);
 
-protected:
+private:
   /** Launches the execution thread which will be executing DAGs on the fly. **/
   void launchExecutionThread();
   /** The execution thread lives here **/
