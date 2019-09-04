@@ -21,6 +21,7 @@ add_library(${LIBRARY_NAME}
             tensor_op_factory.cpp
             network_builder_mps.cpp
             network_build_factory.cpp
+            contraction_seq_optimizer_dummy.cpp
             tensor_network.cpp)
 
 target_include_directories(${LIBRARY_NAME}

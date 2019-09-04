@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/15
+REVISION: 2019/09/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,7 +19,7 @@ namespace exatn{
 namespace numerics{
 
 TensorNetwork::TensorNetwork():
- explicit_output_(0), finalized_(0)
+ explicit_output_(0), finalized_(0), contraction_seq_flops_(0.0)
 {
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
@@ -31,7 +31,7 @@ TensorNetwork::TensorNetwork():
 
 
 TensorNetwork::TensorNetwork(const std::string & name):
- explicit_output_(0), finalized_(0), name_(name)
+ explicit_output_(0), finalized_(0), name_(name), contraction_seq_flops_(0.0)
 {
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
@@ -45,7 +45,7 @@ TensorNetwork::TensorNetwork(const std::string & name):
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
- explicit_output_(1), finalized_(0), name_(name)
+ explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
 {
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
@@ -59,7 +59,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
- explicit_output_(1), finalized_(0), name_(name)
+ explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
 {
  //Convert tensor hypernetwork into regular tensor network, if needed:
  //`Finish
@@ -137,7 +137,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
- explicit_output_(0), finalized_(0), name_(name)
+ explicit_output_(0), finalized_(0), name_(name), contraction_seq_flops_(0.0)
 {
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
@@ -292,6 +292,16 @@ void TensorNetwork::updateConnections(unsigned int tensor_id)
   other_tensor->resetLeg(other_tensor_leg_id,other_tensor_leg);
  }
  return;
+}
+
+
+double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer)
+{
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ if(contraction_seq_.empty()){
+  contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_);
+ }
+ return contraction_seq_flops_;
 }
 
 
@@ -450,6 +460,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    return false;
   }
  }
+ contraction_seq_.clear(); //invalidate previously cached tensor contraction sequence
  finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
  return true;
 }
@@ -545,6 +556,7 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
                   );
  }
  this->updateConnections(0); //update connections in just appended input tensors
+ contraction_seq_.clear(); //invalidate previously cached tensor contraction sequence
  finalized_ = 1; //implicit leg pairing always keeps the primary tensor network in a finalized state
  return true;
 }
@@ -639,6 +651,7 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
  tensor = nullptr;
  auto num_deleted = tensors_.erase(tensor_id);
  assert(num_deleted == 1);
+ contraction_seq_.clear(); //invalidate previously cached tensor contraction sequence
  return true;
 }
 
@@ -717,6 +730,7 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  assert(num_deleted == 1);
  //Update connections:
  this->updateConnections(result_id);
+ contraction_seq_.clear(); //invalidate previously cached tensor contraction sequence
  return true;
 }
 

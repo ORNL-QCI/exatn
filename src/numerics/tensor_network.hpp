@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/08/09
+REVISION: 2019/09/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -56,10 +56,12 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_connected.hpp"
 #include "tensor_op_factory.hpp"
 #include "network_build_factory.hpp"
+#include "contraction_seq_optimizer.hpp"
 
 #include <unordered_map>
 #include <map>
 #include <vector>
+#include <list>
 #include <string>
 #include <memory>
 
@@ -82,9 +84,9 @@ public:
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: fully specified output tensor of the tensor network
                const std::vector<TensorLeg> & output_legs); //in: fully specified output tensor legs
- /** Creates a named tensor network from a symbolic tensor network expression and vector of tensors. **/
- TensorNetwork(const std::string & name,                              //in: tensor network name
-               const std::string & tensor_network,                    //in: tensor network expression (symbolic math expression)
+ /** Creates a named tensor network from a symbolic tensor network expression and a container of tensors. **/
+ TensorNetwork(const std::string & name,                    //in: tensor network name
+               const std::string & tensor_network,          //in: tensor network expression (symbolic math expression)
                const std::map<std::string,std::shared_ptr<Tensor>> & tensors); //in: participating tensors identified by their names
  /** Builds a named tensor network from a template implemented by a custom tensor network builder. **/
  TensorNetwork(const std::string & name,                    //in: tensor network name
@@ -194,6 +196,10 @@ protected:
  /** Updates tensor network linking when a tensor has its connections modified. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
 
+ /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
+     Returns an estimate of the total flop count required by the returned contraction sequence. **/
+ double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
+
 private:
 
  int explicit_output_;                                  //whether or not the output tensor has been fully specified during construction
@@ -201,6 +207,8 @@ private:
  std::string name_;                                     //tensor network name
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
+ std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
+ double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
 };
 
 } //namespace numerics
