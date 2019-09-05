@@ -6,11 +6,11 @@ build_devel:
   only:
   - devel
   script:
-  - cd docker/ci/ubuntu1804/devel && nvidia-docker build -t exatn/devel . --no-cache && nvidia-docker run -it --rm exatn/devel bash -c "cd exatn/build && ctest --output-on-failure" 
+  - cd docker/ci/ubuntu1804/devel && nvidia-docker build -t exatn/devel . --no-cache && nvidia-docker run --rm exatn/devel bash -c "cd exatn/build && ctest --output-on-failure" 
 
 build_master:
   stage: build
   only:
   - master
   script:
-  - cd docker/ci/ubuntu1804/master && nvidia-docker build -t exatn/master . --no-cache && nvidia-docker run -it --rm exatn/master bash -c "cd exatn/build && ctest --output-on-failure"
+  - cd docker/ci/ubuntu1804/master && nvidia-docker build -t exatn/master . --no-cache && nvidia-docker run --rm exatn/master bash -c "cd exatn/build && ctest --output-on-failure"
