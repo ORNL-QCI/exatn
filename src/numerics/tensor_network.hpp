@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/04
+REVISION: 2019/09/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -177,6 +177,18 @@ public:
  bool mergeTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                    unsigned int right_id,   //in: right tensor id (present in the tensor network)
                    unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+
+ /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
+     in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.
+     Additionally, it also allows rescaling of the tensor contraction cost with the adjustment
+     by the arithmetic intensity (lower arithmetic intensity will increase the cost). **/
+ double getContractionCost(unsigned int left_id,  //in: left tensor id (present in the tensor network)
+                           unsigned int right_id, //in: right tensor id (present in the tensor network)
+                           double * arithm_intensity = nullptr, //out: arithmetic intensity of the tensor contraction
+                           bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
+
+ /** Returns the list of tensor operations required for evaluating the tensor network. **/
+ std::list<std::shared_ptr<TensorOperation>> getOperationList(const std::string & contr_seq_opt_name = "dummy");
 
 protected:
 

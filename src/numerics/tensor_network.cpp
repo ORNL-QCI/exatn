@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/04
+REVISION: 2019/09/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,10 +13,15 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace exatn{
 
 namespace numerics{
+
+//Tensor contraction sequence optmizers:
+std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
+
 
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(0), contraction_seq_flops_(0.0)
@@ -732,6 +737,23 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  this->updateConnections(result_id);
  contraction_seq_.clear(); //invalidate previously cached tensor contraction sequence
  return true;
+}
+
+
+double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int right_id,
+                                         double * arithm_intensity, bool adjust_cost)
+{
+ double flops = 0.0;
+ //`Finish
+ return flops;
+}
+
+
+std::list<std::shared_ptr<TensorOperation>> TensorNetwork::getOperationList(const std::string & contr_seq_opt_name)
+{
+ std::list<std::shared_ptr<TensorOperation>> ops;
+ //`Finish
+ return ops;
 }
 
 } //namespace numerics

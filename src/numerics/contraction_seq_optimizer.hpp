@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2019/09/04
+REVISION: 2019/09/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,6 +13,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 
 #include <list>
+#include <memory>
 
 namespace exatn{
 
@@ -35,6 +36,8 @@ public:
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq) = 0;
 };
+
+using createContractionSeqOptimizerFn = std::unique_ptr<ContractionSeqOptimizer> (*)(void);
 
 } //namespace numerics
 
