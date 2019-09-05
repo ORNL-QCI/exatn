@@ -208,6 +208,9 @@ protected:
  /** Updates tensor network linking when a tensor has its connections modified. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
 
+ /** Invalidates cached tensor contraction sequence. **/
+ void invalidateContractionSequence();
+
  /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
      Returns an estimate of the total flop count required by the returned contraction sequence. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
@@ -219,8 +222,9 @@ private:
  std::string name_;                                     //tensor network name
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
- std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
+ std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
+ std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
 };
 
 } //namespace numerics

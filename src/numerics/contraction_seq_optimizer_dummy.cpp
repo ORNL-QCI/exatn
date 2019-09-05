@@ -15,7 +15,7 @@ double ContractionSeqOptimizerDummy::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq)
 {
  double flops = 0.0;
- //`Finish
+ //`Finish: Requires TensorNetwork::iterator
  return flops;
 }
 
