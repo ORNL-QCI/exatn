@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/05
+REVISION: 2019/09/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,6 +75,7 @@ public:
  static constexpr unsigned int NUM_WALKERS = 1024; //default number of walkers for tensor contraction sequence optimization
 
  using ContractionSequence = std::vector<std::pair<unsigned int, unsigned int>>; //pairs of contracted tensor id's
+ using Iterator = typename std::unordered_map<unsigned int,TensorConn>::iterator; //iterator
 
  /** Creates an unnamed empty tensor network with a single scalar output tensor named "_SMOKY_TENSOR_" **/
  TensorNetwork();
@@ -121,6 +122,11 @@ public:
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id);
+
+ /** Begin iterator **/
+ inline Iterator begin() {return tensors_.begin();}
+ /** End iterator **/
+ inline Iterator end() {return tensors_.end();}
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/
@@ -177,6 +183,13 @@ public:
  bool mergeTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
                    unsigned int right_id,   //in: right tensor id (present in the tensor network)
                    unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+
+ /** Splits a given tensor in a finalized tensor network into two tensors by introducing new dimensions
+     across the cutting boundary. The original tensor dimensions are then assigned to either left or
+     right tensor. The new dimensions are then appended at the end. **/
+ bool splitTensor(unsigned int tensor_id,               //in: id of the tensor to be split into two tensors
+                  const TensorShape & contracted_dims,  //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
+                  const std::vector<bool> & left_dims); //in: assignment of original tensor dimensions to new tensors (true: belongs to left, false: belongs to right tensor)
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.

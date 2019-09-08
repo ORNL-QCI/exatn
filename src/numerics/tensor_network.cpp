@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/05
+REVISION: 2019/09/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -314,7 +314,7 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
  if(contraction_seq_.empty()){
-  contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_);
+  contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_,this->getNumTensors()+1);
  }
  return contraction_seq_flops_;
 }
@@ -745,6 +745,26 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  assert(num_deleted == 1);
  //Update connections:
  this->updateConnections(result_id);
+ invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ return true;
+}
+
+
+bool TensorNetwork::splitTensor(unsigned int tensor_id,
+                                const TensorShape & contracted_dims,
+                                const std::vector<bool> & left_dims)
+{
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "Splitting the output tensor of the tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "Splitting a tensor in an unfinalized tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ //`Finish
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return true;
 }
