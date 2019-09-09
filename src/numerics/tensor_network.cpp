@@ -714,7 +714,8 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
 }
 
 
-bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, unsigned int result_id)
+bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, unsigned int result_id,
+                                 std::string * contr_pattern)
 {
  if(left_id == right_id || left_id == result_id || right_id == result_id){
   std::cout << "#ERROR(TensorNetwork::mergeTensors): Invalid arguments: Cannot be identical: " <<

@@ -192,9 +192,10 @@ public:
      result = left * right: All participating tensor ids must be distinct and not equal to 0.
      The uncontracted modes of the left tensor will precede in-order the uncontracted
      modes of the right tensor in the tensor-result. **/
- bool mergeTensors(unsigned int left_id,    //in: left tensor id (present in the tensor network)
-                   unsigned int right_id,   //in: right tensor id (present in the tensor network)
-                   unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+ bool mergeTensors(unsigned int left_id,   //in: left tensor id (present in the tensor network)
+                   unsigned int right_id,  //in: right tensor id (present in the tensor network)
+                   unsigned int result_id, //in: result tensor id (absent in the tensor network, to be appended)
+                   std::string * contr_pattern = nullptr); //inout: corresponding tensor contraction pattern (owned by the caller)
 
  /** Splits a given tensor in a finalized tensor network into two tensors by introducing new dimensions
      across the cutting boundary. The original tensor dimensions are then assigned to either left or
