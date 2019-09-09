@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/08
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -72,10 +72,9 @@ namespace numerics{
 class TensorNetwork{
 public:
 
- static constexpr unsigned int NUM_WALKERS = 1024; //default number of walkers for tensor contraction sequence optimization
-
  using ContractionSequence = std::vector<std::pair<unsigned int, unsigned int>>; //pairs of contracted tensor id's
- using Iterator = typename std::unordered_map<unsigned int,TensorConn>::iterator; //iterator
+ using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
+ using ConstIterator = typename std::unordered_map<unsigned int, TensorConn>::const_iterator; //constant iterator
 
  /** Creates an unnamed empty tensor network with a single scalar output tensor named "_SMOKY_TENSOR_" **/
  TensorNetwork();
@@ -127,6 +126,10 @@ public:
  inline Iterator begin() {return tensors_.begin();}
  /** End iterator **/
  inline Iterator end() {return tensors_.end();}
+ /** Begin constant iterator **/
+ inline ConstIterator cbegin() {return tensors_.cbegin();}
+ /** End constant iterator **/
+ inline ConstIterator cend() {return tensors_.cend();}
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/
@@ -153,6 +156,13 @@ public:
                    std::shared_ptr<Tensor> tensor,                                           //in: appended tensor
                    const std::vector<std::pair<unsigned int, unsigned int>> & pairing,       //in: leg pairing: output tensor mode -> appended tensor mode
                    const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}); //in: optional leg directions (for all tensor modes)
+
+ /** Appends a new even-rank tensor to the tensor network by matching the first half
+     of the tensor legs with network's output legs provided in "pairing".
+     The second half of the tensor legs will then replace the matched output legs. **/
+ bool appendTensorGate(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
+                       std::shared_ptr<Tensor> tensor,             //in: appended tensor
+                       const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes (half-rank)
 
  /** Appends a tensor network to the current tensor network by matching the modes
      of the output tensors of both tensor networks. The unmatched modes of the
@@ -189,7 +199,7 @@ public:
      right tensor. The new dimensions are then appended at the end. **/
  bool splitTensor(unsigned int tensor_id,               //in: id of the tensor to be split into two tensors
                   const TensorShape & contracted_dims,  //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
-                  const std::vector<bool> & left_dims); //in: assignment of original tensor dimensions to new tensors (true: belongs to left, false: belongs to right tensor)
+                  const std::vector<int> & right_dims); //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.

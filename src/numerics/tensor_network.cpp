@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/08
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -481,6 +481,37 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
 }
 
 
+bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
+                                     std::shared_ptr<Tensor> tensor,
+                                     const std::vector<unsigned int> & pairing)
+{
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+   "Appending a tensor gate to an unfinalized tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+   "Tensor 0 (output tensor) must already be present in the tensor network!" << std::endl;
+  return false;
+ }
+ //Check validity of leg pairing:
+ auto tensor_rank = tensor->getRank();
+ if((tensor_rank % 2) != 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Odd-rank tensors are not allowed as gates!" << std::endl;
+  return false;
+ }
+ if(tensor_rank != (pairing.size() * 2)){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Wrong size of the leg pairing vector!" << std::endl;
+  return false;
+ }
+ //`Finish
+ invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
+ return true;
+}
+
+
 bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,                                           //in: appended tensor network
                                         const std::vector<std::pair<unsigned int, unsigned int>> & pairing) //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 {
@@ -752,7 +783,7 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
 
 bool TensorNetwork::splitTensor(unsigned int tensor_id,
                                 const TensorShape & contracted_dims,
-                                const std::vector<bool> & left_dims)
+                                const std::vector<int> & right_dims)
 {
  if(tensor_id == 0){
   std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<

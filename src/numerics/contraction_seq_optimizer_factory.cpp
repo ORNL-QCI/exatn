@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer factory
-REVISION: 2019/09/05
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,6 +13,7 @@ namespace numerics{
 ContractionSeqOptimizerFactory::ContractionSeqOptimizerFactory()
 {
  registerContractionSeqOptimizer("dummy",&ContractionSeqOptimizerDummy::createNew);
+ registerContractionSeqOptimizer("heuro",&ContractionSeqOptimizerHeuro::createNew);
 }
 
 void ContractionSeqOptimizerFactory::registerContractionSeqOptimizer(const std::string & name,

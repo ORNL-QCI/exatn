@@ -22,6 +22,7 @@ add_library(${LIBRARY_NAME}
             network_builder_mps.cpp
             network_build_factory.cpp
             contraction_seq_optimizer_dummy.cpp
+            contraction_seq_optimizer_heuro.cpp
             contraction_seq_optimizer_factory.cpp
             tensor_network.cpp)
 

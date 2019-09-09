@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer factory
-REVISION: 2019/09/05
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -14,6 +14,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "contraction_seq_optimizer.hpp"
 #include "contraction_seq_optimizer_dummy.hpp"
+#include "contraction_seq_optimizer_heuro.hpp"
 
 #include <string>
 #include <memory>
