@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Dummy
-REVISION: 2019/09/08
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,7 +22,7 @@ public:
 
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
-                                             unsigned int intermediate_num_begin) override;
+                                             std::function<unsigned int ()> intermediate_num_generator) override;
 
  static std::unique_ptr<ContractionSeqOptimizer> createNew();
 };

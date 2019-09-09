@@ -196,6 +196,16 @@ unsigned int TensorNetwork::getNumTensors() const
 }
 
 
+unsigned int TensorNetwork::getMaxTensorId() const
+{
+ unsigned int max_id = 0;
+ for(const auto & kv: tensors_){
+  if(kv.first > max_id) max_id = kv.first;
+ }
+ return max_id;
+}
+
+
 const std::string & TensorNetwork::getName() const
 {
  return name_;
@@ -314,7 +324,9 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
  if(contraction_seq_.empty()){
-  contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_,this->getNumTensors()+1);
+  auto intermediate_num_begin = this->getMaxTensorId() + 1;
+  auto intermediate_num_generator = [intermediate_num_begin]() mutable {return intermediate_num_begin++;};
+  contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_,intermediate_num_generator);
  }
  return contraction_seq_flops_;
 }

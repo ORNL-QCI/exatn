@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Dummy
-REVISION: 2019/09/08
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,7 +13,7 @@ namespace numerics{
 
 double ContractionSeqOptimizerDummy::determineContractionSequence(const TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
-                                                                  unsigned int intermediate_num_begin)
+                                                                  std::function<unsigned int ()> intermediate_num_generator)
 {
  contr_seq.clear();
  double flops = 0.0;
@@ -32,11 +32,12 @@ double ContractionSeqOptimizerDummy::determineContractionSequence(const TensorNe
     contr_seq.emplace_back(ContrTriple{0,curr_tensor,prev_tensor});
     flops += net.getContractionCost(curr_tensor,prev_tensor);
    }else{ //intermediate tensor contraction
-    contr_seq.emplace_back(ContrTriple{intermediate_num_begin,curr_tensor,prev_tensor});
+    auto intermediate_num = intermediate_num_generator();
+    contr_seq.emplace_back(ContrTriple{intermediate_num,curr_tensor,prev_tensor});
     flops += net.getContractionCost(curr_tensor,prev_tensor);
-    auto merged = net.mergeTensors(curr_tensor,prev_tensor,intermediate_num_begin);
+    auto merged = net.mergeTensors(curr_tensor,prev_tensor,intermediate_num);
     assert(merged);
-    prev_tensor = intermediate_num_begin++;
+    prev_tensor = intermediate_num;
    }
   }
  }

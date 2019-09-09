@@ -72,7 +72,6 @@ namespace numerics{
 class TensorNetwork{
 public:
 
- using ContractionSequence = std::vector<std::pair<unsigned int, unsigned int>>; //pairs of contracted tensor id's
  using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
  using ConstIterator = typename std::unordered_map<unsigned int, TensorConn>::const_iterator; //constant iterator
 
@@ -114,6 +113,9 @@ public:
  /** Returns the number of input tensors in the tensor network.
      Note that the output tensor (tensor #0) is not counted here. **/
  unsigned int getNumTensors() const;
+
+ /** Returns the maximal tensor id value used in the tensor network. **/
+ unsigned int getMaxTensorId() const;
 
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;

@@ -22,7 +22,7 @@ public:
 
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
-                                             unsigned int intermediate_num_begin) override;
+                                             std::function<unsigned int ()> intermediate_num_generator) override;
 
  static std::unique_ptr<ContractionSeqOptimizer> createNew();
 };

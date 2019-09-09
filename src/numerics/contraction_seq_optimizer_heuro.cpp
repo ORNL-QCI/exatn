@@ -16,7 +16,7 @@ static constexpr unsigned int NUM_WALKERS = 1024; //default number of walkers fo
 
 double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
-                                                                  unsigned int intermediate_num_begin)
+                                                                  std::function<unsigned int ()> intermediate_num_generator)
 {
  contr_seq.clear();
  double flops = 0.0;
