@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/03
+REVISION: 2019/09/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -162,7 +162,10 @@ void NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 void NumServer::submit(TensorNetwork & network)
 {
- assert(false);//`Finish
+ auto & op_list = network.getOperationList();
+ for(auto op = op_list.begin(); op != op_list.end(); ++op){
+  tensor_rt_->submit(*op);
+ }
  return;
 }
 
@@ -184,8 +187,7 @@ bool NumServer::sync(TensorOperation & operation, bool wait)
 
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
- assert(false);//`Finish
- return false;
+ return sync(*(network.getTensor(0)),wait);
 }
 
 } //namespace exatn

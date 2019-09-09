@@ -17,7 +17,7 @@ double ContractionSeqOptimizerDummy::determineContractionSequence(const TensorNe
 {
  contr_seq.clear();
  double flops = 0.0;
- const auto num_tensors = network.getNumTensors();
+ const auto num_tensors = network.getNumTensors(); //number of input tensors
  if(num_tensors > 1){
   TensorNetwork net(network);
   unsigned int ids[num_tensors], i = 0;

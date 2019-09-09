@@ -36,8 +36,11 @@ public:
 
  /** Determines the pseudo-optimal tensor contraction sequence required for
      evaluating a given tensor network. The unique intermediate tensor id's are generated
-     by the provided intermediate number generator (each invocation returns a new id).
-     The latter can be conveniently passed as a lambda closure.  **/
+     by the provided intermediate number generator (each invocation returns a new tensor id).
+     The latter can be conveniently passed as a lambda closure. The returned double value
+     is an estimate of the total flop count associated with the determined contraction sequence.
+     The tensor network must have at least two input tensors in order to get a single contraction.
+     No contraction sequence is generated for tensor networks with a single input tensor. **/
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) = 0;

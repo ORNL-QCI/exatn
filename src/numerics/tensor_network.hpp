@@ -213,7 +213,7 @@ public:
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 
  /** Returns the list of tensor operations required for evaluating the tensor network. **/
- std::list<std::shared_ptr<TensorOperation>> getOperationList(const std::string & contr_seq_opt_name = "dummy");
+ std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy");
 
 protected:
 
@@ -237,7 +237,9 @@ protected:
  void invalidateContractionSequence();
 
  /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
-     Returns an estimate of the total flop count required by the returned contraction sequence. **/
+     Returns an estimate of the total flop count required by the returned contraction sequence.
+     The tensor network must contain at least two input tensors in order to generate a single contraction.
+     No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
 
 private:

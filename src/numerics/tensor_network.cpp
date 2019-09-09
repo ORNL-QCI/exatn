@@ -847,27 +847,67 @@ double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int righ
 }
 
 
-std::list<std::shared_ptr<TensorOperation>> TensorNetwork::getOperationList(const std::string & contr_seq_opt_name)
+std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(const std::string & contr_seq_opt_name)
 {
- std::list<std::shared_ptr<TensorOperation>> ops;
- auto iter = optimizers.find(contr_seq_opt_name);
- if(iter == optimizers.end()){ //not cached
-  auto & optimizer_factory = *(ContractionSeqOptimizerFactory::get());
-  auto optimizer = optimizer_factory.createContractionSeqOptimizer(contr_seq_opt_name);
-  if(optimizer){
-   auto res = optimizers.emplace(std::make_pair(contr_seq_opt_name,
+ if(operations_.empty()){
+  //Get the tensor contraction sequence optimizer:
+  auto iter = optimizers.find(contr_seq_opt_name);
+  if(iter == optimizers.end()){ //not cached
+   auto & optimizer_factory = *(ContractionSeqOptimizerFactory::get());
+   auto optimizer = optimizer_factory.createContractionSeqOptimizer(contr_seq_opt_name);
+   if(optimizer){
+    auto res = optimizers.emplace(std::make_pair(contr_seq_opt_name,
                                   std::shared_ptr<ContractionSeqOptimizer>(std::move(optimizer))));
-   assert(res.second);
-   iter = res.first;
-  }else{
-   std::cout << "#ERROR(TensorNetwork::getOperationList): Invalid request: " <<
-    "Tensor contraction sequence optimizer" << contr_seq_opt_name << "has not been registered before!" << std::endl;
-   assert(false);
+    assert(res.second);
+    iter = res.first;
+   }else{
+    std::cout << "#ERROR(TensorNetwork::getOperationList): Invalid request: " <<
+     "Tensor contraction sequence optimizer" << contr_seq_opt_name << "has not been registered before!" << std::endl;
+    assert(false);
+   }
+  }
+  //Determine the pseudo-optimal sequence of tensor contractions:
+  double flops = determineContractionSequence(*(iter->second));
+  //Generate the list of operations:
+  auto & tensor_op_factory = *(TensorOpFactory::get());
+  if(this->getNumTensors() > 1){ //two or more input tensors: One or more contractions
+   TensorNetwork net(*this);
+   unsigned int num_contractions = contraction_seq_.size();
+   for(auto contr = contraction_seq_.cbegin(); contr != contraction_seq_.cend(); ++contr){
+    auto tensor1 = net.getTensor(contr->left_id);
+    auto tensor2 = net.getTensor(contr->right_id);
+    //`Get index pattern for tensor contraction
+    auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id);
+    assert(merged);
+    auto tensor0 = net.getTensor(contr->result_id);
+    auto op = tensor_op_factory.createTensorOp(TensorOpCode::CONTRACT);
+    op->setTensorOperand(tensor0);
+    op->setTensorOperand(tensor1);
+    op->setTensorOperand(tensor2);
+    op->setIndexPattern("`Replace with generated index pattern");
+    assert(op->isSet());
+    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
+   }
+  }else{ //one input tensor: Single addition
+   std::shared_ptr<Tensor> tensor0(nullptr);
+   std::shared_ptr<Tensor> tensor1(nullptr);
+   for(auto iter = this->begin(); iter != this->end(); ++iter){
+    if(iter->first == 0){
+     tensor0 = this->getTensor(iter->first);
+    }else{
+     tensor1 = this->getTensor(iter->first);
+    }
+   }
+   auto op = tensor_op_factory.createTensorOp(TensorOpCode::ADD);
+   op->setTensorOperand(tensor0);
+   op->setTensorOperand(tensor1);
+   //`Get index pattern for tensor addition
+   op->setIndexPattern("`Replace with generated index pattern");
+   assert(op->isSet());
+   operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
  }
- double flops = determineContractionSequence(*(iter->second));
- //`Finish: Copy tensor network, contract according to the sequence, record each contraction as operation
- return ops;
+ return operations_;
 }
 
 } //namespace numerics
