@@ -14,6 +14,12 @@ using namespace exatn;
 using namespace exatn::numerics;
 using namespace pybind11::literals;
 
+/**
+* This module provides the necessary bindings for the ExaTN classes and functionality to be used within
+* python. The various classes are bound with pybind11 and, when this is included in CMake compilation,
+* can be used to write python scripts which leverage the ExaTN functionality.
+*/
+
 
 /**
   Trampoline class for abstract virtual functions in TensorOperation
@@ -133,7 +139,8 @@ PYBIND11_MODULE(_pyexatn, m) {
   py::class_<exatn::numerics::TensorOpFactory>(
       m, "TensorOpFactory", "")
       .def("registerTensorOp", &exatn::numerics::TensorOpFactory::registerTensorOp, "")
-      .def("get", &exatn::numerics::TensorOpFactory::get, "");
+      .def("get", &exatn::numerics::TensorOpFactory::get, py::return_value_policy::reference, "")
+      .def("createTensorOpShared", &exatn::numerics::TensorOpFactory::createTensorOpShared, "");
 
   py::class_<exatn::numerics::TensorOpTransform,
              std::shared_ptr<exatn::numerics::TensorOpTransform>,

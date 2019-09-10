@@ -27,10 +27,10 @@ target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn)
 target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn-numerics)
 
 if(APPLE)
-   set_target_properties(_pyexatn PROPERTIES INSTALL_RPATH "@loader_path/lib")
+   set_target_properties(_pyexatn PROPERTIES INSTALL_RPATH "@loader_path/lib;@loader_path/plugins")
    set_target_properties(_pyexatn PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 else()
-   set_target_properties(_pyexatn PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+   set_target_properties(_pyexatn PROPERTIES INSTALL_RPATH "$ORIGIN/lib;$ORIGIN/plugins")
    set_target_properties(_pyexatn PROPERTIES LINK_FLAGS "-shared")
 endif()
 
