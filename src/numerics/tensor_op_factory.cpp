@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2019/06/03
+REVISION: 2019/09/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,6 +30,11 @@ std::unique_ptr<TensorOperation> TensorOpFactory::createTensorOp(TensorOpCode op
  auto it = factory_map_.find(opcode);
  if(it != factory_map_.end()) return (it->second)();
  return std::unique_ptr<TensorOperation>(nullptr);
+}
+
+std::shared_ptr<TensorOperation> TensorOpFactory::createTensorOpShared(TensorOpCode opcode)
+{
+ return std::move(createTensorOp(opcode));
 }
 
 TensorOpFactory * TensorOpFactory::get()

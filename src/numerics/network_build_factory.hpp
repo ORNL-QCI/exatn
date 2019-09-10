@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder factory
-REVISION: 2019/07/11
+REVISION: 2019/09/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,6 +37,8 @@ public:
 
  /** Creates a new instance of a desired subtype. **/
  std::unique_ptr<NetworkBuilder> createNetworkBuilder(const std::string & name);
+ /** Creates a new instance of a desired subtype. **/
+ std::shared_ptr<NetworkBuilder> createNetworkBuilderShared(const std::string & name);
 
  /** Returns a pointer to the NetworkBuildFactory singleton. **/
  static NetworkBuildFactory * get();

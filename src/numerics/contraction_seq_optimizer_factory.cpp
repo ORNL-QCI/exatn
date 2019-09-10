@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer factory
-REVISION: 2019/09/09
+REVISION: 2019/09/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,6 +28,11 @@ std::unique_ptr<ContractionSeqOptimizer> ContractionSeqOptimizerFactory::createC
  auto it = factory_map_.find(name);
  if(it != factory_map_.end()) return (it->second)();
  return std::unique_ptr<ContractionSeqOptimizer>(nullptr);
+}
+
+std::shared_ptr<ContractionSeqOptimizer> ContractionSeqOptimizerFactory::createContractionSeqOptimizerShared(const std::string & name)
+{
+ return std::move(createContractionSeqOptimizer(name));
 }
 
 ContractionSeqOptimizerFactory * ContractionSeqOptimizerFactory::get()

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer factory
-REVISION: 2019/09/09
+REVISION: 2019/09/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,6 +38,8 @@ public:
 
  /** Creates a new instance of a desired subtype. **/
  std::unique_ptr<ContractionSeqOptimizer> createContractionSeqOptimizer(const std::string & name);
+ /** Creates a new instance of a desired subtype. **/
+ std::shared_ptr<ContractionSeqOptimizer> createContractionSeqOptimizerShared(const std::string & name);
 
  /** Returns a pointer to the ContractionSeqOptimizerFactory singleton. **/
  static ContractionSeqOptimizerFactory * get();

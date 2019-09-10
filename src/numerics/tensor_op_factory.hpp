@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2019/06/03
+REVISION: 2019/09/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,6 +40,8 @@ public:
 
  /** Creates a new instance of a desired subtype. **/
  std::unique_ptr<TensorOperation> createTensorOp(TensorOpCode opcode);
+ /** Creates a new instance of a desired subtype. **/
+ std::shared_ptr<TensorOperation> createTensorOpShared(TensorOpCode opcode);
 
  /** Returns a pointer to the TensorOpFactory singleton. **/
  static TensorOpFactory * get();
