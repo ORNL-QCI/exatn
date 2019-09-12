@@ -1,10 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/08/07
+REVISION: 2019/09/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_symbol.hpp"
+
+#include <cassert>
 
 namespace exatn{
 
@@ -124,6 +126,35 @@ bool parse_tensor_network(const std::string & network,        //in: tensor netwo
   tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
  }else{
   return false;
+ }
+ return true;
+}
+
+
+bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & pattern,
+                                  unsigned int left_tensor_rank,
+                                  unsigned int right_tensor_rank,
+                                  std::string & symb_pattern)
+{
+ assert(pattern.size() == left_tensor_rank + right_tensor_rank);
+ symb_pattern.clear();
+ if(pattern.empty()){
+  symb_pattern = "D()+=L()*R()";
+ }else{
+  unsigned int dest_tensor_rank = 0;
+  for(const auto & leg: pattern){
+   if(leg.getTensorId() == 0) ++dest_tensor_rank;
+  }
+  symb_pattern.append("D(");
+  for(unsigned int i = 0; i < dest_tensor_rank; ++i){
+   symb_pattern.append("u"+std::to_string(i)+",");
+  }
+  symb_pattern.replace(symb_pattern.size()-1,1,")");
+  unsigned int nums[right_tensor_rank];
+  symb_pattern.append("+=L(");
+  for(unsigned int i = 0; i < left_tensor_rank; ++i){
+
+  }
  }
  return true;
 }
