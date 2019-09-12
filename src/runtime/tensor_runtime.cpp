@@ -13,7 +13,7 @@ TensorRuntime::TensorRuntime(const std::string & graph_executor_name,
 {
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
   std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
-            << graph_executor_name_ << "+" << node_executor_name_ << std::endl << std::flush;
+            << graph_executor_name_ << " + " << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
 }
 
