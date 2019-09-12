@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/09
+REVISION: 2019/09/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,8 +13,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <memory>
+#include <algorithm>
 
 namespace exatn{
 
@@ -236,6 +238,14 @@ std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id)
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return std::shared_ptr<Tensor>(nullptr);
  return (it->second).getTensor();
+}
+
+
+const std::vector<TensorLeg> * TensorNetwork::getTensorConnections(unsigned int tensor_id)
+{
+ auto it = tensors_.find(tensor_id);
+ if(it == tensors_.end()) return nullptr;
+ return &((it->second).getTensorLegs());
 }
 
 
@@ -767,6 +777,11 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
   }
  }
  assert(res_mode == num_uncontracted);
+ //Generate symbolic contraction pattern if needed:
+ if(contr_pattern != nullptr){
+  auto generated = generate_contraction_pattern(pattern,left_tensor_rank,right_tensor_rank,*contr_pattern);
+  assert(generated);
+ }
  //Append the tensor result:
  tensors_.emplace(std::make_pair(
                    result_id,
@@ -873,37 +888,80 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
   auto & tensor_op_factory = *(TensorOpFactory::get());
   if(this->getNumTensors() > 1){ //two or more input tensors: One or more contractions
    TensorNetwork net(*this);
+   std::list<unsigned int> intermediates;
    unsigned int num_contractions = contraction_seq_.size();
    for(auto contr = contraction_seq_.cbegin(); contr != contraction_seq_.cend(); ++contr){
+    //std::cout << "#DEBUG(TensorNetwork::getOperationList): Contracting " << contr->left_id << " * " << contr->right_id
+    //          << " -> " << contr->result_id << std::endl; //debug
     auto tensor1 = net.getTensor(contr->left_id);
     auto tensor2 = net.getTensor(contr->right_id);
-    //`Get index pattern for tensor contraction
-    auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id);
-    assert(merged);
+    std::string contr_pattern;
+    if(num_contractions > 1){ //intermediate contraction
+     auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id,&contr_pattern);
+     assert(merged);
+    }else{ //last contraction
+     assert(contr->result_id == 0); //last tensor contraction accumulates into the output tensor of the tensor network
+     const auto * tensor1_legs = net.getTensorConnections(contr->left_id);
+     assert(tensor1_legs != nullptr);
+     const auto * tensor2_legs = net.getTensorConnections(contr->right_id);
+     assert(tensor2_legs != nullptr);
+     std::vector<TensorLeg> pattern(*tensor1_legs);
+     pattern.insert(pattern.end(),tensor2_legs->begin(),tensor2_legs->end());
+     auto generated = generate_contraction_pattern(pattern,tensor1_legs->size(),tensor2_legs->size(),contr_pattern);
+     assert(generated);
+    }
     auto tensor0 = net.getTensor(contr->result_id);
+    if(contr->result_id != 0){ //intermediate tensors need to be created/destroyed
+     auto op_create = tensor_op_factory.createTensorOp(TensorOpCode::CREATE);
+     op_create->setTensorOperand(tensor0);
+     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_create)));
+     intermediates.emplace_back(contr->result_id);
+    }
     auto op = tensor_op_factory.createTensorOp(TensorOpCode::CONTRACT);
     op->setTensorOperand(tensor0);
     op->setTensorOperand(tensor1);
     op->setTensorOperand(tensor2);
-    op->setIndexPattern("`Replace with generated index pattern");
+    op->setIndexPattern(contr_pattern);
     assert(op->isSet());
     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
+    auto left_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->left_id);
+    if(left_intermediate != intermediates.end()){
+     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY);
+     op_destroy->setTensorOperand(tensor1);
+     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_destroy)));
+     intermediates.erase(left_intermediate);
+    }
+    auto right_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->right_id);
+    if(right_intermediate != intermediates.end()){
+     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY);
+     op_destroy->setTensorOperand(tensor2);
+     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_destroy)));
+     intermediates.erase(right_intermediate);
+    }
+    --num_contractions;
    }
+   assert(intermediates.empty());
   }else{ //one input tensor: Single addition
    std::shared_ptr<Tensor> tensor0(nullptr);
    std::shared_ptr<Tensor> tensor1(nullptr);
+   unsigned int left_tensor_id = 0;
    for(auto iter = this->begin(); iter != this->end(); ++iter){
     if(iter->first == 0){
      tensor0 = this->getTensor(iter->first);
     }else{
      tensor1 = this->getTensor(iter->first);
+     left_tensor_id = iter->first;
     }
    }
    auto op = tensor_op_factory.createTensorOp(TensorOpCode::ADD);
    op->setTensorOperand(tensor0);
    op->setTensorOperand(tensor1);
-   //`Get index pattern for tensor addition
-   op->setIndexPattern("`Replace with generated index pattern");
+   const auto * tensor1_legs = this->getTensorConnections(left_tensor_id);
+   assert(tensor1_legs != nullptr);
+   std::string contr_pattern;
+   auto generated = generate_contraction_pattern(*tensor1_legs,tensor1_legs->size(),0,contr_pattern);
+   assert(generated);
+   op->setIndexPattern(contr_pattern);
    assert(op->isSet());
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }

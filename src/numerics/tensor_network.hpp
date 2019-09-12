@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/09
+REVISION: 2019/09/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -123,6 +123,9 @@ public:
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id);
+
+ /** Get tensor connections. **/
+ const std::vector<TensorLeg> * getTensorConnections(unsigned int tensor_id);
 
  /** Begin iterator **/
  inline Iterator begin() {return tensors_.begin();}

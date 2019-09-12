@@ -1,10 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/08/07
+REVISION: 2019/09/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_symbol.hpp"
+
+#include <cassert>
 
 namespace exatn{
 
@@ -124,6 +126,73 @@ bool parse_tensor_network(const std::string & network,        //in: tensor netwo
   tensors.emplace_back(network.substr(trim_range.first,trim_range.second-trim_range.first+1));
  }else{
   return false;
+ }
+ return true;
+}
+
+
+bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & pattern,
+                                  unsigned int left_tensor_rank,
+                                  unsigned int right_tensor_rank,
+                                  std::string & symb_pattern)
+/* pattern[left_rank + right_rank] = {left_legs + right_legs} */
+{
+ const std::size_t DEFAULT_STRING_CAPACITY = 256; //string capacity reserve value
+
+ assert(pattern.size() == left_tensor_rank + right_tensor_rank);
+ symb_pattern.clear();
+ if(pattern.empty()){ //multiplication of scalars
+  symb_pattern = "D()+=L()*R()";
+ }else{ //at least one tensor is present
+  if(symb_pattern.capacity() < DEFAULT_STRING_CAPACITY) symb_pattern.reserve(DEFAULT_STRING_CAPACITY);
+  unsigned int dest_indices[left_tensor_rank + right_tensor_rank];
+  unsigned int dest_tensor_rank = 0;
+  for(const auto & leg: pattern){
+   if(leg.getTensorId() == 0){
+    dest_indices[leg.getDimensionId()] = dest_tensor_rank++;
+   }
+  }
+  symb_pattern.append("D(");
+  for(unsigned int i = 0; i < dest_tensor_rank; ++i){
+   symb_pattern.append("u"+std::to_string(dest_indices[i])+",");
+  }
+  if(symb_pattern[symb_pattern.size()-1] == ','){
+   symb_pattern.replace(symb_pattern.size()-1,1,")");
+  }else{
+   symb_pattern.append(")");
+  }
+  symb_pattern.append("+=L(");
+  dest_tensor_rank = 0;
+  unsigned int contr_ind = 0;
+  for(unsigned int i = 0; i < left_tensor_rank; ++i){
+   if(pattern[i].getTensorId() == 0){
+    dest_indices[i] = left_tensor_rank;
+    symb_pattern.append("u"+std::to_string(dest_tensor_rank++)+",");
+   }else{
+    dest_indices[i] = contr_ind;
+    symb_pattern.append("c"+std::to_string(contr_ind++)+",");
+   }
+  }
+  if(symb_pattern[symb_pattern.size()-1] == ','){
+   symb_pattern.replace(symb_pattern.size()-1,1,")");
+  }else{
+   symb_pattern.append(")");
+  }
+  symb_pattern.append("*R(");
+  for(unsigned int i = left_tensor_rank; i < left_tensor_rank + right_tensor_rank; ++i){
+   if(pattern[i].getTensorId() == 0){
+    symb_pattern.append("u"+std::to_string(dest_tensor_rank++)+",");
+   }else{
+    contr_ind = dest_indices[pattern[i].getDimensionId()];
+    assert(contr_ind < left_tensor_rank);
+    symb_pattern.append("c"+std::to_string(contr_ind)+",");
+   }
+  }
+  if(symb_pattern[symb_pattern.size()-1] == ','){
+   symb_pattern.replace(symb_pattern.size()-1,1,")");
+  }else{
+   symb_pattern.append(")");
+  }
  }
  return true;
 }

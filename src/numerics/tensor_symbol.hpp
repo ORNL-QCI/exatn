@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/08/07
+REVISION: 2019/09/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -34,6 +34,7 @@ Rationale:
 #define EXATN_TENSOR_SYMBOL_HPP_
 
 #include "tensor_basic.hpp"
+#include "tensor_leg.hpp"
 
 #include <string>
 #include <vector>
@@ -124,6 +125,20 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
     the output tensor of the tensor network. **/
 bool parse_tensor_network(const std::string & network,         //in: tensor network as a string
                           std::vector<std::string> & tensors); //out: parsed (symbolic) tensors
+
+/** Generates symbolic tensor contraction pattern from the digital tensor
+    contraction pattern used by the contraction-based Tensor constructor:
+     pattern[0..m-1] describes connectivity of dimensions of the left contracted tensor,
+     pattern[m..m+n-1] decribes connectivity of dimensions of the right contracted tensor,
+      where m and n are the ranks of the left and right contracted tensors, respectively.
+     pattern[x] is a TensorLeg specifying the dimension of another tensor the described
+      dimension is connected to, where the result tensor is tensor 0 while the left and
+      right contracted tensors are tensors 1 and 2, respectively.
+    **/
+bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & pattern,
+                                  unsigned int left_tensor_rank,
+                                  unsigned int right_tensor_rank,
+                                  std::string & symb_pattern);
 
 } //namespace exatn
 

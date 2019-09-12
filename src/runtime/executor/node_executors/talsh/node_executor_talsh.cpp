@@ -151,7 +151,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  const auto tensor0_hash = tensor0.getTensorHash();
  auto tens0_pos = tensors_.find(tensor0_hash);
  if(tens0_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 0 not found: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 0 not found: " << std::endl;
   op.printIt();
   assert(false);
  }
@@ -161,7 +161,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  const auto tensor1_hash = tensor1.getTensorHash();
  auto tens1_pos = tensors_.find(tensor1_hash);
  if(tens1_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 1 not found: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 1 not found: " << std::endl;
   op.printIt();
   assert(false);
  }
@@ -171,7 +171,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  const auto tensor2_hash = tensor2.getTensorHash();
  auto tens2_pos = tensors_.find(tensor2_hash);
  if(tens2_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Tensor operand 2 not found: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 2 not found: " << std::endl;
   op.printIt();
   assert(false);
  }
@@ -181,7 +181,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
                                 std::make_shared<talsh::TensorTask>()));
  if(!task_res.second){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ADD: Attempt to execute the same operation twice: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Attempt to execute the same operation twice: " << std::endl;
   op.printIt();
   assert(false);
  }
