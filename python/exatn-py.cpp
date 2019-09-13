@@ -155,6 +155,7 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def(py::init<>())
       .def(py::init<const std::string>())
       .def(py::init<const std::string, std::shared_ptr<exatn::numerics::Tensor>, const std::vector<exatn::numerics::TensorLeg>>())
+      .def(py::init<const std::string, const std::string, const std::map<std::string,std::shared_ptr<exatn::numerics::Tensor>>>())
       .def("printIt", &exatn::numerics::TensorNetwork::printIt, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
       .def("isEmpty", &exatn::numerics::TensorNetwork::isEmpty, "")
