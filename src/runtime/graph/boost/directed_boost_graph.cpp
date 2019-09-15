@@ -61,7 +61,10 @@ bool DirectedBoostGraph::dependencyExists(VertexIdType vertex_id1, VertexIdType 
 
 
 TensorOpNode & DirectedBoostGraph::getNodeProperties(VertexIdType vertex_id) {
-  return *((*dag_)[vertex_id].properties);
+  lock();
+  TensorOpNode & node_properties = *((*dag_)[vertex_id].properties);
+  unlock();
+  return node_properties;
 }
 
 

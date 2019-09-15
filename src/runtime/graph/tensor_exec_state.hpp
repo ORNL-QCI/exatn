@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/08/26
+REVISION: 2019/09/15
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -27,7 +27,13 @@ Rationale:
      The execution state of a Tensor is progressing through alternating
      read and write epochs, introducing read-after-write, write-after-write,
      and write-after-read dependencies between tensor nodes with stored
-     tensor operations operating on the same data (Tensor).
+     tensor operations operating on the same data (Tensor). Importantly,
+     the execution state of a Tensor is defined with respect to the DAG
+     builder, that is, every time a new tensor operation is added into
+     the DAG the execution state of each participating tensor is inspected
+     and possibly altered (switched to another epoch). Thus, the execution
+     state of a tensor is only used for establishing data dependencies for
+     newly added DAG nodes, it has nothing to do with actual DAG execution.
 **/
 
 #ifndef EXATN_RUNTIME_TENSOR_EXEC_STATE_HPP_

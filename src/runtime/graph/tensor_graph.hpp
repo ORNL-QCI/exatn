@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/09/03
+REVISION: 2019/09/15
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -151,8 +151,8 @@ public:
                                 VertexIdType vertex_id2) = 0;
 
   /** Returns the properties (TensorOpNode) of a given DAG node (by reference).
-      This function may require external locking in order to provide an
-      exclusive access to the DAG node properties returned by reference. **/
+      Subsequently, one may need to lock/unlock the returned TensorOpNode
+      in order to ensure a mutually exclusive access to it. **/
   virtual TensorOpNode & getNodeProperties(VertexIdType vertex_id) = 0;
 
   /** Returns the number of nodes the given node is connected to. **/
@@ -186,7 +186,14 @@ public:
 
   /** Marks the DAG node as executed to completion. **/
   void setNodeExecuted(VertexIdType vertex_id, int error_code = 0) {
-    return getNodeProperties(vertex_id).setExecuted(error_code);
+    TensorOpNode & node_properties = getNodeProperties(vertex_id);
+    node_properties.setExecuted(error_code);
+    auto & op = node_properties.getOperation();
+    auto & output_tensor = *(op->getTensorOperand(0));
+    lock();
+    auto update_cnt = exec_state_.registerWriteCompletion(output_tensor);
+    unlock();
+    return;
   }
 
   /** Returns TRUE if the DAG node is currently being executed. **/
