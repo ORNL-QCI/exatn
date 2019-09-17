@@ -20,9 +20,9 @@ domain which heavily relies on large-scale numerical tensor algebra:
 
 ## Dependencies
 ```
-Compiler (C++11, optional Fortran-2003 for multi-node ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
-MPI: OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
-BLAS: ATLAS, MKL, ACML, ESSL (optional)
+Compiler (C++11, optional Fortran-2003 for multi-node execution with ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
+MPI (optional): OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
+BLAS (optional): ATLAS, MKL, ACML, ESSL
 CUDA 9+ (optional)
 CMake 3.9+ (for build)
 ```
@@ -75,12 +75,12 @@ supports up to GCC 7, so if your default `g++` is version 8, then you will need 
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
-```
+
 When requesting the multi-node MPI build, the tensor algebra library ExaTENSOR
 is used as the default multi-node execution backend. Due to numerous bugs in
 Fortran compilers and MPI libraries, the only tested choices are the following:
 gcc-8 compiler, intel-18+ compiler, openmpi-3.1.0 library, mpich-3.2.1 library or later.
-```
+
 To use python capabilities after compilation, export the library to your `PYTHONPATH`.
 ```
 $ export PYTHONPATH=$PYTHONPATH:~/.exatn
