@@ -23,7 +23,7 @@ protected:
 
   std::string portName = "exatn-mpi-driver";
 
-  std::map<std::string, std::shared_ptr<TensorMethod<Identifiable>>> registeredTensorMethods;
+  std::map<std::string, std::shared_ptr<talsh::TensorFunctor<Identifiable>>> registeredTensorMethods;
 
 public:
   MPIServer() : DriverServer() {}

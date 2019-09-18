@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/09
+REVISION: 2019/09/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,7 +34,7 @@ void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
  return;
 }
 
-void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method)
+void NumServer::registerTensorMethod(std::shared_ptr<talsh::TensorFunctor<Identifiable>> method)
 {
  auto res = ext_methods_.insert({method->name(),method});
  if(!(std::get<1>(res))) std::cout << "#ERROR(NumServer::registerTensorMethod): Method already exists: " <<
@@ -43,7 +43,7 @@ void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>>
  return;
 }
 
-std::shared_ptr<TensorMethod<Identifiable>> NumServer::getTensorMethod(const std::string & tag)
+std::shared_ptr<talsh::TensorFunctor<Identifiable>> NumServer::getTensorMethod(const std::string & tag)
 {
  return ext_methods_[tag];
 }

@@ -24,7 +24,7 @@ public:
   void Start(BundleContext context) {
     auto t =
         std::make_shared<exatn::test::ExampleTensorMethod>();
-    context.RegisterService<TensorMethod<exatn::Identifiable>>(t);
+    context.RegisterService<talsh::TensorFunctor<exatn::Identifiable>>(t);
   }
 
   /**

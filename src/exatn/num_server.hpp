@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/03
+REVISION: 2019/09/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,7 +9,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      + Opening/closing TAProL scopes (top scope 0 "GLOBAL" is open automatically);
      + Creation/destruction of named vector spaces and their named subspaces;
      + Registration/retrieval of external data (class BytePacket);
-     + Registration/retrieval of external tensor methods (class TensorMethod);
+     + Registration/retrieval of external tensor methods (class TensorFunctor);
      + Submission for processing of individual tensor operations or tensor networks.
  (b) Processing of individual tensor operations or tensor networks has asynchronous semantics:
      Submit TensorOperation/TensorNetwork for processing, then synchronize on the tensor-result.
@@ -68,10 +68,10 @@ public:
                                const std::string & node_executor_name);
 
  /** Registers an external tensor method. **/
- void registerTensorMethod(std::shared_ptr<TensorMethod<Identifiable>> method);
+ void registerTensorMethod(std::shared_ptr<talsh::TensorFunctor<Identifiable>> method);
 
  /** Retrieves a registered external tensor method. **/
- std::shared_ptr<TensorMethod<Identifiable>> getTensorMethod(const std::string & tag);
+ std::shared_ptr<talsh::TensorFunctor<Identifiable>> getTensorMethod(const std::string & tag);
 
  /** Registers an external data packet. **/
  void registerExternalData(const std::string & tag, std::shared_ptr<BytePacket> packet);
@@ -139,7 +139,7 @@ private:
  numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
- std::map<std::string,std::shared_ptr<TensorMethod<Identifiable>>> ext_methods_; //external tensor methods
+ std::map<std::string,std::shared_ptr<talsh::TensorFunctor<Identifiable>>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}

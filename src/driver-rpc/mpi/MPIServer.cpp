@@ -116,7 +116,7 @@ void MPIServer::start() {
         MPI_Get_count(&status, MPI_BYTE, &count);
         packet.size_bytes = count;
 
-        auto tensor_method = exatn::getService<TensorMethod<Identifiable>>(tmName);
+        auto tensor_method = exatn::getService<talsh::TensorFunctor<Identifiable>>(tmName);
         tensor_method->unpack(packet);
         exatn::numericalServer->registerTensorMethod(tensor_method);
 

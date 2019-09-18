@@ -21,11 +21,11 @@ public:
   // Currently retrieves saved complex<double> scalars.
   virtual const std::vector<std::complex<double>> getResults(const std::string& jobId) = 0;
 
-  // Register an external tensor method, a subclass of TensorMethod class
-  // which overrides the .apply(const TensorDenseBlock &) method. This
-  // allows an application to initialize and transform tensors is a custom way
+  // Register an external tensor method, a subclass of TensorFunctor class
+  // which overrides the .apply(talsh::Tensor &) method. This allows
+  // an application to initialize and transform tensors is a custom way
   // since the registered tensor methods will be accessible in TAProL text.
-  virtual void registerTensorMethod(const std::string& varName, TensorMethod<Identifiable>& method) = 0;
+  virtual void registerTensorMethod(const std::string& varName, talsh::TensorFunctor<Identifiable>& method) = 0;
 
   // Register external data under some symbolic name. This data will be accessible
   // in TAProL text. It can be used to define tensor dimensions dynamically, for example.

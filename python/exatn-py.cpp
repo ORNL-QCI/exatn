@@ -60,19 +60,13 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def_readwrite("base_addr", &BytePacket::base_addr,"")
       .def_readwrite("size_bytes", &BytePacket::size_bytes, "");
 
-  py::class_<TensorDenseBlock>(
-      m, "TensorDenseBlock", "")
-      .def_readwrite("num_dims", &TensorDenseBlock::num_dims,"")
-      .def_readwrite("data_kind", &TensorDenseBlock::data_kind, "")
-      .def_readwrite("body_ptr", &TensorDenseBlock::body_ptr, "")
-      .def_readwrite("bases", &TensorDenseBlock::bases, "")
-      .def_readwrite("dims", &TensorDenseBlock::dims, "");
-
-  py::class_<TensorMethod<Identifiable>, std::shared_ptr<TensorMethod<Identifiable>>>(
+/**
+  py::class_<talsh::TensorFunctor<Identifiable>, std::shared_ptr<talsh::TensorFunctor<Identifiable>>>(
       m, "TensorMethod", "")
-      .def("pack", &TensorMethod<Identifiable>::pack, "")
-      .def("unpack", &TensorMethod<Identifiable>::unpack, "")
-      .def("apply", &TensorMethod<Identifiable>::apply, "");
+      .def("pack", &talsh::TensorFunctor<Identifiable>::pack, "")
+      .def("unpack", &talsh::TensorFunctor<Identifiable>::unpack, "")
+      .def("apply", &talsh::TensorFunctor<Identifiable>::apply, "");
+**/
 
   py::class_<exatn::rpc::DriverClient, std::shared_ptr<exatn::rpc::DriverClient>>(
       m, "DriverClient","")

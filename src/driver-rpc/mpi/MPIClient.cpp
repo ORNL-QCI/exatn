@@ -27,13 +27,13 @@ void MPIClient::connect() {
 
 }
 
-void MPIClient::registerTensorMethod(const std::string& varName, TensorMethod<exatn::Identifiable>& method) {
+void MPIClient::registerTensorMethod(const std::string& varName, talsh::TensorFunctor<exatn::Identifiable>& method) {
 
   if (!connected) connect();
 
 //  char buf[1];
   auto name = method.name();
-  std::cout << "[mpi-client] Sending TensorMethod " << name << " to remote server.\n";
+  std::cout << "[mpi-client] Sending TensorFunctor " << name << " to remote server.\n";
   MPI_Send(name.c_str(), name.size(), MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
 
 //  MPI_Send(buf, 1, MPI_CHAR, 0, REGISTER_TENSORMETHOD, serverComm);
@@ -42,7 +42,7 @@ void MPIClient::registerTensorMethod(const std::string& varName, TensorMethod<ex
   initBytePacket(&packet);
   method.pack(packet);
 
-  std::cout << "[mpi-client] Sending TensorMethod data to remote server.\n";
+  std::cout << "[mpi-client] Sending TensorFunctor data to remote server.\n";
   MPI_Send(packet.base_addr, packet.size_bytes, MPI_BYTE, 0, 0, serverComm);
 
   return;

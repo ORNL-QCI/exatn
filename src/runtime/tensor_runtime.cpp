@@ -1,6 +1,9 @@
 #include "tensor_runtime.hpp"
 #include "exatn_service.hpp"
 
+#include "talshxx.hpp"
+
+#include <vector>
 #include <iostream>
 
 namespace exatn {
@@ -139,12 +142,13 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 }
 
 
-TensorDenseBlock TensorRuntime::getTensorData(const Tensor & tensor) {
+talsh::Tensor TensorRuntime::getTensorData(Tensor & tensor) {
   // Complete all submitted update operations on the tensor
   auto synced = sync(tensor,true);
   assert(synced);
   //`Get access to tensor data
-  return TensorDenseBlock();
+  const double init_val = 0.0;
+  return talsh::Tensor(std::vector<int>{},init_val);
 }
 
 } // namespace runtime

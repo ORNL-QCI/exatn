@@ -5,32 +5,30 @@
 #include <iostream>
 
 namespace exatn {
-
 namespace test {
 
-void ExampleTensorMethod::pack(BytePacket& packet) {
-   appendToBytePacket(&packet, datum);
+void ExampleTensorMethod::pack(BytePacket & packet) {
+  appendToBytePacket(&packet,datum);
 }
 
-void ExampleTensorMethod::unpack(BytePacket &packet) {
-    extractFromBytePacket(&packet, datum);
+void ExampleTensorMethod::unpack(BytePacket & packet) {
+  extractFromBytePacket(&packet,datum);
 }
 
-int ExampleTensorMethod::apply(const TensorDenseBlock& local_tensor) {
+int ExampleTensorMethod::apply(talsh::Tensor & local_tensor) {
 
-    auto nElements = getDenseTensorVolume(local_tensor);
+  auto nElements = local_tensor.getVolume();
 
-    for (int i = 0; i < nElements; i++) {
-        if (local_tensor.data_kind == ::talsh::TensorData<double>::kind) {
-            ((double*)local_tensor.body_ptr)[i] = datum;
-        } else {
-            std::cerr << "can't handle any other data type.\n";
-        }
-    }
+  double * elements;
+  auto is_double = local_tensor.getDataAccessHost(&elements);
+  assert(is_double);
 
-    return 0;
+  for(decltype(nElements) i = 0; i < nElements; i++){
+    elements[i] = 0.0;
+  }
 
+  return 0;
 }
 
-}
-}
+} //namespace test
+} //namespace exatn

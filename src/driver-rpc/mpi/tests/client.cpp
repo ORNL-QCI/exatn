@@ -26,9 +26,9 @@ TEST(client_test, checkSimple) {
 
   exatn::initialize();
 
-  auto tm = exatn::getService<TensorMethod<exatn::Identifiable>>("HamiltonianTest");
+  auto tm = exatn::getService<talsh::TensorFunctor<exatn::Identifiable>>("HamiltonianTest");
 
-  // How to set the state of the TensorMethod...
+// How to set the state of the TensorFunctor ...
 //   BytePacket p;
 //   initBytePacket(&p);
 //   appendToBytePacket(&p, .002);
