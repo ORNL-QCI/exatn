@@ -68,6 +68,18 @@ cmake ..
 -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS
 -DBLAS_PATH=/usr/lib
+
+Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib)
+as well as CUDA (this is a single command line below):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DCUDA_HOST_COMPILER=/usr/bin/g++
+-DBLAS_LIB=ATLAS
+-DBLAS_PATH=/usr/lib
+-DMPI_LIB=MPICH
+-DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 ```
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
 not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only
