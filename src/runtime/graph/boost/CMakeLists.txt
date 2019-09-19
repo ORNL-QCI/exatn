@@ -1,7 +1,8 @@
-set(LIBRARY_NAME exatn-runtime-graph)
+set(LIBRARY_NAME exatn-runtime-boost-graph)
 
 file(GLOB SRC
-     tensor_exec_state.cpp
+     directed_boost_graph.cpp
+     boost_graph_activator.cpp
     )
 
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
@@ -13,9 +14,9 @@ add_library(${LIBRARY_NAME}
            )
 
 target_include_directories(${LIBRARY_NAME}
-  PUBLIC . .. ${CMAKE_SOURCE_DIR}/src/exatn)
+  PUBLIC . ..)
 
-set(_bundle_name exatn_runtime_graph)
+set(_bundle_name exatn_runtime_boost_graph)
 set_target_properties(${LIBRARY_NAME}
                       PROPERTIES COMPILE_DEFINITIONS
                                  US_BUNDLE_NAME=${_bundle_name}
@@ -30,13 +31,13 @@ usfunctionembedresources(TARGET
                          manifest.json)
 
 target_link_libraries(${LIBRARY_NAME}
-                      PUBLIC CppMicroServices exatn-numerics)
+                      PUBLIC CppMicroServices exatn-runtime-graph
+                      PRIVATE Boost::graph)
 
-exatn_configure_library_rpath(${LIBRARY_NAME})
+exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
-add_subdirectory(boost)
+if(EXATN_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
 
-file (GLOB HEADERS *.hpp)
-
-install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)

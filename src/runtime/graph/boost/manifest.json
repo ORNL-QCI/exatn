@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_runtime_boost_graph",
+  "bundle.activator" : true,
+  "bundle.name" : "ExaTN Runtime Boost Graph Implementation library",
+  "bundle.description" : ""
+}
