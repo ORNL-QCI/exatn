@@ -4,9 +4,6 @@ file(GLOB SRC
      tensor_exec_state.cpp
     )
 
-usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
-usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)
-
 add_library(${LIBRARY_NAME}
             SHARED
             ${SRC}
@@ -15,19 +12,6 @@ add_library(${LIBRARY_NAME}
 target_include_directories(${LIBRARY_NAME}
   PUBLIC . .. ${CMAKE_SOURCE_DIR}/src/exatn)
 
-set(_bundle_name exatn_runtime_graph)
-set_target_properties(${LIBRARY_NAME}
-                      PROPERTIES COMPILE_DEFINITIONS
-                                 US_BUNDLE_NAME=${_bundle_name}
-                                 US_BUNDLE_NAME
-                                 ${_bundle_name})
-
-usfunctionembedresources(TARGET
-                         ${LIBRARY_NAME}
-                         WORKING_DIRECTORY
-                         ${CMAKE_CURRENT_SOURCE_DIR}
-                         FILES
-                         manifest.json)
 
 target_link_libraries(${LIBRARY_NAME}
                       PUBLIC CppMicroServices exatn-numerics)

@@ -21,10 +21,7 @@ add_library(_pyexatn SHARED exatn-py.cpp)
 
 set_target_properties(_pyexatn PROPERTIES PREFIX "")
 
-
-
-target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn)
-target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn-numerics)
+target_link_libraries(_pyexatn PUBLIC CppMicroServices exatn exatn-numerics)
 
 if(APPLE)
    set_target_properties(_pyexatn PROPERTIES INSTALL_RPATH "@loader_path/lib;@loader_path/plugins")

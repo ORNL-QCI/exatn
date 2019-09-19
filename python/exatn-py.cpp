@@ -9,6 +9,10 @@
 #include <pybind11/operators.h>
 #include <pybind11/eigen.h>
 
+#include "pybind11/detail/common.h"
+#include "talshxx.hpp"
+#include "tensor_method.hpp"
+
 namespace py = pybind11;
 using namespace exatn;
 using namespace exatn::numerics;
@@ -49,7 +53,23 @@ class PyTensorOperation : public exatn::numerics::TensorOperation {
 
 };
 
+class PyTensorFunctor : public talsh::TensorFunctor<Identifiable> {
+public:
+  using TensorFunctor::TensorFunctor;
 
+  //Packing/unpacking data members into/from a plain byte packet:
+ void pack(BytePacket & packet) override {
+     PYBIND11_OVERLOAD_PURE(void, TensorFunctor<Identifiable>, pack, packet);
+ }
+ void unpack(BytePacket & packet) override {
+     PYBIND11_OVERLOAD_PURE(void, TensorFunctor<Identifiable>, unpack, packet);
+ }
+
+ //Application-defined external tensor method:
+ int apply(Tensor & local_tensor) {
+    PYBIND11_OVERLOAD_PURE(int, TensorFunctor<Identifiable>, apply, local_tensor);
+ }
+};
 
 PYBIND11_MODULE(_pyexatn, m) {
   m.doc() =
@@ -60,13 +80,24 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def_readwrite("base_addr", &BytePacket::base_addr,"")
       .def_readwrite("size_bytes", &BytePacket::size_bytes, "");
 
-/**
-  py::class_<talsh::TensorFunctor<Identifiable>, std::shared_ptr<talsh::TensorFunctor<Identifiable>>>(
+  py::class_<talsh::Tensor>(m, "TalshTensor", "")
+      .def("getRank", &talsh::Tensor::getRank, "")
+      .def("getOrder", &talsh::Tensor::getOrder, "")
+      .def("getVolume", &talsh::Tensor::getVolume, "")
+      .def("getDimExtent", &talsh::Tensor::getDimExtent, "")
+      .def("reshape", &talsh::Tensor::reshape, "")
+      .def("getDataAccessHost", [](talsh::Tensor& self) ->py::array_t<double> {
+          double* elements;
+          self.getDataAccessHost(&elements);
+          return py::array(self.getVolume(), elements);
+      }, py::return_value_policy::reference, "");
+
+  py::class_<talsh::TensorFunctor<Identifiable>, PyTensorFunctor>(
       m, "TensorMethod", "")
       .def("pack", &talsh::TensorFunctor<Identifiable>::pack, "")
       .def("unpack", &talsh::TensorFunctor<Identifiable>::unpack, "")
       .def("apply", &talsh::TensorFunctor<Identifiable>::apply, "");
-**/
+
 
   py::class_<exatn::rpc::DriverClient, std::shared_ptr<exatn::rpc::DriverClient>>(
       m, "DriverClient","")

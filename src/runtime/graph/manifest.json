@@ -1,6 +1,0 @@
-{
-  "bundle.symbolic_name" : "exatn_runtime_graph",
-  "bundle.activator" : true,
-  "bundle.name" : "ExaTN Runtime Graph library",
-  "bundle.description" : ""
-}
