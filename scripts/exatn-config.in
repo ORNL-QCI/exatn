@@ -1,0 +1,48 @@
+#!/user/bin/env python3
+# This is an llvm-config inspired python script which returns some of the compile
+# flags to the user. Running script like:
+# $ exatn-config --includes
+# prints the include directories used in the build
+
+import argparse, sys, os
+
+def main(argv=None):
+
+    # Print out libraries that are used in CMake
+    if '--libs' in sys.argv[1:]:
+        print("Base libraries can be found in @CMAKE_INSTALL_PREFIX@/lib")
+
+        mpiLibs = '@MPI_CXX_LIBRARIES@'
+        mpiLibs = mpiLibs.split(';')
+        print('The MPI libraries are')
+        for string in mpiLibs:
+            print(string + ', ')
+        sys.argv.remove('--libs')
+
+    # Print out the linker flags used in CMake
+    if '--ldflags' in sys.argv[1:]:
+        mpiCxxLinkFlags = '@MPI_CXX_LINK_FLAGS@'
+        mpiFortranLinkFlags = '@MPI_FORTRAN_LINK_FLAGS@'
+        openMP = '@OpenMP_CXX_FLAGS@'
+
+        print("Linker flags for MPI are: " + mpiCxxLinkFlags + ' ' + mpiFortranLinkFlags + ' ' + openMP)
+        sys.argv.remove('--ldflags')
+
+    # Print out the include directories from CMake
+    if '--includes' in sys.argv[1:]:
+        baseIncludes = ['@CMAKE_INSTALL_PREFIX@/include/exatn']
+        cmakeIncludes = '@INC_DIRS@'
+        cmakeIncludes = cmakeIncludes.split(';')
+        print("The include directories are:")
+        print(baseIncludes + cmakeIncludes)
+        sys.argv.remove('--includes')
+
+    #Print out the CXX flags from CMake
+    if '--cxxflags' in sys.argv[1:]:
+        print('CXX compiler used is: @CMAKE_CXX_COMPILER@')
+        print('The CXX flags used in compilation are: @CMAKE_CXX_FLAGS@')
+
+
+
+if __name__ == "__main__":
+    sys.exit(main())
