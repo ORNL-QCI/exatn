@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/09/15
+REVISION: 2019/09/19
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -105,8 +105,17 @@ public:
     auto executed = executed_.load();
     assert(executing && !executed);
     error_.store(error_code);
-    executing_.store(false);
     executed_.store(true);
+    executing_.store(false);
+    return;
+  }
+
+  /** Marks the tensor graph node as idle. **/
+  inline void setIdle() {
+    auto executed = executed_.load();
+    assert(!executed);
+    error_.store(0);
+    executing_.store(false);
     return;
   }
 
@@ -194,6 +203,11 @@ public:
     auto update_cnt = exec_state_.registerWriteCompletion(output_tensor);
     unlock();
     return;
+  }
+
+  /** Marks the DAG node as idle. **/
+  void setNodeIdle(VertexIdType vertex_id) {
+    return getNodeProperties(vertex_id).setIdle();
   }
 
   /** Returns TRUE if the DAG node is currently being executed. **/

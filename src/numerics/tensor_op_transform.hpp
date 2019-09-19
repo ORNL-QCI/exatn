@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/08/30
+REVISION: 2019/09/19
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,8 +11,12 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #ifndef EXATN_NUMERICS_TENSOR_OP_TRANSFORM_HPP_
 #define EXATN_NUMERICS_TENSOR_OP_TRANSFORM_HPP_
 
+#include "Identifiable.hpp"
+
 #include "tensor_basic.hpp"
 #include "tensor_operation.hpp"
+
+#include "tensor_method.hpp"
 
 namespace exatn{
 
@@ -39,7 +43,14 @@ public:
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
 
+ void resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>> functor){
+  functor_ = functor;
+  return;
+ }
+
 private:
+
+ std::shared_ptr<talsh::TensorFunctor<Identifiable>> functor_; //tensor functor (method)
 
 };
 
