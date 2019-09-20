@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/18
+REVISION: 2019/09/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,8 +30,9 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_runtime.hpp"
 
-#include "tensor_method.hpp"
 #include "Identifiable.hpp"
+#include "tensor_method.hpp"
+#include "functor_init_val.hpp"
 
 #include <memory>
 #include <string>
@@ -50,6 +51,8 @@ using numerics::TensorLeg;
 using numerics::Tensor;
 using numerics::TensorOperation;
 using numerics::TensorNetwork;
+
+using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
 
 class NumServer final {

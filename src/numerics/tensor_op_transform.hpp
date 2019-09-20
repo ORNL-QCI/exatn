@@ -1,11 +1,13 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/09/19
+REVISION: 2019/09/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Transforms/initializes a tensor inside the processing backend.
+     Requires a user-provided talsh::TensorFunctor object to concretize
+     the transformation/initilization operation.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_TRANSFORM_HPP_
@@ -46,6 +48,11 @@ public:
  void resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>> functor){
   functor_ = functor;
   return;
+ }
+
+ int apply(talsh::Tensor & local_tensor){
+  if(functor_) return functor_->apply(local_tensor);
+  return 0;
  }
 
 private:

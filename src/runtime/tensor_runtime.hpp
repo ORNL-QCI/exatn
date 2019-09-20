@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/18
+REVISION: 2019/09/20
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -100,8 +100,11 @@ public:
   bool sync(const Tensor & tensor,
             bool wait = false);
 
-  /** Returns an accessor to the elements of a given tensor. **/
-  talsh::Tensor getTensorData(Tensor & tensor);
+  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
+      The argument slice must be an existing talsh::Tensor defining the slice of interest.
+      This slice will be extracted from the exatn::numerics::Tensor tensor. **/
+  bool getLocalTensor(Tensor & tensor,        //in: exatn::numerics::Tensor to get slice of
+                      talsh::Tensor & slice); //inout: locally stored tensor slice
 
 private:
   /** Launches the execution thread which will be executing DAGs on the fly. **/

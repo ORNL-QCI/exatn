@@ -142,13 +142,12 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 }
 
 
-talsh::Tensor TensorRuntime::getTensorData(Tensor & tensor) {
+bool TensorRuntime::getLocalTensor(Tensor & tensor, talsh::Tensor & slice) {
   // Complete all submitted update operations on the tensor
   auto synced = sync(tensor,true);
   assert(synced);
-  //`Get access to tensor data
-  const double init_val = 0.0;
-  return talsh::Tensor(std::vector<int>{},init_val);
+  //`Implement
+  return true;
 }
 
 } // namespace runtime

@@ -95,9 +95,18 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- //`Implement
+ const auto & tensor = *(op.getTensorOperand(0));
+ const auto tensor_hash = tensor.getTensorHash();
+ auto tens_pos = tensors_.find(tensor_hash);
+ if(tens_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): TRANSFORM: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens = *(tens_pos->second);
+ int error_code = op.apply(tens); //synchronous user-defined operation
  *exec_handle = op.getId();
- return 0;
+ return error_code;
 }
 
 

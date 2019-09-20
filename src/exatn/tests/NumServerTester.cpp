@@ -114,7 +114,53 @@ TEST(NumServerTester, useNumServer)
  exatn::numericalServer->submit(create_s2);
 
  //Initialize participating ExaTN tensors:
- //`Finish
+ std::shared_ptr<TensorOperation> init_z0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_z0->setTensorOperand(z0);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_z0)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.0)));
+ exatn::numericalServer->submit(init_z0);
+
+ std::shared_ptr<TensorOperation> init_t0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_t0->setTensorOperand(t0);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_t0)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_t0);
+
+ std::shared_ptr<TensorOperation> init_t1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_t1->setTensorOperand(t1);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_t1)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_t1);
+
+ std::shared_ptr<TensorOperation> init_t2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_t2->setTensorOperand(t2);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_t2)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_t2);
+
+ std::shared_ptr<TensorOperation> init_h0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_h0->setTensorOperand(h0);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_h0)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_h0);
+
+ std::shared_ptr<TensorOperation> init_s0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_s0->setTensorOperand(s0);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_s0)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_s0);
+
+ std::shared_ptr<TensorOperation> init_s1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_s1->setTensorOperand(s1);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_s1)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_s1);
+
+ std::shared_ptr<TensorOperation> init_s2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
+ init_s2->setTensorOperand(s2);
+ std::dynamic_pointer_cast<TensorOpTransform>(init_s2)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ exatn::numericalServer->submit(init_s2);
 
  //Evaluate the tensor network:
  exatn::numericalServer->submit(network);
