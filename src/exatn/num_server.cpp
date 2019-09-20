@@ -1,12 +1,16 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/18
+REVISION: 2019/09/20
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 
+#include "tensor_symbol.hpp"
+
 #include <cassert>
+#include <vector>
+#include <map>
 
 namespace exatn{
 
@@ -17,6 +21,7 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 NumServer::NumServer():
  tensor_rt_(std::make_shared<runtime::TensorRuntime>())
 {
+ tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
  tensor_rt_->openScope("GLOBAL");
 }
@@ -34,7 +39,7 @@ void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
  return;
 }
 
-void NumServer::registerTensorMethod(std::shared_ptr<talsh::TensorFunctor<Identifiable>> method)
+void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod> method)
 {
  auto res = ext_methods_.insert({method->name(),method});
  if(!(std::get<1>(res))) std::cout << "#ERROR(NumServer::registerTensorMethod): Method already exists: " <<
@@ -43,7 +48,7 @@ void NumServer::registerTensorMethod(std::shared_ptr<talsh::TensorFunctor<Identi
  return;
 }
 
-std::shared_ptr<talsh::TensorFunctor<Identifiable>> NumServer::getTensorMethod(const std::string & tag)
+std::shared_ptr<TensorMethod> NumServer::getTensorMethod(const std::string & tag)
 {
  return ext_methods_[tag];
 }
@@ -188,6 +193,53 @@ bool NumServer::sync(TensorOperation & operation, bool wait)
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
  return sync(*(network.getTensor(0)),wait);
+}
+
+bool NumServer::destroyTensor(const std::string & name)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return false;
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+ op->setTensorOperand(iter->second);
+ submit(op);
+ return true;
+}
+
+bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return false;
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op->setTensorOperand(iter->second);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
+ submit(op);
+ return true;
+}
+
+bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network)
+{
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(network,tensors);
+ if(parsed){
+  std::map<std::string,std::shared_ptr<Tensor>> tensor_map;
+  std::string tensor_name;
+  std::vector<IndexLabel> indices;
+  for(const auto & tensor: tensors){
+   bool complex_conj;
+   parsed = parse_tensor(tensor,tensor_name,indices,complex_conj);
+   if(!parsed) break;
+   auto iter = tensors_.find(tensor_name);
+   if(iter == tensors_.end()) parsed = false;
+   if(!parsed) break;
+   auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
+   parsed = res.second; if(!parsed) break;
+  }
+  if(parsed){
+   TensorNetwork tensnet(name,network,tensor_map);
+   submit(tensnet);
+  }
+ }
+ return parsed;
 }
 
 } //namespace exatn

@@ -11,6 +11,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      + Registration/retrieval of external data (class BytePacket);
      + Registration/retrieval of external tensor methods (class TensorFunctor);
      + Submission for processing of individual tensor operations or tensor networks.
+     + Higher-level methods for tensor creation, destruction, and operations on them.
  (b) Processing of individual tensor operations or tensor networks has asynchronous semantics:
      Submit TensorOperation/TensorNetwork for processing, then synchronize on the tensor-result.
      Processing of a tensor operation means evaluating the output tensor operand (#0).
@@ -25,7 +26,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "space_register.hpp"
 #include "tensor.hpp"
-#include "tensor_operation.hpp"
+#include "tensor_op_factory.hpp"
 #include "tensor_network.hpp"
 
 #include "tensor_runtime.hpp"
@@ -50,6 +51,7 @@ using numerics::TensorSignature;
 using numerics::TensorLeg;
 using numerics::Tensor;
 using numerics::TensorOperation;
+using numerics::TensorOpFactory;
 using numerics::TensorNetwork;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
@@ -71,10 +73,10 @@ public:
                                const std::string & node_executor_name);
 
  /** Registers an external tensor method. **/
- void registerTensorMethod(std::shared_ptr<talsh::TensorFunctor<Identifiable>> method);
+ void registerTensorMethod(std::shared_ptr<TensorMethod> method);
 
  /** Retrieves a registered external tensor method. **/
- std::shared_ptr<talsh::TensorFunctor<Identifiable>> getTensorMethod(const std::string & tag);
+ std::shared_ptr<TensorMethod> getTensorMethod(const std::string & tag);
 
  /** Registers an external data packet. **/
  void registerExternalData(const std::string & tag, std::shared_ptr<BytePacket> packet);
@@ -137,21 +139,82 @@ public:
  bool sync(TensorNetwork & network,
            bool wait = false);
 
+ /** HIGHER-LEVEL WRAPPERS **/
+
+ /** Declares, registers and actually creates a tensor via processing backend.
+     See numerics::Tensor constructors for different creation options. **/
+ template <typename... Args>
+ bool createTensor(const std::string & name, //in: tensor name
+                   Args&&... args);          //in: other arguments for Tensor ctor
+
+ /** Destroys a tensor, including its backend representation. **/
+ bool destroyTensor(const std::string & name); //in: tensor name
+
+ /** Initializes a tensor to some scalar value. **/
+ template<typename NumericType>
+ bool initTensor(const std::string & name, //in: tensor name
+                 NumericType value);       //in: scalar value
+
+ /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
+ bool transformTensor(const std::string & name,               //in: tensor name
+                      std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+
+ /** Performs tensor addition: tensor0 += tensor1 * alpha **/
+ template<typename NumericType>
+ bool addTensors(const std::string & name0, //in: tensor 0 name
+                 const std::string & name1, //in: tensor 1 name
+                 NumericType alpha);        //in: alpha prefactor
+
+ /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
+ template<typename NumericType>
+ bool contractTensors(const std::string & name0, //in: tensor 0 name
+                      const std::string & name1, //in: tensor 1 name
+                      const std::string & name2, //in: tensor 2 name
+                      NumericType alpha);        //in: alpha prefactor
+
+ /** Performs a full evaluation of a tensor network. **/
+ bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
+                            const std::string & network); //in: tensor network
+
 private:
 
  numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
- std::map<std::string,std::shared_ptr<talsh::TensorFunctor<Identifiable>>> ext_methods_; //external tensor methods
+ std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors
+
+ std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
+
+ TensorOpFactory * tensor_op_factory_; //tensor operation factory
 
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 
 /** Numerical service singleton (numerical server) **/
 extern std::shared_ptr<NumServer> numericalServer;
+
+//TEMPLATE DEFINITIONS:
+template <typename... Args>
+bool NumServer::createTensor(const std::string & name, Args&&... args)
+{
+ auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
+ if(res.second){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand((res.first)->second);
+  submit(op);
+ }
+ return res.second;
+}
+
+template<typename NumericType>
+bool NumServer::initTensor(const std::string & name, NumericType value)
+{
+ return transformTensor(name,
+                        std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+}
 
 } //namespace exatn
 
