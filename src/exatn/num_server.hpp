@@ -210,10 +210,30 @@ bool NumServer::createTensor(const std::string & name, Args&&... args)
 }
 
 template<typename NumericType>
-bool NumServer::initTensor(const std::string & name, NumericType value)
+bool NumServer::initTensor(const std::string & name,
+                           NumericType value)
 {
  return transformTensor(name,
                         std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+}
+
+template<typename NumericType>
+bool NumServer::addTensors(const std::string & name0,
+                           const std::string & name1,
+                           NumericType alpha)
+{
+ //`Finish
+ return true;
+}
+
+template<typename NumericType>
+bool contractTensors(const std::string & name0,
+                     const std::string & name1,
+                     const std::string & name2,
+                     NumericType alpha)
+{
+ //`Finish
+ return true;
 }
 
 } //namespace exatn
