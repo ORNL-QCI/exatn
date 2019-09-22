@@ -331,9 +331,34 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("submit", (void (exatn::NumServer::*)(std::shared_ptr<exatn::numerics::TensorNetwork>)) &exatn::NumServer::submit, "")
       .def("sync", (bool (exatn::NumServer::*)(const exatn::numerics::Tensor &, bool)) &exatn::NumServer::sync, "")
       .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorOperation &, bool)) &exatn::NumServer::sync, "")
-      .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::NumServer::sync, "");
-
-
+      .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::NumServer::sync, "")
+      .def("createTensor", [](exatn::NumServer& n, const std::string name, std::vector<std::size_t> dims) {
+          bool created = false;
+          created = exatn::numericalServer->createTensor(name, exatn::numerics::TensorShape(dims));
+          assert(created);
+          return;
+      }, "")
+      .def("createTensor", [](exatn::NumServer& n,  const std::string name) {
+          bool created = false;
+          created = exatn::numericalServer->createTensor(name);
+          assert(created);
+          return;
+      }, "")
+      .def("initTensor", &exatn::NumServer::initTensor<float>, "")
+      .def("initTensor", &exatn::NumServer::initTensor<int>, "")
+      .def("initTensor", &exatn::NumServer::initTensor<double>, "")
+      .def("initTensor", &exatn::NumServer::initTensor<std::complex<double>>, "")
+      .def("transformTensor", &exatn::NumServer::transformTensor, "")
+      .def("destroyTensor", &exatn::NumServer::destroyTensor, "")
+    //   .def("addTensors", &exatn::NumServer::addTensors<float>, "")
+    //   .def("addTensors", &exatn::NumServer::addTensors<double>, "")
+    //   .def("addTensors", &exatn::NumServer::addTensors<int>, "")
+    //   .def("addTensors", &exatn::NumServer::addTensors<std::complex<double>>, "")
+    //   .def("contractTensors", &exatn::NumServer::contractTensors<float>, "")
+    //   .def("contractTensors", &exatn::NumServer::contractTensors<double>, "")
+    //   .def("contractTensors", &exatn::NumServer::contractTensors<int>, "")
+    //   .def("contractTensors", &exatn::NumServer::contractTensors<std::complex<double>>, "")
+      .def("evaluateTensorNetwork", &exatn::NumServer::evaluateTensorNetwork, "");
 
   py::class_<exatn::numerics::TensorConn>(
       m, "TensorConn", "")
