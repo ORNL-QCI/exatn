@@ -134,10 +134,12 @@ bool TensorRuntime::sync(TensorOperation & op, bool wait) {
 
 
 bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
+  if(wait) std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Syncing on tensor " << tensor.getName() << " ... "; //debug
   assert(currentScopeIsSet());
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
   bool completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
   while(wait && (!completed)) completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+  if(wait) std::cout << "Synced" << std::endl; //debug
   return completed;
 }
 
