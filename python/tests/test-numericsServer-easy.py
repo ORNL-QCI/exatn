@@ -24,6 +24,7 @@ num_server.initTensor("S2",0.001)
 num_server.evaluateTensorNetwork("{0,1} 3-site MPS closure",
   "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)")
 
+num_server.sync("Z0", True)
 
 num_server.destroyTensor("Z0")
 num_server.destroyTensor("T0")

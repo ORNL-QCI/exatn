@@ -332,6 +332,8 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("sync", (bool (exatn::NumServer::*)(const exatn::numerics::Tensor &, bool)) &exatn::NumServer::sync, "")
       .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorOperation &, bool)) &exatn::NumServer::sync, "")
       .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::NumServer::sync, "")
+      .def("sync", (bool (exatn::NumServer::*)(const std::string &, bool)) & exatn::NumServer::sync, "")
+      .def("getTensorRef", &exatn::NumServer::getTensorRef, "")
       .def("createTensor", [](exatn::NumServer& n, const std::string name, std::vector<std::size_t> dims) {
           bool created = false;
           created = n.createTensor(name, exatn::numerics::TensorShape(dims));
