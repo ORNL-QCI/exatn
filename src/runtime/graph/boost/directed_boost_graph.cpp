@@ -1,3 +1,10 @@
+/** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
+REVISION: 2019/09/03
+
+Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+**/
+
 #include "directed_boost_graph.hpp"
 
 #include <iostream>

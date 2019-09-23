@@ -1,3 +1,10 @@
+/** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
+REVISION: 2019/09/23
+
+Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+**/
+
 #include "tensor_runtime.hpp"
 #include "exatn_service.hpp"
 
@@ -134,10 +141,12 @@ bool TensorRuntime::sync(TensorOperation & op, bool wait) {
 
 
 bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
+  //if(wait) std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Syncing on tensor " << tensor.getName() << " ... "; //debug
   assert(currentScopeIsSet());
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
   bool completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
   while(wait && (!completed)) completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+  //if(wait) std::cout << "Synced" << std::endl; //debug
   return completed;
 }
 

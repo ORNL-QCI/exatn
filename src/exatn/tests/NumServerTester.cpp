@@ -165,8 +165,8 @@ TEST(NumServerTester, useNumServer)
 
  //Evaluate the tensor network:
  exatn::numericalServer->submit(network);
- //auto synced = exatn::numericalServer->sync(network,true);
- //assert(synced);
+ auto synced = exatn::numericalServer->sync(network,true);
+ assert(synced);
 
  //Retrieve the result:
  //`Finish
