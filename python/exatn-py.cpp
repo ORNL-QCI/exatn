@@ -334,13 +334,13 @@ PYBIND11_MODULE(_pyexatn, m) {
       .def("sync", (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &, bool)) &exatn::NumServer::sync, "")
       .def("createTensor", [](exatn::NumServer& n, const std::string name, std::vector<std::size_t> dims) {
           bool created = false;
-          created = exatn::numericalServer->createTensor(name, exatn::numerics::TensorShape(dims));
+          created = n.createTensor(name, exatn::numerics::TensorShape(dims));
           assert(created);
           return;
       }, "")
       .def("createTensor", [](exatn::NumServer& n,  const std::string name) {
           bool created = false;
-          created = exatn::numericalServer->createTensor(name);
+          created = n.createTensor(name);
           assert(created);
           return;
       }, "")
