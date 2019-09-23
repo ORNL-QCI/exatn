@@ -245,6 +245,10 @@ TEST(NumServerTester, easyNumServer)
  evaluated = exatn::numericalServer->evaluateTensorNetwork("{0,1} 3-site MPS closure",
   "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)");
 
+ //Sync all operations on Z0:
+ auto synced = false;
+ synced = exatn::numericalServer->sync("Z0"); assert(synced);
+
  //Destroy tensors:
  auto destroyed = false;
  destroyed = exatn::numericalServer->destroyTensor("S2"); assert(destroyed);

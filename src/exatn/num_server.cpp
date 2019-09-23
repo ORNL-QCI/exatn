@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/20
+REVISION: 2019/09/23
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -193,6 +193,20 @@ bool NumServer::sync(TensorOperation & operation, bool wait)
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
  return sync(*(network.getTensor(0)),wait);
+}
+
+bool NumServer::sync(const std::string & name, bool wait)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return false;
+ return sync(*(iter->second),wait);
+}
+
+Tensor & NumServer::getTensorRef(const std::string & name)
+{
+ auto iter = tensors_.find(name);
+ assert(iter != tensors_.end());
+ return *(iter->second);
 }
 
 bool NumServer::destroyTensor(const std::string & name)

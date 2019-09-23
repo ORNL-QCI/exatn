@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/20
+REVISION: 2019/09/23
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -93,12 +93,12 @@ public:
   /** Tests for completion of a given tensor operation.
       If wait = TRUE, it will block until completion. **/
   bool sync(TensorOperation & op,
-            bool wait = false);
+            bool wait = true);
 
   /** Tests for completion of all outstanding update operations on a given tensor.
       If wait = TRUE, it will block until completion. **/
   bool sync(const Tensor & tensor,
-            bool wait = false);
+            bool wait = true);
 
   /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
       The argument slice must be an existing talsh::Tensor defining the slice of interest.

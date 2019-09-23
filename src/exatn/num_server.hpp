@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/20
+REVISION: 2019/09/23
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -131,15 +131,22 @@ public:
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
-           bool wait = false);
+           bool wait = true);
  /** Synchronizes execution of a specific tensor operation. **/
  bool sync(TensorOperation & operation,
-           bool wait = false);
+           bool wait = true);
  /** Synchronizes execution of a specific tensor network. **/
  bool sync(TensorNetwork & network,
-           bool wait = false);
+           bool wait = true);
 
  /** HIGHER-LEVEL WRAPPERS **/
+
+ /** Synchronizes all outstanding update operations on a given tensor. **/
+ bool sync(const std::string & name,
+           bool wait = true);
+
+ /** Returns the reference to the actual tensor object. **/
+ Tensor & getTensorRef(const std::string & name);
 
  /** Declares, registers and actually creates a tensor via processing backend.
      See numerics::Tensor constructors for different creation options. **/
