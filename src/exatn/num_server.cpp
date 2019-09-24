@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/23
+REVISION: 2019/09/24
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -161,6 +161,11 @@ const Subspace * NumServer::getSubspace(const std::string & subspace_name) const
 void NumServer::submit(std::shared_ptr<TensorOperation> operation)
 {
  assert(operation);
+ if(operation->getOpcode() == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
+  auto tensor = operation->getTensorOperand(0);
+  auto elem_type = std::dynamic_pointer_cast<numerics::TensorOpCreate>(operation)->getTensorElementType();
+  tensor->setElementType(elem_type);
+ }
  tensor_rt_->submit(operation);
  return;
 }
@@ -207,6 +212,13 @@ Tensor & NumServer::getTensorRef(const std::string & name)
  auto iter = tensors_.find(name);
  assert(iter != tensors_.end());
  return *(iter->second);
+}
+
+TensorElementType NumServer::getTensorElementType(const std::string & name) const
+{
+ auto iter = tensors_.find(name);
+ assert(iter != tensors_.end());
+ return (iter->second)->getElementType();
 }
 
 bool NumServer::destroyTensor(const std::string & name)

@@ -230,6 +230,8 @@ TEST(NumServerTester, easyNumServer)
  created = exatn::numericalServer->createTensor("S1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
  created = exatn::numericalServer->createTensor("S2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
 
+ //std::cout << "Z0 tensor element type is " << int(exatn::numericalServer->getTensorElementType("Z0")) << std::endl; //debug
+
  //Initialize tensors:
  auto initialized = false;
  initialized = exatn::numericalServer->initTensor("Z0",0.0); assert(initialized);

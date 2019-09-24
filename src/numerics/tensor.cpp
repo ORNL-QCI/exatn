@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/07/22
+REVISION: 2019/09/24
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -16,7 +16,7 @@ namespace numerics{
 Tensor::Tensor(const std::string & name,
                const TensorShape & shape,
                const TensorSignature & signature):
-name_(name), shape_(shape), signature_(signature)
+name_(name), shape_(shape), signature_(signature), element_type_(TensorElementType::VOID)
 {
  //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
@@ -25,12 +25,12 @@ name_(name), shape_(shape), signature_(signature)
 
 Tensor::Tensor(const std::string & name,
                const TensorShape & shape):
-name_(name), shape_(shape), signature_(shape.getRank())
+name_(name), shape_(shape), signature_(shape.getRank()), element_type_(TensorElementType::VOID)
 {
 }
 
 Tensor::Tensor(const std::string & name):
-name_(name)
+name_(name), element_type_(TensorElementType::VOID)
 {
 }
 
@@ -38,7 +38,7 @@ Tensor::Tensor(const std::string & name,                    //tensor name
                const Tensor & left_tensor,                  //left tensor
                const Tensor & right_tensor,                 //right tensor
                const std::vector<TensorLeg> & contraction): //tensor contraction pattern
-name_(name)
+name_(name), element_type_(TensorElementType::VOID)
 {
  //Import shape/signature of the input tensors:
  auto left_rank = left_tensor.getRank();
@@ -155,6 +155,16 @@ void Tensor::appendDimension(DimExtent dim_extent)
 {
  this->appendDimension(std::pair<SpaceId,SubspaceId>{SOME_SPACE,0},dim_extent);
  return;
+}
+
+void Tensor::setElementType(TensorElementType element_type)
+{
+ element_type_ = element_type;
+}
+
+TensorElementType Tensor::getElementType() const
+{
+ return element_type_;
 }
 
 TensorHashType Tensor::getTensorHash() const

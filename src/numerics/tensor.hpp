@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/09/11
+REVISION: 2019/09/24
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -129,14 +129,21 @@ public:
                       DimExtent dim_extent);
  void appendDimension(DimExtent dim_extent);
 
+ /** Sets the tensor element type. **/
+ void setElementType(TensorElementType element_type);
+
+ /** Returns the tensor element type. **/
+ TensorElementType getElementType() const;
+
  /** Get the unique integer tensor id. **/
  TensorHashType getTensorHash() const;
 
 private:
 
- std::string name_;          //tensor name
- TensorShape shape_;         //tensor shape
- TensorSignature signature_; //tensor signature
+ std::string name_;               //tensor name
+ TensorShape shape_;              //tensor shape
+ TensorSignature signature_;      //tensor signature
+ TensorElementType element_type_; //tensor element type (optional)
 };
 
 
@@ -145,7 +152,7 @@ template<typename T>
 Tensor::Tensor(const std::string & name,
                std::initializer_list<T> extents,
                std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces):
-name_(name), shape_(extents), signature_(subspaces)
+name_(name), shape_(extents), signature_(subspaces), element_type_(TensorElementType::VOID)
 {
  //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
@@ -156,7 +163,7 @@ template<typename T>
 Tensor::Tensor(const std::string & name,
                const std::vector<T> & extents,
                const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces):
-name_(name), shape_(extents), signature_(subspaces)
+name_(name), shape_(extents), signature_(subspaces), element_type_(TensorElementType::VOID)
 {
  //DEBUG:
  if(signature_.getRank() != shape_.getRank()) std::cout << "ERROR(Tensor::Tensor): Signature/Shape size mismatch!" << std::endl;
@@ -166,14 +173,14 @@ name_(name), shape_(extents), signature_(subspaces)
 template<typename T>
 Tensor::Tensor(const std::string & name,
                std::initializer_list<T> extents):
-name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size()))
+name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size())), element_type_(TensorElementType::VOID)
 {
 }
 
 template<typename T>
 Tensor::Tensor(const std::string & name,
                const std::vector<T> & extents):
-name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size()))
+name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size())), element_type_(TensorElementType::VOID)
 {
 }
 

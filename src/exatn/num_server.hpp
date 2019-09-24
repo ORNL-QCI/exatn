@@ -148,6 +148,9 @@ public:
  /** Returns the reference to the actual tensor object. **/
  Tensor & getTensorRef(const std::string & name);
 
+ /** Returns the tensor element type. **/
+ TensorElementType getTensorElementType(const std::string & name) const;
+
  /** Declares, registers and actually creates a tensor via processing backend.
      See numerics::Tensor constructors for different creation options. **/
  template <typename... Args>
