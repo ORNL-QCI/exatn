@@ -1,19 +1,6 @@
-#include "DriverClient.hpp"
-#include "exatn.hpp"
 
-#include "pybind11/detail/common.h"
-#include <pybind11/complex.h>
-#include <pybind11/eigen.h>
-#include <pybind11/functional.h>
-#include <pybind11/iostream.h>
-#include <pybind11/numpy.h>
-#include <pybind11/operators.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
-
-#include "pybind11/pybind11.h"
-#include "talshxx.hpp"
-#include "tensor_method.hpp"
+#include "exatn_py_utils.hpp"
+#include "tensor_basic.hpp"
 
 namespace py = pybind11;
 using namespace exatn;
@@ -26,119 +13,6 @@ using namespace pybind11::literals;
  * pybind11 and, when this is included in CMake compilation, can be used to
  * write python scripts which leverage the ExaTN functionality.
  */
-
-/**
-  Trampoline class for abstract virtual functions in TensorOperation
-*/
-
-class PyTensorOperation : public exatn::numerics::TensorOperation {
-public:
-  /* Inherit the constructors */
-  using TensorOperation::TensorOperation;
-  void printIt() { PYBIND11_OVERLOAD(void, TensorOperation, printIt, ); }
-  bool isSet() { PYBIND11_OVERLOAD_PURE(bool, TensorOperation, isSet, ); }
-};
-
-using TensorFunctor = talsh::TensorFunctor<Identifiable>;
-
-template <typename NumericType>
-class NumpyTensorFunctorCppWrapper : public TensorFunctor {
-protected:
-  std::function<void(py::array_t<NumericType> &buffer)> _functor;
-  py::array initialData;
-  bool initialDataProvided = false;
-
-public:
-  NumpyTensorFunctorCppWrapper(
-      std::function<void(py::array_t<NumericType> &buffer)> functor)
-      : _functor(functor) {}
-  NumpyTensorFunctorCppWrapper(py::array &buffer)
-      : initialData(buffer), initialDataProvided(true) {}
-  const std::string name() const override {
-    return "numpy_tensor_functor_cpp_wrapper";
-  }
-  const std::string description() const override { return ""; }
-  virtual void pack(BytePacket &packet) override {}
-  virtual void unpack(BytePacket &packet) override {}
-
-  int apply(talsh::Tensor &local_tensor) override {
-    py::gil_scoped_release release;
-    unsigned int nd = local_tensor.getRank();
-    std::vector<int> dims_vec(nd);
-    auto dims = local_tensor.getDimExtents(nd);
-    for (int i = 0; i < nd; i++) {
-      dims_vec[i] = dims[i];
-    }
-
-    NumericType *elements;
-    local_tensor.getDataAccessHost(&elements);
-
-    if (initialDataProvided) {
-      // If initial data is provided as a numpy array,
-      // then I want to flatten it, and set it on the elements data
-      std::vector<std::size_t> flattened{local_tensor.getVolume()};
-      assert(local_tensor.getVolume() == initialData.size());
-      initialData.resize(flattened);
-      auto constelements =
-          reinterpret_cast<const NumericType *>(initialData.data());
-      for (int i = 0; i < local_tensor.getVolume(); i++) {
-        elements[i] = constelements[i]; //.cast<double>();
-      }
-    } else {
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      py::gil_scoped_acquire acquire;
-      auto arr = py::array_t<NumericType>(dims_vec, elements, cap);
-      _functor(arr);
-      py::gil_scoped_release r;
-    }
-    return 0;
-  }
-};
-
-template <typename T> struct TypeToTensorElementType;
-template <> struct TypeToTensorElementType<float> {
-  static TensorElementType type;
-  // = TensorElementType::COMPLEX32;
-};
-template <> struct TypeToTensorElementType<double> {
-  static TensorElementType type;
-};
-template <> struct TypeToTensorElementType<std::complex<double>> {
-  static TensorElementType type;
-};
-TensorElementType TypeToTensorElementType<float>::type =
-    TensorElementType::REAL32;
-TensorElementType TypeToTensorElementType<double>::type =
-    TensorElementType::REAL64;
-TensorElementType TypeToTensorElementType<std::complex<double>>::type =
-    TensorElementType::COMPLEX64;
-
-template <typename NumericType>
-bool createTensorWithData(exatn::NumServer &n, const std::string name,
-                          py::array_t<NumericType> &data) {
-  auto shape = data.shape();
-  std::vector<std::size_t> dims(data.ndim());
-  for (int i = 0; i < data.ndim(); i++) {
-    dims[i] = shape[i];
-  }
-
-  auto tensor_el_type = TypeToTensorElementType<NumericType>::type;
-  auto created =
-      n.createTensor(name, tensor_el_type, exatn::numerics::TensorShape(dims));
-  assert(created);
-  auto functor =
-      std::make_shared<NumpyTensorFunctorCppWrapper<NumericType>>(data);
-  return n.transformTensor(name, functor);
-}
-
-template <typename NumericType>
-bool generalTransformWithData(
-    exatn::NumServer &n, const std::string &name,
-    std::function<void(py::array_t<NumericType> &buffer)> f) {
-  auto functor = std::make_shared<NumpyTensorFunctorCppWrapper<NumericType>>(f);
-  return n.transformTensor(name, functor);
-}
 
 PYBIND11_MODULE(_pyexatn, m) {
   m.doc() = "Python bindings for ExaTN.";
@@ -399,6 +273,14 @@ PYBIND11_MODULE(_pyexatn, m) {
            "")
       .def("resetDirection", &exatn::numerics::TensorLeg::resetDirection, "");
 
+  py::enum_<exatn::TensorElementType>(m, "DataType", py::arithmetic(), "")
+      .value("float32", exatn::TensorElementType::REAL32, "")
+      .value("float64", exatn::TensorElementType::REAL64, "")
+      .value("complex32", exatn::TensorElementType::COMPLEX32, "")
+      .value("complex64", exatn::TensorElementType::COMPLEX64, "")
+      .value("complex", exatn::TensorElementType::COMPLEX64, "")
+      .value("float", exatn::TensorElementType::REAL64, "");
+
   py::class_<exatn::NumServer, std::shared_ptr<exatn::NumServer>>(
       m, "NumServer", "")
       .def(py::init<>())
@@ -481,19 +363,32 @@ PYBIND11_MODULE(_pyexatn, m) {
             return;
           },
           "")
-
-      .def("createTensor", &createTensorWithData<double>, "")
-      .def("createTensor", &createTensorWithData<std::complex<double>>, "")
+       .def(
+          "createTensor",
+          [](exatn::NumServer &n, const std::string name,
+             std::vector<std::size_t> dims, exatn::TensorElementType type) {
+            bool created = false;
+            created = n.createTensor(name,type,
+                                     exatn::numerics::TensorShape(dims));
+            assert(created);
+            return;
+          },
+          "")
+      .def("createTensor", &exatn::createTensorWithData<double>, "")
+      .def("createTensor", &exatn::createTensorWithData<std::complex<double>>, "")
       .def("initTensor", &exatn::NumServer::initTensor<float>, "")
       .def("initTensor", &exatn::NumServer::initTensor<int>, "")
       .def("initTensor", &exatn::NumServer::initTensor<double>, "")
       .def("initTensor", &exatn::NumServer::initTensor<std::complex<double>>,
            "")
       .def("transformTensor", &exatn::NumServer::transformTensor, "")
-      .def("transformTensor", &generalTransformWithData<double>, "")
-      .def("transformTensor", &generalTransformWithData<std::complex<double>>,
+      .def("transformTensor", &exatn::generalTransformWithData<double>, "")
+      .def("transformRealTensor", &exatn::generalTransformWithData<double>, "")
+      .def("transformComplexTensor", &exatn::generalTransformWithData<std::complex<double>>,
            "")
       .def("destroyTensor", &exatn::NumServer::destroyTensor, "")
+
+      // FIXME Coming soon...
       //   .def("addTensors", &exatn::NumServer::addTensors<float>, "")
       //   .def("addTensors", &exatn::NumServer::addTensors<double>, "")
       //   .def("addTensors", &exatn::NumServer::addTensors<int>, "")
@@ -505,6 +400,7 @@ PYBIND11_MODULE(_pyexatn, m) {
       //   .def("contractTensors", &exatn::NumServer::contractTensors<int>, "")
       //   .def("contractTensors",
       //   &exatn::NumServer::contractTensors<std::complex<double>>, "")
+
       .def("evaluateTensorNetwork", &exatn::NumServer::evaluateTensorNetwork,
            "");
 
