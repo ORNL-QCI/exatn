@@ -212,6 +212,7 @@ TEST(NumServerTester, easyNumServer)
 {
  using exatn::numerics::Tensor;
  using exatn::numerics::TensorShape;
+ using exatn::TensorElementType;
 
  //Example of tensor network processing:
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -220,14 +221,14 @@ TEST(NumServerTester, easyNumServer)
 
  //Create tensors:
  auto created = false;
- created = exatn::numericalServer->createTensor("Z0"); assert(created);
- created = exatn::numericalServer->createTensor("T0",TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("T1",TensorShape{2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("T2",TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("H0",TensorShape{2,2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S0",TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S1",TensorShape{2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S2",TensorShape{2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("Z0",TensorElementType::REAL64); assert(created);
+ created = exatn::numericalServer->createTensor("T0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("T1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("T2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("H0",TensorElementType::REAL64,TensorShape{2,2,2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("S0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("S1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
+ created = exatn::numericalServer->createTensor("S2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
 
  //Initialize tensors:
  auto initialized = false;
