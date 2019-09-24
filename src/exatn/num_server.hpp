@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/23
+REVISION: 2019/09/24
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -151,8 +151,9 @@ public:
  /** Declares, registers and actually creates a tensor via processing backend.
      See numerics::Tensor constructors for different creation options. **/
  template <typename... Args>
- bool createTensor(const std::string & name, //in: tensor name
-                   Args&&... args);          //in: other arguments for Tensor ctor
+ bool createTensor(const std::string & name,       //in: tensor name
+                   TensorElementType element_type, //in: tensor element type
+                   Args&&... args);                //in: other arguments for Tensor ctor
 
  /** Destroys a tensor, including its backend representation. **/
  bool destroyTensor(const std::string & name); //in: tensor name
@@ -205,12 +206,13 @@ extern std::shared_ptr<NumServer> numericalServer;
 
 //TEMPLATE DEFINITIONS:
 template <typename... Args>
-bool NumServer::createTensor(const std::string & name, Args&&... args)
+bool NumServer::createTensor(const std::string & name, TensorElementType element_type, Args&&... args)
 {
  auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
  if(res.second){
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand((res.first)->second);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submit(op);
  }
  return res.second;
