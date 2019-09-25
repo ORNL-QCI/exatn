@@ -217,6 +217,8 @@ bool NumServer::createTensor(const std::string & name, TensorElementType element
   op->setTensorOperand((res.first)->second);
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submit(op);
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::createTensor): Tensor " << name << " already exists!" << std::endl;
  }
  return res.second;
 }

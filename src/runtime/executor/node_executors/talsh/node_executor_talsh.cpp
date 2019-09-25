@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/09/02
+REVISION: 2019/09/25
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -45,6 +45,8 @@ TalshNodeExecutor::~TalshNodeExecutor()
  talsh_init_lock.lock();
  --talsh_node_exec_count_;
  if(talsh_initialized_ && talsh_node_exec_count_ == 0){
+  tasks_.clear();
+  tensors_.clear();
   auto error_code = talsh::shutdown();
   if(error_code == TALSH_SUCCESS){
    //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;

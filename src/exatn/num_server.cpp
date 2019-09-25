@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/24
+REVISION: 2019/09/25
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -203,38 +203,56 @@ bool NumServer::sync(TensorNetwork & network, bool wait)
 bool NumServer::sync(const std::string & name, bool wait)
 {
  auto iter = tensors_.find(name);
- if(iter == tensors_.end()) return false;
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::sync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
  return sync(*(iter->second),wait);
 }
 
 Tensor & NumServer::getTensorRef(const std::string & name)
 {
  auto iter = tensors_.find(name);
- assert(iter != tensors_.end());
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::getTensorRef): Tensor " << name << " not found!" << std::endl;
+  assert(false);
+ }
  return *(iter->second);
 }
 
 TensorElementType NumServer::getTensorElementType(const std::string & name) const
 {
  auto iter = tensors_.find(name);
- assert(iter != tensors_.end());
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::getTensorElementType): Tensor " << name << " not found!" << std::endl;
+  assert(false);
+ }
  return (iter->second)->getElementType();
 }
 
 bool NumServer::destroyTensor(const std::string & name)
 {
  auto iter = tensors_.find(name);
- if(iter == tensors_.end()) return false;
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
  op->setTensorOperand(iter->second);
  submit(op);
+ sync(*op);
+ auto num_erased = tensors_.erase(name);
+ assert(num_erased == 1);
  return true;
 }
 
 bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
 {
  auto iter = tensors_.find(name);
- if(iter == tensors_.end()) return false;
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::transformTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
@@ -253,10 +271,18 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
   for(const auto & tensor: tensors){
    bool complex_conj;
    parsed = parse_tensor(tensor,tensor_name,indices,complex_conj);
-   if(!parsed) break;
+   if(!parsed){
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor: " << tensor << std::endl;
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
+    break;
+   }
    auto iter = tensors_.find(tensor_name);
-   if(iter == tensors_.end()) parsed = false;
-   if(!parsed) break;
+   if(iter == tensors_.end()){
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Tensor " << tensor_name << " not found!" << std::endl;
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Undefined tensor in tensor network: " << network << std::endl;
+    parsed = false;
+    break;
+   }
    auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
    parsed = res.second; if(!parsed) break;
   }
@@ -264,6 +290,8 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
    TensorNetwork tensnet(name,network,tensor_map);
    submit(tensnet);
   }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
  }
  return parsed;
 }

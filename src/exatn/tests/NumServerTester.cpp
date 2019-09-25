@@ -267,6 +267,65 @@ TEST(NumServerTester, easyNumServer)
 }
 
 
+TEST(NumServerTester, superEasyNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::TensorElementType;
+
+ //Example of tensor network processing:
+ //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
+ //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
+ // 0      1         2           3         4             5         6           7  <-- tensor id
+
+ //Create tensors:
+ auto created = false;
+ created = exatn::createTensor("Z0",TensorElementType::REAL64); assert(created);
+ created = exatn::createTensor("T0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::createTensor("T1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
+ created = exatn::createTensor("T2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::createTensor("H0",TensorElementType::REAL64,TensorShape{2,2,2,2}); assert(created);
+ created = exatn::createTensor("S0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+ created = exatn::createTensor("S1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
+ created = exatn::createTensor("S2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
+
+ //std::cout << "Z0 tensor element type is " << int(exatn::numericalServer->getTensorElementType("Z0")) << std::endl; //debug
+
+ //Initialize tensors:
+ auto initialized = false;
+ initialized = exatn::initTensor("Z0",0.0); assert(initialized);
+ initialized = exatn::initTensor("T0",0.001); assert(initialized);
+ initialized = exatn::initTensor("T1",0.001); assert(initialized);
+ initialized = exatn::initTensor("T2",0.001); assert(initialized);
+ initialized = exatn::initTensor("H0",0.001); assert(initialized);
+ initialized = exatn::initTensor("S0",0.001); assert(initialized);
+ initialized = exatn::initTensor("S1",0.001); assert(initialized);
+ initialized = exatn::initTensor("S2",0.001); assert(initialized);
+
+ //Evaluate a tensor network:
+ auto evaluated = false;
+ evaluated = exatn::evaluateTensorNetwork("{0,1} 3-site MPS closure",
+  "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)");
+
+ //Sync all operations on Z0:
+ auto synced = false;
+ synced = exatn::sync("Z0"); assert(synced);
+
+ //Destroy tensors:
+ auto destroyed = false;
+ destroyed = exatn::destroyTensor("S2"); assert(destroyed);
+ destroyed = exatn::destroyTensor("S1"); assert(destroyed);
+ destroyed = exatn::destroyTensor("S0"); assert(destroyed);
+ destroyed = exatn::destroyTensor("H0"); assert(destroyed);
+ destroyed = exatn::destroyTensor("T2"); assert(destroyed);
+ destroyed = exatn::destroyTensor("T1"); assert(destroyed);
+ destroyed = exatn::destroyTensor("T0"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Z0"); assert(destroyed);
+
+ //Grab a beer!
+}
+
+
 int main(int argc, char **argv) {
   exatn::initialize();
 
