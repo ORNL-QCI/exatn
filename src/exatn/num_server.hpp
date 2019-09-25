@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/24
+REVISION: 2019/09/25
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -116,7 +116,7 @@ public:
 
  /** Destroys a previously created named subspace of a named vector space. **/
  void destroySubspace(const std::string & subspace_name); //in: name of the subspace to destroy
- void destroySubspace(SubspaceId subspace_id);
+ void destroySubspace(SubspaceId subspace_id); //in: id of the subspace to destroy
 
  /** Returns a non-owning pointer to a previosuly registered named subspace
      of a previously registered named vector space. **/
@@ -142,14 +142,14 @@ public:
  /** HIGHER-LEVEL WRAPPERS **/
 
  /** Synchronizes all outstanding update operations on a given tensor. **/
- bool sync(const std::string & name,
-           bool wait = true);
+ bool sync(const std::string & name, //in: tensor name
+           bool wait = true);        //in: wait versus test for completion
 
  /** Returns the reference to the actual tensor object. **/
- Tensor & getTensorRef(const std::string & name);
+ Tensor & getTensorRef(const std::string & name); //in: tensor name
 
  /** Returns the tensor element type. **/
- TensorElementType getTensorElementType(const std::string & name) const;
+ TensorElementType getTensorElementType(const std::string & name) const; //in: tensor name
 
  /** Declares, registers and actually creates a tensor via processing backend.
      See numerics::Tensor constructors for different creation options. **/
@@ -239,10 +239,10 @@ bool NumServer::addTensors(const std::string & name0,
 }
 
 template<typename NumericType>
-bool contractTensors(const std::string & name0,
-                     const std::string & name1,
-                     const std::string & name2,
-                     NumericType alpha)
+bool NumServer::contractTensors(const std::string & name0,
+                                const std::string & name1,
+                                const std::string & name2,
+                                NumericType alpha)
 {
  //`Finish
  return true;
