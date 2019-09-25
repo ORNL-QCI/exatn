@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/11
+REVISION: 2019/09/25
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -163,8 +163,8 @@ public:
                    const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}); //in: optional leg directions (for all tensor modes)
 
  /** Appends a new even-rank tensor to the tensor network by matching the first half
-     of the tensor legs with network's output legs provided in "pairing".
-     The second half of the tensor legs will then replace the matched output legs. **/
+     of the tensor legs with network's output legs provided in "pairing". The second half
+     of the tensor legs will then replace the matched output legs in the output tensor. **/
  bool appendTensorGate(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
                        std::shared_ptr<Tensor> tensor,             //in: appended tensor
                        const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes (half-rank)
@@ -234,7 +234,8 @@ protected:
  /** Checks validity of connections in the enitre tensor network. **/
  bool checkConnections();
 
- /** Updates tensor network linking when a tensor has its connections modified. **/
+ /** Updates tensor network linking when a tensor has its connections modified:
+     tensor_id is the id of the tensor whose leg numeration was updated. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
 
  /** Invalidates cached tensor contraction sequence. **/
