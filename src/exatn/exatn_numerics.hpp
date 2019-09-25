@@ -108,22 +108,19 @@ inline bool transformTensor(const std::string & name,              //in: tensor 
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/
 template<typename NumericType>
-inline bool addTensors(const std::string & name0, //in: tensor 0 name
-                       const std::string & name1, //in: tensor 1 name
-                       NumericType alpha)         //in: alpha prefactor
- {return numericalServer->addTensors(name0,name1,alpha);}
+inline bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
+                       NumericType alpha)            //in: alpha prefactor
+ {return numericalServer->addTensors(addition,alpha);}
 
 /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
 template<typename NumericType>
-inline bool contractTensors(const std::string & name0, //in: tensor 0 name
-                            const std::string & name1, //in: tensor 1 name
-                            const std::string & name2, //in: tensor 2 name
-                            NumericType alpha)         //in: alpha prefactor
- {return numericalServer->contractTensors(name0,name1,name2,alpha);}
+inline bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
+                            NumericType alpha)               //in: alpha prefactor
+ {return numericalServer->contractTensors(contraction,alpha);}
 
 /** Performs a full evaluation of a tensor network. **/
 inline bool evaluateTensorNetwork(const std::string & name,    //in: tensor network name
-                                  const std::string & network) //in: tensor network
+                                  const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetwork(name,network);}
 
 /** Synchronizes all outstanding update operations on a given tensor. **/

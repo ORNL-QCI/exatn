@@ -28,6 +28,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor.hpp"
 #include "tensor_op_factory.hpp"
 #include "tensor_network.hpp"
+#include "tensor_symbol.hpp"
 
 #include "tensor_runtime.hpp"
 
@@ -36,6 +37,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_val.hpp"
 
 #include <memory>
+#include <vector>
 #include <string>
 #include <stack>
 #include <map>
@@ -172,20 +174,17 @@ public:
 
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
- bool addTensors(const std::string & name0, //in: tensor 0 name
-                 const std::string & name1, //in: tensor 1 name
-                 NumericType alpha);        //in: alpha prefactor
+ bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
+                 NumericType alpha);           //in: alpha prefactor
 
  /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
  template<typename NumericType>
- bool contractTensors(const std::string & name0, //in: tensor 0 name
-                      const std::string & name1, //in: tensor 1 name
-                      const std::string & name2, //in: tensor 2 name
-                      NumericType alpha);        //in: alpha prefactor
+ bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
+                      NumericType alpha);              //in: alpha prefactor
 
  /** Performs a full evaluation of a tensor network. **/
  bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
-                            const std::string & network); //in: tensor network
+                            const std::string & network); //in: symbolic tensor network specification
 
 private:
 
@@ -232,22 +231,130 @@ bool NumServer::initTensor(const std::string & name,
 }
 
 template<typename NumericType>
-bool NumServer::addTensors(const std::string & name0,
-                           const std::string & name1,
+bool NumServer::addTensors(const std::string & addition,
                            NumericType alpha)
 {
- //`Finish
- return true;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(addition,tensors);
+ if(parsed){
+  if(tensors.size() == 2){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   if(parsed){
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     if(parsed){
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
+       op->setTensorOperand(tensor0);
+       op->setTensorOperand(tensor1);
+       op->setIndexPattern(addition);
+       op->setScalar(0,std::complex<double>(alpha));
+       submit(op);
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+                 << addition << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
+                << addition << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+               << addition << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
+              << addition << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid number of arguments in tensor addition: "
+             << addition << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid tensor addition: " << addition << std::endl;
+ }
+ return parsed;
 }
 
 template<typename NumericType>
-bool NumServer::contractTensors(const std::string & name0,
-                                const std::string & name1,
-                                const std::string & name2,
+bool NumServer::contractTensors(const std::string & contraction,
                                 NumericType alpha)
 {
- //`Finish
- return true;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   if(parsed){
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     if(parsed){
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj);
+       if(parsed){
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
+         op->setTensorOperand(tensor0);
+         op->setTensorOperand(tensor1);
+         op->setTensorOperand(tensor2);
+         op->setIndexPattern(contraction);
+         op->setScalar(0,std::complex<double>(alpha));
+         submit(op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 } //namespace exatn

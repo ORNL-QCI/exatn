@@ -6,8 +6,6 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 
-#include "tensor_symbol.hpp"
-
 #include <cassert>
 #include <vector>
 #include <map>
