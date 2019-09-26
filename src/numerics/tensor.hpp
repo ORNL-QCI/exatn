@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/09/24
+REVISION: 2019/09/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,6 +43,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <initializer_list>
 #include <vector>
+#include <memory>
 
 namespace exatn{
 
@@ -128,6 +129,13 @@ public:
  void appendDimension(std::pair<SpaceId,SubspaceId> subspace,
                       DimExtent dim_extent);
  void appendDimension(DimExtent dim_extent);
+
+ /** Creates a new tensor from the current tensor by selecting a subset of its modes.
+     Vector mode_mask must have the size equal to the original tensor rank:
+     mode_mask[i] == mask_val will select dimension i for appending to the subtensor. **/
+ std::shared_ptr<Tensor> createSubtensor(const std::string & name,           //in: subtensor name
+                                         const std::vector<int> & mode_mask, //in: mode masks
+                                         int mask_val);                      //in: chosen mask value
 
  /** Sets the tensor element type. **/
  void setElementType(TensorElementType element_type);

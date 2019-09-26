@@ -216,10 +216,15 @@ public:
 
  /** Splits a given tensor in a finalized tensor network into two tensors by introducing new dimensions
      across the cutting boundary. The original tensor dimensions are then assigned to either left or
-     right tensor. The new dimensions are then appended at the end. **/
- bool splitTensor(unsigned int tensor_id,               //in: id of the tensor to be split into two tensors
-                  const TensorShape & contracted_dims,  //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
-                  const std::vector<int> & right_dims); //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
+     right tensor. The new dimensions are then appended to both tensors at the end. The two tensors
+     obtained via such splitting must get unique ids, one of them may be the original tensor_id. **/
+ bool splitTensor(unsigned int tensor_id,                //in: id of the tensor to be split into two tensors
+                  unsigned int left_tensor_id,           //in: id of the left tensor obtained via splitting
+                  const std::string & left_tensor_name,  //in: name of the left tensor
+                  unsigned int right_tensor_id,          //in: id of the right tensor obtained via splitting
+                  const std::string & right_tensor_name, //in: name of the right tensor
+                  const TensorShape & contracted_dims,   //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
+                  const std::vector<int> & right_dims);  //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.

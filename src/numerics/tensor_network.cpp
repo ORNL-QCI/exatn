@@ -969,12 +969,22 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
 
 
 bool TensorNetwork::splitTensor(unsigned int tensor_id,
+                                unsigned int left_tensor_id,
+                                const std::string & left_tensor_name,
+                                unsigned int right_tensor_id,
+                                const std::string & right_tensor_name,
                                 const TensorShape & contracted_dims,
                                 const std::vector<int> & right_dims)
 {
+ //Check arguments:
  if(tensor_id == 0){
   std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
    "Splitting the output tensor of the tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ if(left_tensor_id == 0 || right_tensor_id == 0 || left_tensor_id == right_tensor_id){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "Split tensors must acquire unique positive ids!" << std::endl;
   return false;
  }
  if(finalized_ == 0){
@@ -982,7 +992,63 @@ bool TensorNetwork::splitTensor(unsigned int tensor_id,
    "Splitting a tensor in an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
- //`Finish
+ auto * tensor = this->getTensorConn(tensor_id);
+ assert(tensor != nullptr);
+ const auto tensor_rank = tensor->getNumLegs();
+ if(right_dims.size() != tensor_rank){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "The vector of tensor dimension split assignment has wrong size!" << std::endl;
+  return false;
+ }
+ //Create new tensors from the original tensor:
+ unsigned int left_rank = 0;
+ unsigned int right_rank = 0;
+ for(const auto & ass: right_dims) (ass == 0) ? ++left_rank : ++right_rank;
+ unsigned int num_contr_dims = contracted_dims.getRank();
+ unsigned int left_full_rank = left_rank + num_contr_dims;
+ unsigned int right_full_rank = right_rank + num_contr_dims;
+ auto left_tensor = tensor->getTensor()->createSubtensor(left_tensor_name,right_dims,0);
+ assert(left_tensor);
+ auto right_tensor = tensor->getTensor()->createSubtensor(right_tensor_name,right_dims,1);
+ assert(right_tensor);
+ std::vector<TensorLeg> left_legs(left_rank,TensorLeg(0,0));
+ std::vector<TensorLeg> right_legs(right_rank,TensorLeg(0,0));
+ for(unsigned int l = 0, r = 0, i = 0; i < tensor_rank; ++i){
+  (right_dims[i] == 0) ? left_legs[l++] = tensor->getTensorLeg(i):
+                         right_legs[r++] = tensor->getTensorLeg(i);
+ }
+ //Remove the original tensor from the tensor network:
+ auto num_erased = tensors_.erase(tensor_id); assert(num_erased == 1);
+ //Append the new derived tensors to the tensor network:
+ auto new_pos = tensors_.emplace(std::make_pair(
+                                  left_tensor_id,TensorConn(left_tensor,left_tensor_id,left_legs)
+                                 )
+                                );
+ if(!(new_pos.second)){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "A tensor with id " << left_tensor_id << " already exists in the tensor network!" << std::endl;
+  return false;
+ }
+ new_pos = tensors_.emplace(std::make_pair(
+                             right_tensor_id,TensorConn(right_tensor,right_tensor_id,right_legs)
+                            )
+                           );
+ if(!(new_pos.second)){
+  std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
+   "A tensor with id " << right_tensor_id << " already exists in the tensor network!" << std::endl;
+  return false;
+ }
+ updateConnections(left_tensor_id);
+ updateConnections(right_tensor_id);
+ //Append new (contracted) dimensions to both the left and right derived tensors:
+ auto * left = this->getTensorConn(left_tensor_id); assert(left);
+ auto * right = this->getTensorConn(right_tensor_id); assert(right);
+ for(unsigned int i = 0; i < num_contr_dims; ++i){
+  auto dim_extent = contracted_dims.getDimExtent(i);
+  left->appendLeg(dim_extent,TensorLeg(right_tensor_id,right_rank++));
+  right->appendLeg(dim_extent,TensorLeg(left_tensor_id,left_rank++));
+ }
+ assert(left_rank == left_full_rank && right_rank == right_full_rank);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return true;
 }

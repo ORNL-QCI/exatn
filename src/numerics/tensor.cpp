@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/09/24
+REVISION: 2019/09/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -155,6 +155,20 @@ void Tensor::appendDimension(DimExtent dim_extent)
 {
  this->appendDimension(std::pair<SpaceId,SubspaceId>{SOME_SPACE,0},dim_extent);
  return;
+}
+
+std::shared_ptr<Tensor> Tensor::createSubtensor(const std::string & name,
+                                                const std::vector<int> & mode_mask, int mask_val)
+{
+ const auto tensor_rank = this->getRank();
+ assert(tensor_rank == mode_mask.size());
+ auto subtensor = std::make_shared<Tensor>(name); assert(subtensor);
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  if(mode_mask[i] == mask_val){
+   subtensor->appendDimension(this->getDimSpaceAttr(i),this->getDimExtent(i));
+  }
+ }
+ return subtensor;
 }
 
 void Tensor::setElementType(TensorElementType element_type)
