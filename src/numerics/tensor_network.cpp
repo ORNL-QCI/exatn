@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/25
+REVISION: 2019/09/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -526,7 +526,7 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
   std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Odd-rank tensors are not allowed as gates!" << std::endl;
   return false;
  }
- if(tensor_rank != (pairing.size() * 2)){
+ if(tensor_rank != pairing.size() * 2){
   std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Wrong size of the leg pairing vector!" << std::endl;
   return false;
  }
@@ -551,7 +551,7 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
  if(tensor_rank > 0){
   std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders for legs
   unsigned int paired_leg_id = 0;
-  unsigned int unpaired_leg_id = tensor_rank/2;
+  unsigned int unpaired_leg_id = tensor_rank / 2;
   for(const auto & output_tensor_leg_id: pairing){
    auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
    //Relink the input tensor with the new tensor:
@@ -681,6 +681,98 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
                      output1->getTensorLeg(i));
  }
  output0_rank = output0->getNumLegs();
+ //Append all input tensors from the appended tensor network into the primary tensor network:
+ auto tensors = network.getTensorConnAll();
+ for(auto & tensor: tensors){
+  unsigned int tensor_id = tensor->getTensorId();
+  tensors_.emplace(std::make_pair(
+                    tensor_id,*tensor
+                   )
+                  );
+ }
+ this->updateConnections(0); //update connections in just appended input tensors
+ invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ finalized_ = 1; //implicit leg pairing always keeps the primary tensor network in a finalized state
+ return true;
+}
+
+
+bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
+                                            const std::vector<unsigned int> & pairing)
+{
+ if(!((*this).isFinalized()) || !(network.isFinalized())){
+  std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid request: " <<
+   "Either primary or appended tensor network is not finalized!" << std::endl;
+  return false;
+ }
+ //Check validity of leg pairing:
+ auto * output0 = this->getTensorConn(0);
+ assert(output0 != nullptr);
+ auto output0_rank = output0->getNumLegs();
+ auto * output1 = network.getTensorConn(0);
+ assert(output1 != nullptr);
+ auto output1_rank = output1->getNumLegs();
+ if(output1_rank % 2 != 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Odd-rank tensor networks are not allowed as gates!"
+            << std::endl;
+  return false;
+ }
+ if(output1_rank != pairing.size() * 2){
+  std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Wrong size of the leg pairing vector!"
+            << std::endl;
+  return false;
+ }
+ if(output1_rank > output0_rank * 2){
+  std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Primary tensor network does not have enough open legs!"
+            << std::endl;
+  return false;
+ }
+ if(output0_rank > 0){
+  char inds[output0_rank] = {0};
+  for(const auto & leg_id: pairing){
+   if(leg_id >= output0_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+   if(inds[leg_id]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+  }
+ }
+ //Pair output legs of the primary tensor network with the output legs of the appended tensor network:
+ if(pairing.size() > 0){
+  unsigned int output1_leg_id = 0;
+  unsigned int output1_replace_leg_id = output1_rank / 2;
+  for(const auto & output0_leg_id: pairing){
+   const auto & output0_leg = output0->getTensorLeg(output0_leg_id);
+   const auto & output1_leg = output1->getTensorLeg(output1_leg_id);
+   const auto input0_id = output0_leg.getTensorId();
+   const auto input0_leg_id = output0_leg.getDimensionId();
+   const auto input1_id = output1_leg.getTensorId();
+   const auto input1_leg_id = output1_leg.getDimensionId();
+   auto * input0 = this->getTensorConn(input0_id);
+   assert(input0 != nullptr);
+   auto * input1 = network.getTensorConn(input1_id);
+   assert(input1 != nullptr);
+   auto input0_leg = input0->getTensorLeg(input0_leg_id);
+   input0_leg.resetTensorId(input1_id);
+   input0_leg.resetDimensionId(input1_leg_id);
+   input0->resetLeg(input0_leg_id,input0_leg);
+   auto input1_leg = input1->getTensorLeg(input1_leg_id);
+   input1_leg.resetTensorId(input0_id);
+   input1_leg.resetDimensionId(input0_leg_id);
+   input1->resetLeg(input1_leg_id,input1_leg);
+   const auto & output1_replace_leg = output1->getTensorLeg(output1_replace_leg_id);
+   output0->resetLeg(output0_leg_id,output1_replace_leg);
+   ++output1_leg_id; ++output1_replace_leg_id;
+  }
+  //Delete matched legs in the output tensor of the appended tensor network:
+  std::vector<unsigned int> matched_legs(pairing.size(),0);
+  for(unsigned int i = 0; i < pairing.size(); ++i) matched_legs[i] = i; //first half has been matched
+  output1->deleteLegs(matched_legs);
+  network.updateConnections(0);
+ }
  //Append all input tensors from the appended tensor network into the primary tensor network:
  auto tensors = network.getTensorConnAll();
  for(auto & tensor: tensors){

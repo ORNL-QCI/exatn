@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/25
+REVISION: 2019/09/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -166,20 +166,34 @@ public:
      of the tensor legs with network's output legs provided in "pairing". The second half
      of the tensor legs will then replace the matched output legs in the output tensor. **/
  bool appendTensorGate(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
-                       std::shared_ptr<Tensor> tensor,             //in: appended tensor
+                       std::shared_ptr<Tensor> tensor,             //in: appended tensor gate (operator)
                        const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes (half-rank)
 
- /** Appends a tensor network to the current tensor network by matching the modes
+ /** Appends a tensor network to the current (primary) tensor network by matching the modes
      of the output tensors of both tensor networks. The unmatched modes of the
      output tensor of the appended tensor network will be appended to the updated output
      tensor of the primary tensor network (at the end). The appended tensor network
      will cease to exist after being absorbed by the primary tensor network.
      If paired legs of either output tensor are directed, the directions must be respected.
-     The tensors constituting the appended tensor network, except its output tensor, must
-     have their unique ids be different from the ids of the tensors constituting
+     The tensors constituting the appended tensor network, except its output tensor,
+     must have their unique ids be different from the ids of the tensors constituting
      the primary tensor network, otherwise the result is undefined and unrecoverable! **/
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
+
+ /** Appends an even-rank tensor network to the current (primary) tensor network by matching
+     the first half of the output modes of the appended tensor network with selected
+     modes of the current (primary) tensor network, simultaneously replacing the matched
+     output modes of the current (primary) tensor network by the second half of the modes
+     of the appended tensor network, going in order. Matching will respect leg directions.
+     The replacing output modes of the appended tensor network mush have same directions
+     as the replaced modes of the current (primary) tensor network. The appended tensor
+     network will cease to exist after being absorbed by the primary tensor network.
+     The tensors constituting the appended tensor network, except its output tensor,
+     must have their unique ids be different from the ids of the tensors constituting
+     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
+ bool appendTensorNetworkGate(TensorNetwork && network,                   //in: appended tensor network gate (operator)
+                              const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes of the primary network (half-rank)
 
  /** Reoders the modes of the output tensor of the tensor network:
      order[x] = y: yth mode of the output tensor becomes its xth mode. **/
