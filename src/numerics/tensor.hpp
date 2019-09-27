@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/09/26
+REVISION: 2019/09/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -193,6 +193,12 @@ name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size(
 }
 
 } //namespace numerics
+
+template<typename... Args>
+inline std::shared_ptr<numerics::Tensor> makeSharedTensor(Args&&... args)
+{
+ return std::make_shared<numerics::Tensor>(args...);
+}
 
 } //namespace exatn
 

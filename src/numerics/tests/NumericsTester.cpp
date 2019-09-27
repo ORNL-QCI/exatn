@@ -28,6 +28,8 @@ TEST(NumericsTester, checkSimple)
   TensorLeg leg{1,4};
   leg.printIt();
   std::cout << std::endl;
+
+  auto tensor = makeSharedTensor("H0",TensorShape{2,2,2,2});
  }
 }
 
