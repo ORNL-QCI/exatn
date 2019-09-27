@@ -101,6 +101,31 @@ TEST(NumericsTester, checkTensorNetworkSymbolic)
  network.printIt();
 }
 
+TEST(NumericsTester, checkSharedTensorNetworkSymbolic)
+{
+ //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
+ //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
+ // 0      1         2           3         4             5         6           7  <-- tensor id
+ auto network = makeSharedTensorNetwork(
+                 "{0,1} 3-site MPS closure", //tensor network name
+                 "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)", //tensor network specification
+                 std::map<std::string,std::shared_ptr<Tensor>>{
+                  {"Z0",std::make_shared<Tensor>("Z0")},
+                  {"T0",std::make_shared<Tensor>("T0",TensorShape{2,2})},
+                  {"T1",std::make_shared<Tensor>("T1",TensorShape{2,2,2})},
+                  {"T2",std::make_shared<Tensor>("T2",TensorShape{2,2})},
+                  {"H0",std::make_shared<Tensor>("H0",TensorShape{2,2,2,2})},
+                  {"S0",std::make_shared<Tensor>("S0",TensorShape{2,2})},
+                  {"S1",std::make_shared<Tensor>("S1",TensorShape{2,2,2})},
+                  {"S2",std::make_shared<Tensor>("S2",TensorShape{2,2})}
+                 }
+                );
+ network->printIt();
+ //Remove tensor #6 to create the optimization environment for MPS tensor S1:
+ network->deleteTensor(6);
+ network->printIt();
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
