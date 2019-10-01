@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2019/09/09
+REVISION: 2019/10/01
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,6 +33,8 @@ class TensorNetwork;
 class ContractionSeqOptimizer{
 
 public:
+
+ virtual ~ContractionSeqOptimizer() = default;
 
  /** Determines the pseudo-optimal tensor contraction sequence required for
      evaluating a given tensor network. The unique intermediate tensor id's are generated
