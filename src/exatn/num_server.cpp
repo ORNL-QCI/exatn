@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/25
+REVISION: 2019/10/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -244,7 +244,7 @@ bool NumServer::destroyTensor(const std::string & name)
  return true;
 }
 
-bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
+bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor, bool async)
 {
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
@@ -255,6 +255,10 @@ bool NumServer::transformTensor(const std::string & name, std::shared_ptr<Tensor
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
  submit(op);
+ if(!async){
+  auto synced = sync(*op);
+  assert(synced);
+ }
  return true;
 }
 

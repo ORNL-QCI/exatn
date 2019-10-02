@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/09/25
+REVISION: 2019/10/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -98,13 +98,15 @@ inline bool destroyTensor(const std::string & name) //in: tensor name
 /** Initializes a tensor to some scalar value. **/
 template<typename NumericType>
 inline bool initTensor(const std::string & name, //in: tensor name
-                       NumericType value)        //in: scalar value
- {return numericalServer->initTensor(name,value);}
+                       NumericType value,        //in: scalar value
+                       bool async = true)        //in: asynchronisity
+ {return numericalServer->initTensor(name,value,async);}
 
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
 inline bool transformTensor(const std::string & name,              //in: tensor name
-                            std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
- {return numericalServer->transformTensor(name,functor);}
+                            std::shared_ptr<TensorMethod> functor, //in: functor defining tensor transformation
+                            bool async = true)                     //in: asynchronisity
+ {return numericalServer->transformTensor(name,functor,async);}
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/
 template<typename NumericType>

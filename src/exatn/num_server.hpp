@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/09/25
+REVISION: 2019/10/02
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -166,11 +166,13 @@ public:
  /** Initializes a tensor to some scalar value. **/
  template<typename NumericType>
  bool initTensor(const std::string & name, //in: tensor name
-                 NumericType value);       //in: scalar value
+                 NumericType value,        //in: scalar value
+                 bool async = true);       //in: asynchronisity
 
  /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
- bool transformTensor(const std::string & name,               //in: tensor name
-                      std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+ bool transformTensor(const std::string & name,              //in: tensor name
+                      std::shared_ptr<TensorMethod> functor, //in: functor defining tensor transformation
+                      bool async = true);                    //in: asynchronisity
 
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
@@ -224,10 +226,10 @@ bool NumServer::createTensor(const std::string & name, TensorElementType element
 
 template<typename NumericType>
 bool NumServer::initTensor(const std::string & name,
-                           NumericType value)
+                           NumericType value,
+                           bool async)
 {
- return transformTensor(name,
-                        std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)),async);
 }
 
 template<typename NumericType>
