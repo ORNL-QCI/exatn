@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/23
+REVISION: 2019/10/02
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -102,7 +102,7 @@ public:
 
   /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
       The argument slice must be an existing talsh::Tensor defining the slice of interest.
-      This slice will be extracted from the exatn::numerics::Tensor tensor. **/
+      This slice will be extracted from the exatn::numerics::Tensor tensor as a copy. **/
   bool getLocalTensor(Tensor & tensor,        //in: exatn::numerics::Tensor to get slice of
                       talsh::Tensor & slice); //inout: locally stored tensor slice
 

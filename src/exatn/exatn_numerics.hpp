@@ -36,6 +36,7 @@ namespace exatn{
 inline ScopeId openScope(const std::string & scope_name) //new scope name
  {return numericalServer->openScope(scope_name);}
 
+
 /** Closes the currently open TAProL scope and returns its parental scope id. **/
 inline ScopeId closeScope()
  {return numericalServer->closeScope();}
@@ -48,12 +49,14 @@ inline SpaceId createVectorSpace(const std::string & space_name,           //in:
                                  const VectorSpace ** space_ptr = nullptr) //out: non-owning pointer to the created vector space
  {return numericalServer->createVectorSpace(space_name,space_dim,space_ptr);}
 
+
 /** Destroys a previously created named vector space. **/
 inline void destroyVectorSpace(const std::string & space_name) //in: name of the vector space to destroy
  {return numericalServer->destroyVectorSpace(space_name);}
 
 inline void destroyVectorSpace(SpaceId space_id) //in: id of the vector space to destroy
  {return numericalServer->destroyVectorSpace(space_id);}
+
 
 /** Creates a named subspace of a named vector space,
     returns its registered id, and, optionally, a non-owning pointer to it. **/
@@ -63,6 +66,7 @@ inline SubspaceId createSubspace(const std::string & subspace_name,           //
                                  const Subspace ** subspace_ptr = nullptr)    //out: non-owning pointer to the created subspace
  {return numericalServer->createSubspace(subspace_name,space_name,bounds,subspace_ptr);}
 
+
 /** Destroys a previously created named subspace of a named vector space. **/
 inline void destroySubspace(const std::string & subspace_name) //in: name of the subspace to destroy
  {return numericalServer->destroySubspace(subspace_name);}
@@ -70,10 +74,34 @@ inline void destroySubspace(const std::string & subspace_name) //in: name of the
 inline void destroySubspace(SubspaceId subspace_id) //in: id of the subspace to destroy
  {return numericalServer->destroySubspace(subspace_id);}
 
+
 /** Returns a non-owning pointer to a previosuly registered named subspace
     of a previously registered named vector space. **/
 inline const Subspace * getSubspace(const std::string & subspace_name) //in: name of the subspace to get
  {return numericalServer->getSubspace(subspace_name);}
+
+
+/** Registers an external tensor method. **/
+inline void registerTensorMethod(const std::string & tag,
+                                 std::shared_ptr<TensorMethod> method)
+ {return numericalServer->registerTensorMethod(tag,method);}
+
+
+/** Retrieves a registered external tensor method. **/
+inline std::shared_ptr<TensorMethod> getTensorMethod(const std::string & tag)
+ {return numericalServer->getTensorMethod(tag);}
+
+
+/** Registers an external data packet. **/
+inline void registerExternalData(const std::string & tag,
+                                 std::shared_ptr<BytePacket> packet)
+ {return numericalServer->registerExternalData(tag,packet);}
+
+
+/** Retrieves a registered external data packet. **/
+inline std::shared_ptr<BytePacket> getExternalData(const std::string & tag)
+ {return numericalServer->getExternalData(tag);}
+
 
 /** Declares, registers and actually creates a tensor via processing backend.
     See numerics::Tensor constructors for different creation options. **/
@@ -83,17 +111,21 @@ inline bool createTensor(const std::string & name,       //in: tensor name
                          Args&&... args)                 //in: other arguments for Tensor ctor
  {return numericalServer->createTensor(name,element_type,args...);}
 
+
 /** Returns the reference to the actual tensor object. **/
 inline Tensor & getTensorRef(const std::string & name) //in: tensor name
  {return numericalServer->getTensorRef(name);}
+
 
 /** Returns the tensor element type. **/
 inline TensorElementType getTensorElementType(const std::string & name) //in: tensor name
  {return numericalServer->getTensorElementType(name);}
 
+
 /** Destroys a tensor, including its backend representation. **/
 inline bool destroyTensor(const std::string & name) //in: tensor name
  {return numericalServer->destroyTensor(name);}
+
 
 /** Initializes a tensor to some scalar value. **/
 template<typename NumericType>
@@ -102,11 +134,13 @@ inline bool initTensor(const std::string & name, //in: tensor name
                        bool async = true)        //in: asynchronisity
  {return numericalServer->initTensor(name,value,async);}
 
+
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
 inline bool transformTensor(const std::string & name,              //in: tensor name
                             std::shared_ptr<TensorMethod> functor, //in: functor defining tensor transformation
                             bool async = true)                     //in: asynchronisity
  {return numericalServer->transformTensor(name,functor,async);}
+
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/
 template<typename NumericType>
@@ -114,21 +148,32 @@ inline bool addTensors(const std::string & addition, //in: symbolic tensor addit
                        NumericType alpha)            //in: alpha prefactor
  {return numericalServer->addTensors(addition,alpha);}
 
+
 /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
 template<typename NumericType>
 inline bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
                             NumericType alpha)               //in: alpha prefactor
  {return numericalServer->contractTensors(contraction,alpha);}
 
+
 /** Performs a full evaluation of a tensor network. **/
 inline bool evaluateTensorNetwork(const std::string & name,    //in: tensor network name
                                   const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetwork(name,network);}
 
+
 /** Synchronizes all outstanding update operations on a given tensor. **/
 inline bool sync(const std::string & name, //in: tensor name
                  bool wait = true)         //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
+
+
+/** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
+    The argument slice must be an existing talsh::Tensor defining the slice of interest.
+    This slice will be extracted from the exatn::numerics::Tensor tensor as a copy **/
+inline bool getLocalTensor(Tensor & tensor,       //in: exatn::numerics::Tensor to get slice of
+                           talsh::Tensor & slice) //inout: locally stored tensor slice (copy)
+ {return numericalServer->getLocalTensor(tensor,slice);}
 
 } //namespace exatn
 

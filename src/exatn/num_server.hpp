@@ -75,13 +75,15 @@ public:
                                const std::string & node_executor_name);
 
  /** Registers an external tensor method. **/
- void registerTensorMethod(std::shared_ptr<TensorMethod> method);
+ void registerTensorMethod(const std::string & tag,
+                           std::shared_ptr<TensorMethod> method);
 
  /** Retrieves a registered external tensor method. **/
  std::shared_ptr<TensorMethod> getTensorMethod(const std::string & tag);
 
  /** Registers an external data packet. **/
- void registerExternalData(const std::string & tag, std::shared_ptr<BytePacket> packet);
+ void registerExternalData(const std::string & tag,
+                           std::shared_ptr<BytePacket> packet);
 
  /** Retrieves a registered external data packet. **/
  std::shared_ptr<BytePacket> getExternalData(const std::string & tag);
@@ -187,6 +189,12 @@ public:
  /** Performs a full evaluation of a tensor network. **/
  bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
                             const std::string & network); //in: symbolic tensor network specification
+
+ /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
+     The argument slice must be an existing talsh::Tensor defining the slice of interest.
+     This slice will be extracted from the exatn::numerics::Tensor tensor as a copy **/
+ bool getLocalTensor(Tensor & tensor,        //in: exatn::numerics::Tensor to get slice of
+                     talsh::Tensor & slice); //inout: locally stored tensor slice (copy)
 
 private:
 

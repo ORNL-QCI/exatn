@@ -37,11 +37,10 @@ void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
  return;
 }
 
-void NumServer::registerTensorMethod(std::shared_ptr<TensorMethod> method)
+void NumServer::registerTensorMethod(const std::string & tag, std::shared_ptr<TensorMethod> method)
 {
- auto res = ext_methods_.insert({method->name(),method});
- if(!(std::get<1>(res))) std::cout << "#ERROR(NumServer::registerTensorMethod): Method already exists: " <<
-  method->name() << std::endl;
+ auto res = ext_methods_.insert({tag,method});
+ if(!(std::get<1>(res))) std::cout << "#ERROR(NumServer::registerTensorMethod): Method already exists: " << tag << std::endl;
  assert(std::get<1>(res));
  return;
 }
@@ -296,6 +295,11 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
  }
  return parsed;
+}
+
+bool NumServer::getLocalTensor(Tensor & tensor, talsh::Tensor & slice)
+{
+ return tensor_rt_->getLocalTensor(tensor,slice);
 }
 
 } //namespace exatn

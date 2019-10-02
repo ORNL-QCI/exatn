@@ -118,7 +118,7 @@ void MPIServer::start() {
 
         auto tensor_method = exatn::getService<talsh::TensorFunctor<Identifiable>>(tmName);
         tensor_method->unpack(packet);
-        exatn::numericalServer->registerTensorMethod(tensor_method);
+        exatn::numericalServer->registerTensorMethod(tensor_method->name(),tensor_method);
 
         std::cout << "[mpi-server] Successfully created tensor method, added to backend.\n";
 
