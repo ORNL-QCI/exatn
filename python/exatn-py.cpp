@@ -1,5 +1,6 @@
 
 #include "exatn_py_utils.hpp"
+#include "pybind11/pybind11.h"
 #include "tensor_basic.hpp"
 
 namespace py = pybind11;
@@ -14,7 +15,7 @@ using namespace pybind11::literals;
  * write python scripts which leverage the ExaTN functionality.
  */
 
-PYBIND11_MODULE(_pyexatn, m) {
+void create_exatn_py_module(py::module& m) {
   m.doc() = "Python bindings for ExaTN.";
 
   py::class_<BytePacket>(m, "BytePacket", "")
@@ -363,44 +364,27 @@ PYBIND11_MODULE(_pyexatn, m) {
             return;
           },
           "")
-       .def(
+      .def(
           "createTensor",
           [](exatn::NumServer &n, const std::string name,
              std::vector<std::size_t> dims, exatn::TensorElementType type) {
             bool created = false;
-            created = n.createTensor(name,type,
-                                     exatn::numerics::TensorShape(dims));
+            created =
+                n.createTensor(name, type, exatn::numerics::TensorShape(dims));
             assert(created);
             return;
           },
           "")
-      .def("createTensor", &exatn::createTensorWithData<double>, "")
-      .def("createTensor", &exatn::createTensorWithData<std::complex<double>>, "")
+      .def("createTensor", &exatn::createTensorWithData, "")
       .def("initTensor", &exatn::NumServer::initTensor<float>, "")
       .def("initTensor", &exatn::NumServer::initTensor<int>, "")
       .def("initTensor", &exatn::NumServer::initTensor<double>, "")
       .def("initTensor", &exatn::NumServer::initTensor<std::complex<double>>,
            "")
       .def("transformTensor", &exatn::NumServer::transformTensor, "")
-      .def("transformTensor", &exatn::generalTransformWithData<double>, "")
-      .def("transformRealTensor", &exatn::generalTransformWithData<double>, "")
-      .def("transformComplexTensor", &exatn::generalTransformWithData<std::complex<double>>,
-           "")
+      .def("transformTensor", &exatn::generalTransformWithData, "") //py::call_guard<py::gil_scoped_release>(), "")
+      .def("print", &exatn::printTensorData, "")
       .def("destroyTensor", &exatn::NumServer::destroyTensor, "")
-
-      // FIXME Coming soon...
-      //   .def("addTensors", &exatn::NumServer::addTensors<float>, "")
-      //   .def("addTensors", &exatn::NumServer::addTensors<double>, "")
-      //   .def("addTensors", &exatn::NumServer::addTensors<int>, "")
-      //   .def("addTensors",
-      //   &exatn::NumServer::addTensors<std::complex<double>>, "")
-      //   .def("contractTensors", &exatn::NumServer::contractTensors<float>,
-      //   "") .def("contractTensors",
-      //   &exatn::NumServer::contractTensors<double>, "")
-      //   .def("contractTensors", &exatn::NumServer::contractTensors<int>, "")
-      //   .def("contractTensors",
-      //   &exatn::NumServer::contractTensors<std::complex<double>>, "")
-
       .def("evaluateTensorNetwork", &exatn::NumServer::evaluateTensorNetwork,
            "");
 
@@ -590,4 +574,9 @@ PYBIND11_MODULE(_pyexatn, m) {
         return network->appendTensorNetwork(std::move(append_network), pairing);
       },
       "");
+}
+
+
+PYBIND11_MODULE(_pyexatn, m) {
+    create_exatn_py_module(m);
 }
