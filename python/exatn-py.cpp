@@ -376,11 +376,15 @@ void create_exatn_py_module(py::module& m) {
           },
           "")
       .def("createTensor", &exatn::createTensorWithData, "")
-      .def("initTensor", &exatn::NumServer::initTensor<float>, "")
-      .def("initTensor", &exatn::NumServer::initTensor<int>, "")
-      .def("initTensor", &exatn::NumServer::initTensor<double>, "")
-      .def("initTensor", &exatn::NumServer::initTensor<std::complex<double>>,
-           "")
+      .def("initTensor", [](NumServer& n,const std::string& name, float value) {
+          return n.initTensor(name, value, false);
+      }, "")
+      .def("initTensor", [](NumServer& n,const std::string& name, double value) {
+          return n.initTensor(name, value, false);
+      }, "")
+      .def("initTensor", [](NumServer& n,const std::string& name, std::complex<double> value) {
+          return n.initTensor(name, value, false);
+      }, "")
       .def("transformTensor", &exatn::NumServer::transformTensor, "")
       .def("transformTensor", &exatn::generalTransformWithData, "") //py::call_guard<py::gil_scoped_release>(), "")
       .def("print", &exatn::printTensorData, "")

@@ -30,14 +30,14 @@ num_server.createTensor("Sx", np.array([[0.,1.],[1.,0.]]))
 num_server.transformTensor("Sx", printTensor)
 
 num_server.createTensor("Sy", np.array([[0.,-1.j],[1.j,0.]]))
-num_server.transformComplexTensor("Sy", printTensor)
+num_server.transformTensor("Sy", printTensor)
 
 num_server.createTensor("Sz", np.array([[1.,0.],[0.,-1.]]))
 num_server.transformTensor("Sz", printTensor)
 
-num_server.transformComplexTensor("T1", printTensor)
+num_server.transformTensor("T1", printTensor)
 
-num_server.sync("T1", True)
+# num_server.sync("T1", True)
 
 num_server.destroyTensor("T0")
 num_server.destroyTensor("L")

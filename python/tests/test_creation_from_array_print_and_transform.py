@@ -17,6 +17,9 @@ num_server.print("Sx")
 num_server.transformTensor("Sx", negate)
 num_server.print("Sx")
 
+num_server.transformTensor("Sy", negate)
+num_server.print("Sy")
+
 num_server.destroyTensor("Sx")
 num_server.destroyTensor("Sy")
 
