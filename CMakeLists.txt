@@ -178,6 +178,12 @@ if(PYTHON_INCLUDE_DIR)
   add_subdirectory(python)
 endif()
 
+# Gets the include directory properties
+get_property(INC_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+
+configure_file(${CMAKE_SOURCE_DIR}/scripts/exatn-config.in
+               ${CMAKE_BINARY_DIR}/scripts/exatn-config)
 configure_file("${CMAKE_SOURCE_DIR}/cmake/exatn-config.cmake.in"
                "${CMAKE_BINARY_DIR}/exatn-config.cmake" @ONLY)
 install(FILES "${CMAKE_BINARY_DIR}/exatn-config.cmake" DESTINATION .)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/scripts/exatn-config DESTINATION ${CMAKE_BINARY_DIR})

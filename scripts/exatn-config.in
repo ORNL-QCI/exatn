@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+import argparse, sys, os, subprocess, mimetypes
+
+# This is an llvm-config inspired python script which returns some of the compile
+# flags to the user. Running script like:
+# $ exatn-config --includes
+# prints the include directories used in the build
+
+
+def main(argv=None):
+    # First get some basic things that are guaranteed to be used
+    verbose = False
+    compiler = '@CMAKE_CXX_COMPILER'
+    baseLibs = ['-rdynamic','-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/lib',
+                '-L', '@CMAKE_INSTALL_PREFIX@/lib', '-lCppMicroServices']
+
+    # Put this one in a string first so that it comes out as a 1D list
+    cxxflag = '@CMAKE_CXX_FLAGS@'
+    cxxFlags = [cxxflag]
+    incDirs = '@INC_DIRS@'.split(';')
+    baseIncludes = ['@CMAKE_INSTALL_PREFIX@/include/exatn'] + incDirs
+    # Make lists for other flags that might be needed
+    LDFlags = ['']
+
+
+    # Make booleans to indicate what should be added to the command
+    useLibs = False
+    useLDFlags = False
+    useIncludes = False
+    useCXXFlags = False
+
+    # Give a print statement of what is about to be sent to the compiler
+    if '--verbose' in sys.argv[1:]:
+        verbose = True
+        sys.argv.remove('--verbose')
+
+    # Print out libraries that are used in CMake
+    if '--libs' in sys.argv[1:]:
+        useLibs = True
+        mpiLibs = '@MPI_CXX_LIBRARIES@'
+        # Split up the mpi libraries based on how cmake hands them
+        mpiLibs = mpiLibs.split(';')
+        baseLibs += mpiLibs
+        sys.argv.remove('--libs')
+
+    # Print out the linker flags used in CMake
+    if '--ldflags' in sys.argv[1:]:
+        useLDFlags = True
+        # Add the MPI and/or openMPI libraries, if they exist. Otherwise will be empty
+        # Put them in strings first so they don't get added as individual letters
+        mpiFlags = '@MPI_CXX_LINK_FLAGS@'.split(',')
+        LDFlags += mpiFlags
+        openmpFlags = '@OpenMP_CXX_FLAGS@'.split(',')
+        LDFlags += openmpFlags
+        sys.argv.remove('--ldflags')
+
+    # Print out the include directories from CMake
+    if '--includes' in sys.argv[1:]:
+        useIncludes = True
+        sys.argv.remove('--includes')
+
+    # Print out the CXX flags from CMake
+    if '--cxxflags' in sys.argv[1:]:
+        useCXXFlags = True
+        sys.argv.remove('--cxxflags')
+
+    # If the executable name is in the sys.argv, remove it
+    sys.argv[0] = ''
+    if 'exatn-config' in sys.argv[1:]:
+        sys.argv.remove('exatn-config')
+
+    commands = sys.argv
+
+    # Add all of the desired things to the command string
+    if useLibs:
+        commands += baseLibs
+    if useLDFlags:
+        commands += LDFlags
+    if useIncludes:
+        commands += baseIncludes
+    if useCXXFlags:
+        commands += cxxFlags
+
+    commandString = ' '.join([c for c in commands])
+
+    # Print it if desired
+    if verbose:
+        print('Exatn compiling: ' + commandString)
+
+    # Try to execute it at the command line
+    try:
+        result = subprocess.run(commandString, check=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        print(e.returncode)
+        return e.returncode
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
