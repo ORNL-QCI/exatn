@@ -3,6 +3,8 @@
 #include "pybind11/pybind11.h"
 #include "tensor_basic.hpp"
 
+#include "exatn_numerics.hpp"
+
 namespace py = pybind11;
 using namespace exatn;
 using namespace exatn::numerics;
@@ -578,6 +580,19 @@ void create_exatn_py_module(py::module& m) {
         return network->appendTensorNetwork(std::move(append_network), pairing);
       },
       "");
+
+  m.def("createTensor", [](const std::string& name, TensorElementType type) {
+    return exatn::createTensor(name, type);
+  }, "");
+  m.def("createTensor", [](const std::string& name, std::vector<std::size_t> dims,TensorElementType type) {
+    return exatn::createTensor(name, type, exatn::numerics::TensorShape(dims));
+  }, "");
+  m.def("createTensor", &createTensorWithDataNoNumServer, "");
+  m.def("print", &printTensorDataNoNumServer, "");
+  m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
+  m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");
+  m.def("destroyTensor", &destroyTensor, "");
+  
 }
 
 

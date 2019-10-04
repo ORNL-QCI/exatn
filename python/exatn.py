@@ -10,6 +10,13 @@ def parse_args(args):
     opts = parser.parse_args(args)
     return opts
 
+Initialize()
+
+def _finalize():
+    Finalize()
+
+import atexit
+atexit.register(_finalize)
 
 def main(argv=None):
     opts = parse_args(sys.argv[1:])
