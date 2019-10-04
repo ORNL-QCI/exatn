@@ -41,5 +41,5 @@ exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 file (GLOB HEADERS *.hpp)
 
-install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
-install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
+install(FILES ${HEADERS} DESTINATION include/exatn)
+#install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
