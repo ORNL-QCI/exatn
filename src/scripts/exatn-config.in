@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import argparse, sys, os, subprocess, mimetypes
+
+# This is an llvm-config inspired python script which returns some of the compile
+# flags to the user. Running script like:
+# $ exatn-config --includes
+# prints the include directories used in the build
+
+
+def main(argv=None):
+
+    output = []
+
+    # Print out libraries that are used in CMake
+    if '--libs' in sys.argv[1:]:
+        baseLibs = ['-rdynamic','-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/lib',
+                '-L', '@CMAKE_INSTALL_PREFIX@/lib', '-lCppMicroServices','-ltalsh', '-lexatn', '-lexatn-numerics', '-lexatn-runtime', '-lexatn-runtime-graph', '-ldl', '-lpthread']
+        if '@EXA_TALSH_ONLY@' != 'YES':
+            baseLibs += ['-lexatensor']
+            baseLibs += '@MPI_CXX_LIBRARIES@'.split(';') + '@REQUIRED_EXATENSOR_LIBS@'.split(';')
+        output += baseLibs
+
+    # Print out the linker flags used in CMake
+    #if '--ldflags' in sys.argv[1:]:
+        # Add the MPI and/or openMPI libraries, if they exist. Otherwise will be empty
+        # Put them in strings first so they don't get added as individual letters
+        #mpiFlags = '@MPI_CXX_LINK_FLAGS@'.split(',')
+        #openmpFlags = '@OpenMP_CXX_FLAGS@'.split(',')
+        #output += mpiFlags + openmpFlags
+
+    # Print out the include directories from CMake
+    if '--includes' in sys.argv[1:]:
+        baseIncludes = ['@CMAKE_INSTALL_PREFIX@/include/exatn', '@CMAKE_INSTALL_PREFIX@/include', '@CMAKE_INSTALL_PREFIX@/include/cppmicroservices4']
+        for b in baseIncludes:
+            output += ['-I'+b]
+
+    # Print out the CXX flags from CMake
+    if '--cxxflags' in sys.argv[1:]:
+        output += ['-std=gnu++11', '-fPIC'] + ['@CMAKE_CXX_FLAGS@']
+
+    print(' '.join([c for c in output]))
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

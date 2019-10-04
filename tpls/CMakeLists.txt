@@ -337,6 +337,15 @@ add_custom_command(
           -E
           copy
           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_method.hpp
-          ${CMAKE_INSTALL_PREFIX}/include/exatensor
+          ${CMAKE_INSTALL_PREFIX}/include/tensor_method.hpp
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Installing ExaTensor tensor_method.hpp to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/byte_packet.h
+          ${CMAKE_INSTALL_PREFIX}/include/byte_packet.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor byte_packet.h to Install Prefix...")

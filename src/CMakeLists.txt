@@ -112,3 +112,8 @@ add_subdirectory(numerics)
 add_subdirectory(driver-rpc)
 add_subdirectory(parser)
 add_subdirectory(runtime)
+
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/exatn-config.in
+               ${CMAKE_BINARY_DIR}/scripts/exatn-config)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/scripts/exatn-config DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

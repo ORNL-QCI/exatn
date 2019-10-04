@@ -30,5 +30,5 @@ endif()
 
 file (GLOB HEADERS *.hpp)
 
-install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)

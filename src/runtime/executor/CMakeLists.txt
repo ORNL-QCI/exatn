@@ -47,5 +47,5 @@ endif()
 
 file (GLOB HEADERS *.hpp)
 
-install(FILES ${HEADERS} DESTINATION include/exatn/runtime)
+install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)
