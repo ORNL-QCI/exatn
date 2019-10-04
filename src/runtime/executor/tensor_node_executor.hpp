@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/09/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -23,7 +23,12 @@ Rationale:
 #include "tensor_op_factory.hpp"
 #include "tensor.hpp"
 
+#include <vector>
 #include <memory>
+
+namespace talsh{
+class Tensor;
+}
 
 namespace exatn {
 namespace runtime {
@@ -31,6 +36,8 @@ namespace runtime {
 class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecutor> {
 
 public:
+
+  virtual ~TensorNodeExecutor() = default;
 
   /** Explicitly initializes the underlying numerical service, if needed **/
   virtual void initialize() = 0;
@@ -54,6 +61,10 @@ public:
   virtual bool sync(TensorOpExecHandle op_handle,
                     int * error_code,
                     bool wait = false) = 0;
+
+  /** Returns a local copy of a given tensor slice. **/
+  virtual std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
+                         const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) = 0;
 
   virtual std::shared_ptr<TensorNodeExecutor> clone() = 0;
 };

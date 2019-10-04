@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2019/09/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -13,6 +13,8 @@ Rationale:
 
 #include "tensor_node_executor.hpp"
 
+#include "talshxx.hpp"
+
 namespace exatn {
 namespace runtime {
 
@@ -25,7 +27,7 @@ public:
   ExatensorNodeExecutor & operator=(const ExatensorNodeExecutor &) = delete;
   ExatensorNodeExecutor(ExatensorNodeExecutor &&) noexcept = delete;
   ExatensorNodeExecutor & operator=(ExatensorNodeExecutor &&) noexcept = delete;
-  ~ExatensorNodeExecutor() = default;
+  virtual ~ExatensorNodeExecutor() = default;
 
   void initialize() override;
 
@@ -43,6 +45,9 @@ public:
   bool sync(TensorOpExecHandle op_handle,
             int * error_code,
             bool wait = false) override;
+
+  std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
+                 const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;
 
   const std::string name() const override {return "exatensor-node-executor";}
   const std::string description() const override {return "ExaTENSOR tensor graph node executor";}

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2019/09/03
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -19,6 +19,8 @@ namespace runtime {
 class EagerGraphExecutor : public TensorGraphExecutor {
 
 public:
+
+  virtual ~EagerGraphExecutor() = default;
 
   /** Traverses the DAG and executes all its nodes. **/
   void execute(TensorGraph & dag) override;

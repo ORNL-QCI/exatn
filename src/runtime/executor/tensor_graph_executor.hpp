@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2019/09/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -39,7 +39,7 @@ public:
   TensorGraphExecutor & operator=(const TensorGraphExecutor &) = delete;
   TensorGraphExecutor(TensorGraphExecutor &&) noexcept = delete;
   TensorGraphExecutor & operator=(TensorGraphExecutor &&) noexcept = delete;
-  ~TensorGraphExecutor() = default;
+  virtual ~TensorGraphExecutor() = default;
 
   /** Sets/resets the DAG node executor (tensor operation executor). **/
   void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor) {
@@ -54,6 +54,13 @@ public:
 
   /** Factory method **/
   virtual std::shared_ptr<TensorGraphExecutor> clone() = 0;
+
+  /** Returns a local copy of a given tensor slice. **/
+  std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
+                 const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) {
+    assert(node_executor_);
+    return node_executor_->getLocalTensor(tensor,slice_spec);
+  }
 
   /** Signals to stop execution of the DAG until later resume
       and waits until the execution has actually stopped.

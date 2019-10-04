@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -297,9 +297,10 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
  return parsed;
 }
 
-bool NumServer::getLocalTensor(Tensor & tensor, talsh::Tensor & slice)
+std::future<std::shared_ptr<talsh::Tensor>> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
+                                      const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
 {
- return tensor_rt_->getLocalTensor(tensor,slice);
+ return tensor_rt_->getLocalTensor(tensor,slice_spec);
 }
 
 } //namespace exatn

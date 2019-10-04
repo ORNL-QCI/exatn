@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -50,10 +50,14 @@ Rationale:
 #include "tensor_method.hpp"
 
 #include <map>
+#include <list>
 #include <string>
+#include <vector>
 #include <memory>
 #include <thread>
 #include <atomic>
+#include <future>
+#include <mutex>
 
 namespace exatn {
 namespace runtime {
@@ -101,16 +105,40 @@ public:
             bool wait = true);
 
   /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
-      The argument slice must be an existing talsh::Tensor defining the slice of interest.
-      This slice will be extracted from the exatn::numerics::Tensor tensor as a copy. **/
-  bool getLocalTensor(Tensor & tensor,        //in: exatn::numerics::Tensor to get slice of
-                      talsh::Tensor & slice); //inout: locally stored tensor slice
+      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
+      The returned future becomes ready once the execution thread has retrieved the slice copy. **/
+  std::future<std::shared_ptr<talsh::Tensor>> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
+                            const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
 
 private:
+  /** Tensor data request **/
+  class TensorDataReq{
+  public:
+   std::promise<std::shared_ptr<talsh::Tensor>> slice_promise_;
+   std::shared_ptr<Tensor> tensor_;
+   std::vector<std::pair<DimOffset,DimExtent>> slice_specs_;
+
+   TensorDataReq(std::promise<std::shared_ptr<talsh::Tensor>> && slice_promise,
+                 const std::vector<std::pair<DimOffset,DimExtent>> & slice_specs,
+                 std::shared_ptr<Tensor> tensor):
+    slice_promise_(std::move(slice_promise)), slice_specs_(slice_specs), tensor_(tensor){}
+
+   TensorDataReq(const TensorDataReq & req) = delete;
+   TensorDataReq & operator=(const TensorDataReq & req) = delete;
+   TensorDataReq(TensorDataReq && req) noexcept = default;
+   TensorDataReq & operator=(TensorDataReq && req) noexcept = default;
+   ~TensorDataReq() = default;
+  };
+
   /** Launches the execution thread which will be executing DAGs on the fly. **/
   void launchExecutionThread();
-  /** The execution thread lives here **/
+  /** The execution thread lives here. **/
   void executionThreadWorkflow();
+  /** Processes all outstanding tensor data requests (by execution thread). **/
+  void processTensorDataRequests();
+
+  inline void lockDataReqQ(){data_req_mtx_.lock();}
+  inline void unlockDataReqQ(){data_req_mtx_.unlock();}
 
   /** Tensor graph (DAG) executor name **/
   std::string graph_executor_name_;
@@ -124,12 +152,16 @@ private:
   std::string current_scope_;
   /** Current DAG **/
   TensorGraph * current_dag_; //non-ownining pointer to the current DAG
+  /** Tensor data request queue **/
+  std::list<TensorDataReq> data_req_queue_;
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** End of life flag **/
   std::atomic<bool> alive_; //TRUE while the main thread is accepting new operations from Client
   /** Execution thread **/
   std::thread exec_thread_;
+  /** Data request mutex **/
+  std::mutex data_req_mtx_;
 };
 
 } // namespace runtime

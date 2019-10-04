@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/09/25
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -234,6 +234,14 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
   if(synced) tasks_.erase(iter);
  }
  return synced;
+}
+
+
+std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics::Tensor & tensor,
+                                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec)
+{
+ //`Implement
+ return std::make_shared<talsh::Tensor>(std::vector<int>{},0.0);
 }
 
 } //namespace runtime

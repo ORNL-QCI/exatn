@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/10/02
+REVISION: 2019/10/04
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -169,11 +169,11 @@ inline bool sync(const std::string & name, //in: tensor name
 
 
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
-    The argument slice must be an existing talsh::Tensor defining the slice of interest.
-    This slice will be extracted from the exatn::numerics::Tensor tensor as a copy **/
-inline bool getLocalTensor(Tensor & tensor,       //in: exatn::numerics::Tensor to get slice of
-                           talsh::Tensor & slice) //inout: locally stored tensor slice (copy)
- {return numericalServer->getLocalTensor(tensor,slice);}
+    This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
+    The returned future becomes ready once the execution thread has retrieved the slice copy. **/
+inline std::future<std::shared_ptr<talsh::Tensor>> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
+                                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
+ {return numericalServer->getLocalTensor(tensor,slice_spec);}
 
 } //namespace exatn
 
