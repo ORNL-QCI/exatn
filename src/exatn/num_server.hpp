@@ -41,7 +41,6 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <stack>
 #include <map>
-#include <future>
 
 using exatn::Identifiable;
 
@@ -194,8 +193,8 @@ public:
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
      The returned future becomes ready once the execution thread has retrieved the slice copy. **/
- std::future<std::shared_ptr<talsh::Tensor>> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
-                           const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
+ std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
+              const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
 
 private:
 

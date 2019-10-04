@@ -9,6 +9,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <cassert>
 #include <vector>
 #include <map>
+#include <future>
 
 namespace exatn{
 
@@ -297,10 +298,10 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
  return parsed;
 }
 
-std::future<std::shared_ptr<talsh::Tensor>> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
-                                      const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
+std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
+                         const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
 {
- return tensor_rt_->getLocalTensor(tensor,slice_spec);
+ return (tensor_rt_->getLocalTensor(tensor,slice_spec)).get();
 }
 
 } //namespace exatn
