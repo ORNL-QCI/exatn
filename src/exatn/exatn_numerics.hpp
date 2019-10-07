@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -111,6 +111,12 @@ inline bool createTensor(const std::string & name,       //in: tensor name
                          Args&&... args)                 //in: other arguments for Tensor ctor
  {return numericalServer->createTensor(name,element_type,args...);}
 
+template <typename... Args>
+inline bool createTensorSync(const std::string & name,       //in: tensor name
+                             TensorElementType element_type, //in: tensor element type
+                             Args&&... args)                 //in: other arguments for Tensor ctor
+ {return numericalServer->createTensorSync(name,element_type,args...);}
+
 
 /** Returns the reference to the actual tensor object. **/
 inline Tensor & getTensorRef(const std::string & name) //in: tensor name
@@ -126,20 +132,30 @@ inline TensorElementType getTensorElementType(const std::string & name) //in: te
 inline bool destroyTensor(const std::string & name) //in: tensor name
  {return numericalServer->destroyTensor(name);}
 
+inline bool destroyTensorSync(const std::string & name) //in: tensor name
+ {return numericalServer->destroyTensorSync(name);}
+
 
 /** Initializes a tensor to some scalar value. **/
 template<typename NumericType>
 inline bool initTensor(const std::string & name, //in: tensor name
-                       NumericType value,        //in: scalar value
-                       bool async = true)        //in: asynchronisity
- {return numericalServer->initTensor(name,value,async);}
+                       NumericType value)        //in: scalar value
+ {return numericalServer->initTensor(name,value);}
+
+template<typename NumericType>
+inline bool initTensorSync(const std::string & name, //in: tensor name
+                           NumericType value)        //in: scalar value
+ {return numericalServer->initTensorSync(name,value);}
 
 
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
 inline bool transformTensor(const std::string & name,              //in: tensor name
-                            std::shared_ptr<TensorMethod> functor, //in: functor defining tensor transformation
-                            bool async = true)                     //in: asynchronisity
- {return numericalServer->transformTensor(name,functor,async);}
+                            std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
+ {return numericalServer->transformTensor(name,functor);}
+
+inline bool transformTensorSync(const std::string & name,              //in: tensor name
+                                std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
+ {return numericalServer->transformTensorSync(name,functor);}
 
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/
@@ -148,6 +164,11 @@ inline bool addTensors(const std::string & addition, //in: symbolic tensor addit
                        NumericType alpha)            //in: alpha prefactor
  {return numericalServer->addTensors(addition,alpha);}
 
+template<typename NumericType>
+inline bool addTensorsSync(const std::string & addition, //in: symbolic tensor addition specification
+                           NumericType alpha)            //in: alpha prefactor
+ {return numericalServer->addTensorsSync(addition,alpha);}
+
 
 /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
 template<typename NumericType>
@@ -155,11 +176,20 @@ inline bool contractTensors(const std::string & contraction, //in: symbolic tens
                             NumericType alpha)               //in: alpha prefactor
  {return numericalServer->contractTensors(contraction,alpha);}
 
+template<typename NumericType>
+inline bool contractTensorsSync(const std::string & contraction, //in: symbolic tensor contraction specification
+                                NumericType alpha)               //in: alpha prefactor
+ {return numericalServer->contractTensorsSync(contraction,alpha);}
+
 
 /** Performs a full evaluation of a tensor network. **/
 inline bool evaluateTensorNetwork(const std::string & name,    //in: tensor network name
                                   const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetwork(name,network);}
+
+inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor network name
+                                      const std::string & network) //in: symbolic tensor network specification
+ {return numericalServer->evaluateTensorNetworkSync(name,network);}
 
 
 /** Synchronizes all outstanding update operations on a given tensor. **/

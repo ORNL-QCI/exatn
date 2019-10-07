@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -162,33 +162,56 @@ public:
                    TensorElementType element_type, //in: tensor element type
                    Args&&... args);                //in: other arguments for Tensor ctor
 
+ template <typename... Args>
+ bool createTensorSync(const std::string & name,       //in: tensor name
+                       TensorElementType element_type, //in: tensor element type
+                       Args&&... args);                //in: other arguments for Tensor ctor
+
  /** Destroys a tensor, including its backend representation. **/
  bool destroyTensor(const std::string & name); //in: tensor name
+
+ bool destroyTensorSync(const std::string & name); //in: tensor name
 
  /** Initializes a tensor to some scalar value. **/
  template<typename NumericType>
  bool initTensor(const std::string & name, //in: tensor name
-                 NumericType value,        //in: scalar value
-                 bool async = true);       //in: asynchronisity
+                 NumericType value);       //in: scalar value
+
+ template<typename NumericType>
+ bool initTensorSync(const std::string & name, //in: tensor name
+                     NumericType value);       //in: scalar value
 
  /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
- bool transformTensor(const std::string & name,              //in: tensor name
-                      std::shared_ptr<TensorMethod> functor, //in: functor defining tensor transformation
-                      bool async = true);                    //in: asynchronisity
+ bool transformTensor(const std::string & name,               //in: tensor name
+                      std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+
+ bool transformTensorSync(const std::string & name,               //in: tensor name
+                          std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
 
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
  bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
                  NumericType alpha);           //in: alpha prefactor
 
+ template<typename NumericType>
+ bool addTensorsSync(const std::string & addition, //in: symbolic tensor addition specification
+                     NumericType alpha);           //in: alpha prefactor
+
  /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
  template<typename NumericType>
  bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
                       NumericType alpha);              //in: alpha prefactor
 
+ template<typename NumericType>
+ bool contractTensorsSync(const std::string & contraction, //in: symbolic tensor contraction specification
+                          NumericType alpha);              //in: alpha prefactor
+
  /** Performs a full evaluation of a tensor network. **/
  bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
                             const std::string & network); //in: symbolic tensor network specification
+
+ bool evaluateTensorNetworkSync(const std::string & name,     //in: tensor network name
+                                const std::string & network); //in: symbolic tensor network specification
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
@@ -218,7 +241,9 @@ extern std::shared_ptr<NumServer> numericalServer;
 
 //TEMPLATE DEFINITIONS:
 template <typename... Args>
-bool NumServer::createTensor(const std::string & name, TensorElementType element_type, Args&&... args)
+bool NumServer::createTensor(const std::string & name,
+                             TensorElementType element_type,
+                             Args&&... args)
 {
  auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
  if(res.second){
@@ -232,12 +257,36 @@ bool NumServer::createTensor(const std::string & name, TensorElementType element
  return res.second;
 }
 
+template <typename... Args>
+bool NumServer::createTensorSync(const std::string & name,
+                                 TensorElementType element_type,
+                                 Args&&... args)
+{
+ auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
+ if(res.second){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand((res.first)->second);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+  submit(op);
+  sync(*op);
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::createTensor): Tensor " << name << " already exists!" << std::endl;
+ }
+ return res.second;
+}
+
 template<typename NumericType>
 bool NumServer::initTensor(const std::string & name,
-                           NumericType value,
-                           bool async)
+                           NumericType value)
 {
- return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)),async);
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+}
+
+template<typename NumericType>
+bool NumServer::initTensorSync(const std::string & name,
+                               NumericType value)
+{
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
 }
 
 template<typename NumericType>
@@ -267,6 +316,63 @@ bool NumServer::addTensors(const std::string & addition,
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
        submit(op);
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+                 << addition << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
+                << addition << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+               << addition << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
+              << addition << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid number of arguments in tensor addition: "
+             << addition << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid tensor addition: " << addition << std::endl;
+ }
+ return parsed;
+}
+
+template<typename NumericType>
+bool NumServer::addTensorsSync(const std::string & addition,
+                               NumericType alpha)
+{
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(addition,tensors);
+ if(parsed){
+  if(tensors.size() == 2){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   if(parsed){
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     if(parsed){
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
+       op->setTensorOperand(tensor0);
+       op->setTensorOperand(tensor1);
+       op->setIndexPattern(addition);
+       op->setScalar(0,std::complex<double>(alpha));
+       submit(op);
+       sync(*op);
       }else{
        parsed = false;
        std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -329,6 +435,78 @@ bool NumServer::contractTensors(const std::string & contraction,
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
          submit(op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
+}
+
+template<typename NumericType>
+bool NumServer::contractTensorsSync(const std::string & contraction,
+                                    NumericType alpha)
+{
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   if(parsed){
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     if(parsed){
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj);
+       if(parsed){
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
+         op->setTensorOperand(tensor0);
+         op->setTensorOperand(tensor1);
+         op->setTensorOperand(tensor2);
+         op->setIndexPattern(contraction);
+         op->setScalar(0,std::complex<double>(alpha));
+         submit(op);
+         sync(*op);
         }else{
          parsed = false;
          std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

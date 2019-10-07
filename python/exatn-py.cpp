@@ -1,4 +1,3 @@
-
 #include "exatn_py_utils.hpp"
 #include "pybind11/pybind11.h"
 #include "tensor_basic.hpp"
@@ -378,16 +377,19 @@ void create_exatn_py_module(py::module& m) {
           },
           "")
       .def("createTensor", &exatn::createTensorWithData, "")
-      .def("initTensor", [](NumServer& n,const std::string& name, float value) {
-          return n.initTensor(name, value, false);
+      .def("initTensor", [](NumServer& n, const std::string& name, float value) {
+          return n.initTensorSync(name, value);
       }, "")
-      .def("initTensor", [](NumServer& n,const std::string& name, double value) {
-          return n.initTensor(name, value, false);
+      .def("initTensor", [](NumServer& n, const std::string& name, double value) {
+          return n.initTensorSync(name, value);
       }, "")
-      .def("initTensor", [](NumServer& n,const std::string& name, std::complex<double> value) {
-          return n.initTensor(name, value, false);
+      .def("initTensor", [](NumServer& n, const std::string& name, std::complex<float> value) {
+          return n.initTensorSync(name, value);
       }, "")
-      .def("transformTensor", &exatn::NumServer::transformTensor, "")
+      .def("initTensor", [](NumServer& n, const std::string& name, std::complex<double> value) {
+          return n.initTensorSync(name, value);
+      }, "")
+      .def("transformTensor", &exatn::NumServer::transformTensorSync, "")
       .def("transformTensor", &exatn::generalTransformWithData, "") //py::call_guard<py::gil_scoped_release>(), "")
       .def("print", &exatn::printTensorData, "")
       .def("destroyTensor", &exatn::NumServer::destroyTensor, "")
@@ -592,7 +594,7 @@ void create_exatn_py_module(py::module& m) {
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
   m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");
   m.def("destroyTensor", &destroyTensor, "");
-  
+
 }
 
 

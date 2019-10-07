@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -228,7 +228,7 @@ TensorElementType NumServer::getTensorElementType(const std::string & name) cons
  return (iter->second)->getElementType();
 }
 
-bool NumServer::destroyTensor(const std::string & name)
+bool NumServer::destroyTensor(const std::string & name) //always synchronous
 {
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
@@ -244,7 +244,23 @@ bool NumServer::destroyTensor(const std::string & name)
  return true;
 }
 
-bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor, bool async)
+bool NumServer::destroyTensorSync(const std::string & name)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+ op->setTensorOperand(iter->second);
+ submit(op);
+ sync(*op);
+ auto num_erased = tensors_.erase(name);
+ assert(num_erased == 1);
+ return true;
+}
+
+bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
 {
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
@@ -255,10 +271,21 @@ bool NumServer::transformTensor(const std::string & name, std::shared_ptr<Tensor
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
  submit(op);
- if(!async){
-  auto synced = sync(*op);
-  assert(synced);
+ return true;
+}
+
+bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<TensorMethod> functor)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::transformTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
  }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op->setTensorOperand(iter->second);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
+ submit(op);
+ sync(*op);
  return true;
 }
 
@@ -291,6 +318,43 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
    submit(tensnet);
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
+ }
+ return parsed;
+}
+
+bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::string & network)
+{
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(network,tensors);
+ if(parsed){
+  std::map<std::string,std::shared_ptr<Tensor>> tensor_map;
+  std::string tensor_name;
+  std::vector<IndexLabel> indices;
+  for(const auto & tensor: tensors){
+   bool complex_conj;
+   parsed = parse_tensor(tensor,tensor_name,indices,complex_conj);
+   if(!parsed){
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor: " << tensor << std::endl;
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
+    break;
+   }
+   auto iter = tensors_.find(tensor_name);
+   if(iter == tensors_.end()){
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Tensor " << tensor_name << " not found!" << std::endl;
+    std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Undefined tensor in tensor network: " << network << std::endl;
+    parsed = false;
+    break;
+   }
+   auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
+   parsed = res.second; if(!parsed) break;
+  }
+  if(parsed){
+   TensorNetwork tensnet(name,network,tensor_map);
+   submit(tensnet);
+   sync(tensnet);
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
