@@ -219,6 +219,8 @@ public:
  std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
               const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
 
+ std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor);
+
 private:
 
  numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces

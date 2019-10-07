@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -7,7 +7,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
 
 #include "node_executor_talsh.hpp"
 
+#include <complex>
 #include <mutex>
+
+#include <cstdlib>
 #include <cassert>
 
 namespace exatn {
@@ -240,8 +243,42 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
 std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics::Tensor & tensor,
                                   const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec)
 {
- //`Implement
- return std::make_shared<talsh::Tensor>(std::vector<int>{},0.0);
+ const auto tensor_rank = slice_spec.size();
+ std::vector<std::size_t> signature(tensor_rank);
+ std::vector<int> offsets(tensor_rank);
+ std::vector<int> dims(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  signature[i] = static_cast<std::size_t>(slice_spec[i].first);
+  offsets[i] = static_cast<int>(slice_spec[i].first);
+  dims[i] = static_cast<int>(slice_spec[i].second);
+ }
+ std::shared_ptr<talsh::Tensor> slice(nullptr);
+ switch(tensor.getElementType()){
+  case TensorElementType::REAL32:
+   slice = std::make_shared<talsh::Tensor>(signature,dims,static_cast<float>(0.0));
+   break;
+  case TensorElementType::REAL64:
+   slice = std::make_shared<talsh::Tensor>(signature,dims,static_cast<double>(0.0));
+   break;
+  case TensorElementType::COMPLEX32:
+   slice = std::make_shared<talsh::Tensor>(signature,dims,std::complex<float>(0.0));
+   break;
+  case TensorElementType::COMPLEX64:
+   slice = std::make_shared<talsh::Tensor>(signature,dims,std::complex<double>(0.0));
+   break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Invalid tensor element type!" << std::endl;
+   std::abort();
+ }
+ auto tens_pos = tensors_.find(tensor.getTensorHash());
+ if(tens_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Tensor not found: " << std::endl;
+  tensor.printIt();
+  std::abort();
+ }
+ auto & talsh_tensor = *(tens_pos->second);
+ auto error_code = talsh_tensor.extractSlice(nullptr,*slice,offsets); assert(error_code == TALSH_SUCCESS);
+ return slice;
 }
 
 } //namespace runtime

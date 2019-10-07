@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -76,6 +76,7 @@ void TensorRuntime::processTensorDataRequests()
   for(auto & req: data_req_queue_){
     req.slice_promise_.set_value(graph_executor_->getLocalTensor(*(req.tensor_),req.slice_specs_));
   }
+  data_req_queue_.clear();
   unlockDataReqQ();
   return;
 }

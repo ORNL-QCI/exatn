@@ -368,4 +368,12 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor>
  return (tensor_rt_->getLocalTensor(tensor,slice_spec)).get();
 }
 
+std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor) //in: exatn::numerics::Tensor to get slice of (by copy)
+{
+ const auto tensor_rank = tensor->getRank();
+ std::vector<std::pair<DimOffset,DimExtent>> slice_spec(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i) slice_spec[i] = std::pair<DimOffset,DimExtent>{0,tensor->getDimExtent(i)};
+ return getLocalTensor(tensor,slice_spec);
+}
+
 } //namespace exatn

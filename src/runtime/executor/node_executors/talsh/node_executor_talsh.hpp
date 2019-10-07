@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/10/04
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -16,6 +16,7 @@ Rationale:
 #include "talshxx.hpp"
 
 #include <unordered_map>
+#include <vector>
 #include <memory>
 
 namespace exatn {
