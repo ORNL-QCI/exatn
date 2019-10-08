@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/09/27
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,6 +10,13 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
  (b) Tensor rank (number of tensor dimensions) and
      tensor shape (extents of all tensor dimensions);
  (c) Optional tensor signature (space/subspace identifier for all tensor dimensions).
+ (d) Optional tensor element type (exatn::TensorElementType).
+ (e) Optional isometries: An isometry is a group of tensor dimensions a contraction over
+     which with the conjugated tensor results in a delta function over the remaining
+     tensor dimensions, spit between the original and conjugated tensors.
+     A tensor is isometric if it has at least one isometry group of dimensions.
+     A tensor is unitary if its dimensions can be partioned into two non-overlapping
+     groups such that both groups form an isometry.
 
  Tensor signature identifies a full tensor or its slice. Tensor signature
  requires providing a pair<SpaceId,SubspaceId> for each tensor dimension.
@@ -43,6 +50,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <initializer_list>
 #include <vector>
+#include <list>
 #include <memory>
 
 namespace exatn{
@@ -143,6 +151,12 @@ public:
  /** Returns the tensor element type. **/
  TensorElementType getElementType() const;
 
+ /** Registers an isometry in the tensor. **/
+ void registerIsometry(const std::vector<unsigned int> & isometry);
+
+ /** Retrieves the list of all registered isometries in the tensor. **/
+ const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
+
  /** Get the unique integer tensor id. **/
  TensorHashType getTensorHash() const;
 
@@ -152,6 +166,7 @@ private:
  TensorShape shape_;              //tensor shape
  TensorSignature signature_;      //tensor signature
  TensorElementType element_type_; //tensor element type (optional)
+ std::list<std::vector<unsigned int>> isometries_; //available isometries (optional)
 };
 
 

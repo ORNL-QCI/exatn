@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/09/26
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,7 +7,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor.hpp"
 
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 namespace exatn{
 
@@ -179,6 +179,20 @@ void Tensor::setElementType(TensorElementType element_type)
 TensorElementType Tensor::getElementType() const
 {
  return element_type_;
+}
+
+void Tensor::registerIsometry(const std::vector<unsigned int> & isometry)
+{
+ const auto tensor_rank = this->getRank();
+ assert(isometry.size() <= tensor_rank);
+ for(const auto & dim: isometry) assert(dim < tensor_rank);
+ if(isometry.size() > 0) isometries_.emplace_back(isometry);
+ return;
+}
+
+const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
+{
+ return isometries_;
 }
 
 TensorHashType Tensor::getTensorHash() const
