@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/09/26
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -116,14 +116,15 @@ TensorNetwork::TensorNetwork(const std::string & name,
       }
      }
      if(i == 0){
-       tensors_.emplace( //output tensor (id = 0)
-                        std::make_pair(
-                         0U,
-                         TensorConn(tensor->second,0U,legs)
-                        )
-                       );
+      assert(!conjugated); //output tensor must not appear complex conjugated
+      tensors_.emplace( //output tensor (id = 0)
+                       std::make_pair(
+                        0U,
+                        TensorConn(tensor->second,0U,legs)
+                       )
+                      );
      }else{ //input tensor
-      this->appendTensor(i,tensor->second,legs);
+      this->appendTensor(i,tensor->second,legs,conjugated);
      }
     }else{
      std::cout << "#ERROR(TensorNetwork::TensorNetwork): Unable to find tensor named " <<
@@ -233,10 +234,11 @@ std::vector<TensorConn*> TensorNetwork::getTensorConnAll()
 }
 
 
-std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id)
+std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id, bool * conjugated)
 {
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return std::shared_ptr<Tensor>(nullptr);
+ if(conjugated != nullptr) *conjugated = (it->second).isComplexConjugated();
  return (it->second).getTensor();
 }
 
@@ -344,7 +346,8 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
                                  std::shared_ptr<Tensor> tensor,             //in: appended tensor
-                                 const std::vector<TensorLeg> & connections) //in: tensor connections (fully specified)
+                                 const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
+                                 bool conjugated)                            //in: complex conjugation flag for the appended tensor
 {
  if(explicit_output_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
@@ -372,7 +375,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
  }
  //Append the tensor to the tensor network:
  auto new_pos = tensors_.emplace(std::make_pair(
-                                  tensor_id,TensorConn(tensor,tensor_id,connections)
+                                  tensor_id,TensorConn(tensor,tensor_id,connections,conjugated)
                                  )
                                 );
  if(!(new_pos.second)){
@@ -387,7 +390,8 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                                             //in: tensor id (unique within the tensor network)
                                  std::shared_ptr<Tensor> tensor,                                     //in: appended tensor
                                  const std::vector<std::pair<unsigned int, unsigned int>> & pairing, //in: leg pairing: output tensor mode -> appended tensor mode
-                                 const std::vector<LegDirection> & leg_dir)                          //in: optional leg direction (for all tensor modes)
+                                 const std::vector<LegDirection> & leg_dir,                          //in: optional leg direction (for all tensor modes)
+                                 bool conjugated)                                                    //in: complex conjugation flag for the appended tensor
 {
  if(explicit_output_ != 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
@@ -478,7 +482,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    ++mode;
   }
   auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs)
+                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs,conjugated)
                                   )
                                  );
   if(!(new_pos.second)){
@@ -488,7 +492,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
   }
  }else{ //scalar tensor
   auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>())
+                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>(),conjugated)
                                   )
                                  );
   if(!(new_pos.second)){
@@ -505,7 +509,8 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
 
 bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
                                      std::shared_ptr<Tensor> tensor,
-                                     const std::vector<unsigned int> & pairing)
+                                     const std::vector<unsigned int> & pairing,
+                                     bool conjugated)
 {
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
@@ -576,7 +581,7 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
    ++paired_leg_id; ++unpaired_leg_id;
   }
   auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs)
+                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs,conjugated)
                                   )
                                  );
   if(!(new_pos.second)){
@@ -586,7 +591,7 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
   }
  }else{ //scalar tensor
   auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>())
+                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>(),conjugated)
                                   )
                                  );
   if(!(new_pos.second)){
@@ -1118,8 +1123,9 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    for(auto contr = contraction_seq_.cbegin(); contr != contraction_seq_.cend(); ++contr){
     //std::cout << "#DEBUG(TensorNetwork::getOperationList): Contracting " << contr->left_id << " * " << contr->right_id
     //          << " -> " << contr->result_id << std::endl; //debug
-    auto tensor1 = net.getTensor(contr->left_id);
-    auto tensor2 = net.getTensor(contr->right_id);
+    bool conj1, conj2;
+    auto tensor1 = net.getTensor(contr->left_id,&conj1);
+    auto tensor2 = net.getTensor(contr->right_id,&conj2);
     std::string contr_pattern;
     if(num_contractions > 1){ //intermediate contraction
      auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id,&contr_pattern);
@@ -1144,8 +1150,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     }
     auto op = tensor_op_factory.createTensorOp(TensorOpCode::CONTRACT);
     op->setTensorOperand(tensor0);
-    op->setTensorOperand(tensor1);
-    op->setTensorOperand(tensor2);
+    op->setTensorOperand(tensor1,conj1);
+    op->setTensorOperand(tensor2,conj2);
     op->setIndexPattern(contr_pattern);
     assert(op->isSet());
     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
@@ -1169,18 +1175,19 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
   }else{ //one input tensor: Single addition
    std::shared_ptr<Tensor> tensor0(nullptr);
    std::shared_ptr<Tensor> tensor1(nullptr);
+   bool conj1;
    unsigned int left_tensor_id = 0;
    for(auto iter = this->begin(); iter != this->end(); ++iter){
     if(iter->first == 0){
      tensor0 = this->getTensor(iter->first);
     }else{
-     tensor1 = this->getTensor(iter->first);
+     tensor1 = this->getTensor(iter->first,&conj1);
      left_tensor_id = iter->first;
     }
    }
    auto op = tensor_op_factory.createTensorOp(TensorOpCode::ADD);
    op->setTensorOperand(tensor0);
-   op->setTensorOperand(tensor1);
+   op->setTensorOperand(tensor1,conj1);
    const auto * tensor1_legs = this->getTensorConnections(left_tensor_id);
    assert(tensor1_legs != nullptr);
    std::string contr_pattern;

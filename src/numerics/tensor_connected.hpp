@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/07/16
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,9 +34,10 @@ class TensorConn{
 public:
 
  /** Constructs a connected tensor inside a tensor network. **/
- TensorConn(std::shared_ptr<Tensor> tensor,       //in: co-owned pointer to the tensor
-            unsigned int id,                      //in: tensor id in the tensor network
-            const std::vector<TensorLeg> & legs); //in: tensor legs: Connections to other tensors in the tensor network
+ TensorConn(std::shared_ptr<Tensor> tensor,      //in: co-owned pointer to the tensor
+            unsigned int id,                     //in: tensor id in the tensor network
+            const std::vector<TensorLeg> & legs, //in: tensor legs: Connections to other tensors in the tensor network
+            bool conjugated = false);            //in: whether or not the tensor enters a tensor network as complex conjugated
 
  TensorConn(const TensorConn &) = default;
  TensorConn & operator=(const TensorConn &) = default;
@@ -49,6 +50,9 @@ public:
 
  /** Returns the total number of legs (tensor rank/order). **/
  unsigned int getNumLegs() const;
+
+ /** Returns the complex conjugation status of the tensor. **/
+ bool isComplexConjugated() const;
 
  /** Returns a co-owned pointer to the tensor. **/
  std::shared_ptr<Tensor> getTensor();
@@ -89,7 +93,7 @@ private:
  std::shared_ptr<Tensor> tensor_; //co-owned pointer to the tensor
  unsigned int id_;                //tensor id in the tensor network
  std::vector<TensorLeg> legs_;    //tensor legs: Connections to other tensors
-
+ bool conjugated_;                //complex conjugation flag
 };
 
 } //namespace numerics

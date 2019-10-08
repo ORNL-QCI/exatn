@@ -126,14 +126,14 @@ void create_exatn_py_module(py::module& m) {
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
                unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
-               const std::vector<exatn::numerics::TensorLeg> &)) &
+               const std::vector<exatn::numerics::TensorLeg> &, bool conjugated)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
                unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
                const std::vector<std::pair<unsigned int, unsigned int>> &,
-               const std::vector<exatn::LegDirection> &)) &
+               const std::vector<exatn::LegDirection> &, bool conjugated)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
       .def("reoderOutputModes",
