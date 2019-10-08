@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/07
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -218,8 +218,13 @@ public:
      The returned future becomes ready once the execution thread has retrieved the slice copy. **/
  std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
               const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
-
+ /** This overload will return a copy of the full tensor. **/
  std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor);
+ /** This overload references the ExaTN tensor by its registered name. **/
+ std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, //in: exatn tensor name
+        const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec); //in: tensor slice specification
+ /** This overload returns a copy of the full tensor while referencing it by its registered name. **/
+ std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name); //in: exatn tensor name
 
 private:
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/07
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -374,6 +374,21 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor>
  std::vector<std::pair<DimOffset,DimExtent>> slice_spec(tensor_rank);
  for(unsigned int i = 0; i < tensor_rank; ++i) slice_spec[i] = std::pair<DimOffset,DimExtent>{0,tensor->getDimExtent(i)};
  return getLocalTensor(tensor,slice_spec);
+}
+
+std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & name,
+                   const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return std::shared_ptr<talsh::Tensor>(nullptr);
+ return getLocalTensor(iter->second,slice_spec);
+}
+
+std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & name)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return std::shared_ptr<talsh::Tensor>(nullptr);
+ return getLocalTensor(iter->second);
 }
 
 } //namespace exatn

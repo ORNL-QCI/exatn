@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/10/07
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -204,6 +204,13 @@ inline bool sync(const std::string & name, //in: tensor name
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)
                      const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
  {return numericalServer->getLocalTensor(tensor,slice_spec);}
+
+inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, //in: name of the registered exatn::numerics::Tensor
+               const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) //in: tensor slice specification
+ {return numericalServer->getLocalTensor(name,slice_spec);}
+
+inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
+ {return numericalServer->getLocalTensor(name);}
 
 } //namespace exatn
 
