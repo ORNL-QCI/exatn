@@ -591,8 +591,8 @@ void create_exatn_py_module(py::module& m) {
   m.def("print", &printTensorDataNoNumServer, "");
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
   m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");
+  m.def("getTensorData", &getTensorData, "");
   m.def("destroyTensor", &destroyTensor, "");
-  
 }
 
 

@@ -253,6 +253,22 @@ void printTensorDataNoNumServer(const std::string &name) {
   auto worked = n->transformTensor(name, functor, false);
   return;
 }
+
+const py::array getTensorData(const std::string& name) {
+    py::array a;
+    auto n = exatn::numericalServer;
+  auto type = n->getTensorElementType(name);
+    std::function<void(py::array&)> f = [&a](py::array& data) {
+     py::print("Shape: ", data.shape());
+     py::print(data);
+     a = data;
+  };
+  auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
+      f,
+      type);
+  auto worked = n->transformTensor(name, functor, false);
+  return a;
+}
 } // namespace exatn
 
 #endif
