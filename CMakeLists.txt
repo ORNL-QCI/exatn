@@ -27,6 +27,7 @@ option(BLAS_PATH "Provide the path to the BLAS libraries" "")
 option(MPI_LIB "Provide the MPI implementation (MPICH,OPENMPI)" "")
 option(MPI_ROOT_DIR "Provide the MPI root directory" "")
 option(MPI_BIN_PATH "Provide the MPI bin path" "")
+option(ENABLE_CUDA "Turn on CUDA support" OFF)
 
 #Check to make sure that both the MPI implementation and root installation/bin path were supplied
 if(MPI_LIB)
@@ -123,10 +124,13 @@ find_package(MPI)
 
 if(ENABLE_CUDA)
   find_package(CUDAExaTN)
-endif()
-
-if(NOT CUDA_FOUND)
+  if(NOT CUDA_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+    message(WARNING "You specified ENABLE_CUDA=TRUE but find_package(CUDA) could not find CUDA development headers or libraries")
+  endif()
+else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+  set(CUDA_FOUND FALSE)
 endif()
 
 #If BLAS implementation not user specified, proceed with "NONE"
