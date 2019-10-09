@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/09/23
+REVISION: 2019/10/07
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -60,12 +60,25 @@ void TensorRuntime::executionThreadWorkflow()
     if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
+      processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
     }
   }
   graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr));
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
             //<< std::endl << std::flush;
   return; //end of execution thread life
+}
+
+
+void TensorRuntime::processTensorDataRequests()
+{
+  lockDataReqQ();
+  for(auto & req: data_req_queue_){
+    req.slice_promise_.set_value(graph_executor_->getLocalTensor(*(req.tensor_),req.slice_specs_));
+  }
+  data_req_queue_.clear();
+  unlockDataReqQ();
+  return;
 }
 
 
@@ -151,12 +164,19 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 }
 
 
-bool TensorRuntime::getLocalTensor(Tensor & tensor, talsh::Tensor & slice) {
-  // Complete all submitted update operations on the tensor
-  auto synced = sync(tensor,true);
-  assert(synced);
-  //`Implement
-  return true;
+std::future<std::shared_ptr<talsh::Tensor>> TensorRuntime::getLocalTensor(std::shared_ptr<Tensor> tensor,
+                                          const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec)
+{
+  // Complete all submitted update operations on the tensor:
+  auto synced = sync(*tensor,true); assert(synced);
+  // Create promise-future pair:
+  std::promise<std::shared_ptr<talsh::Tensor>> promised_slice;
+  auto future_slice = promised_slice.get_future();
+  // Schedule data request:
+  lockDataReqQ();
+  data_req_queue_.emplace_back(std::move(promised_slice),slice_spec,tensor);
+  unlockDataReqQ();
+  return future_slice;
 }
 
 } // namespace runtime

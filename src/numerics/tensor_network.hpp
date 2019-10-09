@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/01
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -122,7 +122,8 @@ public:
 
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
- std::shared_ptr<Tensor> getTensor(unsigned int tensor_id);
+ std::shared_ptr<Tensor> getTensor(unsigned int tensor_id,
+                                   bool * conjugated = nullptr);
 
  /** Get tensor connections. **/
  const std::vector<TensorLeg> * getTensorConnections(unsigned int tensor_id);
@@ -146,9 +147,10 @@ public:
      in advance in the TensorNetwork ctor. This way requires the advance knowledge
      of the entire tensor network. Once all tensors have been appended, one needs
      to call .finalize() to complete the construction of the tensor network. **/
- bool appendTensor(unsigned int tensor_id,                      //in: appended tensor id (unique within the tensor network)
-                   std::shared_ptr<Tensor> tensor,              //in: appended tensor
-                   const std::vector<TensorLeg> & connections); //in: tensor connections (fully specified)
+ bool appendTensor(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
+                   std::shared_ptr<Tensor> tensor,             //in: appended tensor
+                   const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
+                   bool conjugated = false);                   //in: complex conjugation flag for the appended tensor
 
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of the output tensor of the tensor network. The unmatched modes
@@ -157,17 +159,19 @@ public:
      leg_dir allows specification of the leg direction for all tensor modes.
      If provided, the direction of the paired legs of the appended tensor
      must anti-match the direction of the corresponding legs of existing tensors. **/
- bool appendTensor(unsigned int tensor_id,                                                   //in: appended tensor id (unique within the tensor network)
-                   std::shared_ptr<Tensor> tensor,                                           //in: appended tensor
-                   const std::vector<std::pair<unsigned int, unsigned int>> & pairing,       //in: leg pairing: output tensor mode -> appended tensor mode
-                   const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}); //in: optional leg directions (for all tensor modes)
+ bool appendTensor(unsigned int tensor_id,                                                  //in: appended tensor id (unique within the tensor network)
+                   std::shared_ptr<Tensor> tensor,                                          //in: appended tensor
+                   const std::vector<std::pair<unsigned int, unsigned int>> & pairing,      //in: leg pairing: output tensor mode -> appended tensor mode
+                   const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}, //in: optional leg directions (for all tensor modes)
+                   bool conjugated = false);                                                //in: complex conjugation flag for the appended tensor
 
  /** Appends a new even-rank tensor to the tensor network by matching the first half
      of the tensor legs with network's output legs provided in "pairing". The second half
      of the tensor legs will then replace the matched output legs in the output tensor. **/
- bool appendTensorGate(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
-                       std::shared_ptr<Tensor> tensor,             //in: appended tensor gate (operator)
-                       const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes (half-rank)
+ bool appendTensorGate(unsigned int tensor_id,                    //in: appended tensor id (unique within the tensor network)
+                       std::shared_ptr<Tensor> tensor,            //in: appended tensor gate (operator)
+                       const std::vector<unsigned int> & pairing, //in: leg pairing: output tensor modes (half-rank)
+                       bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
 
  /** Appends a tensor network to the current (primary) tensor network by matching the modes
      of the output tensors of both tensor networks. The unmatched modes of the

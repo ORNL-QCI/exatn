@@ -162,7 +162,7 @@ bool createTensorWithDataNoNumServer(const std::string name,
   auto created = n->createTensor(name, type, exatn::numerics::TensorShape(dims));
   assert(created);
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(data, type);
-  return n->transformTensor(name, functor, false);
+  return n->transformTensorSync(name, functor);
 }
 
 bool createTensorWithData(exatn::NumServer &n, const std::string name,
@@ -189,7 +189,7 @@ bool createTensorWithData(exatn::NumServer &n, const std::string name,
   auto created = n.createTensor(name, type, exatn::numerics::TensorShape(dims));
   assert(created);
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(data, type);
-  return n.transformTensor(name, functor, false);
+  return n.transformTensorSync(name, functor);
 }
 
 bool generalTransformWithData(exatn::NumServer &n, const std::string &name,
@@ -203,7 +203,7 @@ bool generalTransformWithData(exatn::NumServer &n, const std::string &name,
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
       wrapper,
       type);
-  auto worked = n.transformTensor(name, functor, false);
+  auto worked = n.transformTensorSync(name, functor);
   return worked;
 }
 
@@ -220,7 +220,7 @@ auto n = exatn::numericalServer;
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
       wrapper,
       type);
-  auto worked = n->transformTensor(name, functor, false);
+  auto worked = n->transformTensorSync(name, functor);
   return worked;
 }
 
@@ -234,7 +234,7 @@ void printTensorData(exatn::NumServer &n, const std::string &name) {
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
       f,
       type);
-  auto worked = n.transformTensor(name, functor, false);
+  auto worked = n.transformTensorSync(name, functor);
   return;
 }
 
@@ -250,7 +250,7 @@ void printTensorDataNoNumServer(const std::string &name) {
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
       f,
       type);
-  auto worked = n->transformTensor(name, functor, false);
+  auto worked = n->transformTensorSync(name, functor);
   return;
 }
 
@@ -266,7 +266,7 @@ const py::array getTensorData(const std::string& name) {
   auto functor = std::make_shared<NumpyTensorFunctorCppWrapper>(
       f,
       type);
-  auto worked = n->transformTensor(name, functor, false);
+  auto worked = n->transformTensorSync(name, functor);
   return a;
 }
 } // namespace exatn

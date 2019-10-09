@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/09/03
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -71,10 +71,12 @@ public:
  TensorHashType getTensorOperandHash(unsigned int op_num) const;
 
  /** Returns a co-owned pointer to a specific tensor operand, or nullptr if not yet set. **/
- std::shared_ptr<Tensor> getTensorOperand(unsigned int op_num) const;
+ std::shared_ptr<Tensor> getTensorOperand(unsigned int op_num,
+                                          bool * conjugated = nullptr) const;
 
  /** Sets the next tensor operand. **/
- void setTensorOperand(std::shared_ptr<Tensor> tensor);
+ void setTensorOperand(std::shared_ptr<Tensor> tensor,
+                       bool conjugated = false);
 
  /** Returns the number of scalar arguments required for the tensor operation. **/
  unsigned int getNumScalars() const;
@@ -105,7 +107,7 @@ public:
 protected:
 
  std::string pattern_; //symbolic index pattern
- std::vector<std::shared_ptr<Tensor>> operands_; //tensor operands (non-owning pointers)
+ std::vector<std::pair<std::shared_ptr<Tensor>,bool>> operands_; //tensor operands (non-owning pointers)
  std::vector<std::complex<double>> scalars_; //additional scalars (prefactors)
  unsigned int num_operands_; //number of required tensor operands
  unsigned int num_scalars_; //number of required scalar arguments

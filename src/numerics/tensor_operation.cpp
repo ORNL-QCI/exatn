@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/09/03
+REVISION: 2019/10/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -23,7 +23,8 @@ void TensorOperation::printIt() const
 {
  std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
- for(const auto & tensor: operands_){
+ for(const auto & operand: operands_){
+  const auto & tensor = operand.first;
   std::cout << " ";
   tensor->printIt();
   std::cout << std::endl;
@@ -56,17 +57,20 @@ TensorHashType TensorOperation::getTensorOperandHash(unsigned int op_num) const
  return this->getTensorOperand(op_num)->getTensorHash();
 }
 
-std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num) const
+std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num, bool * conjugated) const
 {
- if(op_num < operands_.size()) return operands_[op_num];
+ if(op_num < operands_.size()){
+  if(conjugated != nullptr) *conjugated = operands_[op_num].second;
+  return operands_[op_num].first;
+ }
  return std::shared_ptr<Tensor>(nullptr);
 }
 
-void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor)
+void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor, bool conjugated)
 {
  assert(tensor);
  assert(operands_.size() < num_operands_);
- operands_.emplace_back(tensor);
+ operands_.emplace_back(std::make_pair(tensor,conjugated));
  return;
 }
 

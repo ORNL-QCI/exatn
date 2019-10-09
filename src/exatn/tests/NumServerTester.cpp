@@ -169,7 +169,7 @@ TEST(NumServerTester, useNumServer)
  assert(synced);
 
  //Retrieve the result:
- //`Finish
+ auto talsh_tensor = exatn::numericalServer->getLocalTensor(z0);
 
  //Destroy participating ExaTN tensors:
  std::shared_ptr<TensorOperation> destroy_s2 = op_factory.createTensorOp(TensorOpCode::DESTROY);
@@ -310,6 +310,9 @@ TEST(NumServerTester, superEasyNumServer)
  //Sync all operations on Z0:
  auto synced = false;
  synced = exatn::sync("Z0"); assert(synced);
+
+ //Retrieve the result (Z0):
+ auto talsh_tensor = getLocalTensor("Z0");
 
  //Destroy tensors:
  auto destroyed = false;
