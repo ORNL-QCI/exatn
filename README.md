@@ -46,36 +46,50 @@ $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE
-  For Python API append:
+  For Python API:
   -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
-  For GPU execution via very recent CUDA versions append:
-  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_C++_COMPILER>
-  For CPU accelerated matrix algebra via a CPU BLAS library append:
+  For execution on NVIDIA GPU:
+  -DENABLE_CUDA=True
+  For GPU execution via very recent CUDA versions with GNU compiler:
+  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+  For CPU accelerated matrix algebra via a CPU BLAS library:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
-  where the choices are ATLAS, MKL, ACML, ESSL.
-  For multi-node execution via MPI (ExaTENSOR backend) append:
+   where the choices are ATLAS, MKL, ACML, ESSL.
+  For multi-node execution via MPI (ExaTENSOR backend requires Fortran):
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
-  where the choices are OPENMPI or MPICH. You may also need to set
+   where the choices are OPENMPI or MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
 $ make install
 
-Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib)
-as well as CUDA (this is a single command line below):
+Example of a typical workstation configuration with no BLAS:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
--DCUDA_HOST_COMPILER=/usr/bin/g++
+
+Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DBLAS_LIB=ATLAS
 -DBLAS_PATH=/usr/lib
 
-Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib)
-as well as CUDA (this is a single command line below):
+Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
--DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DBLAS_LIB=ATLAS
+-DBLAS_PATH=/usr/lib
+
+Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS
 -DBLAS_PATH=/usr/lib
 -DMPI_LIB=MPICH
@@ -99,8 +113,8 @@ $ export PYTHONPATH=$PYTHONPATH:~/.exatn
 ```
 It may also be helpful to have mpi4py installed.
 
-## Mac OS X Build Instructions
-First install GCC via homebrew (version 8 due to a bug in version 9)
+## Mac OS X Build Instructions (no MPI)
+First install GCC via homebrew:
 ```
 $ brew install gcc@8
 ```

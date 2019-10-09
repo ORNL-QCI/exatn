@@ -118,8 +118,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(CTest)
 
 find_package(OpenMP REQUIRED)
+
 find_package(MPI)
-find_package(CUDAExaTN)
+
+if(ENABLE_CUDA)
+  find_package(CUDAExaTN)
+endif()
 
 if(NOT CUDA_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
