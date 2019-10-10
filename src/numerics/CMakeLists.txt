@@ -25,6 +25,7 @@ add_library(${LIBRARY_NAME}
             contraction_seq_optimizer_heuro.cpp
             contraction_seq_optimizer_factory.cpp
             tensor_network.cpp
+            tensor_operator.cpp
             functor_init_val.cpp)
 
 target_include_directories(${LIBRARY_NAME}
