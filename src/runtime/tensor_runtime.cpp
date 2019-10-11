@@ -60,8 +60,8 @@ void TensorRuntime::executionThreadWorkflow()
     if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
-      processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
     }
+    processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
   }
   graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr));
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
