@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "exatn.hpp"
+#include "talshxx.hpp"
 
 #include <iostream>
 #include <utility>
@@ -294,13 +295,13 @@ TEST(NumServerTester, superEasyNumServer)
  //Initialize tensors:
  auto initialized = false;
  initialized = exatn::initTensor("Z0",0.0); assert(initialized);
- initialized = exatn::initTensor("T0",0.001); assert(initialized);
- initialized = exatn::initTensor("T1",0.001); assert(initialized);
- initialized = exatn::initTensor("T2",0.001); assert(initialized);
- initialized = exatn::initTensor("H0",0.001); assert(initialized);
- initialized = exatn::initTensor("S0",0.001); assert(initialized);
- initialized = exatn::initTensor("S1",0.001); assert(initialized);
- initialized = exatn::initTensor("S2",0.001); assert(initialized);
+ initialized = exatn::initTensor("T0",0.01); assert(initialized);
+ initialized = exatn::initTensor("T1",0.01); assert(initialized);
+ initialized = exatn::initTensor("T2",0.01); assert(initialized);
+ initialized = exatn::initTensor("H0",0.01); assert(initialized);
+ initialized = exatn::initTensor("S0",0.01); assert(initialized);
+ initialized = exatn::initTensor("S1",0.01); assert(initialized);
+ initialized = exatn::initTensor("S2",0.01); assert(initialized);
 
  //Evaluate a tensor network:
  auto evaluated = false;
@@ -312,7 +313,12 @@ TEST(NumServerTester, superEasyNumServer)
  synced = exatn::sync("Z0"); assert(synced);
 
  //Retrieve the result (Z0):
+ auto access_granted = false;
  auto talsh_tensor = getLocalTensor("Z0");
+ const double * body_ptr;
+ access_granted = talsh_tensor->getDataAccessHostConst(&body_ptr); assert(access_granted);
+ std::cout << "Final Z0 value = " << *body_ptr << " VS correct value of " << 512e-14 << std::endl;
+ body_ptr = nullptr;
 
  //Destroy tensors:
  auto destroyed = false;
