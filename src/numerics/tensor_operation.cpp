@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,6 +34,25 @@ void TensorOperation::printIt() const
  }
  if(scalars_.size() > 0) std::cout << std::endl;
  std::cout << "}" << std::endl;
+ return;
+}
+
+void TensorOperation::printItFile(std::ofstream & output_file) const
+{
+ output_file << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
+ if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
+ for(const auto & operand: operands_){
+  const auto & tensor = operand.first;
+  output_file << " ";
+  tensor->printItFile(output_file);
+  output_file << std::endl;
+ }
+ for(const auto & scalar: scalars_){
+  output_file << " " << scalar;
+ }
+ if(scalars_.size() > 0) output_file << std::endl;
+ output_file << "}" << std::endl;
+ output_file.flush();
  return;
 }
 

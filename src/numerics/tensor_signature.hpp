@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/07/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -24,6 +24,9 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <utility>
 #include <initializer_list>
 #include <vector>
+
+#include <iostream>
+#include <fstream>
 
 namespace exatn{
 
@@ -50,6 +53,7 @@ public:
 
  /** Print. **/
  void printIt() const;
+ void printItFile(std::ofstream & output_file) const;
 
  /** Get tensor rank (number of dimensions). **/
  unsigned int getRank() const;

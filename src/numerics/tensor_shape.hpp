@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/08/06
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -14,12 +14,13 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 
-#include <assert.h>
-
 #include <iostream>
+#include <fstream>
 #include <type_traits>
 #include <initializer_list>
 #include <vector>
+
+#include <cassert>
 
 namespace exatn{
 
@@ -44,6 +45,7 @@ public:
 
  /** Print. **/
  void printIt() const;
+ void printItFile(std::ofstream & output_file) const;
 
  /** Get tensor rank (number of tensor dimensions). **/
  unsigned int getRank() const;

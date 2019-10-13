@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -46,6 +46,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <assert.h>
 
 #include <iostream>
+#include <fstream>
 #include <type_traits>
 #include <string>
 #include <initializer_list>
@@ -110,6 +111,7 @@ public:
 
  /** Print. **/
  void printIt() const;
+ void printItFile(std::ofstream & output_file) const;
 
  /** Get tensor name. **/
  const std::string & getName() const;

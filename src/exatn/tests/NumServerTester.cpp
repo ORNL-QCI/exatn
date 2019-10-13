@@ -274,6 +274,8 @@ TEST(NumServerTester, superEasyNumServer)
  using exatn::numerics::TensorShape;
  using exatn::TensorElementType;
 
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
  //Example of tensor network processing:
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
  //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)

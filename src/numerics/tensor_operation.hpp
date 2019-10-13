@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,6 +18,9 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <complex>
+
+#include <iostream>
+#include <fstream>
 
 namespace exatn{
 
@@ -57,6 +60,7 @@ public:
 
  /** Prints. **/
  virtual void printIt() const;
+ virtual void printItFile(std::ofstream & output_file) const;
 
  /** Returns the tensor operation code (opcode). **/
  TensorOpCode getOpcode() const;

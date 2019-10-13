@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/04
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -72,6 +72,9 @@ public:
   TensorRuntime(TensorRuntime &&) noexcept = delete;
   TensorRuntime & operator=(TensorRuntime &&) noexcept = delete;
   ~TensorRuntime();
+
+  /** Resets the logging level (0:none) [MAIN THREAD]. **/
+  void resetLoggingLevel(int level = 0);
 
   /** Opens a new scope represented by a new execution graph (DAG). **/
   void openScope(const std::string & scope_name);
@@ -154,6 +157,8 @@ private:
   TensorGraph * current_dag_; //non-ownining pointer to the current DAG
   /** Tensor data request queue **/
   std::list<TensorDataReq> data_req_queue_;
+  /** Logging level (0:none) **/
+  int logging_;
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** End of life flag **/

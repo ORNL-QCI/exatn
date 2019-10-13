@@ -1,14 +1,13 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/07/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_signature.hpp"
 
-#include <iostream>
 #include <iterator>
-#include <assert.h>
+#include <cassert>
 
 namespace exatn{
 
@@ -44,6 +43,20 @@ void TensorSignature::printIt() const
   }
  }
  std::cout << "}";
+ return;
+}
+
+void TensorSignature::printItFile(std::ofstream & output_file) const
+{
+ output_file << "{";
+ for(auto subsp_it = subspaces_.cbegin(); subsp_it != subspaces_.cend(); ++subsp_it){
+  if(std::next(subsp_it,1) == subspaces_.cend()){
+   output_file << std::get<0>(*subsp_it) << ":" << std::get<1>(*subsp_it);
+  }else{
+   output_file << std::get<0>(*subsp_it) << ":" << std::get<1>(*subsp_it) << ",";
+  }
+ }
+ output_file << "}";
  return;
 }
 

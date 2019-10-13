@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,6 +73,9 @@ public:
  /** Reconfigures tensor runtime implementation. **/
  void reconfigureTensorRuntime(const std::string & dag_executor_name,
                                const std::string & node_executor_name);
+
+ /** Resets the runtime logging level (0:none). **/
+ void resetRuntimeLoggingLevel(int level = 0);
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(const std::string & tag,

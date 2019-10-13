@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -211,6 +211,11 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
+
+
+/** Resets tensor runtime logging level (0:none). **/
+inline void resetRuntimeLoggingLevel(int level = 0)
+ {return numericalServer->resetRuntimeLoggingLevel(level);}
 
 } //namespace exatn
 

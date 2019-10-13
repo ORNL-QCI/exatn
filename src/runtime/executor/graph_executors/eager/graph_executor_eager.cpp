@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2019/09/23
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -22,24 +22,46 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
     auto & dag_node = dag.getNodeProperties(current);
     if(!(dag_node.isExecuted())){
       dag.setNodeExecuting(current);
-      std::cout << "#DEBUG(EagerGraphExecutor)[EXEC_THREAD]: Submitting tensor operation " << current; //debug
-      auto error_code = dag_node.getOperation()->accept(*node_executor_,&exec_handle);
-      std::cout << ": Status = " << error_code << ": "; //debug
+      auto op = dag_node.getOperation();
+      if(logging_.load() != 0){
+        logfile_ << "#DEBUG(EagerGraphExecutor)[EXEC_THREAD]: Submitting tensor operation "
+                 << current << ": Opcode = " << static_cast<int>(op->getOpcode()); //debug
+        if(logging_.load() > 1){
+          logfile_ << ": Details:" << std::endl;
+          op->printItFile(logfile_);
+        }
+      }
+      auto error_code = op->accept(*node_executor_,&exec_handle);
+      if(logging_.load() != 0){
+        logfile_ << ": Status = " << error_code << ": "; //debug
+      }
       if(error_code == 0){
-        std::cout << "Syncing ... "; //debug
+        if(logging_.load() != 0){
+          logfile_ << "Syncing ... "; //debug
+        }
         auto synced = node_executor_->sync(exec_handle,&error_code,true);
         if(synced && error_code == 0){
           dag.setNodeExecuted(current);
-          std::cout << "Success" << std::endl; //debug
+          if(logging_.load() != 0){
+            logfile_ << "Success" << std::endl; //debug
+            logfile_.flush();
+          }
           ++current;
         }else{
           if(error_code != 0) dag.setNodeExecuted(current,error_code);
+          if(logging_.load() != 0){
+            logfile_ << "Failed to synchronize tensor operation: Error " << error_code << std::endl;
+            logfile_.flush();
+          }
           std::cout << "Failed to synchronize tensor operation: Error " << error_code << std::endl;
           assert(false);
         }
       }else{
         dag.setNodeIdle(current);
-        std::cout << "Will retry again" << std::endl; //debug
+        if(logging_.load() != 0){
+          logfile_ << "Will retry again" << std::endl; //debug
+          logfile_.flush();
+        }
       }
     }else{
       ++current;

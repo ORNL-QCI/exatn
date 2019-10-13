@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/08
+REVISION: 2019/10/13
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,6 +35,12 @@ void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
  tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(dag_executor_name,node_executor_name));
+ return;
+}
+
+void NumServer::resetRuntimeLoggingLevel(int level)
+{
+ if(tensor_rt_) tensor_rt_->resetLoggingLevel(level);
  return;
 }
 
