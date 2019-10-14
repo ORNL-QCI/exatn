@@ -5,7 +5,7 @@ s = np.random.rand(2)
 r = np.random.rand(2)
 
 # Create the ExaTN tensors
-exatn.createTensor("Z0", exatn.DataType.float64)
+exatn.createTensor("Z0", 0.0) 
 exatn.createTensor("S", s)
 exatn.createTensor("R", r)
 

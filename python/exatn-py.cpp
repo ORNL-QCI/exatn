@@ -583,6 +583,21 @@ void create_exatn_py_module(py::module& m) {
       },
       "");
 
+  m.def("createTensor", [](const std::string& name, double& value) {
+      auto success = exatn::createTensor(name, exatn::TensorElementType::REAL64);
+      if (success) {
+      return exatn::initTensorSync(name, value);
+      }
+      return success;
+  });
+  m.def("createTensor", [](const std::string& name, std::complex<double>& value) {
+      auto success = exatn::createTensor(name, exatn::TensorElementType::COMPLEX64);
+      if (success) {
+      return exatn::initTensorSync(name, value);
+      }
+      return success;
+  });
+
   m.def("createTensor", [](const std::string& name, TensorElementType type) {
     return exatn::createTensor(name, type);
   }, "");
