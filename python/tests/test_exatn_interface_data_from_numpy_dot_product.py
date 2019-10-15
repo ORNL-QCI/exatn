@@ -5,7 +5,7 @@ s = np.random.rand(2)
 r = np.random.rand(2)
 
 # Create the ExaTN tensors
-exatn.createTensor("Z0", 0.0) 
+exatn.createTensor("Z0", 0.0)
 exatn.createTensor("S", s)
 exatn.createTensor("R", r)
 
@@ -24,8 +24,13 @@ exatn.print("S")
 exatn.evaluateTensorNetwork('MyTN', 'Z0() = S(a) * R(a)')
 exatn.print('Z0')
 
+z0_data = exatn.getLocalTensor('Z0')
+
 # Compare to what numpy would have gotten
 print(np.dot(-s,r))
+print('z0 = ', z0_data)
+print(exatn.getLocalTensor('S'))
+print(exatn.getLocalTensor('S').shape)
 
 # Clean up and destroy
 exatn.destroyTensor("S")

@@ -1,5 +1,6 @@
 #include "exatn_py_utils.hpp"
 #include "pybind11/pybind11.h"
+#include "talshxx.hpp"
 #include "tensor_basic.hpp"
 
 #include "exatn_numerics.hpp"
@@ -16,7 +17,7 @@ using namespace pybind11::literals;
  * write python scripts which leverage the ExaTN functionality.
  */
 
-void create_exatn_py_module(py::module& m) {
+void create_exatn_py_module(py::module &m) {
   m.doc() = "Python bindings for ExaTN.";
 
   py::class_<BytePacket>(m, "BytePacket", "")
@@ -126,7 +127,8 @@ void create_exatn_py_module(py::module& m) {
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
                unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
-               const std::vector<exatn::numerics::TensorLeg> &, bool conjugated)) &
+               const std::vector<exatn::numerics::TensorLeg> &,
+               bool conjugated)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
       .def("appendTensor",
@@ -377,20 +379,34 @@ void create_exatn_py_module(py::module& m) {
           },
           "")
       .def("createTensor", &exatn::createTensorWithData, "")
-      .def("initTensor", [](NumServer& n, const std::string& name, float value) {
-          return n.initTensorSync(name, value);
-      }, "")
-      .def("initTensor", [](NumServer& n, const std::string& name, double value) {
-          return n.initTensorSync(name, value);
-      }, "")
-      .def("initTensor", [](NumServer& n, const std::string& name, std::complex<float> value) {
-          return n.initTensorSync(name, value);
-      }, "")
-      .def("initTensor", [](NumServer& n, const std::string& name, std::complex<double> value) {
-          return n.initTensorSync(name, value);
-      }, "")
+      .def(
+          "initTensor",
+          [](NumServer &n, const std::string &name, float value) {
+            return n.initTensorSync(name, value);
+          },
+          "")
+      .def(
+          "initTensor",
+          [](NumServer &n, const std::string &name, double value) {
+            return n.initTensorSync(name, value);
+          },
+          "")
+      .def(
+          "initTensor",
+          [](NumServer &n, const std::string &name, std::complex<float> value) {
+            return n.initTensorSync(name, value);
+          },
+          "")
+      .def(
+          "initTensor",
+          [](NumServer &n, const std::string &name,
+             std::complex<double> value) {
+            return n.initTensorSync(name, value);
+          },
+          "")
       .def("transformTensor", &exatn::NumServer::transformTensorSync, "")
-      .def("transformTensor", &exatn::generalTransformWithData, "") //py::call_guard<py::gil_scoped_release>(), "")
+      .def("transformTensor", &exatn::generalTransformWithData,
+           "") // py::call_guard<py::gil_scoped_release>(), "")
       .def("print", &exatn::printTensorData, "")
       .def("destroyTensor", &exatn::NumServer::destroyTensor, "")
       .def("evaluateTensorNetwork", &exatn::NumServer::evaluateTensorNetwork,
@@ -583,37 +599,90 @@ void create_exatn_py_module(py::module& m) {
       },
       "");
 
-  m.def("createTensor", [](const std::string& name, double& value) {
-      auto success = exatn::createTensor(name, exatn::TensorElementType::REAL64);
-      if (success) {
+  m.def("createTensor", [](const std::string &name, double &value) {
+    auto success = exatn::createTensor(name, exatn::TensorElementType::REAL64);
+    if (success) {
       return exatn::initTensorSync(name, value);
-      }
-      return success;
+    }
+    return success;
   });
-  m.def("createTensor", [](const std::string& name, std::complex<double>& value) {
-      auto success = exatn::createTensor(name, exatn::TensorElementType::COMPLEX64);
-      if (success) {
-      return exatn::initTensorSync(name, value);
-      }
-      return success;
-  });
+  m.def("createTensor",
+        [](const std::string &name, std::complex<double> &value) {
+          auto success =
+              exatn::createTensor(name, exatn::TensorElementType::COMPLEX64);
+          if (success) {
+            return exatn::initTensorSync(name, value);
+          }
+          return success;
+        });
 
-  m.def("createTensor", [](const std::string& name, TensorElementType type) {
-    return exatn::createTensor(name, type);
-  }, "");
-  m.def("createTensor", [](const std::string& name, std::vector<std::size_t> dims,TensorElementType type) {
-    return exatn::createTensor(name, type, exatn::numerics::TensorShape(dims));
-  }, "");
+  m.def(
+      "createTensor",
+      [](const std::string &name, TensorElementType type) {
+        return exatn::createTensor(name, type);
+      },
+      "");
+  m.def(
+      "createTensor",
+      [](const std::string &name, std::vector<std::size_t> dims,
+         TensorElementType type) {
+        return exatn::createTensor(name, type,
+                                   exatn::numerics::TensorShape(dims));
+      },
+      "");
   m.def("createTensor", &createTensorWithDataNoNumServer, "");
   m.def("print", &printTensorDataNoNumServer, "");
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
   m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");
   m.def("getTensorData", &getTensorData, "");
+  m.def("getLocalTensor", [](const std::string &name) {
+    auto local_tensor = exatn::getLocalTensor(name);
+    unsigned int nd = local_tensor->getRank();
+
+    std::vector<std::size_t> dims_vec(nd);
+    auto dims = local_tensor->getDimExtents(nd);
+    for (int i = 0; i < nd; i++) {
+      dims_vec[i] = dims[i];
+    }
+
+    auto tensorType = local_tensor->getElementType();
+
+    if (tensorType == talsh::REAL64) {
+      double *elements;
+      auto worked = local_tensor->getDataAccessHost(&elements);
+      auto cap = py::capsule(
+          elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array(dims_vec, elements, cap);
+      return arr;
+    } else if (tensorType == talsh::COMPLEX64) {
+      std::complex<double> *elements;
+      auto worked = local_tensor->getDataAccessHost(&elements);
+      auto cap = py::capsule(
+          elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array(dims_vec, elements, cap);
+      return arr;
+
+    } else if (tensorType == talsh::COMPLEX32) {
+      std::complex<float> *elements;
+      auto worked = local_tensor->getDataAccessHost(&elements);
+      auto cap = py::capsule(
+          elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array(dims_vec, elements, cap);
+      return arr;
+
+    } else if (tensorType == talsh::REAL32) {
+      float *elements;
+      auto worked = local_tensor->getDataAccessHost(&elements);
+      auto cap = py::capsule(
+          elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array(dims_vec, elements, cap);
+      return arr;
+
+    } else {
+      assert(false && "Invalid TensorElementType");
+    }
+  });
   m.def("destroyTensor", &destroyTensor, "");
-
 }
 
-
-PYBIND11_MODULE(_pyexatn, m) {
-    create_exatn_py_module(m);
-}
+PYBIND11_MODULE(_pyexatn, m) { create_exatn_py_module(m); }
