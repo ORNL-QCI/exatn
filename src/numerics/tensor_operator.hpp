@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/10
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,7 +9,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      its expansion (tensor) coefficients factorized as a tensor network.
      A ket tensor network vector produces its corresponding dual bra
      tensor network vector upon complex conjugation of all constituting
-     tensor factors and reversing the direction of the output tensor legs.
+     tensor factors and reversing the direction of the all tensor legs.
  (b) A tensor operator is an ordered linear combination of tensors and
      tensor networks in which the output tensor legs are distinguished
      as bra and ket tensor legs: The bra tensor legs contract with legs
@@ -87,6 +87,11 @@ public:
                       const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Output tensor leg --> global tensor mode id
                       const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Output tensor leg --> global tensor mode id
                       const std::complex<double> coefficient);                                //in: expansion coefficient
+
+ /** Conjugates the tensor operator: All constituting tensors are complex conjugated,
+     all tensor legs reverse their direction, bra legs and ket legs are swapped,
+     complex linear expansion coefficients are complex conjugated.  **/
+ void conjugate();
 
 protected:
 

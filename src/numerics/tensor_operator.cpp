@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/10
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -20,6 +20,16 @@ bool TensorOperator::appendComponent(std::shared_ptr<TensorNetwork> network, //i
  assert(ket_pairing.size() + bra_pairing.size() == output_tensor_rank);
  components_.emplace_back(OperatorComponent{network,ket_pairing,bra_pairing,coefficient});
  return true;
+}
+
+void TensorOperator::conjugate()
+{
+ for(auto & component: components_){
+  component.network->conjugate();
+  component.ket_legs.swap(component.bra_legs);
+  component.coefficient = std::conj(component.coefficient);
+ }
+ return;
 }
 
 } //namespace numerics
