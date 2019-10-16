@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/09/19
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -260,6 +260,22 @@ public:
     auto avail = exec_state_.extractExecutingNode(node_id);
     unlock();
     return avail;
+  }
+
+  /** Given just executed DAG node, moves forward the DAG front node
+      if appropriate. **/
+  inline bool progressFrontNode(VertexIdType node_executed) {
+    return exec_state_.progressFrontNode(node_executed);
+  }
+
+  /** Returns the current front node id. **/
+  inline VertexIdType getFrontNode() const {
+    return exec_state_.getFrontNode();
+  }
+
+  /** Affirms that the DAG has unexecuted nodes. **/
+  inline bool hasUnexecutedNodes() {
+    return (exec_state_.getFrontNode() < this->getNumNodes());
   }
 
   inline void lock() {mtx_.lock();}

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/09/15
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -78,7 +78,8 @@ protected:
 
 public:
 
-  TensorExecState() = default;
+  TensorExecState(): front_node_(0) {}
+
   TensorExecState(const TensorExecState &) = delete;
   TensorExecState & operator=(const TensorExecState &) = delete;
   TensorExecState(TensorExecState &&) noexcept = default;
@@ -114,6 +115,13 @@ public:
   /** Extracts an executed DAG node from the list. **/
   bool extractExecutingNode(VertexIdType * node_id);
 
+  /** Moves the front node forward if the given DAG node is the next node
+      after the front node and it has just been executed to completion. **/
+  bool progressFrontNode(VertexIdType node_executed);
+
+  /** Returns the front node id. **/
+  VertexIdType getFrontNode() const;
+
 private:
   /** Table for tracking the execution status of a given tensor:
       Tensor Hash --> TensorExecInfo **/
@@ -122,6 +130,8 @@ private:
   std::list<VertexIdType> nodes_ready_;
   /** List of the DAG nodes being currently executed **/
   std::list<VertexIdType> nodes_executing_;
+  /** Execution front node (all previous DAG nodes have been executed). **/
+  VertexIdType front_node_;
 };
 
 } // namespace runtime

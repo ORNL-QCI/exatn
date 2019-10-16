@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2019/10/13
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -16,7 +16,7 @@ namespace runtime {
 
 void EagerGraphExecutor::execute(TensorGraph & dag) {
   auto num_nodes = dag.getNumNodes();
-  decltype(num_nodes) current = 0;
+  auto current = dag.getFrontNode();
   while(current < num_nodes){
     TensorOpExecHandle exec_handle;
     auto & dag_node = dag.getNodeProperties(current);
@@ -46,6 +46,7 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
             logfile_ << "Success" << std::endl; //debug
             logfile_.flush();
           }
+          dag.progressFrontNode(current);
           ++current;
         }else{
           if(error_code != 0) dag.setNodeExecuted(current,error_code);

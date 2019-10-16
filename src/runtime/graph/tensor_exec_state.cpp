@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/08/26
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -105,6 +105,18 @@ bool TensorExecState::extractExecutingNode(VertexIdType * node_id)
     nodes_executing_.pop_front();
   }
   return !empty;
+}
+
+bool TensorExecState::progressFrontNode(VertexIdType node_executed)
+{
+ bool progressed = (node_executed == front_node_);
+ if(progressed) ++front_node_;
+ return progressed;
+}
+
+VertexIdType TensorExecState::getFrontNode() const
+{
+ return front_node_;
 }
 
 } // namespace runtime

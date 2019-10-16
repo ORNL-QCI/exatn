@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/13
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -57,9 +57,11 @@ void TensorRuntime::executionThreadWorkflow()
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
             //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){ //alive_ is set by the main thread
-    if(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
+    while(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
       executing_.store(false); //executing_ is set to FALSE by the execution thread
+      processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
+      if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
   }
