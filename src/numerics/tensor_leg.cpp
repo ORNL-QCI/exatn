@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/07/14
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -69,6 +69,12 @@ void TensorLeg::resetDimensionId(unsigned int dimensn_id)
 void TensorLeg::resetDirection(LegDirection direction)
 {
  direction_ = direction;
+ return;
+}
+
+void TensorLeg::reverseDirection()
+{
+ direction_ = reverseLegDirection(direction_);
  return;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/13
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1057,6 +1057,13 @@ bool TensorNetwork::splitTensor(unsigned int tensor_id,
  assert(left_rank == left_full_rank && right_rank == right_full_rank);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return true;
+}
+
+
+void TensorNetwork::conjugate()
+{
+ for(auto iter = this->begin(); iter != this->end(); ++iter) (iter->second).conjugate();
+ return;
 }
 
 

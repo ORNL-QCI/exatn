@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/10/08
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,6 +27,7 @@ void TensorConn::printIt() const
 {
  std::cout << id_ << ": ";
  tensor_->printIt();
+ if(conjugated_) std::cout << "+";
  std::cout << ": { ";
  for(const auto & leg: legs_) leg.printIt();
  std::cout << " }" << std::endl;
@@ -114,6 +115,13 @@ void TensorConn::appendLeg(std::pair<SpaceId,SubspaceId> subspace, DimExtent dim
 void TensorConn::appendLeg(DimExtent dim_extent, TensorLeg tensor_leg)
 {
  this->appendLeg(std::pair<SpaceId,SubspaceId>{SOME_SPACE,0},dim_extent,tensor_leg);
+ return;
+}
+
+void TensorConn::conjugate()
+{
+ conjugated_ = !conjugated_;
+ for(auto & leg: legs_) leg.reverseDirection();
  return;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/10/08
+REVISION: 2019/10/16
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -87,6 +87,10 @@ public:
                 TensorLeg tensor_leg);                  //in: new leg configuration
  void appendLeg(DimExtent dim_extent,
                 TensorLeg tensor_leg);
+
+ /** Conjugates the connected tensor, which includes complex conjugation
+     of the tensor itself as well as tensor leg direction reversal. **/
+ void conjugate();
 
 private:
 
