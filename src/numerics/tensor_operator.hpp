@@ -68,12 +68,12 @@ public:
  inline ConstIterator cend() {return components_.cend();}
 
  /** Returns the total number of components in the tensor operator. **/
- std::size_t getNumComponents() const{
+ inline std::size_t getNumComponents() const{
   return components_.size();
  }
 
  /** Returns a specific component of the tensor operator. **/
- const OperatorComponent & getComponent(std::size_t component_num){
+ inline const OperatorComponent & getComponent(std::size_t component_num){
   assert(component_num < components_.size());
   return components_[component_num];
  }
