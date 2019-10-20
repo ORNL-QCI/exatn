@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/16
+REVISION: 2019/10/20
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -59,9 +59,12 @@ void TensorRuntime::executionThreadWorkflow()
   while(alive_.load()){ //alive_ is set by the main thread
     while(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
       graph_executor_->execute(*current_dag_);
-      executing_.store(false); //executing_ is set to FALSE by the execution thread
       processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
-      if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
+      if(current_dag_->hasUnexecutedNodes()){
+        executing_.store(true); //reaffirm that DAG is still executing
+      }else{
+        executing_.store(false); //executing_ is set to FALSE by the execution thread
+      }
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
   }
@@ -106,7 +109,7 @@ void TensorRuntime::openScope(const std::string & scope_name) {
                                )
                               );
   assert(new_dag.second); // make sure there was no other scope with the same name
-  current_dag_ = (new_dag.first)->second.get(); //storing a non-owning raw pointer to the DAG
+  current_dag_ = (new_dag.first)->second; //storing a shared pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
   return;
 }
@@ -123,7 +126,7 @@ void TensorRuntime::resumeScope(const std::string & scope_name) {
   // Pause the current scope first:
   if(currentScopeIsSet()) pauseScope();
   while(executing_.load()){}; //wait until the execution thread stops executing previous DAG
-  current_dag_ = dags_[scope_name].get(); //storing a non-owning raw pointer to the DAG
+  current_dag_ = dags_[scope_name]; //storing a shared pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
   executing_.store(true); //will trigger DAG execution by the execution thread
   return;
@@ -135,7 +138,7 @@ void TensorRuntime::closeScope() {
     const std::string scope_name = current_scope_;
     while(executing_.load()){}; //wait until the execution thread has completed execution of the current DAG
     current_scope_ = "";
-    current_dag_ = nullptr;
+    current_dag_.reset();
     auto num_deleted = dags_.erase(scope_name);
     assert(num_deleted == 1);
   }

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/13
+REVISION: 2019/10/20
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -154,7 +154,7 @@ private:
   /** Name of the current scope (current DAG name) **/
   std::string current_scope_;
   /** Current DAG **/
-  TensorGraph * current_dag_; //non-ownining pointer to the current DAG
+  std::shared_ptr<TensorGraph> current_dag_; //pointer to the current DAG
   /** Tensor data request queue **/
   std::list<TensorDataReq> data_req_queue_;
   /** Logging level (0:none) **/
