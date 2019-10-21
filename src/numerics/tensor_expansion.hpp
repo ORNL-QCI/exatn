@@ -8,10 +8,14 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
  (a) A tensor network expansion is an ordered linear expansion
      consisting of tensor networks with complex coefficients.
      The output tensors of all constituting tensor networks must
-     be conformant, that is, have the same shape and leg direction.
+     be congruent, that is, have the same shape and leg direction.
      The tensor network expansion is essentially a linear combination
      of tensor network vectors in a given tensor space.
  (b) A tensor network expansion can either be a ket or a bra.
+ (c) An inner product can be formed by contracting a bra and a ket
+     tensor expansions.
+ (d) A tensor network operator can be applied to a tensor expansion,
+     producing another tensor expansion of the same kind.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_EXPANSION_HPP_
@@ -85,6 +89,22 @@ public:
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
+
+ /** Applies a tensor network operator to the tensor network expansion,
+     replacing the original tensor network expansion with the result. **/
+ bool applyOperator(const TensorOperator & tensor_operator); //in: tensor network operator
+
+ /** Closes the tensor network expansion by contracting it with another tensor
+     network expansion from the dual tensor space, thus forming an inner product
+     expansion which will replace the original tensor network expansion. **/
+ bool formInnerProduct(const TensorExpansion & dual_expansion); //in: tensor network expansion from the dual tensor space
+
+ /** Closes the tensor network expansion by applying a tensor network operator
+     to it and then contracting it with another tensor network expansion from
+     the dual tensor space, thus forming an inner product expansion which will
+     replace the original tensor network expansion. **/
+ bool formInnerProduct(const TensorOperator & tensor_operator,  //in: tensor network operator
+                       const TensorExpansion & dual_expansion); //in: tensor network expansion from the dual tensor space
 
 protected:
 
