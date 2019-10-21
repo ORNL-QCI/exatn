@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/10/16
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -16,6 +16,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 
 #include <iostream>
+#include <vector>
 
 namespace exatn{
 
@@ -77,6 +78,12 @@ private:
  unsigned int dimensn_id_; //dimension id in the connected tensor [0..*]
  LegDirection direction_;  //direction of the leg: {UNDIRECT, INWARD, OUTWARD}, defaults to UNDIRECT
 };
+
+
+/** Returns true if two vectors of tensor legs are congruent, that is,
+    they have the same size and direction of each tensor leg. **/
+bool tensorLegsAreCongruent(const std::vector<TensorLeg> * legs0,
+                            const std::vector<TensorLeg> * legs1);
 
 } //namespace numerics
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/10/13
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -141,6 +141,12 @@ SubspaceId Tensor::getDimSubspaceId(unsigned int dim_id) const
 std::pair<SpaceId,SubspaceId> Tensor::getDimSpaceAttr(unsigned int dim_id) const
 {
  return signature_.getDimSpaceAttr(dim_id);
+}
+
+bool Tensor::isCongruentTo(const Tensor & another) const
+{
+ return shape_.isCongruentTo(another.getShape()) &&
+        signature_.isCongruentTo(another.getSignature());
 }
 
 void Tensor::deleteDimension(unsigned int dim_id)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/16
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,6 +75,10 @@ public:
  /** Returns whether the tensor network expansion is ket or not. **/
  inline bool isKet() const{
   return ket_;
+ }
+
+ inline bool isBra() const{
+  return !ket_;
  }
 
  /** Conjugates the tensor network expansion: All constituting tensors are complex conjugated,

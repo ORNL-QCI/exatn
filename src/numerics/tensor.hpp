@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/10/13
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -131,6 +131,10 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Returns TRUE if the tensor is congruent to another tensor, that is,
+     it has the same shape and signature. **/
+ bool isCongruentTo(const Tensor & another) const;
 
  /** Deletes a specific tensor dimension, reducing the tensor rank by one. **/
  void deleteDimension(unsigned int dim_id);

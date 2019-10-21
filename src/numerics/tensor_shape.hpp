@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/10/13
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,9 @@ public:
 
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
+
+ /** Returns TRUE if the tensor shape coincides with another tensor shape. **/
+ bool isCongruentTo(const TensorShape & another) const;
 
  /** Resets a specific dimension. **/
  void resetDimension(unsigned int dim_id, DimExtent extent);

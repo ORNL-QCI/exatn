@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/10/13
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,6 +62,9 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Returns TRUE if the tensor signature coincides with another tensor signature. **/
+ bool isCongruentTo(const TensorSignature & another) const;
 
  /** Resets a specific subspace. **/
  void resetDimension(unsigned int dim_id, std::pair<SpaceId,SubspaceId> subspace);
