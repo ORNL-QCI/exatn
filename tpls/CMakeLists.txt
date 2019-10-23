@@ -71,6 +71,23 @@ message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
 message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
 message(STATUS "Solely TAL-SH backend single-node build: ${EXA_TALSH_ONLY}")
 
+
+if(WITH_LAPACK)
+  ## DMITRY WILL UPDATE THESE WITH CORRECT LAPACK LIBS
+  set(LAPACK_LIBRARIES "")
+  if (BLAS_LIB STREQUAL "ATLAS")
+    set(LAPACK_LIBRARIES "-llapack -llapack")
+  elseif(BLAS_LIB STREQUAL "MKL")
+    set(LAPACK_LIBRARIES "MKL LIBNAME")
+  elseif(BLAS_LIB STREQUAL "ACML")
+    set(LAPACK_LIBRARIES "${acml_mp}")
+  elseif(BLAS_LIB STREQUAL "ESSL")
+    set(LAPACK_LIBRARIES "${essl};${xlf90_r};${xlfmath}")
+  endif()
+endif()
+
+
+
 if(APPLE)
   message(STATUS "This is Mac OS build, building TAL-SH CPU backend only")
 
@@ -95,6 +112,9 @@ if(APPLE)
                             EXA_OS=NO_LINUX
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
+                            WITH_LAPACK=${WITH_LAPACK}
+                            PATH_LAPACK_LIB=${BLAS_PATH}
+                            LAPACK_LIBS=${LAPACK_LIBRARIES}
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -116,6 +136,9 @@ if(APPLE)
                             PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
+                            WITH_LAPACK=${WITH_LAPACK}
+                            PATH_LAPACK_LIB=${BLAS_PATH}
+                            LAPACK_LIBS=${LAPACK_LIBRARIES}
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   elseif(MPI_LIB STREQUAL "MPICH")
@@ -137,6 +160,9 @@ if(APPLE)
                             PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
+                            WITH_LAPACK=${WITH_LAPACK}
+                            PATH_LAPACK_LIB=${BLAS_PATH}
+                            LAPACK_LIBS=${LAPACK_LIBRARIES}
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
@@ -166,6 +192,9 @@ else()
                               EXATN_SERVICE=YES
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -188,6 +217,9 @@ else()
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "MPICH")
@@ -210,6 +242,9 @@ else()
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     endif()
@@ -232,6 +267,9 @@ else()
                               EXATN_SERVICE=YES
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -252,6 +290,9 @@ else()
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "MPICH")
@@ -272,6 +313,9 @@ else()
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
+                              WITH_LAPACK=${WITH_LAPACK}
+                              PATH_LAPACK_LIB=${BLAS_PATH}
+                              LAPACK_LIBS=${LAPACK_LIBRARIES}
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     endif()
