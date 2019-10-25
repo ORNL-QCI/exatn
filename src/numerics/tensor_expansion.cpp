@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/21
+REVISION: 2019/10/25
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -52,30 +52,46 @@ void TensorExpansion::conjugate()
 }
 
 
-bool TensorExpansion::applyOperator(const TensorOperator & tensor_operator) //in: tensor network operator
+TensorExpansion::TensorExpansion(const TensorExpansion & expansion,       //in: tensor network expansion in some tensor space
+                                 const TensorOperator & tensor_operator): //in: tensor network operator
+ ket_(expansion.isKet())
 {
  //`Finish
- return true;
 }
 
 
-bool TensorExpansion::formInnerProduct(const TensorExpansion & dual_expansion) //in: tensor network expansion from the dual tensor space
+void TensorExpansion::constructDirectProductTensorExpansion(const TensorExpansion & left_expansion,
+                                                            const TensorExpansion & right_expansion)
 {
- if((this->isKet() && dual_expansion.isKet()) || (this->isBra() && dual_expansion.isBra())){
-  std::cout << "#ERROR(exatn::numerics::TensorExpansion::formInnerProduct): Invalid duality!" << std::endl;
-  return false;
+ //`Finish
+ return;
+}
+
+
+void TensorExpansion::constructInnerProductTensorExpansion(const TensorExpansion & left_expansion,
+                                                           const TensorExpansion & right_expansion)
+{
+ //`Finish
+ return;
+}
+
+
+TensorExpansion::TensorExpansion(const TensorExpansion & left_expansion,  //in: tensor network expansion in some tensor space
+                                 const TensorExpansion & right_expansion) //in: tensor network expansion from the same or dual space
+{
+ if((left_expansion.isKet() && right_expansion.isKet()) || (left_expansion.isBra() && right_expansion.isBra())){
+  constructDirectProductTensorExpansion(left_expansion,right_expansion);
+ }else{
+  constructInnerProductTensorExpansion(left_expansion,right_expansion);
  }
- //`Finish
- return true;
 }
 
 
-bool TensorExpansion::formInnerProduct(const TensorOperator & tensor_operator, //in: tensor network operator
-                                       const TensorExpansion & dual_expansion) //in: tensor network expansion from the dual tensor space
+TensorExpansion::TensorExpansion(const TensorExpansion & left_expansion,  //in: tensor network expansion in some tensor space
+                                 const TensorExpansion & right_expansion, //in: tensor network expansion from the dual tensor space
+                                 const TensorOperator & tensor_operator)  //in: tensor network operator
 {
- auto success = this->applyOperator(tensor_operator);
- if(success) success = this->formInnerProduct(dual_expansion);
- return success;
+ constructInnerProductTensorExpansion(left_expansion,TensorExpansion(right_expansion,tensor_operator));
 }
 
 } //namespace numerics
