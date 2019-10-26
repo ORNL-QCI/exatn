@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/16
+REVISION: 2019/10/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -110,6 +110,9 @@ public:
  /** Returns TRUE if the tensor network is finalized, FALSE otherwise. **/
  bool isFinalized() const;
 
+ /** Returns the rank of the tensor network (rank of its output tensor). **/
+ unsigned int getRank() const;
+
  /** Returns the number of input tensors in the tensor network.
      Note that the output tensor (tensor #0) is not counted here. **/
  unsigned int getNumTensors() const;
@@ -119,6 +122,9 @@ public:
 
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;
+
+ /** Renames the tensor network. **/
+ void rename(const std::string & name);
 
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
@@ -133,9 +139,9 @@ public:
  /** End iterator **/
  inline Iterator end() {return tensors_.end();}
  /** Begin constant iterator **/
- inline ConstIterator cbegin() {return tensors_.cbegin();}
+ inline ConstIterator cbegin() const {return tensors_.cbegin();}
  /** End constant iterator **/
- inline ConstIterator cend() {return tensors_.cend();}
+ inline ConstIterator cend() const {return tensors_.cend();}
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/

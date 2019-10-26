@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/25
+REVISION: 2019/10/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,8 +84,8 @@ public:
 
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
- inline ConstIterator cbegin() {return components_.cbegin();}
- inline ConstIterator cend() {return components_.cend();}
+ inline ConstIterator cbegin() const {return components_.cbegin();}
+ inline ConstIterator cend() const {return components_.cend();}
 
  /** Returns the total number of components in the tensor network expansion. **/
  inline std::size_t getNumComponents() const{
@@ -116,13 +116,15 @@ public:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
 
-protected:
+private:
 
  /** Internal methods: **/
  void constructDirectProductTensorExpansion(const TensorExpansion & left_expansion,
                                             const TensorExpansion & right_expansion);
  void constructInnerProductTensorExpansion(const TensorExpansion & left_expansion,
                                            const TensorExpansion & right_expansion);
+
+protected:
 
  /** Data members: **/
  std::vector<ExpansionComponent> components_; //ordered components of the tensor network expansion

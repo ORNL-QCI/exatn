@@ -1,10 +1,12 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/25
+REVISION: 2019/10/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_expansion.hpp"
+
+#include <cassert>
 
 namespace exatn{
 
@@ -71,7 +73,24 @@ void TensorExpansion::constructDirectProductTensorExpansion(const TensorExpansio
 void TensorExpansion::constructInnerProductTensorExpansion(const TensorExpansion & left_expansion,
                                                            const TensorExpansion & right_expansion)
 {
- //`Finish
+ if(left_expansion.getNumComponents() == 0 || right_expansion.getNumComponents() == 0){
+  std::cout << "#ERROR(exatn::numerics::TensorExpansion::constructInnerProductTensorExpansion): Empty input expansion!"
+            << std::endl;
+  assert(false);
+ }
+ auto rank = left_expansion.cbegin()->network->getRank();
+ assert(rank > 0);
+ std::vector<std::pair<unsigned int, unsigned int>> pairing(rank);
+ for(unsigned int i = 0; i < rank; ++i) pairing[i] = {i,i};
+ for(auto left = left_expansion.cbegin(); left != left_expansion.cend(); ++left){
+  for(auto right = right_expansion.cbegin(); right != right_expansion.cend(); ++right){
+   assert(right->network->getRank() == rank);
+   auto product = std::make_shared<TensorNetwork>(*(right->network));
+   product->appendTensorNetwork(TensorNetwork(*(left->network)),pairing);
+   product->rename(left->network->getName() + "*" + right->network->getName());
+   this->appendComponent(product,(left->coefficient)*(right->coefficient));
+  }
+ }
  return;
 }
 

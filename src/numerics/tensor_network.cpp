@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/16
+REVISION: 2019/10/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -194,6 +194,13 @@ bool TensorNetwork::isFinalized() const
 }
 
 
+unsigned int TensorNetwork::getRank() const
+{
+ assert(this->isFinalized());
+ return tensors_.at(0).getNumLegs(); //output tensor
+}
+
+
 unsigned int TensorNetwork::getNumTensors() const
 {
  return static_cast<unsigned int>(tensors_.size() - 1); //output tensor is not counted
@@ -213,6 +220,13 @@ unsigned int TensorNetwork::getMaxTensorId() const
 const std::string & TensorNetwork::getName() const
 {
  return name_;
+}
+
+
+void TensorNetwork::rename(const std::string & name)
+{
+ name_ = name;
+ return;
 }
 
 

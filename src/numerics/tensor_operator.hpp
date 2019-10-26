@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/16
+REVISION: 2019/10/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -64,8 +64,8 @@ public:
 
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
- inline ConstIterator cbegin() {return components_.cbegin();}
- inline ConstIterator cend() {return components_.cend();}
+ inline ConstIterator cbegin() const {return components_.cbegin();}
+ inline ConstIterator cend() const {return components_.cend();}
 
  /** Returns the total number of components in the tensor operator. **/
  inline std::size_t getNumComponents() const{
