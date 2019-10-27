@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/16
+REVISION: 2019/10/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,8 +11,8 @@ namespace exatn{
 namespace numerics{
 
 bool TensorOperator::appendComponent(std::shared_ptr<TensorNetwork> network, //in: tensor network (or single tensor as a tensor network)
-     const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Output tensor leg --> global tensor mode id
-     const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Output tensor leg --> global tensor mode id
+     const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
+     const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg
      const std::complex<double> coefficient)                                 //in: expansion coefficient
 {
  auto output_tensor = network->getTensor(0);

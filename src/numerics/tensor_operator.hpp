@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/26
+REVISION: 2019/10/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,9 +43,9 @@ public:
  struct OperatorComponent{
   //Tensor network (or a single tensor stored as a tensor network of size 1):
   std::shared_ptr<TensorNetwork> network;
-  //Ket legs of the tensor network: Output tensor leg --> global tensor mode id:
+  //Ket legs of the tensor network: Global tensor mode id <-- Output tensor leg:
   std::vector<std::pair<unsigned int, unsigned int>> ket_legs;
-  //Bra legs of the tensor network: Output tensor leg --> global tensor mode id:
+  //Bra legs of the tensor network: Global tensor mode id <-- Output tensor leg:
   std::vector<std::pair<unsigned int, unsigned int>> bra_legs;
   //Expansion coefficient of the operator component:
   std::complex<double> coefficient;
@@ -84,8 +84,8 @@ public:
      tensor act on a ket vector and which on a bra vector, together with their mapping onto
      the global modes of the tensor space the tensor operator is supposed to act upon. **/
  bool appendComponent(std::shared_ptr<TensorNetwork> network,                                 //in: tensor network (or single tensor as a tensor network)
-                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Output tensor leg --> global tensor mode id
-                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Output tensor leg --> global tensor mode id
+                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
+                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg
                       const std::complex<double> coefficient);                                //in: expansion coefficient
 
  /** Conjugates the tensor operator: All constituting tensors are complex conjugated,
