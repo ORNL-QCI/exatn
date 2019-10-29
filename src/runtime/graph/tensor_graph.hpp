@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/10/16
+REVISION: 2019/10/29
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -124,11 +124,11 @@ public:
 
 protected:
   std::shared_ptr<TensorOperation> op_; //stored tensor operation
-  VertexIdType id_;             //graph vertex id
-  std::atomic<int> error_;      //execution error code (0:success)
+  bool is_noop_;                //TRUE if the stored tensor operation is NOOP (dummy node)
   std::atomic<bool> executing_; //TRUE if the stored tensor operation is currently being executed
   std::atomic<bool> executed_;  //TRUE if the stored tensor operation has been executed to completion
-  bool is_noop_;                //TRUE if the stored tensor operation is NOOP (dummy node)
+  std::atomic<int> error_;      //execution error code (0:success)
+  VertexIdType id_;             //graph vertex id
 
 private:
   std::recursive_mutex mtx_; //object access mutex
