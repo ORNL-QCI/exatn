@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/26
+REVISION: 2019/10/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -809,11 +809,11 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
 }
 
 
-bool TensorNetwork::reoderOutputModes(const std::vector<unsigned int> & order)
+bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
 {
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid request: " <<
-   "Reodering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
+   "Reordering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
  auto * output_tensor = this->getTensorConn(0);

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/26
+REVISION: 2019/10/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -205,9 +205,9 @@ public:
  bool appendTensorNetworkGate(TensorNetwork && network,                   //in: appended tensor network gate (operator)
                               const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes of the primary network (half-rank)
 
- /** Reoders the modes of the output tensor of the tensor network:
+ /** Reorders the modes of the output tensor of the tensor network:
      order[x] = y: yth mode of the output tensor becomes its xth mode. **/
- bool reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
+ bool reorderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
 
  /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
      The released tensor legs will be joined at the end of the output tensor,

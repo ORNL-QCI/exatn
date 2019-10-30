@@ -138,8 +138,8 @@ void create_exatn_py_module(py::module &m) {
                const std::vector<exatn::LegDirection> &, bool conjugated)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
-      .def("reoderOutputModes",
-           &exatn::numerics::TensorNetwork::reoderOutputModes, "")
+      .def("reorderOutputModes",
+           &exatn::numerics::TensorNetwork::reorderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
       .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "");
 
