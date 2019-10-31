@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/30
+REVISION: 2019/10/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -166,7 +166,9 @@ TensorNetwork::TensorNetwork(const std::string & name,
 
 void TensorNetwork::printIt() const
 {
- std::cout << "TensorNetwork(" << name_ << ")[size = " << this->getNumTensors() << "]{" << std::endl;
+ std::cout << "TensorNetwork(" << name_
+           << ")[rank = " << this->getRank()
+           << ", size = " << this->getNumTensors() << "]{" << std::endl;
  for(const auto & kv: tensors_){
   std::cout << " ";
   kv.second.printIt();

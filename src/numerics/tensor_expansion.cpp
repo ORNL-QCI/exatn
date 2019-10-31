@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/30
+REVISION: 2019/10/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -103,6 +103,25 @@ void TensorExpansion::conjugate()
   component.coefficient = std::conj(component.coefficient);
  }
  ket_ = !ket_;
+ return;
+}
+
+
+void TensorExpansion::printIt() const
+{
+ if(ket_){
+  std::cout << "TensorNetworkExpansion()[ket rank = " << this->getRank()
+            << ", size = " << this->getNumComponents() << "]{" << std::endl;
+ }else{
+  std::cout << "TensorNetworkExpansion()[bra rank = " << this->getRank()
+            << ", size = " << this->getNumComponents() << "]{" << std::endl;
+ }
+ std::size_t i = 0;
+ for(const auto & component: components_){
+  std::cout << "Component " << i++ << ": " << component.coefficient << std::endl;
+  component.network->printIt();
+ }
+ std::cout << "}" << std::endl;
  return;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/27
+REVISION: 2019/10/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -67,6 +67,18 @@ public:
  inline ConstIterator cbegin() const {return components_.cbegin();}
  inline ConstIterator cend() const {return components_.cend();}
 
+ /** Returns the name of the tensor network operator. **/
+ inline const std::string & getName() const{
+  return name_;
+ }
+
+ /** Returns the rank of the tensor operator (number of legs per component).
+     If the expansion is empty, returns -1. **/
+ inline int getRank() const{
+  if(!(components_.empty())) return components_[0].network->getRank();
+  return -1;
+ }
+
  /** Returns the total number of components in the tensor operator. **/
  inline std::size_t getNumComponents() const{
   return components_.size();
@@ -92,6 +104,9 @@ public:
      all tensor legs reverse their direction, bra legs and ket legs are swapped,
      complex linear expansion coefficients are complex conjugated.  **/
  void conjugate();
+
+ /** Prints. **/
+ void printIt() const;
 
 protected:
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/10/30
+REVISION: 2019/10/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -122,6 +122,9 @@ public:
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
+
+ /** Prints. **/
+ void printIt() const;
 
 private:
 
