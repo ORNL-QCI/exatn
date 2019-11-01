@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/31
+REVISION: 2019/11/01
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -159,8 +159,9 @@ TensorNetwork::TensorNetwork(const std::string & name,
                    )
                   )
                  );
- builder.build(*this);
+ builder.build(*this); //create and link input tensors of the tensor network
  finalized_ = 1;
+ updateConnectionsFromInputTensors(); //update output tensor legs
 }
 
 
@@ -335,6 +336,15 @@ void TensorNetwork::updateConnections(unsigned int tensor_id)
   other_tensor_leg.resetTensorId(tensor_id);
   other_tensor_leg.resetDimensionId(i);
   other_tensor->resetLeg(other_tensor_leg_id,other_tensor_leg);
+ }
+ return;
+}
+
+
+void TensorNetwork::updateConnectionsFromInputTensors()
+{
+ for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
+  if(iter->first != 0) updateConnections(iter->first);
  }
  return;
 }

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/30
+REVISION: 2019/11/01
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -270,6 +270,10 @@ protected:
  /** Updates tensor network linking when a tensor has its connections modified:
      tensor_id is the id of the tensor whose leg numeration was updated. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
+
+ /** Calls updateConnections() method for all input tensors.
+     This is used for updating the output tensor legs. **/
+ void updateConnectionsFromInputTensors();
 
  /** Invalidates cached tensor contraction sequence. **/
  void invalidateContractionSequence();

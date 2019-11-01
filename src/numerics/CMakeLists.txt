@@ -20,6 +20,7 @@ add_library(${LIBRARY_NAME}
             tensor_op_contract.cpp
             tensor_op_factory.cpp
             network_builder_mps.cpp
+            network_builder_tree.cpp
             network_build_factory.cpp
             contraction_seq_optimizer_dummy.cpp
             contraction_seq_optimizer_heuro.cpp
