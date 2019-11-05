@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/01
+REVISION: 2019/11/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -156,7 +156,8 @@ public:
  bool appendTensor(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
                    std::shared_ptr<Tensor> tensor,             //in: appended tensor
                    const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
-                   bool conjugated = false);                   //in: complex conjugation flag for the appended tensor
+                   bool conjugated = false,                    //in: complex conjugation flag for the appended tensor
+                   bool leg_matching_check = true);            //in: tensor leg matching check
 
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of the output tensor of the tensor network. The unmatched modes
