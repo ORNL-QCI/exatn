@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/31
+REVISION: 2019/11/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -98,6 +98,15 @@ public:
  bool appendComponent(std::shared_ptr<TensorNetwork> network,                                 //in: tensor network (or single tensor as a tensor network)
                       const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
                       const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg
+                      const std::complex<double> coefficient);                                //in: expansion coefficient
+
+ /** Appends a new component to the tensor operator linear expansion. The new component is
+     a single tensor. The ket and bra pairing arguments specify which legs of the tensor
+     act on a ket vector and which on a bra vector, together with their mapping onto
+     the global modes of the tensor space the tensor operator is supposed to act upon. **/
+ bool appendComponent(std::shared_ptr<Tensor> tensor,                                         //in: tensor
+                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Tensor leg
+                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Tensor leg
                       const std::complex<double> coefficient);                                //in: expansion coefficient
 
  /** Conjugates the tensor operator: All constituting tensors are complex conjugated,

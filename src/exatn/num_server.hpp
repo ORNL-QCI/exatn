@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/13
+REVISION: 2019/11/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -26,9 +26,14 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "space_register.hpp"
 #include "tensor.hpp"
+#include "tensor_operation.hpp"
 #include "tensor_op_factory.hpp"
-#include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
+#include "tensor_network.hpp"
+#include "network_build_factory.hpp"
+#include "contraction_seq_optimizer_factory.hpp"
+#include "tensor_operator.hpp"
+#include "tensor_expansion.hpp"
 
 #include "tensor_runtime.hpp"
 

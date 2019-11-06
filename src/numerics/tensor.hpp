@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/10/21
+REVISION: 2019/11/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -113,6 +113,8 @@ public:
  void printIt() const;
  void printItFile(std::ofstream & output_file) const;
 
+ /** Rename (use this method with care as it can mess up higher-level maps). **/
+ void rename(const std::string & name);
  /** Get tensor name. **/
  const std::string & getName() const;
  /** Get the tensor rank (order). **/

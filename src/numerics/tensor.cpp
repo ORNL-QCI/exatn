@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/10/21
+REVISION: 2019/11/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -95,6 +95,12 @@ void Tensor::printIt() const
 void Tensor::printItFile(std::ofstream & output_file) const
 {
  output_file << name_; signature_.printItFile(output_file); shape_.printItFile(output_file);
+ return;
+}
+
+void Tensor::rename(const std::string & name)
+{
+ name_ = name;
  return;
 }
 
