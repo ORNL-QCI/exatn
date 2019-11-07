@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/06
+REVISION: 2019/11/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,15 +28,12 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 
 TensorNetwork::TensorNetwork():
- explicit_output_(0), finalized_(0), contraction_seq_flops_(0.0)
+ explicit_output_(0), finalized_(0), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = tensors_.emplace( //output tensor (id = 0)
-                             std::make_pair(
-                              0U,
-                              TensorConn(std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>())
-                             )
-                            );
- if(!(res.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    0U, //output tensor (id = 0)
+                                    std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>{});
+ if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
  }
@@ -44,15 +41,12 @@ TensorNetwork::TensorNetwork():
 
 
 TensorNetwork::TensorNetwork(const std::string & name):
- explicit_output_(0), finalized_(0), name_(name), contraction_seq_flops_(0.0)
+ explicit_output_(0), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = tensors_.emplace( //output tensor (id = 0)
-                             std::make_pair(
-                              0U,
-                              TensorConn(std::make_shared<Tensor>(name),0U,std::vector<TensorLeg>())
-                             )
-                            );
- if(!(res.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    0U, //output tensor (id = 0)
+                                    std::make_shared<Tensor>(name),0U,std::vector<TensorLeg>{});
+ if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
  }
@@ -62,15 +56,12 @@ TensorNetwork::TensorNetwork(const std::string & name):
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
- explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
+ explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = tensors_.emplace( //output tensor (id = 0)
-                             std::make_pair(
-                              0U,
-                              TensorConn(output_tensor,0U,output_legs)
-                             )
-                            );
- if(!(res.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    0U, //output tensor (id = 0)
+                                    output_tensor,0U,output_legs);
+ if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
  }
@@ -80,7 +71,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
- explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
+ explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
  //Convert tensor hypernetwork into regular tensor network, if needed:
  //`Finish
@@ -130,13 +121,10 @@ TensorNetwork::TensorNetwork(const std::string & name,
      }
      if(i == 0){
       assert(!conjugated); //output tensor must not appear complex conjugated
-      auto res = tensors_.emplace( //output tensor (id = 0)
-                                  std::make_pair(
-                                   0U,
-                                   TensorConn(tensor->second,0U,legs)
-                                  )
-                                 );
-      if(!(res.second)){
+      auto res = emplaceTensorConnDirect(true,
+                                         0U, //output tensor (id = 0)
+                                         tensor->second,0U,legs);
+      if(!res){
        std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
        assert(false);
       }
@@ -163,19 +151,13 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
- explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
+ explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = tensors_.emplace( //output tensor (id = 0)
-                             std::make_pair(
-                              0U,
-                              TensorConn(
-                               output_tensor,
-                               0U,
-                               std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0)) //dummy legs
-                              )
-                             )
-                            );
- if(!(res.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    0U, //output tensor (id = 0)
+                                    output_tensor,0U,
+                                    std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0))); //dummy legs
+ if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
  }
@@ -230,13 +212,30 @@ unsigned int TensorNetwork::getNumTensors() const
 }
 
 
-unsigned int TensorNetwork::getMaxTensorId() const
+unsigned int TensorNetwork::getMaxTensorId()
 {
- unsigned int max_id = 0;
- for(const auto & kv: tensors_){
-  if(kv.first > max_id) max_id = kv.first;
+ if(max_tensor_id_ == 0){
+  for(const auto & kv: tensors_) max_tensor_id_ = std::max(max_tensor_id_,kv.first);
  }
- return max_id;
+ return max_tensor_id_;
+}
+
+
+void TensorNetwork::updateMaxTensorIdOnAppend(unsigned int tensor_id)
+{
+ auto curr_max_id = getMaxTensorId();
+ max_tensor_id_ = std::max(curr_max_id,tensor_id);
+ return;
+}
+
+
+void TensorNetwork::updateMaxTensorIdOnRemove(unsigned int tensor_id)
+{
+ if(tensor_id != 0 && tensor_id == max_tensor_id_){
+  max_tensor_id_ = 0; //reset max tensor id to Undefined
+  //auto refresh_max_tensor_id = getMaxTensorId();
+ }
+ return;
 }
 
 
@@ -425,11 +424,10 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
   }
  }
  //Append the tensor to the tensor network:
- auto new_pos = tensors_.emplace(std::make_pair(
-                                  tensor_id,TensorConn(tensor,tensor_id,connections,conjugated)
-                                 )
-                                );
- if(!(new_pos.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    tensor_id,
+                                    tensor,tensor_id,connections,conjugated);
+ if(!res){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
   return false;
@@ -532,21 +530,19 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
    }
    ++mode;
   }
-  auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs,conjugated)
-                                  )
-                                 );
-  if(!(new_pos.second)){
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,new_tensor_legs,conjugated);
+  if(!res){
    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
     "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
    return false;
   }
  }else{ //scalar tensor
-  auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>(),conjugated)
-                                  )
-                                 );
-  if(!(new_pos.second)){
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,std::vector<TensorLeg>{},conjugated);
+  if(!res){
    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
     "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
    return false;
@@ -631,21 +627,19 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
    new_tensor_legs[unpaired_leg_id].resetDirection(reverseLegDirection(output_tensor_leg.getDirection()));
    ++paired_leg_id; ++unpaired_leg_id;
   }
-  auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,new_tensor_legs,conjugated)
-                                  )
-                                 );
-  if(!(new_pos.second)){
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,new_tensor_legs,conjugated);
+  if(!res){
    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
     "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
    return false;
   }
  }else{ //scalar tensor
-  auto new_pos = tensors_.emplace(std::make_pair(
-                                   tensor_id,TensorConn(tensor,tensor_id,std::vector<TensorLeg>(),conjugated)
-                                  )
-                                 );
-  if(!(new_pos.second)){
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,std::vector<TensorLeg>{},conjugated);
+  if(!res){
    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
     "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
    return false;
@@ -741,8 +735,8 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
  auto tensors = network.getTensorConnAll();
  for(auto & tensor: tensors){
   unsigned int tensor_id = tensor->getTensorId();
-  auto res = tensors_.emplace(std::make_pair(tensor_id,*tensor));
-  if(!(res.second)){
+  auto res = emplaceTensorConn(false,tensor_id,*tensor);
+  if(!res){
    std::cout << "#ERROR(exatn::numerics::TensorNetwork::appendTensorNetwork): Tensor id already in use!" << std::endl;
    return false;
   }
@@ -834,8 +828,8 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
  auto tensors = network.getTensorConnAll();
  for(auto & tensor: tensors){
   unsigned int tensor_id = tensor->getTensorId();
-  auto res = tensors_.emplace(std::make_pair(tensor_id,*tensor));
-  if(!(res.second)){
+  auto res = emplaceTensorConn(false,tensor_id,*tensor);
+  if(!res){
    std::cout << "#ERROR(exatn::numerics::TensorNetwork::appendTensorNetworkGate): Tensor id already in use!" << std::endl;
    return false;
   }
@@ -934,8 +928,7 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
  }
  //Delete the tensor from the network:
  tensor = nullptr;
- auto num_deleted = tensors_.erase(tensor_id);
- assert(num_deleted == 1);
+ auto erased = eraseTensorConn(tensor_id); assert(erased);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return true;
 }
@@ -1000,29 +993,22 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
   assert(generated);
  }
  //Append the tensor result:
- auto res = tensors_.emplace(std::make_pair(
-                              result_id,
-                              TensorConn(
-                               std::make_shared<Tensor>(
-                                left_tensor->getTensor()->getName() + right_tensor->getTensor()->getName(),
-                                *(left_tensor->getTensor()),
-                                *(right_tensor->getTensor()),
-                                pattern
-                               ),
-                               result_id,
-                               result_legs
-                              )
-                             )
-                            );
- if(!(res.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    result_id,
+                                    std::make_shared<Tensor>(
+                                     left_tensor->getTensor()->getName() + right_tensor->getTensor()->getName(),
+                                     *(left_tensor->getTensor()),
+                                     *(right_tensor->getTensor()),
+                                     pattern
+                                    ),
+                                    result_id,result_legs);
+ if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::mergeTensors): Tensor id already in use!" << std::endl;
   return false;
  }
  //Delete two original tensors:
- auto num_deleted = tensors_.erase(left_id);
- assert(num_deleted == 1);
- num_deleted = tensors_.erase(right_id);
- assert(num_deleted == 1);
+ auto erased = eraseTensorConn(left_id); assert(erased);
+ erased = eraseTensorConn(right_id); assert(erased);
  //Update connections:
  this->updateConnections(result_id);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
@@ -1080,22 +1066,20 @@ bool TensorNetwork::splitTensor(unsigned int tensor_id,
                          right_legs[r++] = tensor->getTensorLeg(i);
  }
  //Remove the original tensor from the tensor network:
- auto num_erased = tensors_.erase(tensor_id); assert(num_erased == 1);
+ auto erased = eraseTensorConn(tensor_id); assert(erased);
  //Append the new derived tensors to the tensor network:
- auto new_pos = tensors_.emplace(std::make_pair(
-                                  left_tensor_id,TensorConn(left_tensor,left_tensor_id,left_legs)
-                                 )
-                                );
- if(!(new_pos.second)){
+ auto res = emplaceTensorConnDirect(true,
+                                    left_tensor_id,
+                                    left_tensor,left_tensor_id,left_legs);
+ if(!res){
   std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
    "A tensor with id " << left_tensor_id << " already exists in the tensor network!" << std::endl;
   return false;
  }
- new_pos = tensors_.emplace(std::make_pair(
-                             right_tensor_id,TensorConn(right_tensor,right_tensor_id,right_legs)
-                            )
-                           );
- if(!(new_pos.second)){
+ res = emplaceTensorConnDirect(true,
+                               right_tensor_id,
+                               right_tensor,right_tensor_id,right_legs);
+ if(!res){
   std::cout << "#ERROR(TensorNetwork::splitTensor): Invalid request: " <<
    "A tensor with id " << right_tensor_id << " already exists in the tensor network!" << std::endl;
   return false;

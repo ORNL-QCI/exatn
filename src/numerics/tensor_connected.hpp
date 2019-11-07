@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/10/16
+REVISION: 2019/11/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,6 +59,9 @@ public:
 
  /** Returns the tensor id. **/
  unsigned int getTensorId() const;
+
+ /** Resets the tensor id. **/
+ void resetTensorId(unsigned int tensor_id);
 
  /** Returns a specific tensor leg. **/
  const TensorLeg & getTensorLeg(unsigned int leg_id) const;

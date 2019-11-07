@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/06
+REVISION: 2019/11/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -260,7 +260,11 @@ bool NumServer::createTensor(const std::string & name,
                              TensorElementType element_type,
                              Args&&... args)
 {
- auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
+ auto res = tensors_.emplace(std::make_pair(
+                              name,
+                              std::shared_ptr<Tensor>(new Tensor(name,std::forward<Args>(args)...))
+                             )
+                            );
  if(res.second){
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand((res.first)->second);
@@ -277,7 +281,11 @@ bool NumServer::createTensorSync(const std::string & name,
                                  TensorElementType element_type,
                                  Args&&... args)
 {
- auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
+ auto res = tensors_.emplace(std::make_pair(
+                              name,
+                              std::shared_ptr<Tensor>(new Tensor(name,std::forward<Args>(args)...))
+                             )
+                            );
  if(res.second){
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand((res.first)->second);
