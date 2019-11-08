@@ -152,22 +152,22 @@ TEST(NumericsTester, checkTensorExpansion)
  ham.appendComponent(std::make_shared<Tensor>("H0",TensorShape{2,2,2,2}),
                      {{0,2},{1,3}},            //ket leg map
                      {{0,0},{1,1}},            //bra leg map
-                     std::complex<double>{0.5} //expansion coefficient
+                     std::complex<double>{1.0} //expansion coefficient
                     );
  ham.appendComponent(std::make_shared<Tensor>("H1",TensorShape{2,2,2,2}),
                      {{2,2},{3,3}},            //ket leg map
                      {{2,0},{3,1}},            //bra leg map
-                     std::complex<double>{0.5} //expansion coefficient
+                     std::complex<double>{1.0} //expansion coefficient
                     );
  ham.appendComponent(std::make_shared<Tensor>("H2",TensorShape{2,2,2,2}),
                      {{4,2},{5,3}},            //ket leg map
                      {{4,0},{5,1}},            //bra leg map
-                     std::complex<double>{0.5} //expansion coefficient
+                     std::complex<double>{1.0} //expansion coefficient
                     );
  ham.appendComponent(std::make_shared<Tensor>("H3",TensorShape{2,2,2,2}),
                      {{6,2},{7,3}},            //ket leg map
                      {{6,0},{7,1}},            //bra leg map
-                     std::complex<double>{0.5} //expansion coefficient
+                     std::complex<double>{1.0} //expansion coefficient
                     );
  ham.printIt();
 
@@ -177,10 +177,23 @@ TEST(NumericsTester, checkTensorExpansion)
  //  ====  ====  ====  ====
  //  |  |  |  |  |  |  |  |
  TensorExpansion ket_vector;
- ket_vector.appendComponent(network,std::complex<double>{1.0,0.0});
+ ket_vector.appendComponent(network,std::complex<double>{0.5});
  TensorExpansion oper_times_ket(ket_vector,ham);
  oper_times_ket.printIt();
+
+ //Form the inner product with a conjugated tensor network:
+ //  O--O--O--O--O--O--O--O
+ //  |  |  |  |  |  |  |  |
+ //  ====  ====  ====  ====
+ //  |  |  |  |  |  |  |  |
+ //  O--O--O--O--O--O--O--O
+ TensorExpansion bra_vector(ket_vector);
+ bra_vector.conjugate();
+ bra_vector.printIt();
+ TensorExpansion inner_prod(bra_vector,ket_vector);
+ inner_prod.printIt();
 }
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
