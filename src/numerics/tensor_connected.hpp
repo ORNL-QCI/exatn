@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/11/07
+REVISION: 2019/11/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,7 +55,7 @@ public:
  bool isComplexConjugated() const;
 
  /** Returns a co-owned pointer to the tensor. **/
- std::shared_ptr<Tensor> getTensor();
+ std::shared_ptr<Tensor> getTensor() const;
 
  /** Returns the tensor id. **/
  unsigned int getTensorId() const;

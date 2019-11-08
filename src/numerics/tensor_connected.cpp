@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/11/07
+REVISION: 2019/11/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -44,7 +44,7 @@ bool TensorConn::isComplexConjugated() const
  return conjugated_;
 }
 
-std::shared_ptr<Tensor> TensorConn::getTensor()
+std::shared_ptr<Tensor> TensorConn::getTensor() const
 {
  return tensor_;
 }
@@ -125,7 +125,7 @@ void TensorConn::appendLeg(DimExtent dim_extent, TensorLeg tensor_leg)
 
 void TensorConn::conjugate()
 {
- conjugated_ = !conjugated_;
+ if(id_ != 0) conjugated_ = !conjugated_; //output tensors do not conjugate
  for(auto & leg: legs_) leg.reverseDirection();
  return;
 }

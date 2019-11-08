@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/07
+REVISION: 2019/11/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,7 +30,7 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(0), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = emplaceTensorConnDirect(true,
+ auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>{});
  if(!res){
@@ -43,7 +43,7 @@ TensorNetwork::TensorNetwork():
 TensorNetwork::TensorNetwork(const std::string & name):
  explicit_output_(0), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = emplaceTensorConnDirect(true,
+ auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     std::make_shared<Tensor>(name),0U,std::vector<TensorLeg>{});
  if(!res){
@@ -58,7 +58,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              const std::vector<TensorLeg> & output_legs):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = emplaceTensorConnDirect(true,
+ auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     output_tensor,0U,output_legs);
  if(!res){
@@ -121,7 +121,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
      }
      if(i == 0){
       assert(!conjugated); //output tensor must not appear complex conjugated
-      auto res = emplaceTensorConnDirect(true,
+      auto res = emplaceTensorConnDirect(false,
                                          0U, //output tensor (id = 0)
                                          tensor->second,0U,legs);
       if(!res){
@@ -153,7 +153,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              NetworkBuilder & builder):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
- auto res = emplaceTensorConnDirect(true,
+ auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     output_tensor,0U,
                                     std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0))); //dummy legs
@@ -164,6 +164,57 @@ TensorNetwork::TensorNetwork(const std::string & name,
  builder.build(*this); //create and link input tensors of the tensor network
  finalized_ = 1;
  updateConnectionsFromInputTensors(); //update output tensor legs
+}
+
+
+TensorNetwork::TensorNetwork(const TensorNetwork & another)
+{
+ explicit_output_ = 1;
+ finalized_ = 0;
+ name_ = another.getName() + "_copy";
+ max_tensor_id_ = 0;
+ contraction_seq_flops_ = 0.0;
+
+ auto output_tensor = another.getTensor(0);
+ const auto & output_legs = *(another.getTensorConnections(0));
+ auto new_output_tensor = makeSharedTensor(*output_tensor);
+ new_output_tensor->rename(output_tensor->getName()+"_new");
+ auto res = emplaceTensorConnDirect(false,
+                                    0U, //output tensor (id = 0)
+                                    new_output_tensor,0U,output_legs);
+ assert(res);
+ for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
+  if(iter->first != 0){ //only input tensors
+   res = emplaceTensorConn(iter->first,iter->second); assert(res);
+  }
+ }
+ finalized_ = 1;
+}
+
+
+TensorNetwork & TensorNetwork::operator=(const TensorNetwork & another)
+{
+ explicit_output_ = 1;
+ finalized_ = 0;
+ name_ = another.getName() + "_copy";
+ max_tensor_id_ = 0;
+ contraction_seq_flops_ = 0.0;
+
+ auto output_tensor = another.getTensor(0);
+ const auto & output_legs = *(another.getTensorConnections(0));
+ auto new_output_tensor = makeSharedTensor(*output_tensor);
+ new_output_tensor->rename(output_tensor->getName()+"_new");
+ auto res = emplaceTensorConnDirect(false,
+                                    0U, //output tensor (id = 0)
+                                    new_output_tensor,0U,output_legs);
+ assert(res);
+ for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
+  if(iter->first != 0){ //only input tensors
+   res = emplaceTensorConn(iter->first,iter->second); assert(res);
+  }
+ }
+ finalized_ = 1;
+ return *this;
 }
 
 
@@ -271,7 +322,7 @@ std::vector<TensorConn*> TensorNetwork::getTensorConnAll()
 }
 
 
-std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id, bool * conjugated)
+std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id, bool * conjugated) const
 {
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return std::shared_ptr<Tensor>(nullptr);
@@ -280,7 +331,7 @@ std::shared_ptr<Tensor> TensorNetwork::getTensor(unsigned int tensor_id, bool * 
 }
 
 
-const std::vector<TensorLeg> * TensorNetwork::getTensorConnections(unsigned int tensor_id)
+const std::vector<TensorLeg> * TensorNetwork::getTensorConnections(unsigned int tensor_id) const
 {
  auto it = tensors_.find(tensor_id);
  if(it == tensors_.end()) return nullptr;
@@ -365,6 +416,13 @@ void TensorNetwork::updateConnectionsFromInputTensors()
  for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
   if(iter->first != 0) updateConnections(iter->first);
  }
+ return;
+}
+
+
+void TensorNetwork::invalidateMaxTensorId()
+{
+ max_tensor_id_ = 0;
  return;
 }
 
