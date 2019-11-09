@@ -17,6 +17,8 @@ domain which heavily relies on large-scale numerical tensor algebra:
  (e) Multivariate data analytics;
  (f) Tensor-based neural network algorithms.
 
+## API Documentation
+For detailed class documentation, please see our [API Documentation](https://ornl-qci.github.io/exatn-api-docs) page.
 
 ## Dependencies
 ```
