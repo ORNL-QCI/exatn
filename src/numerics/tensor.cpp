@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/11/06
+REVISION: 2019/11/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
+#include "tensor_symbol.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -216,6 +217,11 @@ const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 TensorHashType Tensor::getTensorHash() const
 {
  return reinterpret_cast<TensorHashType>(this);
+}
+
+std::string generateTensorName(const Tensor & tensor)
+{
+ return tensor_hex_name(tensor.getTensorHash());
 }
 
 } //namespace numerics

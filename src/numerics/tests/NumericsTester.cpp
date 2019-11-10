@@ -140,7 +140,7 @@ TEST(NumericsTester, checkTensorExpansion)
  //Tensor network structure:
  //  O--O--O--O--O--O--O--O
  //  |  |  |  |  |  |  |  |
- auto output_tensor = std::make_shared<numerics::Tensor>("Z0",std::vector<DimExtent>{2,2,2,2,2,2,2,2});
+ auto output_tensor = makeSharedTensor("Z0",std::vector<DimExtent>{2,2,2,2,2,2,2,2});
  auto network = makeSharedTensorNetwork("TensorTrain",output_tensor,*builder);
  network->printIt();
 
@@ -190,8 +190,8 @@ TEST(NumericsTester, checkTensorExpansion)
  TensorExpansion bra_vector(ket_vector);
  bra_vector.conjugate();
  bra_vector.printIt();
- TensorExpansion inner_prod(bra_vector,ket_vector);
- inner_prod.printIt();
+ TensorExpansion op_prod(oper_times_ket,bra_vector);
+ op_prod.printIt();
 }
 
 

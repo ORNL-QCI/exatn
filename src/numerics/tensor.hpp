@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/11/06
+REVISION: 2019/11/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,7 +43,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_signature.hpp"
 #include "tensor_leg.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 #include <iostream>
 #include <fstream>
@@ -178,6 +178,12 @@ private:
 };
 
 
+//FREE FUNCTIONS:
+
+/** Generates a unique name for a given tensor. **/
+std::string generateTensorName(const Tensor & tensor);
+
+
 //TEMPLATES:
 template<typename T>
 Tensor::Tensor(const std::string & name,
@@ -217,10 +223,11 @@ name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size(
 
 } //namespace numerics
 
+/** Creates a new Tensor as a shared pointer. **/
 template<typename... Args>
 inline std::shared_ptr<numerics::Tensor> makeSharedTensor(Args&&... args)
 {
- return std::make_shared<numerics::Tensor>(args...);
+ return std::make_shared<numerics::Tensor>(std::forward<Args>(args)...);
 }
 
 } //namespace exatn

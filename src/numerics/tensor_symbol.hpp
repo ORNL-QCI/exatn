@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/09/11
+REVISION: 2019/11/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -111,6 +111,22 @@ inline std::pair<int,int> trim_spaces_off(const std::string & str, //in: full st
   }
  }
  return std::make_pair(sbeg,send);
+}
+
+/** Generates a hexadecimal name for a tensor from an integer. **/
+template <typename Integer>
+std::string tensor_hex_name(Integer hash)
+{
+ static_assert(std::is_integral<Integer>::value,"#FATAL(tensor_hex_name): Non-integer type passed!");
+ char digit[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+ auto n = hash; if(n < 0) n = -n;
+ std::string name("z");
+ while(n > 0){
+  auto m = n%16;
+  name += digit[m];
+  n /= 16;
+ }
+ return name;
 }
 
 /** Returns TRUE if the tensor parses as a valid symbolic tensor.

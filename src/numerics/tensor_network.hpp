@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/08
+REVISION: 2019/11/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -332,7 +332,10 @@ inline bool TensorNetwork::emplaceTensorConn(unsigned int tensor_id,
                                              const TensorConn & tensor_conn)
 {
  auto res = tensors_.emplace(tensor_id,tensor_conn);
- if(res.second) updateMaxTensorIdOnAppend(tensor_id);
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
  return res.second;
 }
 
@@ -345,10 +348,12 @@ inline bool TensorNetwork::emplaceTensorConn(bool dynamic_id_enabled,
  if(!(res.second) && dynamic_id_enabled){
   tensor_id = getMaxTensorId() + 1;
   assert(tensor_id != 0); //unsigned int overflow
-  tensor_conn.resetTensorId(tensor_id);
   res = tensors_.emplace(tensor_id,tensor_conn);
  }
- if(res.second) updateMaxTensorIdOnAppend(tensor_id);
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
  return res.second;
 }
 
@@ -364,7 +369,10 @@ inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_id_enabled,
   assert(tensor_id != 0); //unsigned int overflow
   res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
  }
- if(res.second) updateMaxTensorIdOnAppend(tensor_id);
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
  return res.second;
 }
 

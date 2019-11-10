@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/08
+REVISION: 2019/11/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -171,14 +171,14 @@ TensorNetwork::TensorNetwork(const TensorNetwork & another)
 {
  explicit_output_ = 1;
  finalized_ = 0;
- name_ = another.getName() + "_copy";
+ name_ = another.getName();
  max_tensor_id_ = 0;
  contraction_seq_flops_ = 0.0;
 
  auto output_tensor = another.getTensor(0);
  const auto & output_legs = *(another.getTensorConnections(0));
  auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(output_tensor->getName()+"_new");
+ new_output_tensor->rename(generateTensorName(*new_output_tensor));
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     new_output_tensor,0U,output_legs);
@@ -196,14 +196,14 @@ TensorNetwork & TensorNetwork::operator=(const TensorNetwork & another)
 {
  explicit_output_ = 1;
  finalized_ = 0;
- name_ = another.getName() + "_copy";
+ name_ = another.getName();
  max_tensor_id_ = 0;
  contraction_seq_flops_ = 0.0;
 
  auto output_tensor = another.getTensor(0);
  const auto & output_legs = *(another.getTensorConnections(0));
  auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(output_tensor->getName()+"_new");
+ new_output_tensor->rename(generateTensorName(*new_output_tensor));
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     new_output_tensor,0U,output_legs);
@@ -748,7 +748,7 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
   }
  }
  //Pair output legs of the primary tensor network with output legs of the appended (secondary) tensor network:
- auto max_tensor_id = this->getMaxTensorId();
+ auto max_tensor_id = this->getMaxTensorId(); assert(max_tensor_id > 0);
  if(pairing.size() > 0){
   for(const auto & link: pairing){
    const auto & output0_leg_id = link.first;
@@ -853,7 +853,7 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
   }
  }
  //Pair output legs of the primary tensor network with the output legs of the appended tensor network:
- auto max_tensor_id = this->getMaxTensorId();
+ auto max_tensor_id = this->getMaxTensorId(); assert(max_tensor_id > 0);
  if(pairing.size() > 0){
   unsigned int output1_leg_id = 0;
   unsigned int output1_replace_leg_id = output1_rank / 2;
