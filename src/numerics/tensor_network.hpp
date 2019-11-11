@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/10
+REVISION: 2019/11/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -260,7 +260,7 @@ protected:
                                const TensorConn & tensor_conn);
  inline bool emplaceTensorConn(bool dynamic_id_enabled,
                                unsigned int tensor_id,
-                               TensorConn & tensor_conn); //tensor_id may change if dynamic_id_enabled
+                               const TensorConn & tensor_conn); //tensor_id may change if dynamic_id_enabled
 
  /** Emplaces a connected tensor into the tensor network. **/
  template <typename... Args>
@@ -342,7 +342,7 @@ inline bool TensorNetwork::emplaceTensorConn(unsigned int tensor_id,
 
 inline bool TensorNetwork::emplaceTensorConn(bool dynamic_id_enabled,
                                              unsigned int tensor_id,
-                                             TensorConn & tensor_conn)
+                                             const TensorConn & tensor_conn)
 {
  auto res = tensors_.emplace(tensor_id,tensor_conn);
  if(!(res.second) && dynamic_id_enabled){

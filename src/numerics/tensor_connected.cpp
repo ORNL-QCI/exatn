@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/11/08
+REVISION: 2019/11/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
+#include "tensor_symbol.hpp"
 
 #include <algorithm>
 
@@ -127,6 +128,17 @@ void TensorConn::conjugate()
 {
  if(id_ != 0) conjugated_ = !conjugated_; //output tensors do not conjugate
  for(auto & leg: legs_) leg.reverseDirection();
+ return;
+}
+
+void TensorConn::replaceStoredTensor(const std::string & name)
+{
+ assert(tensor_);
+ const auto & old_tensor = *tensor_;
+ tensor_ = makeSharedTensor(old_tensor);
+ auto new_name(name);
+ if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
+ tensor_->rename(new_name);
  return;
 }
 

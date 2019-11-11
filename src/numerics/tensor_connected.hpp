@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/11/08
+REVISION: 2019/11/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,6 +25,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace exatn{
 
@@ -94,6 +95,9 @@ public:
  /** Conjugates the connected tensor, which includes complex conjugation
      of the tensor itself as well as tensor leg direction reversal. **/
  void conjugate();
+
+ /** Replaces the stored tensor with a new one (same shape and signature). **/
+ void replaceStoredTensor(const std::string & name = ""); //tensor name (if empty, will be automatically generated)
 
 private:
 
