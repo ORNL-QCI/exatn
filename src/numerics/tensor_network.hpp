@@ -92,8 +92,11 @@ public:
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
                NetworkBuilder & builder);                   //in: specific tensor network builder
 
+ /** Constructs a copy of a given tensor network while
+     replacing the output tensor with a new one. **/
  TensorNetwork(const TensorNetwork & another);
  TensorNetwork & operator=(const TensorNetwork & another);
+
  TensorNetwork(TensorNetwork &&) noexcept = default;
  TensorNetwork & operator=(TensorNetwork &&) noexcept = default;
  virtual ~TensorNetwork() = default;
@@ -305,6 +308,10 @@ protected:
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
 
 private:
+
+ /** Resets the output tensor in a finalized tensor network to a new
+     one with the same signature and shape but a different name. **/
+ void resetOutputTensor(const std::string & name = ""); //new name of the output tensor (if empty, will be generated automatically)
 
  /** Updates the max tensor id used in the tensor network when a tensor
      is either appended to or removed from the tensor network.  **/

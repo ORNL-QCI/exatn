@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/10
+REVISION: 2019/11/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -290,6 +290,16 @@ void TensorNetwork::updateMaxTensorIdOnRemove(unsigned int tensor_id)
 }
 
 
+void TensorNetwork::resetOutputTensor(const std::string & name)
+{
+ assert(finalized_ != 0);
+ auto iter = tensors_.find(0);
+ assert(iter != tensors_.end());
+ iter->second.replaceStoredTensor(name);
+ return;
+}
+
+
 const std::string & TensorNetwork::getName() const
 {
  return name_;
@@ -500,11 +510,13 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
                                  const std::vector<LegDirection> & leg_dir,                          //in: optional leg direction (for all tensor modes)
                                  bool conjugated)                                                    //in: complex conjugation flag for the appended tensor
 {
- if(explicit_output_ != 0){
+ if(explicit_output_ != 0 && finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
    "Appending a tensor via implicit pairing with the output tensor, but the output tensor is explicit!" << std::endl;
   return false;
  }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
  //Check validity of leg pairing:
  auto tensor_rank = tensor->getRank();
  bool dir_present = (leg_dir.size() > 0);
@@ -627,6 +639,8 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
    "Tensor 0 (output tensor) must already be present in the tensor network!" << std::endl;
   return false;
  }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
  //Check validity of leg pairing:
  auto * output_tensor = this->getTensorConn(0);
  assert(output_tensor != nullptr); //output tensor must be present
@@ -717,6 +731,8 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
    "Either primary or appended tensor network is not finalized!" << std::endl;
   return false;
  }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
  //Check validity of leg pairing:
  auto * output0 = this->getTensorConn(0);
  assert(output0 != nullptr);
@@ -817,6 +833,8 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
    "Either primary or appended tensor network is not finalized!" << std::endl;
   return false;
  }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
  //Check validity of leg pairing:
  auto * output0 = this->getTensorConn(0);
  assert(output0 != nullptr);
@@ -944,6 +962,8 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
    "Deleting a tensor from an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
  //Append the released legs from the deleted tensor to the output tensor:
  auto * tensor = this->getTensorConn(tensor_id);
  if(tensor == nullptr){
