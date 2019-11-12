@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/10/16
+REVISION: 2019/10/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -76,6 +76,17 @@ void TensorLeg::reverseDirection()
 {
  direction_ = reverseLegDirection(direction_);
  return;
+}
+
+bool tensorLegsAreCongruent(const std::vector<TensorLeg> * legs0,
+                            const std::vector<TensorLeg> * legs1)
+{
+ if(legs0->size() != legs1->size()) return false;
+ auto iter1 = legs1->cbegin();
+ for(auto iter0 = legs0->cbegin(); iter0 != legs0->cend(); ++iter0, ++iter1){
+  if(iter0->getDirection() != iter1->getDirection()) return false;
+ }
+ return true;
 }
 
 } //namespace numerics

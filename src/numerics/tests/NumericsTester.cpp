@@ -33,6 +33,7 @@ TEST(NumericsTester, checkSimple)
  }
 }
 
+
 TEST(NumericsTester, checkTensorNetwork)
 {
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -77,6 +78,7 @@ TEST(NumericsTester, checkTensorNetwork)
  network.printIt();
 }
 
+
 TEST(NumericsTester, checkTensorNetworkSymbolic)
 {
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -101,6 +103,7 @@ TEST(NumericsTester, checkTensorNetworkSymbolic)
  network.printIt();
 }
 
+
 TEST(NumericsTester, checkSharedTensorNetworkSymbolic)
 {
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -123,6 +126,18 @@ TEST(NumericsTester, checkSharedTensorNetworkSymbolic)
  network->printIt();
  //Remove tensor #6 to create the optimization environment for MPS tensor S1:
  network->deleteTensor(6);
+ network->printIt();
+}
+
+
+TEST(NumericsTester, checkTensorExpansion)
+{
+ auto & network_build_factory = *(numerics::NetworkBuildFactory::get());
+ auto builder = network_build_factory.createNetworkBuilderShared("MPS");
+ auto success = builder->setParameter("max_bond_dim",6); assert(success);
+
+ auto output_tensor = std::make_shared<numerics::Tensor>("Z0",std::vector<DimExtent>{2,2,2,2,2,2,2,2});
+ auto network = makeSharedTensorNetwork("TensorTrain",output_tensor,*builder);
  network->printIt();
 }
 

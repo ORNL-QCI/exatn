@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/16
+REVISION: 2019/11/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -147,7 +147,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
- explicit_output_(0), finalized_(0), name_(name), contraction_seq_flops_(0.0)
+ explicit_output_(1), finalized_(0), name_(name), contraction_seq_flops_(0.0)
 {
  tensors_.emplace( //output tensor (id = 0)
                   std::make_pair(
@@ -159,14 +159,17 @@ TensorNetwork::TensorNetwork(const std::string & name,
                    )
                   )
                  );
- builder.build(*this);
+ builder.build(*this); //create and link input tensors of the tensor network
  finalized_ = 1;
+ updateConnectionsFromInputTensors(); //update output tensor legs
 }
 
 
 void TensorNetwork::printIt() const
 {
- std::cout << "TensorNetwork(" << name_ << ")[size = " << this->getNumTensors() << "]{" << std::endl;
+ std::cout << "TensorNetwork(" << name_
+           << ")[rank = " << this->getRank()
+           << ", size = " << this->getNumTensors() << "]{" << std::endl;
  for(const auto & kv: tensors_){
   std::cout << " ";
   kv.second.printIt();
@@ -194,6 +197,13 @@ bool TensorNetwork::isFinalized() const
 }
 
 
+unsigned int TensorNetwork::getRank() const
+{
+ assert(this->isFinalized());
+ return tensors_.at(0).getNumLegs(); //output tensor
+}
+
+
 unsigned int TensorNetwork::getNumTensors() const
 {
  return static_cast<unsigned int>(tensors_.size() - 1); //output tensor is not counted
@@ -213,6 +223,13 @@ unsigned int TensorNetwork::getMaxTensorId() const
 const std::string & TensorNetwork::getName() const
 {
  return name_;
+}
+
+
+void TensorNetwork::rename(const std::string & name)
+{
+ name_ = name;
+ return;
 }
 
 
@@ -324,6 +341,15 @@ void TensorNetwork::updateConnections(unsigned int tensor_id)
 }
 
 
+void TensorNetwork::updateConnectionsFromInputTensors()
+{
+ for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
+  if(iter->first != 0) updateConnections(iter->first);
+ }
+ return;
+}
+
+
 void TensorNetwork::invalidateContractionSequence()
 {
  operations_.clear();
@@ -348,7 +374,8 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
                                  std::shared_ptr<Tensor> tensor,             //in: appended tensor
                                  const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
-                                 bool conjugated)                            //in: complex conjugation flag for the appended tensor
+                                 bool conjugated,                            //in: complex conjugation flag for the appended tensor
+                                 bool leg_matching_check)                    //in: tensor leg matching check
 {
  if(explicit_output_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
@@ -361,18 +388,21 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
   return false;
  }
  //Check the validity of new connections:
- unsigned int mode = 0;
- for(const auto & leg: connections){
-  const auto * tensconn = this->getTensorConn(leg.getTensorId());
-  if(tensconn != nullptr){ //connected tensor is already in the tensor network
-   const auto & tens_legs = tensconn->getTensorLegs();
-   const auto & tens_leg = tens_legs[leg.getDimensionId()];
-   if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
-    std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid!" << std::endl;
-    return false;
+ if(leg_matching_check){
+  unsigned int mode = 0;
+  for(const auto & leg: connections){
+   const auto * tensconn = this->getTensorConn(leg.getTensorId());
+   if(tensconn != nullptr){ //connected tensor is already in the tensor network
+    const auto & tens_legs = tensconn->getTensorLegs();
+    const auto & tens_leg = tens_legs[leg.getDimensionId()];
+    if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
+     std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid: "
+               << "Failed input leg: "; leg.printIt(); std::cout << std::endl;
+     return false;
+    }
    }
+   ++mode;
   }
-  ++mode;
  }
  //Append the tensor to the tensor network:
  auto new_pos = tensors_.emplace(std::make_pair(
@@ -795,11 +825,11 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
 }
 
 
-bool TensorNetwork::reoderOutputModes(const std::vector<unsigned int> & order)
+bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
 {
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid request: " <<
-   "Reodering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
+   "Reordering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
  auto * output_tensor = this->getTensorConn(0);

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/10/20
+REVISION: 2019/10/29
 
 Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -118,8 +118,8 @@ private:
   class TensorDataReq{
   public:
    std::promise<std::shared_ptr<talsh::Tensor>> slice_promise_;
-   std::shared_ptr<Tensor> tensor_;
    std::vector<std::pair<DimOffset,DimExtent>> slice_specs_;
+   std::shared_ptr<Tensor> tensor_;
 
    TensorDataReq(std::promise<std::shared_ptr<talsh::Tensor>> && slice_promise,
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_specs,

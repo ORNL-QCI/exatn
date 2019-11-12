@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/10/16
+REVISION: 2019/10/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,9 +43,9 @@ public:
  struct OperatorComponent{
   //Tensor network (or a single tensor stored as a tensor network of size 1):
   std::shared_ptr<TensorNetwork> network;
-  //Ket legs of the tensor network: Output tensor leg --> global tensor mode id:
+  //Ket legs of the tensor network: Global tensor mode id <-- Output tensor leg:
   std::vector<std::pair<unsigned int, unsigned int>> ket_legs;
-  //Bra legs of the tensor network: Output tensor leg --> global tensor mode id:
+  //Bra legs of the tensor network: Global tensor mode id <-- Output tensor leg:
   std::vector<std::pair<unsigned int, unsigned int>> bra_legs;
   //Expansion coefficient of the operator component:
   std::complex<double> coefficient;
@@ -64,8 +64,20 @@ public:
 
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
- inline ConstIterator cbegin() {return components_.cbegin();}
- inline ConstIterator cend() {return components_.cend();}
+ inline ConstIterator cbegin() const {return components_.cbegin();}
+ inline ConstIterator cend() const {return components_.cend();}
+
+ /** Returns the name of the tensor network operator. **/
+ inline const std::string & getName() const{
+  return name_;
+ }
+
+ /** Returns the rank of the tensor operator (number of legs per component).
+     If the expansion is empty, returns -1. **/
+ inline int getRank() const{
+  if(!(components_.empty())) return components_[0].network->getRank();
+  return -1;
+ }
 
  /** Returns the total number of components in the tensor operator. **/
  inline std::size_t getNumComponents() const{
@@ -84,14 +96,17 @@ public:
      tensor act on a ket vector and which on a bra vector, together with their mapping onto
      the global modes of the tensor space the tensor operator is supposed to act upon. **/
  bool appendComponent(std::shared_ptr<TensorNetwork> network,                                 //in: tensor network (or single tensor as a tensor network)
-                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Output tensor leg --> global tensor mode id
-                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Output tensor leg --> global tensor mode id
+                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
+                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg
                       const std::complex<double> coefficient);                                //in: expansion coefficient
 
  /** Conjugates the tensor operator: All constituting tensors are complex conjugated,
      all tensor legs reverse their direction, bra legs and ket legs are swapped,
      complex linear expansion coefficients are complex conjugated.  **/
  void conjugate();
+
+ /** Prints. **/
+ void printIt() const;
 
 protected:
 

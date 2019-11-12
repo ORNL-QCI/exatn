@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/10/16
+REVISION: 2019/11/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -110,6 +110,9 @@ public:
  /** Returns TRUE if the tensor network is finalized, FALSE otherwise. **/
  bool isFinalized() const;
 
+ /** Returns the rank of the tensor network (rank of its output tensor). **/
+ unsigned int getRank() const;
+
  /** Returns the number of input tensors in the tensor network.
      Note that the output tensor (tensor #0) is not counted here. **/
  unsigned int getNumTensors() const;
@@ -119,6 +122,9 @@ public:
 
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;
+
+ /** Renames the tensor network. **/
+ void rename(const std::string & name);
 
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
@@ -133,9 +139,9 @@ public:
  /** End iterator **/
  inline Iterator end() {return tensors_.end();}
  /** Begin constant iterator **/
- inline ConstIterator cbegin() {return tensors_.cbegin();}
+ inline ConstIterator cbegin() const {return tensors_.cbegin();}
  /** End constant iterator **/
- inline ConstIterator cend() {return tensors_.cend();}
+ inline ConstIterator cend() const {return tensors_.cend();}
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/
@@ -150,7 +156,8 @@ public:
  bool appendTensor(unsigned int tensor_id,                     //in: appended tensor id (unique within the tensor network)
                    std::shared_ptr<Tensor> tensor,             //in: appended tensor
                    const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
-                   bool conjugated = false);                   //in: complex conjugation flag for the appended tensor
+                   bool conjugated = false,                    //in: complex conjugation flag for the appended tensor
+                   bool leg_matching_check = true);            //in: tensor leg matching check
 
  /** Appends a new tensor to the tensor network by matching the tensor modes
      with the modes of the output tensor of the tensor network. The unmatched modes
@@ -199,9 +206,9 @@ public:
  bool appendTensorNetworkGate(TensorNetwork && network,                   //in: appended tensor network gate (operator)
                               const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes of the primary network (half-rank)
 
- /** Reoders the modes of the output tensor of the tensor network:
+ /** Reorders the modes of the output tensor of the tensor network:
      order[x] = y: yth mode of the output tensor becomes its xth mode. **/
- bool reoderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
+ bool reorderOutputModes(const std::vector<unsigned int> & order); //in: new order of the output tensor modes (N2O)
 
  /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
      The released tensor legs will be joined at the end of the output tensor,
@@ -264,6 +271,10 @@ protected:
  /** Updates tensor network linking when a tensor has its connections modified:
      tensor_id is the id of the tensor whose leg numeration was updated. **/
  void updateConnections(unsigned int tensor_id); //in: id of the tensor whose connections were modified
+
+ /** Calls updateConnections() method for all input tensors.
+     This is used for updating the output tensor legs. **/
+ void updateConnectionsFromInputTensors();
 
  /** Invalidates cached tensor contraction sequence. **/
  void invalidateContractionSequence();

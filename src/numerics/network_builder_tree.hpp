@@ -1,4 +1,4 @@
-/** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
+/** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
 REVISION: 2019/11/01
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
@@ -7,8 +7,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 /** Rationale:
 **/
 
-#ifndef EXATN_NUMERICS_NETWORK_BUILDER_MPS_HPP_
-#define EXATN_NUMERICS_NETWORK_BUILDER_MPS_HPP_
+#ifndef EXATN_NUMERICS_NETWORK_BUILDER_TREE_HPP_
+#define EXATN_NUMERICS_NETWORK_BUILDER_TREE_HPP_
 
 #include "tensor_basic.hpp"
 #include "network_builder.hpp"
@@ -20,16 +20,16 @@ namespace exatn{
 
 namespace numerics{
 
-class NetworkBuilderMPS: public NetworkBuilder{
+class NetworkBuilderTree: public NetworkBuilder{
 
 public:
 
- NetworkBuilderMPS();
- NetworkBuilderMPS(const NetworkBuilderMPS &) = default;
- NetworkBuilderMPS & operator=(const NetworkBuilderMPS &) = default;
- NetworkBuilderMPS(NetworkBuilderMPS &&) noexcept = default;
- NetworkBuilderMPS & operator=(NetworkBuilderMPS &&) noexcept = default;
- virtual ~NetworkBuilderMPS() = default;
+ NetworkBuilderTree();
+ NetworkBuilderTree(const NetworkBuilderTree &) = default;
+ NetworkBuilderTree & operator=(const NetworkBuilderTree &) = default;
+ NetworkBuilderTree(NetworkBuilderTree &&) noexcept = default;
+ NetworkBuilderTree & operator=(NetworkBuilderTree &&) noexcept = default;
+ virtual ~NetworkBuilderTree() = default;
 
  /** Retrieves a specific parameter of the tensor network builder. **/
  virtual bool getParameter(const std::string & name, long long * value) const override;
@@ -45,10 +45,11 @@ public:
 private:
 
  long long max_bond_dim_; //maximal internal bond dimension
+ long long arity_;        //tree arity
 };
 
 } //namespace numerics
 
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_NETWORK_BUILDER_MPS_HPP_
+#endif //EXATN_NUMERICS_NETWORK_BUILDER_TREE_HPP_

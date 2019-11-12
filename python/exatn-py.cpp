@@ -126,20 +126,24 @@ void create_exatn_py_module(py::module &m) {
       .def("getTensor", &exatn::numerics::TensorNetwork::getTensor, "")
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
-               unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
+               unsigned int,
+               std::shared_ptr<exatn::numerics::Tensor>,
                const std::vector<exatn::numerics::TensorLeg> &,
-               bool conjugated)) &
+               bool conjugated,
+               bool leg_matching_check)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
-               unsigned int, std::shared_ptr<exatn::numerics::Tensor>,
+               unsigned int,
+               std::shared_ptr<exatn::numerics::Tensor>,
                const std::vector<std::pair<unsigned int, unsigned int>> &,
-               const std::vector<exatn::LegDirection> &, bool conjugated)) &
+               const std::vector<exatn::LegDirection> &,
+               bool conjugated)) &
                exatn::numerics::TensorNetwork::appendTensor,
            "")
-      .def("reoderOutputModes",
-           &exatn::numerics::TensorNetwork::reoderOutputModes, "")
+      .def("reorderOutputModes",
+           &exatn::numerics::TensorNetwork::reorderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
       .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "");
 

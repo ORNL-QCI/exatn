@@ -76,9 +76,9 @@ if(WITH_LAPACK)
   ## DMITRY WILL UPDATE THESE WITH CORRECT LAPACK LIBS
   set(LAPACK_LIBRARIES "")
   if (BLAS_LIB STREQUAL "ATLAS")
-    set(LAPACK_LIBRARIES "-llapack -llapack")
+    set(LAPACK_LIBRARIES "-llapack")
   elseif(BLAS_LIB STREQUAL "MKL")
-    set(LAPACK_LIBRARIES "MKL LIBNAME")
+    set(LAPACK_LIBRARIES "-llapack" "-llapack")
   elseif(BLAS_LIB STREQUAL "ACML")
     set(LAPACK_LIBRARIES "${acml_mp}")
   elseif(BLAS_LIB STREQUAL "ESSL")
@@ -114,7 +114,7 @@ if(APPLE)
                             PATH_INTEL=${PATH_INTEL_ROOT}
                             WITH_LAPACK=${WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
-                            LAPACK_LIBS=${LAPACK_LIBRARIES}
+                            LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -138,7 +138,7 @@ if(APPLE)
                             PATH_INTEL=${PATH_INTEL_ROOT}
                             WITH_LAPACK=${WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
-                            LAPACK_LIBS=${LAPACK_LIBRARIES}
+                            LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   elseif(MPI_LIB STREQUAL "MPICH")
@@ -162,7 +162,7 @@ if(APPLE)
                             PATH_INTEL=${PATH_INTEL_ROOT}
                             WITH_LAPACK=${WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
-                            LAPACK_LIBS=${LAPACK_LIBRARIES}
+                            LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
   endif()
@@ -194,7 +194,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -219,7 +219,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "MPICH")
@@ -244,7 +244,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     endif()
@@ -269,7 +269,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -292,7 +292,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "MPICH")
@@ -315,7 +315,7 @@ else()
                               PATH_INTEL=${PATH_INTEL_ROOT}
                               WITH_LAPACK=${WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
-                              LAPACK_LIBS=${LAPACK_LIBRARIES}
+                              LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     endif()
