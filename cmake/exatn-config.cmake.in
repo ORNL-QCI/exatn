@@ -148,6 +148,9 @@ else()
 endif()
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEXATN_SERVICE -fPIC -DPATH_MAX=4096 -Wno-attributes")
+if (NOT CUDA_FOUND)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
+endif()
 # Create imported target CppMicroServices::CppMicroServices
 add_library(CppMicroServices::CppMicroServices SHARED IMPORTED)
 

@@ -389,6 +389,69 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND}
           -E
           copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/talshxx.hpp
+          ${CMAKE_INSTALL_PREFIX}/include/talshxx.hpp
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor talshxx.hpp to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/talsh.h
+          ${CMAKE_INSTALL_PREFIX}/include/talsh.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor talsh.h to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/timer.h
+          ${CMAKE_INSTALL_PREFIX}/include/timer.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor timer.h to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/tensor_algebra.h
+          ${CMAKE_INSTALL_PREFIX}/include/tensor_algebra.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor tensor_algebra.h to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/talsh_complex.h
+          ${CMAKE_INSTALL_PREFIX}/include/talsh_complex.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor talsh_complex.h to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/mem_manager.h
+          ${CMAKE_INSTALL_PREFIX}/include/mem_manager.h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor mem_manager.h to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
+          ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/talsh_task.hpp
+          ${CMAKE_INSTALL_PREFIX}/include/talsh_task.hpp
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Installing ExaTensor talsh_task.hpp to Install Prefix...")
+add_custom_command(
+  TARGET exatensor-build POST_BUILD
+  COMMAND ${CMAKE_COMMAND}
+          -E
+          copy
           ${CMAKE_SOURCE_DIR}/tpls/ExaTensor/include/byte_packet.h
           ${CMAKE_INSTALL_PREFIX}/include/byte_packet.h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
