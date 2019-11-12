@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/13
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -176,6 +176,15 @@ void NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 void NumServer::submit(TensorNetwork & network)
 {
+ auto output_tensor = network.getTensor(0);
+ auto res = tensors_.emplace(std::make_pair(output_tensor->getName(),output_tensor));
+ if(res.second){ //output tensor did not exist and needs to be created
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand((res.first)->second);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->
+   resetTensorElementType((res.first)->second->getElementType());
+  submit(op);
+ }
  auto & op_list = network.getOperationList();
  for(auto op = op_list.begin(); op != op_list.end(); ++op){
   tensor_rt_->submit(*op);
