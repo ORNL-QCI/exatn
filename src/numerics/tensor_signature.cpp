@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -12,6 +12,10 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+TensorSignature::TensorSignature()
+{
+}
 
 TensorSignature::TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces):
 subspaces_(subspaces)
@@ -28,8 +32,14 @@ subspaces_(rank,std::pair<SpaceId,SubspaceId>(SOME_SPACE,0))
 {
 }
 
-TensorSignature::TensorSignature()
+TensorSignature::TensorSignature(const TensorSignature & another,
+                                 const std::vector<unsigned int> & order):
+ TensorSignature(another)
 {
+ const auto rank = another.getRank();
+ assert(order.size() == rank);
+ const auto & orig = another.getDimSpaceAttrs();
+ for(unsigned int new_pos = 0; new_pos < rank; ++new_pos) subspaces_[new_pos] = orig[order[new_pos]];
 }
 
 void TensorSignature::printIt() const
@@ -81,6 +91,11 @@ std::pair<SpaceId,SubspaceId> TensorSignature::getDimSpaceAttr(unsigned int dim_
 {
  assert(dim_id < subspaces_.size()); //debug
  return subspaces_[dim_id];
+}
+
+const std::vector<std::pair<SpaceId,SubspaceId>> & TensorSignature::getDimSpaceAttrs() const
+{
+ return subspaces_;
 }
 
 bool TensorSignature::isCongruentTo(const TensorSignature & another) const

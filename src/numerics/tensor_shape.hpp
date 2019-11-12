@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,18 +29,23 @@ namespace numerics{
 class TensorShape{
 public:
 
+ /** Create an empty tensor shape. **/
+ TensorShape();
+
  /** Create a tensor shape by specifying extents for all tensor dimensions. **/
  template<typename T>
  TensorShape(std::initializer_list<T> extents);
  template<typename T>
  TensorShape(const std::vector<T> & extents);
- /** Create an empty tensor shape. **/
- TensorShape();
 
- TensorShape(const TensorShape & tens_shape) = default;
- TensorShape & operator=(const TensorShape & tens_shape) = default;
- TensorShape(TensorShape && tens_shape) noexcept = default;
- TensorShape & operator=(TensorShape && tens_shape) noexcept = default;
+ /** Create a tensor shape by permuting another tensor shape. **/
+ TensorShape(const TensorShape & another,              //in: another tensor shape
+             const std::vector<unsigned int> & order); //in: new oder (N2O)
+
+ TensorShape(const TensorShape &) = default;
+ TensorShape & operator=(const TensorShape &) = default;
+ TensorShape(TensorShape &&) noexcept = default;
+ TensorShape & operator=(TensorShape &&) noexcept = default;
  virtual ~TensorShape() = default;
 
  /** Print. **/

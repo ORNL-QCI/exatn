@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/11
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -184,14 +184,13 @@ public:
                        bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
 
  /** Appends a tensor network to the current (primary) tensor network by matching the modes
-     of the output tensors of both tensor networks. The unmatched modes of the
-     output tensor of the appended tensor network will be appended to the updated output
-     tensor of the primary tensor network (at the end). The appended tensor network
-     will cease to exist after being absorbed by the primary tensor network.
-     If paired legs of either output tensor are directed, the directions must be respected.
-     The tensors constituting the appended tensor network, except its output tensor,
-     must have their unique ids be different from the ids of the tensors constituting
-     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
+     of the output tensors of both tensor networks. The unmatched modes of the output tensor
+     of the appended tensor network will be appended to the updated output tensor of the
+     primary tensor network (at the end). The appended tensor network will cease to exist
+     after being absorbed by the primary tensor network. If paired legs of either output
+     tensor are directed, the directions must be respected. The tensors constituting the
+     appended tensor network, except its output tensor, will obtain their unique ids to be
+     different from the ids of the tensors constituting the primary tensor network. **/
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 
@@ -204,8 +203,8 @@ public:
      as the replaced modes of the current (primary) tensor network. The appended tensor
      network will cease to exist after being absorbed by the primary tensor network.
      The tensors constituting the appended tensor network, except its output tensor,
-     must have their unique ids be different from the ids of the tensors constituting
-     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
+     will obtain their unique ids to be different from the ids of the tensors constituting
+     the primary tensor network. **/
  bool appendTensorNetworkGate(TensorNetwork && network,                   //in: appended tensor network gate (operator)
                               const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes of the primary network (half-rank)
 
@@ -311,7 +310,12 @@ private:
 
  /** Resets the output tensor in a finalized tensor network to a new
      one with the same signature and shape but a different name. **/
- void resetOutputTensor(const std::string & name = ""); //new name of the output tensor (if empty, will be generated automatically)
+ void resetOutputTensor(const std::string & name = ""); //in: new name of the output tensor (if empty, will be generated automatically)
+
+ /** Resets the output tensor in a finalized tensor network to a new
+     one with a permuted signature and shape, and a different name. **/
+ void resetOutputTensor(const std::vector<unsigned int> & order, //in: new order of dimensions (N2O)
+                        const std::string & name = ""); //in: new name of the output tensor (if empty, will be generated automatically)
 
  /** Updates the max tensor id used in the tensor network when a tensor
      is either appended to or removed from the tensor network.  **/

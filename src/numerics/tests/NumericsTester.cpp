@@ -138,16 +138,16 @@ TEST(NumericsTester, checkTensorExpansion)
  auto success = builder->setParameter("max_bond_dim",6); assert(success);
 
  //Tensor network structure:
- //  O--O--O--O--O--O--O--O
- //  |  |  |  |  |  |  |  |
+ //  O-O-O-O-O-O-O-O
+ //  | | | | | | | |
  auto output_tensor = makeSharedTensor("Z0",std::vector<DimExtent>{2,2,2,2,2,2,2,2});
  auto network = makeSharedTensorNetwork("TensorTrain",output_tensor,*builder);
  network->printIt();
 
  //Hamiltonian structure (four 2-body components):
- //  |  |  |  |  |  |  |  |
- //  ====  ====  ====  ====
- //  |  |  |  |  |  |  |  |
+ //  | | | | | | | |
+ //  === === === ===
+ //  | | | | | | | |
  TensorOperator ham("Hamiltonian"); //will consist of 4 components:
  ham.appendComponent(std::make_shared<Tensor>("H0",TensorShape{2,2,2,2}),
                      {{0,2},{1,3}},            //ket leg map
@@ -172,26 +172,26 @@ TEST(NumericsTester, checkTensorExpansion)
  ham.printIt();
 
  //Application of tensor operator "ham" to the ket tensor network "network":
- //  O--O--O--O--O--O--O--O
- //  |  |  |  |  |  |  |  |
- //  ====  ====  ====  ====
- //  |  |  |  |  |  |  |  |
+ //  O-O-O-O-O-O-O-O     O-O-O-O-O-O-O-O
+ //  | | | | | | | |     | | | | | | | |
+ //  === | | | | | |  +  | | === | | | |  +  ...
+ //  | | | | | | | |     | | | | | | | |
  TensorExpansion ket_vector;
  ket_vector.appendComponent(network,std::complex<double>{0.5});
  TensorExpansion oper_times_ket(ket_vector,ham);
  oper_times_ket.printIt();
 
  //Form the inner product with a conjugated tensor network:
- //  O--O--O--O--O--O--O--O
- //  |  |  |  |  |  |  |  |
- //  ====  ====  ====  ====
- //  |  |  |  |  |  |  |  |
- //  O--O--O--O--O--O--O--O
+ //  O-O-O-O-O-O-O-O     O-O-O-O-O-O-O-O
+ //  | | | | | | | |     | | | | | | | |
+ //  === | | | | | |  +  | | === | | | |  +  ...
+ //  | | | | | | | |     | | | | | | | |
+ //  O-O-O-O-O-O-O-O     O-O-O-O-O-O-O-O
  TensorExpansion bra_vector(ket_vector);
  bra_vector.conjugate();
  bra_vector.printIt();
- TensorExpansion op_prod(oper_times_ket,bra_vector);
- op_prod.printIt();
+ TensorExpansion bra_times_oper_times_ket(bra_vector,oper_times_ket);
+ bra_times_oper_times_ket.printIt();
 }
 
 

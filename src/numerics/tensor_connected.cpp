@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/11/11
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -136,6 +136,25 @@ void TensorConn::replaceStoredTensor(const std::string & name)
  assert(tensor_);
  const auto & old_tensor = *tensor_;
  tensor_ = makeSharedTensor(old_tensor);
+ auto new_name(name);
+ if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
+ tensor_->rename(new_name);
+ return;
+}
+
+void TensorConn::replaceStoredTensor(const std::vector<unsigned int> & order,
+                                     const std::string & name)
+{
+ assert(tensor_);
+ const auto rank = tensor_->getRank();
+ assert(rank == order.size());
+ const auto & old_tensor = *tensor_;
+ tensor_ = makeSharedTensor(old_tensor,order);
+ if(rank > 0){
+  TensorLeg old_legs[rank];
+  for(unsigned int i = 0; i < rank; ++i) old_legs[i] = legs_[i];
+  for(unsigned int i = 0; i < rank; ++i) legs_[i] = old_legs[order[i]];
+ }
  auto new_name(name);
  if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
  tensor_->rename(new_name);

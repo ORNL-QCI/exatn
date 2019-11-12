@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/11/10
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -83,6 +83,24 @@ name_(name), element_type_(TensorElementType::VOID)
     std::cout << "#ERROR(Tensor::Tensor): Invalid function argument: contraction: Missing output tensor mode!" << std::endl;
     assert(false); //missing output tensor dimension
    }
+  }
+ }
+}
+
+Tensor::Tensor(const Tensor & another,
+               const std::vector<unsigned int> & order):
+ name_(another.getName()),
+ shape_(another.getShape(),order),
+ signature_(another.getSignature(),order),
+ element_type_(another.getElementType()),
+ isometries_(another.retrieveIsometries())
+{
+ if(!(isometries_.empty())){
+  const auto rank = order.size();
+  unsigned int o2n[rank];
+  for(unsigned int i = 0; i < rank; ++i) o2n[order[i]] = i;
+  for(auto & iso_group: isometries_){
+   for(auto & old_dim: iso_group) old_dim = o2n[old_dim];
   }
  }
 }

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,20 +35,26 @@ namespace numerics{
 class TensorSignature{
 public:
 
+ /** Create an empty tensor signature. **/
+ TensorSignature();
+
  /** Create a tensor signature by specifying pairs <space_id,subspace_id> for each tensor dimension:
      Case 1: space_id = SOME_SPACE: Then subspace_id refers to the base offset [0..*) in an anonymous abstract space;
      Case 2: space_id != SOME_SPACE: Then space is registered and subspace_id refers to its registered subspace. **/
  TensorSignature(std::initializer_list<std::pair<SpaceId,SubspaceId>> subspaces);
  TensorSignature(const std::vector<std::pair<SpaceId,SubspaceId>> & subspaces);
+
  /** Create a default tensor signature of std::pair<SOME_SPACE,0> by providing the tensor rank only. **/
  TensorSignature(unsigned int rank);
- /** Create an empty tensor signature. **/
- TensorSignature();
 
- TensorSignature(const TensorSignature & tens_signature) = default;
- TensorSignature & operator=(const TensorSignature & tens_signature) = default;
- TensorSignature(TensorSignature && tens_signature) noexcept = default;
- TensorSignature & operator=(TensorSignature && tens_signature) noexcept = default;
+ /** Create a tensor signature by permuting another tensor signature. **/
+ TensorSignature(const TensorSignature & another,          //in: another tensor signature
+                 const std::vector<unsigned int> & order); //in: new order (N2O)
+
+ TensorSignature(const TensorSignature &) = default;
+ TensorSignature & operator=(const TensorSignature &) = default;
+ TensorSignature(TensorSignature &&) noexcept = default;
+ TensorSignature & operator=(TensorSignature &&) noexcept = default;
  virtual ~TensorSignature() = default;
 
  /** Print. **/
@@ -62,6 +68,9 @@ public:
  SpaceId getDimSpaceId(unsigned int dim_id) const;
  SubspaceId getDimSubspaceId(unsigned int dim_id) const;
  std::pair<SpaceId,SubspaceId> getDimSpaceAttr(unsigned int dim_id) const;
+
+ /** Get the attributes of all tensor dimensions. **/
+ const std::vector<std::pair<SpaceId,SubspaceId>> & getDimSpaceAttrs() const;
 
  /** Returns TRUE if the tensor signature coincides with another tensor signature. **/
  bool isCongruentTo(const TensorSignature & another) const;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,10 +37,13 @@ public:
            unsigned int dimensn_id,
            LegDirection direction = LegDirection::UNDIRECT);
 
- TensorLeg(const TensorLeg & tens_leg) = default;
- TensorLeg & operator=(const TensorLeg & tens_leg) = default;
- TensorLeg(TensorLeg && tens_leg) noexcept = default;
- TensorLeg & operator=(TensorLeg && tens_leg) noexcept = default;
+ /** Create the tensor leg {0,0,UNDIRECT}. **/
+ TensorLeg();
+
+ TensorLeg(const TensorLeg &) = default;
+ TensorLeg & operator=(const TensorLeg &) = default;
+ TensorLeg(TensorLeg &&) noexcept = default;
+ TensorLeg & operator=(TensorLeg &&) noexcept = default;
  virtual ~TensorLeg() = default;
 
  /** Print. **/

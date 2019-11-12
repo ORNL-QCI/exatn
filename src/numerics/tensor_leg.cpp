@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,7 +13,12 @@ namespace numerics{
 TensorLeg::TensorLeg(unsigned int tensor_id,
                      unsigned int dimensn_id,
                      LegDirection direction):
-tensor_id_(tensor_id), dimensn_id_(dimensn_id), direction_(direction)
+ tensor_id_(tensor_id), dimensn_id_(dimensn_id), direction_(direction)
+{
+}
+
+TensorLeg::TensorLeg():
+ TensorLeg(0,0)
 {
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/11/10
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -102,6 +102,10 @@ public:
         const Tensor & left_tensor,                  //left tensor
         const Tensor & right_tensor,                 //right tensor
         const std::vector<TensorLeg> & contraction); //tensor contraction pattern
+
+ /** Create a tensor by permuting another tensor. **/
+ Tensor(const Tensor & another,                   //in: another tensor
+        const std::vector<unsigned int> & order); //in: new order (N2O)
 
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;

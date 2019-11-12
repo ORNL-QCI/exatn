@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/11
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -296,6 +296,17 @@ void TensorNetwork::resetOutputTensor(const std::string & name)
  auto iter = tensors_.find(0);
  assert(iter != tensors_.end());
  iter->second.replaceStoredTensor(name);
+ return;
+}
+
+
+void TensorNetwork::resetOutputTensor(const std::vector<unsigned int> & order,
+                                      const std::string & name)
+{
+ assert(finalized_ != 0);
+ auto iter = tensors_.find(0);
+ assert(iter != tensors_.end());
+ iter->second.replaceStoredTensor(order,name);
  return;
 }
 
@@ -763,8 +774,23 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
    return false;
   }
  }
- //Pair output legs of the primary tensor network with output legs of the appended (secondary) tensor network:
+ //Shift input tensor numeration in all internal legs of the appended tensor network:
  auto max_tensor_id = this->getMaxTensorId(); assert(max_tensor_id > 0);
+ for(auto tensor_conn_iter = network.begin(); tensor_conn_iter != network.end(); ++tensor_conn_iter){
+  if(tensor_conn_iter->first != 0){
+   auto & tensor_conn = tensor_conn_iter->second;
+   const auto tensor_conn_rank = tensor_conn.getNumLegs();
+   for(unsigned int i = 0; i < tensor_conn_rank; ++i){
+    TensorLeg new_leg = tensor_conn.getTensorLeg(i);
+    const auto conn_tensor_id = new_leg.getTensorId();
+    if(conn_tensor_id != 0){
+     new_leg.resetTensorId(conn_tensor_id+max_tensor_id);
+     tensor_conn.resetLeg(i,new_leg);
+    }
+   }
+  }
+ }
+ //Pair output legs of the primary tensor network with output legs of the appended (secondary) tensor network:
  if(pairing.size() > 0){
   for(const auto & link: pairing){
    const auto & output0_leg_id = link.first;
@@ -811,8 +837,8 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
  //Append all input tensors from the appended tensor network into the primary tensor network:
  auto tensors = network.getTensorConnAll();
  for(auto & tensor: tensors){
-  unsigned int tensor_id = tensor->getTensorId();
-  auto res = emplaceTensorConn(false,tensor_id+max_tensor_id,*tensor);
+  unsigned int tensor_id = tensor->getTensorId() + max_tensor_id;
+  auto res = emplaceTensorConn(false,tensor_id,*tensor);
   if(!res){
    std::cout << "#ERROR(exatn::numerics::TensorNetwork::appendTensorNetwork): Tensor id already in use!" << std::endl;
    return false;
@@ -870,8 +896,23 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
    }
   }
  }
- //Pair output legs of the primary tensor network with the output legs of the appended tensor network:
+ //Shift input tensor numeration in all internal legs of the appended tensor network:
  auto max_tensor_id = this->getMaxTensorId(); assert(max_tensor_id > 0);
+ for(auto tensor_conn_iter = network.begin(); tensor_conn_iter != network.end(); ++tensor_conn_iter){
+  if(tensor_conn_iter->first != 0){
+   auto & tensor_conn = tensor_conn_iter->second;
+   const auto tensor_conn_rank = tensor_conn.getNumLegs();
+   for(unsigned int i = 0; i < tensor_conn_rank; ++i){
+    TensorLeg new_leg = tensor_conn.getTensorLeg(i);
+    const auto conn_tensor_id = new_leg.getTensorId();
+    if(conn_tensor_id != 0){
+     new_leg.resetTensorId(conn_tensor_id+max_tensor_id);
+     tensor_conn.resetLeg(i,new_leg);
+    }
+   }
+  }
+ }
+ //Pair output legs of the primary tensor network with the output legs of the appended tensor network:
  if(pairing.size() > 0){
   unsigned int output1_leg_id = 0;
   unsigned int output1_replace_leg_id = output1_rank / 2;
@@ -908,8 +949,8 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
  //Append all input tensors from the appended tensor network into the primary tensor network:
  auto tensors = network.getTensorConnAll();
  for(auto & tensor: tensors){
-  unsigned int tensor_id = tensor->getTensorId();
-  auto res = emplaceTensorConn(false,tensor_id+max_tensor_id,*tensor);
+  unsigned int tensor_id = tensor->getTensorId() + max_tensor_id;
+  auto res = emplaceTensorConn(false,tensor_id,*tensor);
   if(!res){
    std::cout << "#ERROR(exatn::numerics::TensorNetwork::appendTensorNetworkGate): Tensor id already in use!" << std::endl;
    return false;
@@ -929,21 +970,14 @@ bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
    "Reordering modes in the output tensor of an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
- auto * output_tensor = this->getTensorConn(0);
- assert(output_tensor != nullptr);
- auto output_tensor_rank = output_tensor->getNumLegs();
+ const auto output_tensor_rank = this->getTensorConn(0)->getNumLegs();
  if(order.size() != output_tensor_rank){
-  std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid argument: Order: Wrong length: " <<
-   order.size() << " versus " << output_tensor_rank << std::endl;
+  std::cout << "#ERROR(TensorNetwork::reorderOutputModes): Invalid argument: Dimension order: Wrong length: "
+            << order.size() << " versus " << output_tensor_rank << std::endl;
   return false;
  }
  if(output_tensor_rank > 0){
-  auto legs = output_tensor->getTensorLegs();
-  for(unsigned int i = 0; i < output_tensor_rank; ++i){
-   const auto & old_leg_id = order[i];
-   assert(old_leg_id < output_tensor_rank);
-   output_tensor->resetLeg(i,legs[old_leg_id]);
-  }
+  resetOutputTensor(order);
   updateConnections(0);
  }
  return true;

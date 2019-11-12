@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,6 +15,16 @@ namespace numerics{
 
 TensorShape::TensorShape()
 {
+}
+
+TensorShape::TensorShape(const TensorShape & another,
+                         const std::vector<unsigned int> & order):
+ TensorShape(another)
+{
+ const auto rank = another.getRank();
+ assert(order.size() == rank);
+ const auto & orig = another.getDimExtents();
+ for(unsigned int new_pos = 0; new_pos < rank; ++new_pos) extents_[new_pos] = orig[order[new_pos]];
 }
 
 void TensorShape::printIt() const
