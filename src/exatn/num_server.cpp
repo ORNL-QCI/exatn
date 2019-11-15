@@ -222,6 +222,22 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
  return false;
 }
 
+bool NumServer::submit(TensorExpansion & expansion)
+{
+ for(auto component = expansion.begin(); component != expansion.end(); ++component){
+  auto & network = *(component->network_);
+  auto submitted = submit(network); if(!submitted) return false;
+  //`Submit the scaling operation for the output tensor by component->coefficient_
+ }
+ return true;
+}
+
+bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion)
+{
+ if(expansion) return submit(*expansion);
+ return false;
+}
+
 bool NumServer::sync(const Tensor & tensor, bool wait)
 {
  return tensor_rt_->sync(tensor,wait);

@@ -148,6 +148,9 @@ public:
  /** Submits a tensor network for processing (evaluating the tensor-result). **/
  bool submit(TensorNetwork & network);
  bool submit(std::shared_ptr<TensorNetwork> network);
+ /** Submits a tensor network expansion for processing (evaluating the tensor result). **/
+ bool submit(TensorExpansion & expansion);
+ bool submit(std::shared_ptr<TensorExpansion> expansion);
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
