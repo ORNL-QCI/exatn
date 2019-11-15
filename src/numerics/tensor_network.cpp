@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/12
+REVISION: 2019/11/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -167,6 +167,15 @@ TensorNetwork::TensorNetwork(const std::string & name,
 }
 
 
+TensorNetwork::TensorNetwork(const TensorNetwork & another,
+                             bool replace_output,
+                             const std::string & new_output_name)
+{
+ *this = another;
+ if(replace_output) this->resetOutputTensor(new_output_name);
+}
+
+/*
 TensorNetwork::TensorNetwork(const TensorNetwork & another)
 {
  explicit_output_ = 1;
@@ -216,7 +225,7 @@ TensorNetwork & TensorNetwork::operator=(const TensorNetwork & another)
  finalized_ = 1;
  return *this;
 }
-
+*/
 
 void TensorNetwork::printIt() const
 {
@@ -744,6 +753,7 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
  }
  //Reset the output tensor to a new one:
  this->resetOutputTensor();
+ network.resetOutputTensor();
  //Check validity of leg pairing:
  auto * output0 = this->getTensorConn(0);
  assert(output0 != nullptr);
@@ -861,6 +871,7 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
  }
  //Reset the output tensor to a new one:
  this->resetOutputTensor();
+ network.resetOutputTensor();
  //Check validity of leg pairing:
  auto * output0 = this->getTensorConn(0);
  assert(output0 != nullptr);
