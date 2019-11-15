@@ -319,16 +319,16 @@ void create_exatn_py_module(py::module &m) {
                exatn::NumServer::destroySubspace,
            "")
       .def("submit",
-           (void (exatn::NumServer::*)(
+           (bool (exatn::NumServer::*)(
                std::shared_ptr<exatn::numerics::TensorOperation>)) &
                exatn::NumServer::submit,
            "")
       .def("submit",
-           (void (exatn::NumServer::*)(exatn::numerics::TensorNetwork &)) &
+           (bool (exatn::NumServer::*)(exatn::numerics::TensorNetwork &)) &
                exatn::NumServer::submit,
            "")
       .def("submit",
-           (void (exatn::NumServer::*)(
+           (bool (exatn::NumServer::*)(
                std::shared_ptr<exatn::numerics::TensorNetwork>)) &
                exatn::NumServer::submit,
            "")

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/05
+REVISION: 2019/11/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -91,6 +91,10 @@ public:
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
                NetworkBuilder & builder);                   //in: specific tensor network builder
+ /** Clones a tensor network with an optional replacement of the output tensor. **/
+ TensorNetwork(const TensorNetwork & another,               //in: another tensor network
+               bool replace_output,                         //in: whether or not to replace the output tensor
+               const std::string & new_output_name = "");   //in: new name of the output tensor (if empty, will be generated)
 
  TensorNetwork(const TensorNetwork &) = default;
  TensorNetwork & operator=(const TensorNetwork &) = default;
@@ -118,7 +122,7 @@ public:
  unsigned int getNumTensors() const;
 
  /** Returns the maximal tensor id value used in the tensor network. **/
- unsigned int getMaxTensorId() const;
+ unsigned int getMaxTensorId();
 
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;
@@ -129,10 +133,10 @@ public:
  /** Returns a given tensor of the tensor network without its connections (legs).
      If not found, returns nullptr. **/
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id,
-                                   bool * conjugated = nullptr);
+                                   bool * conjugated = nullptr) const;
 
  /** Get tensor connections. **/
- const std::vector<TensorLeg> * getTensorConnections(unsigned int tensor_id);
+ const std::vector<TensorLeg> * getTensorConnections(unsigned int tensor_id) const;
 
  /** Begin iterator **/
  inline Iterator begin() {return tensors_.begin();}
@@ -181,14 +185,13 @@ public:
                        bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
 
  /** Appends a tensor network to the current (primary) tensor network by matching the modes
-     of the output tensors of both tensor networks. The unmatched modes of the
-     output tensor of the appended tensor network will be appended to the updated output
-     tensor of the primary tensor network (at the end). The appended tensor network
-     will cease to exist after being absorbed by the primary tensor network.
-     If paired legs of either output tensor are directed, the directions must be respected.
-     The tensors constituting the appended tensor network, except its output tensor,
-     must have their unique ids be different from the ids of the tensors constituting
-     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
+     of the output tensors of both tensor networks. The unmatched modes of the output tensor
+     of the appended tensor network will be appended to the updated output tensor of the
+     primary tensor network (at the end). The appended tensor network will cease to exist
+     after being absorbed by the primary tensor network. If paired legs of either output
+     tensor are directed, the directions must be respected. The tensors constituting the
+     appended tensor network, except its output tensor, will obtain their unique ids to be
+     different from the ids of the tensors constituting the primary tensor network. **/
  bool appendTensorNetwork(TensorNetwork && network,                                            //in: appended tensor network
                           const std::vector<std::pair<unsigned int, unsigned int>> & pairing); //in: leg pairing: output tensor mode (primary) -> output tensor mode (appended)
 
@@ -201,8 +204,8 @@ public:
      as the replaced modes of the current (primary) tensor network. The appended tensor
      network will cease to exist after being absorbed by the primary tensor network.
      The tensors constituting the appended tensor network, except its output tensor,
-     must have their unique ids be different from the ids of the tensors constituting
-     the primary tensor network, otherwise the result is undefined and unrecoverable! **/
+     will obtain their unique ids to be different from the ids of the tensors constituting
+     the primary tensor network. **/
  bool appendTensorNetworkGate(TensorNetwork && network,                   //in: appended tensor network gate (operator)
                               const std::vector<unsigned int> & pairing); //in: leg pairing: output tensor modes of the primary network (half-rank)
 
@@ -255,6 +258,22 @@ public:
 
 protected:
 
+ /** Emplaces a connected tensor into the tensor network. **/
+ inline bool emplaceTensorConn(unsigned int tensor_id,
+                               const TensorConn & tensor_conn);
+ inline bool emplaceTensorConn(bool dynamic_id_enabled,
+                               unsigned int tensor_id,
+                               const TensorConn & tensor_conn); //tensor_id may change if dynamic_id_enabled
+
+ /** Emplaces a connected tensor into the tensor network. **/
+ template <typename... Args>
+ inline bool emplaceTensorConnDirect(bool dynamic_id_enabled,
+                                     unsigned int tensor_id,
+                                     Args&&... args); //arguments for TensorConn ctor
+
+ /** Erases a connected tensor from the tensor network. **/
+ inline bool eraseTensorConn(unsigned int tensor_id);
+
  /** Returns a non-owning pointer to a given tensor of the tensor network
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
@@ -276,6 +295,9 @@ protected:
      This is used for updating the output tensor legs. **/
  void updateConnectionsFromInputTensors();
 
+ /** Invalidate the cached max tensor id. **/
+ void invalidateMaxTensorId();
+
  /** Invalidates cached tensor contraction sequence. **/
  void invalidateContractionSequence();
 
@@ -287,22 +309,100 @@ protected:
 
 private:
 
+ /** Resets the output tensor in a finalized tensor network to a new
+     one with the same signature and shape but a different name. **/
+ void resetOutputTensor(const std::string & name = ""); //in: new name of the output tensor (if empty, will be generated automatically)
+
+ /** Resets the output tensor in a finalized tensor network to a new
+     one with a permuted signature and shape, and a different name. **/
+ void resetOutputTensor(const std::vector<unsigned int> & order, //in: new order of dimensions (N2O)
+                        const std::string & name = ""); //in: new name of the output tensor (if empty, will be generated automatically)
+
+ /** Updates the max tensor id used in the tensor network when a tensor
+     is either appended to or removed from the tensor network.  **/
+ void updateMaxTensorIdOnAppend(unsigned int tensor_id);
+ void updateMaxTensorIdOnRemove(unsigned int tensor_id);
+
+ /** Data members: Core: **/
  int explicit_output_;                                  //whether or not the output tensor has been fully specified during construction
  int finalized_;                                        //finalization status of the tensor network
  std::string name_;                                     //tensor network name
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
+ /** Data members: Tensor id management: **/
+ unsigned int max_tensor_id_;   //cached max tensor id used so far (0:undefined)
+
+ /** Data members: Contraction sequence: **/
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
 };
 
+
+//DEFINITIONS:
+inline bool TensorNetwork::emplaceTensorConn(unsigned int tensor_id,
+                                             const TensorConn & tensor_conn)
+{
+ auto res = tensors_.emplace(tensor_id,tensor_conn);
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
+ return res.second;
+}
+
+
+inline bool TensorNetwork::emplaceTensorConn(bool dynamic_id_enabled,
+                                             unsigned int tensor_id,
+                                             const TensorConn & tensor_conn)
+{
+ auto res = tensors_.emplace(tensor_id,tensor_conn);
+ if(!(res.second) && dynamic_id_enabled){
+  tensor_id = getMaxTensorId() + 1;
+  assert(tensor_id != 0); //unsigned int overflow
+  res = tensors_.emplace(tensor_id,tensor_conn);
+ }
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
+ return res.second;
+}
+
+
+template <typename... Args>
+inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_id_enabled,
+                                                   unsigned int tensor_id,
+                                                   Args&&... args)
+{
+ auto res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ if(!(res.second) && dynamic_id_enabled){
+  tensor_id = getMaxTensorId() + 1;
+  assert(tensor_id != 0); //unsigned int overflow
+  res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ }
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+ }
+ return res.second;
+}
+
+
+inline bool TensorNetwork::eraseTensorConn(unsigned int tensor_id)
+{
+ auto num_deleted = tensors_.erase(tensor_id);
+ if(num_deleted == 1) updateMaxTensorIdOnRemove(tensor_id);
+ return (num_deleted == 1);
+}
+
 } //namespace numerics
+
 
 template<typename... Args>
 inline std::shared_ptr<numerics::TensorNetwork> makeSharedTensorNetwork(Args&&... args)
 {
- return std::make_shared<numerics::TensorNetwork>(args...);
+ return std::make_shared<numerics::TensorNetwork>(std::forward<Args>(args)...);
 }
 
 } //namespace exatn

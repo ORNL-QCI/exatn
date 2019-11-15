@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
+#include "tensor_symbol.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -86,6 +87,24 @@ name_(name), element_type_(TensorElementType::VOID)
  }
 }
 
+Tensor::Tensor(const Tensor & another,
+               const std::vector<unsigned int> & order):
+ name_(another.getName()),
+ shape_(another.getShape(),order),
+ signature_(another.getSignature(),order),
+ element_type_(another.getElementType()),
+ isometries_(another.retrieveIsometries())
+{
+ if(!(isometries_.empty())){
+  const auto rank = order.size();
+  unsigned int o2n[rank];
+  for(unsigned int i = 0; i < rank; ++i) o2n[order[i]] = i;
+  for(auto & iso_group: isometries_){
+   for(auto & old_dim: iso_group) old_dim = o2n[old_dim];
+  }
+ }
+}
+
 void Tensor::printIt() const
 {
  std::cout << name_; signature_.printIt(); shape_.printIt();
@@ -95,6 +114,12 @@ void Tensor::printIt() const
 void Tensor::printItFile(std::ofstream & output_file) const
 {
  output_file << name_; signature_.printItFile(output_file); shape_.printItFile(output_file);
+ return;
+}
+
+void Tensor::rename(const std::string & name)
+{
+ name_ = name;
  return;
 }
 
@@ -210,6 +235,11 @@ const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 TensorHashType Tensor::getTensorHash() const
 {
  return reinterpret_cast<TensorHashType>(this);
+}
+
+std::string generateTensorName(const Tensor & tensor)
+{
+ return tensor_hex_name(tensor.getTensorHash());
 }
 
 } //namespace numerics

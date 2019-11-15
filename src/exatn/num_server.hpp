@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/10/13
+REVISION: 2019/11/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -26,9 +26,14 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "space_register.hpp"
 #include "tensor.hpp"
+#include "tensor_operation.hpp"
 #include "tensor_op_factory.hpp"
-#include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
+#include "tensor_network.hpp"
+#include "tensor_operator.hpp"
+#include "tensor_expansion.hpp"
+#include "network_build_factory.hpp"
+#include "contraction_seq_optimizer_factory.hpp"
 
 #include "tensor_runtime.hpp"
 
@@ -55,6 +60,14 @@ using numerics::Tensor;
 using numerics::TensorOperation;
 using numerics::TensorOpFactory;
 using numerics::TensorNetwork;
+using numerics::TensorOperator;
+using numerics::TensorExpansion;
+
+using numerics::NetworkBuilder;
+using numerics::NetworkBuildFactory;
+
+using numerics::ContractionSeqOptimizer;
+using numerics::ContractionSeqOptimizerFactory;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
@@ -131,10 +144,10 @@ public:
 
 
  /** Submits an individual tensor operation for processing. **/
- void submit(std::shared_ptr<TensorOperation> operation);
+ bool submit(std::shared_ptr<TensorOperation> operation);
  /** Submits a tensor network for processing (evaluating the tensor-result). **/
- void submit(TensorNetwork & network);
- void submit(std::shared_ptr<TensorNetwork> network);
+ bool submit(TensorNetwork & network);
+ bool submit(std::shared_ptr<TensorNetwork> network);
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
@@ -241,7 +254,7 @@ private:
 
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
- TensorOpFactory * tensor_op_factory_; //tensor operation factory
+ TensorOpFactory * tensor_op_factory_; //tensor operation factory (non-owning pointer)
 
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
@@ -255,16 +268,11 @@ bool NumServer::createTensor(const std::string & name,
                              TensorElementType element_type,
                              Args&&... args)
 {
- auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
- if(res.second){
-  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand((res.first)->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submit(op);
- }else{
-  std::cout << "#ERROR(exatn::NumServer::createTensor): Tensor " << name << " already exists!" << std::endl;
- }
- return res.second;
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+ op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
+ std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+ auto submitted = submit(op);
+ return submitted;
 }
 
 template <typename... Args>
@@ -272,17 +280,12 @@ bool NumServer::createTensorSync(const std::string & name,
                                  TensorElementType element_type,
                                  Args&&... args)
 {
- auto res = tensors_.emplace(std::make_pair(name,std::shared_ptr<Tensor>(new Tensor(name,args...))));
- if(res.second){
-  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand((res.first)->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submit(op);
-  sync(*op);
- }else{
-  std::cout << "#ERROR(exatn::NumServer::createTensor): Tensor " << name << " already exists!" << std::endl;
- }
- return res.second;
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+ op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
+ std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+ auto submitted = submit(op);
+ if(submitted) submitted = sync(*op);
+ return submitted;
 }
 
 template<typename NumericType>
@@ -325,7 +328,7 @@ bool NumServer::addTensors(const std::string & addition,
        op->setTensorOperand(tensor1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       submit(op);
+       parsed = submit(op);
       }else{
        parsed = false;
        std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -381,8 +384,8 @@ bool NumServer::addTensorsSync(const std::string & addition,
        op->setTensorOperand(tensor1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       submit(op);
-       sync(*op);
+       parsed = submit(op);
+       if(parsed) parsed = sync(*op);
       }else{
        parsed = false;
        std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -444,7 +447,7 @@ bool NumServer::contractTensors(const std::string & contraction,
          op->setTensorOperand(tensor2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         submit(op);
+         parsed = submit(op);
         }else{
          parsed = false;
          std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -515,8 +518,8 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          op->setTensorOperand(tensor2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         submit(op);
-         sync(*op);
+         parsed = submit(op);
+         if(parsed) parsed = sync(*op);
         }else{
          parsed = false;
          std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

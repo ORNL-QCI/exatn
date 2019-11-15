@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/10/16
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
+#include "tensor_symbol.hpp"
 
 #include <algorithm>
 
@@ -44,7 +45,7 @@ bool TensorConn::isComplexConjugated() const
  return conjugated_;
 }
 
-std::shared_ptr<Tensor> TensorConn::getTensor()
+std::shared_ptr<Tensor> TensorConn::getTensor() const
 {
  return tensor_;
 }
@@ -52,6 +53,11 @@ std::shared_ptr<Tensor> TensorConn::getTensor()
 unsigned int TensorConn::getTensorId() const
 {
  return id_;
+}
+
+void TensorConn::resetTensorId(unsigned int tensor_id)
+{
+ id_ = tensor_id;
 }
 
 const TensorLeg & TensorConn::getTensorLeg(unsigned int leg_id) const
@@ -120,8 +126,38 @@ void TensorConn::appendLeg(DimExtent dim_extent, TensorLeg tensor_leg)
 
 void TensorConn::conjugate()
 {
- conjugated_ = !conjugated_;
+ if(id_ != 0) conjugated_ = !conjugated_; //output tensors do not conjugate
  for(auto & leg: legs_) leg.reverseDirection();
+ return;
+}
+
+void TensorConn::replaceStoredTensor(const std::string & name)
+{
+ assert(tensor_);
+ const auto & old_tensor = *tensor_;
+ tensor_ = makeSharedTensor(old_tensor);
+ auto new_name(name);
+ if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
+ tensor_->rename(new_name);
+ return;
+}
+
+void TensorConn::replaceStoredTensor(const std::vector<unsigned int> & order,
+                                     const std::string & name)
+{
+ assert(tensor_);
+ const auto rank = tensor_->getRank();
+ assert(rank == order.size());
+ const auto & old_tensor = *tensor_;
+ tensor_ = makeSharedTensor(old_tensor,order);
+ if(rank > 0){
+  TensorLeg old_legs[rank];
+  for(unsigned int i = 0; i < rank; ++i) old_legs[i] = legs_[i];
+  for(unsigned int i = 0; i < rank; ++i) legs_[i] = old_legs[order[i]];
+ }
+ auto new_name(name);
+ if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
+ tensor_->rename(new_name);
  return;
 }
 

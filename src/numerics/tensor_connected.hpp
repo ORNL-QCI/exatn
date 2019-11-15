@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/10/16
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,6 +25,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace exatn{
 
@@ -55,10 +56,13 @@ public:
  bool isComplexConjugated() const;
 
  /** Returns a co-owned pointer to the tensor. **/
- std::shared_ptr<Tensor> getTensor();
+ std::shared_ptr<Tensor> getTensor() const;
 
  /** Returns the tensor id. **/
  unsigned int getTensorId() const;
+
+ /** Resets the tensor id. **/
+ void resetTensorId(unsigned int tensor_id);
 
  /** Returns a specific tensor leg. **/
  const TensorLeg & getTensorLeg(unsigned int leg_id) const;
@@ -91,6 +95,12 @@ public:
  /** Conjugates the connected tensor, which includes complex conjugation
      of the tensor itself as well as tensor leg direction reversal. **/
  void conjugate();
+
+ /** Replaces the stored tensor with a new one (same shape and signature). **/
+ void replaceStoredTensor(const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
+ /** Replaces the stored tensor with a new one (permuted shape and signature). **/
+ void replaceStoredTensor(const std::vector<unsigned int> & order, //in: new order of dimensions (N2O)
+                          const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
 
 private:
 

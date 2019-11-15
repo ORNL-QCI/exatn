@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/10/13
+REVISION: 2019/11/07
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -109,13 +109,13 @@ template <typename... Args>
 inline bool createTensor(const std::string & name,       //in: tensor name
                          TensorElementType element_type, //in: tensor element type
                          Args&&... args)                 //in: other arguments for Tensor ctor
- {return numericalServer->createTensor(name,element_type,args...);}
+ {return numericalServer->createTensor(name,element_type,std::forward<Args>(args)...);}
 
 template <typename... Args>
 inline bool createTensorSync(const std::string & name,       //in: tensor name
                              TensorElementType element_type, //in: tensor element type
                              Args&&... args)                 //in: other arguments for Tensor ctor
- {return numericalServer->createTensorSync(name,element_type,args...);}
+ {return numericalServer->createTensorSync(name,element_type,std::forward<Args>(args)...);}
 
 
 /** Returns the reference to the actual tensor object. **/

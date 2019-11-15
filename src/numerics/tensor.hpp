@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/10/21
+REVISION: 2019/11/12
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,7 +43,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_signature.hpp"
 #include "tensor_leg.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 #include <iostream>
 #include <fstream>
@@ -103,6 +103,10 @@ public:
         const Tensor & right_tensor,                 //right tensor
         const std::vector<TensorLeg> & contraction); //tensor contraction pattern
 
+ /** Create a tensor by permuting another tensor. **/
+ Tensor(const Tensor & another,                   //in: another tensor
+        const std::vector<unsigned int> & order); //in: new order (N2O)
+
  Tensor(const Tensor & tensor) = default;
  Tensor & operator=(const Tensor & tensor) = default;
  Tensor(Tensor && tensor) noexcept = default;
@@ -113,6 +117,8 @@ public:
  void printIt() const;
  void printItFile(std::ofstream & output_file) const;
 
+ /** Rename (use this method with care as it can mess up higher-level maps). **/
+ void rename(const std::string & name);
  /** Get tensor name. **/
  const std::string & getName() const;
  /** Get the tensor rank (order). **/
@@ -176,6 +182,12 @@ private:
 };
 
 
+//FREE FUNCTIONS:
+
+/** Generates a unique name for a given tensor. **/
+std::string generateTensorName(const Tensor & tensor);
+
+
 //TEMPLATES:
 template<typename T>
 Tensor::Tensor(const std::string & name,
@@ -215,10 +227,11 @@ name_(name), shape_(extents), signature_(static_cast<unsigned int>(extents.size(
 
 } //namespace numerics
 
+/** Creates a new Tensor as a shared pointer. **/
 template<typename... Args>
 inline std::shared_ptr<numerics::Tensor> makeSharedTensor(Args&&... args)
 {
- return std::make_shared<numerics::Tensor>(args...);
+ return std::make_shared<numerics::Tensor>(std::forward<Args>(args)...);
 }
 
 } //namespace exatn
