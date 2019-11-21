@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/15
+REVISION: 2019/11/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,13 +11,19 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      + Registration/retrieval of external data (class BytePacket);
      + Registration/retrieval of external tensor methods (class TensorFunctor);
      + Submission for processing of individual tensor operations or tensor networks.
-     + Higher-level methods for tensor creation, destruction, and operations on them.
+     + Higher-level methods for tensor creation, destruction, and operations on them,
+       which use symbolic tensor names for tensor identification and processing.
  (b) Processing of individual tensor operations or tensor networks has asynchronous semantics:
      Submit TensorOperation/TensorNetwork for processing, then synchronize on the tensor-result.
      Processing of a tensor operation means evaluating the output tensor operand (#0).
      Processing of a tensor network means evaluating the output tensor (#0).
      Synchronization of processing of a tensor operation or tensor network
      means ensuring that the tensor-result (output tensor) has been fully computed.
+ (c) Namespace exatn introduces a number of aliases for types imported from exatn::numerics.
+     Importantly exatn::TensorMethod, which is talsh::TensorFunctor<Indentifiable>,
+     defines the interface which needs to be implemented by the application in order
+     to perform an arbitrary custom unary transform operation on exatn::Tensor.
+     This is the only portable way to arbitrarily modify tensor content.
 **/
 
 #ifndef EXATN_NUM_SERVER_HPP_
@@ -40,6 +46,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "Identifiable.hpp"
 #include "tensor_method.hpp"
 #include "functor_init_val.hpp"
+#include "functor_init_rnd.hpp"
+#include "functor_scale.hpp"
 
 #include <memory>
 #include <vector>
@@ -70,6 +78,9 @@ using numerics::ContractionSeqOptimizer;
 using numerics::ContractionSeqOptimizerFactory;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
+using numerics::FunctorInitVal;
+using numerics::FunctorInitRnd;
+using numerics::FunctorScale;
 
 
 class NumServer final {
@@ -200,6 +211,20 @@ public:
  bool initTensorSync(const std::string & name, //in: tensor name
                      NumericType value);       //in: scalar value
 
+ /** Initializes a tensor to some random value. **/
+ bool initTensorRnd(const std::string & name); //in: tensor name
+
+ bool initTensorRndSync(const std::string & name); //in: tensor name
+
+ /** Scales a tensor by a scalar value. **/
+ template<typename NumericType>
+ bool scaleTensor(const std::string & name, //in: tensor name
+                  NumericType value);       //in: scalar value
+
+ template<typename NumericType>
+ bool scaleTensorSync(const std::string & name, //in: tensor name
+                      NumericType value);       //in: scalar value
+
  /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
  bool transformTensor(const std::string & name,               //in: tensor name
                       std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
@@ -303,6 +328,20 @@ bool NumServer::initTensorSync(const std::string & name,
                                NumericType value)
 {
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+}
+
+template<typename NumericType>
+bool NumServer::scaleTensor(const std::string & name,
+                            NumericType value)
+{
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
+}
+
+template<typename NumericType>
+bool NumServer::scaleTensorSync(const std::string & name,
+                                NumericType value)
+{
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
 }
 
 template<typename NumericType>

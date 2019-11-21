@@ -1,16 +1,15 @@
-/** ExaTN::Numerics: Tensor Functor: Initialization to a scalar value
+/** ExaTN::Numerics: Tensor Functor: Scaling a tensor by a scalar
 REVISION: 2019/11/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (A) This tensor functor (method) is used to initialize a Tensor to a scalar value,
-     with the default of zero.
+ (A) This tensor functor (method) is used to scale a tensor by a scalar.
 **/
 
-#ifndef EXATN_NUMERICS_FUNCTOR_INIT_VAL_HPP_
-#define EXATN_NUMERICS_FUNCTOR_INIT_VAL_HPP_
+#ifndef EXATN_NUMERICS_FUNCTOR_SCALE_HPP_
+#define EXATN_NUMERICS_FUNCTOR_SCALE_HPP_
 
 #include "Identifiable.hpp"
 
@@ -25,31 +24,29 @@ namespace exatn{
 
 namespace numerics{
 
-class FunctorInitVal: public talsh::TensorFunctor<Identifiable>{
+class FunctorScale: public talsh::TensorFunctor<Identifiable>{
 public:
 
- FunctorInitVal(): init_val_(0.0){};
-
  template<typename NumericType>
- FunctorInitVal(NumericType value): init_val_(value){}
+ FunctorScale(NumericType value): scale_val_(value){}
 
- virtual ~FunctorInitVal() = default;
+ virtual ~FunctorScale() = default;
 
  virtual const std::string name() const override
  {
-  return "TensorFunctorInitVal";
+  return "TensorFunctorScale";
  }
 
  virtual const std::string description() const override
  {
-  return "Initializes a tensor to a scalar value";
+  return "Scales a tensor by a scalar";
  }
 
  /** Packs data members into a byte packet. **/
  virtual void pack(BytePacket & packet) override
  {
-  appendToBytePacket(&packet,init_val_.real());
-  appendToBytePacket(&packet,init_val_.imag());
+  appendToBytePacket(&packet,scale_val_.real());
+  appendToBytePacket(&packet,scale_val_.imag());
   return;
  }
 
@@ -59,11 +56,11 @@ public:
   double real,imag;
   extractFromBytePacket(&packet,real);
   extractFromBytePacket(&packet,imag);
-  init_val_ = std::complex<double>{real,imag};
+  scale_val_ = std::complex<double>{real,imag};
   return;
  }
 
- /** Initializes the local tensor slice to a value.
+ /** Scales the local tensor slice by a scalar value.
      Returns zero on success, or an error code otherwise.
      The talsh::Tensor slice is identified by its signature and
      shape that both can be accessed by talsh::Tensor methods. **/
@@ -71,11 +68,11 @@ public:
 
 private:
 
- std::complex<double> init_val_; //scalar initialization value
+ std::complex<double> scale_val_; //scalar scaling value
 };
 
 } //namespace numerics
 
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_FUNCTOR_INIT_VAL_HPP_
+#endif //EXATN_NUMERICS_FUNCTOR_SCALE_HPP_

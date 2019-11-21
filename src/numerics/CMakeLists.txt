@@ -28,7 +28,9 @@ add_library(${LIBRARY_NAME}
             tensor_network.cpp
             tensor_operator.cpp
             tensor_expansion.cpp
-            functor_init_val.cpp)
+            functor_init_val.cpp
+            functor_init_rnd.cpp
+            functor_scale.cpp)
 
 target_include_directories(${LIBRARY_NAME}
                     PUBLIC .

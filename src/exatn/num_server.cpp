@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/15
+REVISION: 2019/11/21
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -227,7 +227,13 @@ bool NumServer::submit(TensorExpansion & expansion)
  for(auto component = expansion.begin(); component != expansion.end(); ++component){
   auto & network = *(component->network_);
   auto submitted = submit(network); if(!submitted) return false;
-  //`Submit the scaling operation for the output tensor by component->coefficient_
+  bool conjugated;
+  auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+  op->setTensorOperand(output_tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->
+   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorScale(component->coefficient_)));
+  submitted = submit(op); if(!submitted) return false;
  }
  return true;
 }
@@ -309,6 +315,16 @@ bool NumServer::destroyTensorSync(const std::string & name)
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
  return submitted;
+}
+
+bool NumServer::initTensorRnd(const std::string & name)
+{
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+}
+
+bool NumServer::initTensorRndSync(const std::string & name)
+{
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
 }
 
 bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
