@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/21
+REVISION: 2019/11/26
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,6 +47,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_method.hpp"
 #include "functor_init_val.hpp"
 #include "functor_init_rnd.hpp"
+#include "functor_init_dat.hpp"
 #include "functor_scale.hpp"
 
 #include <memory>
