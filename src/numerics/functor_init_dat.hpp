@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a given external data
-REVISION: 2019/11/26
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,7 +9,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      with some externally provided data. This tensor functor should
      normally be used for initializing small tensors.
  (B) The external data vector used to construct this tensor functor
-     must contain the entire tensor body stored column-major.
+     must contain the entire tensor body stored column-major, with
+     the explicit shape of the full tensor supplied as well.
 **/
 
 #ifndef EXATN_NUMERICS_FUNCTOR_INIT_DAT_HPP_
@@ -36,7 +37,7 @@ public:
 
  /** TensorShape object must specify the shape of the full tensor and
      the given external data vector must contain the full tensor body
-     stored column-major. **/
+     stored column-major as specified by the provided tensor shape. **/
  template <typename NumericType>
  FunctorInitDat(const TensorShape & full_shape,
                 const std::vector<NumericType> & ext_data);

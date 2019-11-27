@@ -37,7 +37,11 @@ void FunctorInitDat::unpack(BytePacket & packet)
 
 int FunctorInitDat::apply(talsh::Tensor & local_tensor)
 {
+ unsigned int rank;
+ const auto * extents = local_tensor.getDimExtents(rank);
  auto tensor_volume = local_tensor.getVolume();
+ const auto & offsets = local_tensor.getDimOffsets();
+
  auto access_granted = false;
 
  {//Try REAL32:
