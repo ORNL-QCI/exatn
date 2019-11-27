@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/11/12
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -69,6 +69,19 @@ DimExtent TensorShape::getDimExtent(unsigned int dim_id) const
 const std::vector<DimExtent> & TensorShape::getDimExtents() const
 {
  return extents_;
+}
+
+const std::vector<DimExtent> TensorShape::getDimStrides(DimExtent * volume) const
+{
+ const auto rank = extents_.size();
+ std::vector<DimExtent> strides(rank);
+ DimExtent stride = 1;
+ for(unsigned int i = 0; i < rank; ++i){
+  strides[i] = stride;
+  stride *= extents_[i];
+ }
+ if(volume != nullptr) *volume = stride; //tensor shape volume
+ return strides;
 }
 
 bool TensorShape::isCongruentTo(const TensorShape & another) const

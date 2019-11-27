@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/26
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -180,6 +180,9 @@ public:
  bool sync(const std::string & name, //in: tensor name
            bool wait = true);        //in: wait versus test for completion
 
+ /** Returns a shared pointer to the requested tensor object. **/
+ std::shared_ptr<Tensor> getTensor(const std::string & name); //in: tensor name
+
  /** Returns the reference to the actual tensor object. **/
  Tensor & getTensorRef(const std::string & name); //in: tensor name
 
@@ -211,6 +214,17 @@ public:
  template<typename NumericType>
  bool initTensorSync(const std::string & name, //in: tensor name
                      NumericType value);       //in: scalar value
+
+ /** Initializes a tensor with externally provided data.
+     The vector containing externally provided data assumes
+     the column-wise storage in the initialized tensor.  **/
+ template<typename NumericType>
+ bool initTensorData(const std::string & name,                   //in: tensor name
+                     const std::vector<NumericType> & ext_data); //in: vector with externally provided data
+
+ template<typename NumericType>
+ bool initTensorDataSync(const std::string & name,                   //in: tensor name
+                         const std::vector<NumericType> & ext_data); //in: vector with externally provided data
 
  /** Initializes a tensor to some random value. **/
  bool initTensorRnd(const std::string & name); //in: tensor name
@@ -329,6 +343,26 @@ bool NumServer::initTensorSync(const std::string & name,
                                NumericType value)
 {
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
+}
+
+template<typename NumericType>
+bool NumServer::initTensorData(const std::string & name,
+                               const std::vector<NumericType> & ext_data)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return false;
+ return transformTensor(name,std::shared_ptr<TensorMethod>(
+         new numerics::FunctorInitDat(iter->second->getShape(),ext_data)));
+}
+
+template<typename NumericType>
+bool NumServer::initTensorDataSync(const std::string & name,
+                                   const std::vector<NumericType> & ext_data)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()) return false;
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(
+         new numerics::FunctorInitDat(iter->second->getShape(),ext_data)));
 }
 
 template<typename NumericType>

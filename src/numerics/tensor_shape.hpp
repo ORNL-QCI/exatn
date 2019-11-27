@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/11/12
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -60,6 +60,10 @@ public:
 
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
+
+ /** Get the strides for all tensor dimensions.
+     Column-major storage layout is assumed. **/
+ const std::vector<DimExtent> getDimStrides(DimExtent * volume = nullptr) const;
 
  /** Returns TRUE if the tensor shape coincides with another tensor shape. **/
  bool isCongruentTo(const TensorShape & another) const;

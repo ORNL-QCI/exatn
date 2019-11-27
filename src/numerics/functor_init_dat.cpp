@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a given external data
-REVISION: 2019/11/26
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,17 +38,20 @@ void FunctorInitDat::unpack(BytePacket & packet)
 int FunctorInitDat::apply(talsh::Tensor & local_tensor)
 {
  unsigned int rank;
- const auto * extents = local_tensor.getDimExtents(rank);
- auto tensor_volume = local_tensor.getVolume();
+ const auto * extents = local_tensor.getDimExtents(rank); //rank is returned by reference
+ assert(rank == shape_.getRank());
+ const auto tensor_volume = local_tensor.getVolume();
  const auto & offsets = local_tensor.getDimOffsets();
+ DimExtent full_volume;
+ auto full_strides = shape_.getDimStrides(&full_volume);
+ assert(tensor_volume <= full_volume);
 
  auto access_granted = false;
-
  {//Try REAL32:
   float * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-
+   //`Finish
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = 0.0f;
    return 0;
@@ -59,7 +62,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor)
   double * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-
+   //`Finish
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = 0.0;
    return 0;
@@ -70,7 +73,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor)
   std::complex<float> * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-
+   //`Finish
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{0.0f,0.0f};
    return 0;
@@ -81,7 +84,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor)
   std::complex<double> * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-
+   //`Finish
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{0.0,0.0};
    return 0;

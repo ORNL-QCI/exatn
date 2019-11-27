@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/21
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -267,6 +267,16 @@ bool NumServer::sync(const std::string & name, bool wait)
   return false;
  }
  return sync(*(iter->second),wait);
+}
+
+std::shared_ptr<Tensor> NumServer::getTensor(const std::string & name)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::getTensor): Tensor " << name << " not found!" << std::endl;
+  assert(false);
+ }
+ return iter->second;
 }
 
 Tensor & NumServer::getTensorRef(const std::string & name)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/11/07
+REVISION: 2019/11/27
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -118,6 +118,11 @@ inline bool createTensorSync(const std::string & name,       //in: tensor name
  {return numericalServer->createTensorSync(name,element_type,std::forward<Args>(args)...);}
 
 
+/** Returns a shared pointer to the actual tensor object. **/
+inline std::shared_ptr<Tensor> getTensor(const std::string & name) //in: tensor name
+ {return numericalServer->getTensor(name);}
+
+
 /** Returns the reference to the actual tensor object. **/
 inline Tensor & getTensorRef(const std::string & name) //in: tensor name
  {return numericalServer->getTensorRef(name);}
@@ -146,6 +151,26 @@ template<typename NumericType>
 inline bool initTensorSync(const std::string & name, //in: tensor name
                            NumericType value)        //in: scalar value
  {return numericalServer->initTensorSync(name,value);}
+
+
+/** Initializes a tensor with externally provided data. **/
+template<typename NumericType>
+inline bool initTensorData(const std::string & name,                  //in: tensor name
+                           const std::vector<NumericType> & ext_data) //in: externally provided data
+ {return numericalServer->initTensorData(name,ext_data);}
+
+template<typename NumericType>
+inline bool initTensorDataSync(const std::string & name,                  //in: tensor name
+                               const std::vector<NumericType> & ext_data) //in: externally provided data
+ {return numericalServer->initTensorDataSync(name,ext_data);}
+
+
+/** Initializes the tensor body with random values. **/
+inline bool initTensorRnd(const std::string & name) //in: tensor name
+ {return numericalServer->initTensorRnd(name);}
+
+inline bool initTensorRndSync(const std::string & name) //in: tensor name
+ {return numericalServer->initTensorRndSync(name);}
 
 
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/

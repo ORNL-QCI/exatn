@@ -337,6 +337,76 @@ TEST(NumServerTester, superEasyNumServer)
 }
 
 
+TEST(NumServerTester, circuitNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::numerics::TensorNetwork;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Define the initial qubit state vector:
+ std::vector<std::complex<double>> qzero {
+  {1.0,0.0}, {0.0,0.0}
+ };
+
+ //Define quantum gates:
+ std::vector<std::complex<double>> hadamard {
+  {1.0,0.0}, {1.0,0.0},
+  {1.0,0.0}, {-1.0,0.0}
+ };
+ std::vector<std::complex<double>> cnot {
+  {1.0,0.0}, {0.0,0.0}, {0.0,0.0}, {0.0,0.0},
+  {0.0,0.0}, {1.0,0.0}, {0.0,0.0}, {0.0,0.0},
+  {0.0,0.0}, {0.0,0.0}, {0.0,0.0}, {1.0,0.0},
+  {0.0,0.0}, {0.0,0.0}, {1.0,0.0}, {0.0,0.0}
+ };
+
+ //Create qubit tensors:
+ auto created = false;
+ created = exatn::createTensor("Q0",TensorElementType::COMPLEX64,TensorShape{2}); assert(created);
+ created = exatn::createTensor("Q1",TensorElementType::COMPLEX64,TensorShape{2}); assert(created);
+ created = exatn::createTensor("Q2",TensorElementType::COMPLEX64,TensorShape{2}); assert(created);
+
+ //Create gate tensors:
+ created = exatn::createTensor("H",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
+ created = exatn::createTensor("CNOT",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+
+ //Initialize qubit tensors to zero state:
+ auto initialized = false;
+ initialized = exatn::initTensorData("Q0",qzero); assert(initialized);
+ initialized = exatn::initTensorData("Q1",qzero); assert(initialized);
+ initialized = exatn::initTensorData("Q2",qzero); assert(initialized);
+
+ //Initialize necessary gate tensors:
+ initialized = exatn::initTensorData("H",hadamard); assert(initialized);
+ initialized = exatn::initTensorData("CNOT",cnot); assert(initialized);
+
+ //Build a tensor network from the quantum circuit:
+ TensorNetwork circuit("QuantumCircuit");
+ circuit.appendTensor(0,exatn::getTensor("Q0"),std::vector<std::pair<unsigned int, unsigned int>>{});
+ circuit.appendTensor(1,exatn::getTensor("Q1"),std::vector<std::pair<unsigned int, unsigned int>>{});
+ circuit.appendTensor(2,exatn::getTensor("Q2"),std::vector<std::pair<unsigned int, unsigned int>>{});
+
+ circuit.appendTensorGate(3,exatn::getTensor("H"),std::vector<unsigned int>{0});
+ circuit.appendTensorGate(4,exatn::getTensor("H"),std::vector<unsigned int>{1});
+ circuit.appendTensorGate(5,exatn::getTensor("H"),std::vector<unsigned int>{2});
+
+ circuit.appendTensorGate(6,exatn::getTensor("CNOT"),std::vector<unsigned int>{1,2});
+
+ //Destroy all tensors:
+ auto destroyed = false;
+ destroyed = exatn::destroyTensor("CNOT"); assert(destroyed);
+ destroyed = exatn::destroyTensor("H"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q2"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q1"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
+
+ //Grab a beer!
+}
+
+
 int main(int argc, char **argv) {
   exatn::initialize();
 
