@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/15
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -113,6 +113,9 @@ public:
 
  /** Returns TRUE if the tensor network is finalized, FALSE otherwise. **/
  bool isFinalized() const;
+
+ /** Returns TRUE if the tensor network is valid, FALSE otherwise. **/
+ bool isValid();
 
  /** Returns the rank of the tensor network (rank of its output tensor). **/
  unsigned int getRank() const;

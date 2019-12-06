@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/05
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -256,6 +256,12 @@ bool TensorNetwork::isExplicit() const
 bool TensorNetwork::isFinalized() const
 {
  return (finalized_ != 0);
+}
+
+
+bool TensorNetwork::isValid()
+{
+ return checkConnections();
 }
 
 
@@ -1319,15 +1325,19 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     }
     auto tensor0 = net.getTensor(contr->result_id);
     if(contr->result_id != 0){ //intermediate tensors need to be created/destroyed
-     auto op_create = tensor_op_factory.createTensorOp(TensorOpCode::CREATE); //create intermediate
+     auto op_create = tensor_op_factory.createTensorOpShared(TensorOpCode::CREATE); //create intermediate
      op_create->setTensorOperand(tensor0);
-     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_create)));
+     if(tensor0->getElementType() != TensorElementType::VOID)
+      std::dynamic_pointer_cast<TensorOpCreate>(op_create)->resetTensorElementType(tensor0->getElementType());
+     operations_.emplace_back(op_create);
      intermediates.emplace_back(contr->result_id);
      std::shared_ptr<TensorOperation> op_init(std::move(tensor_op_factory.createTensorOp(TensorOpCode::TRANSFORM))); //init intermediate to zero
      op_init->setTensorOperand(tensor0);
      std::dynamic_pointer_cast<TensorOpTransform>(op_init)->
           resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>>(new FunctorInitVal(0.0)));
      operations_.emplace_back(op_init);
+    }else{ //make sure the output tensor has its type set
+     if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(tensor1->getElementType());
     }
     auto op = tensor_op_factory.createTensorOp(TensorOpCode::CONTRACT);
     op->setTensorOperand(tensor0);
@@ -1366,6 +1376,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      left_tensor_id = iter->first;
     }
    }
+   if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(tensor1->getElementType());
    auto op = tensor_op_factory.createTensorOp(TensorOpCode::ADD);
    op->setTensorOperand(tensor0);
    op->setTensorOperand(tensor1,conj1);

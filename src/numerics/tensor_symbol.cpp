@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/09/12
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -194,6 +194,11 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
    symb_pattern.append(")");
   }
  }
+ /*{//DEBUG:
+  std::cout << std::endl;
+  for(const auto & leg: pattern) leg.printIt();
+  std::cout << " " << symb_pattern << std::endl;
+ }*/
  return true;
 }
 

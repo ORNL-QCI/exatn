@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/11/12
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -85,6 +85,11 @@ name_(name), element_type_(TensorElementType::VOID)
    }
   }
  }
+ //Set the tensor element type:
+ auto left_tensor_type = left_tensor.getElementType();
+ auto right_tensor_type = right_tensor.getElementType();
+ assert(left_tensor_type == right_tensor_type);
+ this->setElementType(left_tensor_type);
 }
 
 Tensor::Tensor(const Tensor & another,

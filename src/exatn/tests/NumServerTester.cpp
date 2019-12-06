@@ -387,15 +387,18 @@ TEST(NumServerTester, circuitNumServer)
   //Build a tensor network from the quantum circuit:
   TensorNetwork circuit("QuantumCircuit");
   circuit.appendTensor(0,exatn::getTensor("Q0"),std::vector<std::pair<unsigned int, unsigned int>>{});
+  circuit.printIt(); //debug
   circuit.appendTensor(1,exatn::getTensor("Q1"),std::vector<std::pair<unsigned int, unsigned int>>{});
+  circuit.printIt(); //debug
   circuit.appendTensor(2,exatn::getTensor("Q2"),std::vector<std::pair<unsigned int, unsigned int>>{});
+  circuit.printIt(); //debug
 
   circuit.appendTensorGate(3,exatn::getTensor("H"),std::vector<unsigned int>{0});
   circuit.appendTensorGate(4,exatn::getTensor("H"),std::vector<unsigned int>{1});
   circuit.appendTensorGate(5,exatn::getTensor("H"),std::vector<unsigned int>{2});
+  circuit.printIt(); //debug
 
   circuit.appendTensorGate(6,exatn::getTensor("CNOT"),std::vector<unsigned int>{1,2});
-
   circuit.printIt(); //debug
 
   //Evaluate the tensor network (quantum circuit):

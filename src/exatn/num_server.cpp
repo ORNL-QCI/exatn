@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/27
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -177,7 +177,12 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
   if(operation->getOpcode() == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
    auto tensor = operation->getTensorOperand(0);
    auto elem_type = std::dynamic_pointer_cast<numerics::TensorOpCreate>(operation)->getTensorElementType();
-   tensor->setElementType(elem_type);
+   if(elem_type == TensorElementType::VOID){
+    elem_type = tensor->getElementType();
+    std::dynamic_pointer_cast<numerics::TensorOpCreate>(operation)->resetTensorElementType(elem_type);
+   }else{
+    tensor->setElementType(elem_type);
+   }
    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
    if(!(res.second)){
     std::cout << "#ERROR(exatn::NumServer::submit): Attempt to CREATE an already existing tensor "
@@ -200,6 +205,8 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 bool NumServer::submit(TensorNetwork & network)
 {
+ assert(network.isValid()); //debug
+ auto & op_list = network.getOperationList();
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
  if(iter == tensors_.end()){ //output tensor did not exist and needs to be created
@@ -209,7 +216,6 @@ bool NumServer::submit(TensorNetwork & network)
    resetTensorElementType(output_tensor->getElementType());
   auto submitted = submit(op); if(!submitted) return false;
  }
- auto & op_list = network.getOperationList();
  for(auto op = op_list.begin(); op != op_list.end(); ++op){
   auto submitted = submit(*op); if(!submitted) return false;
  }
