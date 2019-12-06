@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/11/27
+REVISION: 2019/12/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -221,6 +221,21 @@ inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor 
 inline bool sync(const std::string & name, //in: tensor name
                  bool wait = true)         //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
+
+
+/** Evaluates a tensor network object (computes the output tensor). **/
+inline bool evaluate(TensorNetwork & network) //in: finalized tensor network
+ {return numericalServer->submit(network);}
+
+inline bool evaluateSync(TensorNetwork & network) //in: finalized tensor network
+ {bool success = numericalServer->submit(network);
+  if(success) success = numericalServer->sync(network);
+  return success;}
+
+
+/** Synchronizes all outstanding operations on a given tensor network object. **/
+inline bool sync(TensorNetwork & network) //in: finalized tensor network
+ {return numericalServer->sync(network);}
 
 
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.

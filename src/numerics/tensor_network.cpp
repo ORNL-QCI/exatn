@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/11/15
+REVISION: 2019/12/05
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,7 +28,7 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 
 TensorNetwork::TensorNetwork():
- explicit_output_(0), finalized_(0), max_tensor_id_(0), contraction_seq_flops_(0.0)
+ explicit_output_(0), finalized_(1), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -41,7 +41,7 @@ TensorNetwork::TensorNetwork():
 
 
 TensorNetwork::TensorNetwork(const std::string & name):
- explicit_output_(0), finalized_(0), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
+ explicit_output_(0), finalized_(1), name_(name), max_tensor_id_(0), contraction_seq_flops_(0.0)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
