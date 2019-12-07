@@ -129,7 +129,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
        assert(false);
       }
      }else{ //input tensor
-      this->appendTensor(i,tensor->second,legs,conjugated);
+      this->placeTensor(i,tensor->second,legs,conjugated);
      }
     }else{
      std::cout << "#ERROR(TensorNetwork::TensorNetwork): Unable to find tensor named " <<
@@ -484,24 +484,24 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 }
 
 
-bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
-                                 std::shared_ptr<Tensor> tensor,             //in: appended tensor
-                                 const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
-                                 bool conjugated,                            //in: complex conjugation flag for the appended tensor
-                                 bool leg_matching_check)                    //in: tensor leg matching check
+bool TensorNetwork::placeTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
+                                std::shared_ptr<Tensor> tensor,             //in: appended tensor
+                                const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)
+                                bool conjugated,                            //in: complex conjugation flag for the appended tensor
+                                bool leg_matching_check)                    //in: tensor leg matching check
 {
  if(explicit_output_ == 0){
-  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::placeTensor): Invalid request: " <<
    "Appending a tensor via explicit connections to the tensor network that is missing a full output tensor!" << std::endl;
   return false;
  }
  if(finalized_ != 0){
-  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::placeTensor): Invalid request: " <<
    "Appending a tensor via explicit connections to the tensor network that has been finalized!" << std::endl;
   return false;
  }
  if(tensor_id == 0){
-  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::placeTensor): Invalid request: " <<
    "Attempt to append an output tensor (id = 0) to a tensor network with an explicit output tensor!" << std::endl;
   return false;
  }
@@ -514,7 +514,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
     const auto & tens_legs = tensconn->getTensorLegs();
     const auto & tens_leg = tens_legs[leg.getDimensionId()];
     if(tens_leg.getTensorId() != tensor_id || tens_leg.getDimensionId() != mode){
-     std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Connections are invalid: "
+     std::cout << "#ERROR(TensorNetwork::placeTensor): Invalid argument: Connections are invalid: "
                << "Failed input leg: "; leg.printIt(); std::cout << std::endl;
      return false;
     }
@@ -527,7 +527,7 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
                                     tensor_id,
                                     tensor,tensor_id,connections,conjugated);
  if(!res){
-  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::placeTensor): Invalid request: " <<
    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
   return false;
  }

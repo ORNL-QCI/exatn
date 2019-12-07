@@ -124,14 +124,14 @@ void create_exatn_py_module(py::module &m) {
       .def("getNumTensors", &exatn::numerics::TensorNetwork::getNumTensors, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
       .def("getTensor", &exatn::numerics::TensorNetwork::getTensor, "")
-      .def("appendTensor",
+      .def("placeTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
                unsigned int,
                std::shared_ptr<exatn::numerics::Tensor>,
                const std::vector<exatn::numerics::TensorLeg> &,
                bool conjugated,
                bool leg_matching_check)) &
-               exatn::numerics::TensorNetwork::appendTensor,
+               exatn::numerics::TensorNetwork::placeTensor,
            "")
       .def("appendTensor",
            (bool (exatn::numerics::TensorNetwork::*)(

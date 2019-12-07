@@ -387,24 +387,24 @@ TEST(NumServerTester, circuitNumServer)
   //Build a tensor network from the quantum circuit:
   TensorNetwork circuit("QuantumCircuit");
   auto appended = false;
-  appended = circuit.appendTensor(1,exatn::getTensor("Q0"),std::vector<std::pair<unsigned int, unsigned int>>{}); assert(appended);
-  appended = circuit.appendTensor(2,exatn::getTensor("Q1"),std::vector<std::pair<unsigned int, unsigned int>>{}); assert(appended);
-  appended = circuit.appendTensor(3,exatn::getTensor("Q2"),std::vector<std::pair<unsigned int, unsigned int>>{}); assert(appended);
+  appended = circuit.appendTensor(1,exatn::getTensor("Q0"),{}); assert(appended);
+  appended = circuit.appendTensor(2,exatn::getTensor("Q1"),{}); assert(appended);
+  appended = circuit.appendTensor(3,exatn::getTensor("Q2"),{}); assert(appended);
 
-  appended = circuit.appendTensorGate(4,exatn::getTensor("H"),std::vector<unsigned int>{0}); assert(appended);
-  appended = circuit.appendTensorGate(5,exatn::getTensor("H"),std::vector<unsigned int>{1}); assert(appended);
-  appended = circuit.appendTensorGate(6,exatn::getTensor("H"),std::vector<unsigned int>{2}); assert(appended);
+  appended = circuit.appendTensorGate(4,exatn::getTensor("H"),{0}); assert(appended);
+  appended = circuit.appendTensorGate(5,exatn::getTensor("H"),{1}); assert(appended);
+  appended = circuit.appendTensorGate(6,exatn::getTensor("H"),{2}); assert(appended);
 
-  appended = circuit.appendTensorGate(7,exatn::getTensor("CNOT"),std::vector<unsigned int>{1,2}); assert(appended);
+  appended = circuit.appendTensorGate(7,exatn::getTensor("CNOT"),{1,2}); assert(appended);
   circuit.printIt(); //debug
 
   //Evaluate the tensor network (quantum circuit):
   auto evaluated = false;
   evaluated = exatn::evaluateSync(circuit); assert(evaluated);
- }
 
- //Synchronize:
- exatn::sync();
+  //Synchronize:
+  exatn::sync();
+ }
 
  //Destroy all tensors:
  auto destroyed = false;

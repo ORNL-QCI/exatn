@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2019/11/05
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,31 +51,31 @@ void NetworkBuilderMPS::build(TensorNetwork & network)
  const auto output_tensor_rank = output_tensor->getRank();
  const auto & output_dim_extents = output_tensor->getDimExtents();
  if(output_tensor_rank == 1){
-  appended = network.appendTensor(1, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
-                                   std::initializer_list<DimExtent>{output_dim_extents[0]}),
-                                  {TensorLeg{0,0}},
-                                  false,
-                                  false
-                                 );
+  appended = network.placeTensor(1, //tensor id
+                                 std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
+                                  std::initializer_list<DimExtent>{output_dim_extents[0]}),
+                                 {TensorLeg{0,0}},
+                                 false,
+                                 false
+                                );
   assert(appended);
  }else if(output_tensor_rank == 2){
   DimExtent bond_dim = std::min(output_dim_extents[0],output_dim_extents[1]);
-  appended = network.appendTensor(1, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
-                                   std::initializer_list<DimExtent>{output_dim_extents[0],bond_dim}),
-                                  {TensorLeg{0,0},TensorLeg{2,0}},
-                                  false,
-                                  false
-                                 );
+  appended = network.placeTensor(1, //tensor id
+                                 std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
+                                  std::initializer_list<DimExtent>{output_dim_extents[0],bond_dim}),
+                                 {TensorLeg{0,0},TensorLeg{2,0}},
+                                 false,
+                                 false
+                                );
   assert(appended);
-  appended = network.appendTensor(2, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(2), //tensor name
-                                   std::initializer_list<DimExtent>{bond_dim,output_dim_extents[1]}),
-                                  {TensorLeg{1,1},TensorLeg{0,1}},
-                                  false,
-                                  false
-                                 );
+  appended = network.placeTensor(2, //tensor id
+                                 std::make_shared<Tensor>("T"+std::to_string(2), //tensor name
+                                  std::initializer_list<DimExtent>{bond_dim,output_dim_extents[1]}),
+                                 {TensorLeg{1,1},TensorLeg{0,1}},
+                                 false,
+                                 false
+                                );
   assert(appended);
  }else{ //output_tensor_rank > 2
   //Compute internal bond dimensions:
@@ -94,35 +94,35 @@ void NetworkBuilderMPS::build(TensorNetwork & network)
   }
   //Append left boundary input tensor:
   right_dim = std::min(left_bonds[1],right_bonds[0]);
-  appended = network.appendTensor(1, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
-                                   std::initializer_list<DimExtent>{output_dim_extents[0],right_dim}),
-                                  {TensorLeg{0,0},TensorLeg{2,0}},
-                                  false,
-                                  false
-                                 );
+  appended = network.placeTensor(1, //tensor id
+                                 std::make_shared<Tensor>("T"+std::to_string(1), //tensor name
+                                  std::initializer_list<DimExtent>{output_dim_extents[0],right_dim}),
+                                 {TensorLeg{0,0},TensorLeg{2,0}},
+                                 false,
+                                 false
+                                );
   assert(appended);
   //Append right boundary input tensor:
   left_dim = std::min(right_bonds[output_tensor_rank-2],left_bonds[output_tensor_rank-1]);
-  appended = network.appendTensor(output_tensor_rank, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(output_tensor_rank), //tensor name
-                                   std::initializer_list<DimExtent>{left_dim,output_dim_extents[output_tensor_rank-1]}),
-                                  {TensorLeg{output_tensor_rank-1,2},TensorLeg{0,output_tensor_rank-1}},
-                                  false,
-                                  false
-                                 );
+  appended = network.placeTensor(output_tensor_rank, //tensor id
+                                 std::make_shared<Tensor>("T"+std::to_string(output_tensor_rank), //tensor name
+                                  std::initializer_list<DimExtent>{left_dim,output_dim_extents[output_tensor_rank-1]}),
+                                 {TensorLeg{output_tensor_rank-1,2},TensorLeg{0,output_tensor_rank-1}},
+                                 false,
+                                 false
+                                );
   assert(appended);
   //Append the internal input tensors:
   for(unsigned int i = 1; i < (output_tensor_rank - 1); ++i){
    left_dim = std::min(left_bonds[i],right_bonds[i-1]);
    right_dim = std::min(right_bonds[i],left_bonds[i+1]);
-   appended = network.appendTensor(1+i, //tensor id
-                                   std::make_shared<Tensor>("T"+std::to_string(1+i), //tensor name
-                                    std::initializer_list<DimExtent>{left_dim,output_dim_extents[i],right_dim}),
-                                   {TensorLeg{i,2},TensorLeg{0,i},TensorLeg{i+2,0}},
-                                   false,
-                                   false
-                                  );
+   appended = network.placeTensor(1+i, //tensor id
+                                  std::make_shared<Tensor>("T"+std::to_string(1+i), //tensor name
+                                   std::initializer_list<DimExtent>{left_dim,output_dim_extents[i],right_dim}),
+                                  {TensorLeg{i,2},TensorLeg{0,i},TensorLeg{i+2,0}},
+                                  false,
+                                  false
+                                 );
    assert(appended);
   }
  }

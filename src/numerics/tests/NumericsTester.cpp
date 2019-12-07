@@ -43,34 +43,34 @@ TEST(NumericsTester, checkTensorNetwork)
                        std::make_shared<Tensor>("Z0"), //scalar tensor
                        {} //closed tensor network //no legs
                       );
- network.appendTensor(1,
-                      std::make_shared<Tensor>("T0",TensorShape{2,2}),
-                      std::vector<TensorLeg>{{4,0},{2,0}}
-                     );
- network.appendTensor(2,
-                      std::make_shared<Tensor>("T1",TensorShape{2,2,2}),
-                      std::vector<TensorLeg>{{1,1},{4,1},{3,0}}
-                     );
- network.appendTensor(3,
-                      std::make_shared<Tensor>("T2",TensorShape{2,2}),
-                      std::vector<TensorLeg>{{2,2},{7,1}}
-                     );
- network.appendTensor(4,
-                      std::make_shared<Tensor>("H0",TensorShape{2,2,2,2}),
-                      std::vector<TensorLeg>{{1,0},{2,1},{5,0},{6,1}}
-                     );
- network.appendTensor(5,
-                      std::make_shared<Tensor>("S0",TensorShape{2,2}),
-                      std::vector<TensorLeg>{{4,2},{6,0}}
-                     );
- network.appendTensor(6,
-                      std::make_shared<Tensor>("S1",TensorShape{2,2,2}),
-                      std::vector<TensorLeg>{{5,1},{4,3},{7,0}}
-                     );
- network.appendTensor(7,
-                      std::make_shared<Tensor>("S2",TensorShape{2,2}),
-                      std::vector<TensorLeg>{{6,2},{3,1}}
-                     );
+ network.placeTensor(1,
+                     std::make_shared<Tensor>("T0",TensorShape{2,2}),
+                     std::vector<TensorLeg>{{4,0},{2,0}}
+                    );
+ network.placeTensor(2,
+                     std::make_shared<Tensor>("T1",TensorShape{2,2,2}),
+                     std::vector<TensorLeg>{{1,1},{4,1},{3,0}}
+                    );
+ network.placeTensor(3,
+                     std::make_shared<Tensor>("T2",TensorShape{2,2}),
+                     std::vector<TensorLeg>{{2,2},{7,1}}
+                    );
+ network.placeTensor(4,
+                     std::make_shared<Tensor>("H0",TensorShape{2,2,2,2}),
+                     std::vector<TensorLeg>{{1,0},{2,1},{5,0},{6,1}}
+                    );
+ network.placeTensor(5,
+                     std::make_shared<Tensor>("S0",TensorShape{2,2}),
+                     std::vector<TensorLeg>{{4,2},{6,0}}
+                    );
+ network.placeTensor(6,
+                     std::make_shared<Tensor>("S1",TensorShape{2,2,2}),
+                     std::vector<TensorLeg>{{5,1},{4,3},{7,0}}
+                    );
+ network.placeTensor(7,
+                     std::make_shared<Tensor>("S2",TensorShape{2,2}),
+                     std::vector<TensorLeg>{{6,2},{3,1}}
+                    );
  network.finalize(true);
  network.printIt();
  //Remove tensor #6 to create the optimization environment for MPS tensor S1:

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/11/06
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,7 +38,7 @@ bool TensorOperator::appendComponent(std::shared_ptr<Tensor> tensor,         //i
  for(unsigned int i = 0; i < tensor_rank; ++i) legs[i] = TensorLeg{1,i};
  auto network = makeSharedTensorNetwork(tensor->getName(),output_tensor,legs);
  for(unsigned int i = 0; i < tensor_rank; ++i) legs[i] = TensorLeg{0,i};
- appended = network->appendTensor(1,tensor,legs);
+ appended = network->placeTensor(1,tensor,legs);
  if(appended){
   appended = network->finalize();
   if(appended){
