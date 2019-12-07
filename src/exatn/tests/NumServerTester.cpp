@@ -403,6 +403,9 @@ TEST(NumServerTester, circuitNumServer)
   evaluated = exatn::evaluateSync(circuit); assert(evaluated);
  }
 
+ //Synchronize:
+ exatn::sync();
+
  //Destroy all tensors:
  auto destroyed = false;
  destroyed = exatn::destroyTensor("CNOT"); assert(destroyed);
@@ -410,6 +413,9 @@ TEST(NumServerTester, circuitNumServer)
  destroyed = exatn::destroyTensor("Q2"); assert(destroyed);
  destroyed = exatn::destroyTensor("Q1"); assert(destroyed);
  destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
+
+ //Synchronize:
+ exatn::sync();
 
  //Grab a beer!
 }

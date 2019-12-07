@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/11/27
+REVISION: 2019/12/06
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -173,6 +173,8 @@ public:
  /** Synchronizes execution of a specific tensor network. **/
  bool sync(TensorNetwork & network,
            bool wait = true);
+ /** Synchronizes execution of all outstanding tensor operations. **/
+ bool sync(bool wait = true);
 
  /** HIGHER-LEVEL WRAPPERS **/
 

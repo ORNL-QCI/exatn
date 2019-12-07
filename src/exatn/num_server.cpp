@@ -265,6 +265,11 @@ bool NumServer::sync(TensorNetwork & network, bool wait)
  return sync(*(network.getTensor(0)),wait);
 }
 
+bool NumServer::sync(bool wait)
+{
+ return tensor_rt_->sync(wait);
+}
+
 bool NumServer::sync(const std::string & name, bool wait)
 {
  auto iter = tensors_.find(name);
