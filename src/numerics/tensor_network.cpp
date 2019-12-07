@@ -500,6 +500,11 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                     //i
    "Appending a tensor via explicit connections to the tensor network that has been finalized!" << std::endl;
   return false;
  }
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+   "Attempt to append an output tensor (id = 0) to a tensor network with an explicit output tensor!" << std::endl;
+  return false;
+ }
  //Check the validity of new connections:
  if(leg_matching_check){
   unsigned int mode = 0;
@@ -538,7 +543,12 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
 {
  if(explicit_output_ != 0 && finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
-   "Appending a tensor via implicit pairing with the output tensor, but the output tensor is explicit!" << std::endl;
+   "Appending a tensor via implicit pairing with the output tensor, but the tensor network is not finalized!" << std::endl;
+  return false;
+ }
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
+   "Attempt to append an output tensor (id = 0) to a finalized tensor network!" << std::endl;
   return false;
  }
  //Reset the output tensor to a new one:
