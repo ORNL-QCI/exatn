@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/12/06
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -156,6 +156,11 @@ DimExtent Tensor::getDimExtent(unsigned int dim_id) const
 const std::vector<DimExtent> & Tensor::getDimExtents() const
 {
  return shape_.getDimExtents();
+}
+
+const std::vector<DimExtent> Tensor::getDimStrides(DimExtent * volume) const
+{
+ return shape_.getDimStrides(volume);
 }
 
 SpaceId Tensor::getDimSpaceId(unsigned int dim_id) const

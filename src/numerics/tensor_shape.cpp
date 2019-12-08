@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/11/27
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,6 +58,13 @@ void TensorShape::printItFile(std::ofstream & output_file) const
 unsigned int TensorShape::getRank() const
 {
  return static_cast<unsigned int>(extents_.size());
+}
+
+DimExtent TensorShape::getVolume() const
+{
+ DimExtent volume = 1;
+ for(const auto & extent: extents_) volume *= extent;
+ return volume;
 }
 
 DimExtent TensorShape::getDimExtent(unsigned int dim_id) const

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/11/12
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -132,6 +132,10 @@ public:
  DimExtent getDimExtent(unsigned int dim_id) const;
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
+
+ /** Get the strides for all tensor dimensions.
+     Column-major tensor storage layout is assumed. **/
+ const std::vector<DimExtent> getDimStrides(DimExtent * volume = nullptr) const;
 
  /** Get the space/subspace id for a specific tensor dimension. **/
  SpaceId getDimSpaceId(unsigned int dim_id) const;

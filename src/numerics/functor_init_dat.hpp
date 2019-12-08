@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a given external data
-REVISION: 2019/11/27
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,6 +27,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <complex>
+
+#include <cassert>
 
 namespace exatn{
 
@@ -84,6 +86,7 @@ FunctorInitDat::FunctorInitDat(const TensorShape & full_shape,
                std::is_same<NumericType,std::complex<float>>::value ||
                std::is_same<NumericType,std::complex<double>>::value,
                "#ERROR(exatn::numerics::FunctorInitDat): Invalid numeric data type!");
+ assert(full_shape.getVolume() == ext_data.size());
  for(std::size_t i = 0; i < ext_data.size(); ++i) data_[i] = std::complex<double>(ext_data[i]);
 }
 

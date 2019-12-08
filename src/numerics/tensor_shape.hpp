@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/11/27
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -54,6 +54,9 @@ public:
 
  /** Get tensor rank (number of tensor dimensions). **/
  unsigned int getRank() const;
+
+ /** Get tensor shape volume. **/
+ DimExtent getVolume() const;
 
  /** Get the extent of a specific tensor dimension. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
