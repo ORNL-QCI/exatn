@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/12/06
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -207,7 +207,8 @@ inline bool contractTensorsSync(const std::string & contraction, //in: symbolic 
  {return numericalServer->contractTensorsSync(contraction,alpha);}
 
 
-/** Performs a full evaluation of a tensor network. **/
+/** Performs a full evaluation of a tensor network specified symbolically, based on
+    the symbolic names of previously created tensors (including the output tensor). **/
 inline bool evaluateTensorNetwork(const std::string & name,    //in: tensor network name
                                   const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetwork(name,network);}
@@ -217,7 +218,8 @@ inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor 
  {return numericalServer->evaluateTensorNetworkSync(name,network);}
 
 
-/** Synchronizes all outstanding update operations on a given tensor. **/
+/** Synchronizes all outstanding update operations on a given tensor
+    specified by its symbolic name. **/
 inline bool sync(const std::string & name, //in: tensor name
                  bool wait = true)         //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
@@ -237,6 +239,25 @@ inline bool evaluateSync(TensorNetwork & network) //in: finalized tensor network
 inline bool sync(TensorNetwork & network, //in: finalized tensor network
                  bool wait = true)        //in: wait versus test for completion
  {return numericalServer->sync(network,wait);}
+
+
+/** Evaluates a tensor network expansion into the explicitly provided tensor accumulator. **/
+inline bool evaluate(TensorExpansion & expansion,         //in: tensor network expansion
+                     std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
+ {return numericalServer->submit(expansion,accumulator);}
+
+inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor network expansion
+                         std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
+ {if(!accumulator) return false;
+  bool success = numericalServer->submit(expansion,accumulator);
+  if(success) success = numericalServer->sync(*accumulator);
+  return success;}
+
+
+/** Synchronizes all outstanding operations on a given tensor. **/
+inline bool sync(const Tensor & tensor, //in: tensor
+                 bool wait = true)      //in: wait versus test for completion
+ {return numericalServer->sync(tensor,wait);}
 
 
 /** Synchronizes all outstanding tensor operations in the current scope (barrier). **/

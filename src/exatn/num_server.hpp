@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/06
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -54,6 +54,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <vector>
 #include <string>
 #include <stack>
+#include <list>
 #include <map>
 
 using exatn::Identifiable;
@@ -156,13 +157,21 @@ public:
 
 
  /** Submits an individual tensor operation for processing. **/
- bool submit(std::shared_ptr<TensorOperation> operation);
- /** Submits a tensor network for processing (evaluating the tensor-result). **/
- bool submit(TensorNetwork & network);
+ bool submit(std::shared_ptr<TensorOperation> operation); //in: tensor operation for numerical evaluation
+
+ /** Submits a tensor network for processing (evaluating the output tensor-result).
+     If the output (result) tensor has not been created yet, it will be created and
+     initialized to zero automatically, and later destroyed automatically when no longer needed. **/
+ bool submit(TensorNetwork & network);                //in: tensor network for numerical evaluation
  bool submit(std::shared_ptr<TensorNetwork> network);
- /** Submits a tensor network expansion for processing (evaluating the tensor result). **/
- bool submit(TensorExpansion & expansion);
- bool submit(std::shared_ptr<TensorExpansion> expansion);
+
+ /** Submits a tensor network expansion for processing (evaluating output tensors of all
+     constituting tensor networks and accumualting them in the provided accumulator tensor).
+     Synchronization of the tensor expansion evaluation is done via syncing on the accumulator tensor. **/
+ bool submit(TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+ bool submit(std::shared_ptr<TensorExpansion> expansion,
+             std::shared_ptr<Tensor> accumulator);
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
@@ -267,7 +276,8 @@ public:
  bool contractTensorsSync(const std::string & contraction, //in: symbolic tensor contraction specification
                           NumericType alpha);              //in: alpha prefactor
 
- /** Performs a full evaluation of a tensor network. **/
+ /** Performs a full evaluation of a tensor network based on the symbolic
+     specification involving already created tensors (including the output). **/
  bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
                             const std::string & network); //in: symbolic tensor network specification
 
@@ -289,10 +299,13 @@ public:
 
 private:
 
+ void destroyOrphanedTensors();
+
  numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
- std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors
+ std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
+ std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
 
  std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data

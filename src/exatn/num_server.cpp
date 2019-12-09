@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/06
+REVISION: 2019/12/08
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,6 +27,7 @@ NumServer::NumServer():
 
 NumServer::~NumServer()
 {
+ destroyOrphanedTensors();
  for(auto & kv: tensors_){ //destroy all still existing tensors
   std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
   destroy_op->setTensorOperand(kv.second);
@@ -210,11 +211,12 @@ bool NumServer::submit(TensorNetwork & network)
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
  if(iter == tensors_.end()){ //output tensor did not exist and needs to be created
+  implicit_tensors_.emplace_back(output_tensor); //list of implicitly created tensors (for garbage collection)
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand(output_tensor);
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->
    resetTensorElementType(output_tensor->getElementType());
-  auto submitted = submit(op); if(!submitted) return false;
+  auto submitted = submit(op); if(!submitted) return false; //this CREATE operation will also register the output tensor
  }
  for(auto op = op_list.begin(); op != op_list.end(); ++op){
   auto submitted = submit(*op); if(!submitted) return false;
@@ -228,25 +230,36 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
  return false;
 }
 
-bool NumServer::submit(TensorExpansion & expansion)
+bool NumServer::submit(TensorExpansion & expansion, std::shared_ptr<Tensor> accumulator)
 {
+ assert(accumulator);
  for(auto component = expansion.begin(); component != expansion.end(); ++component){
+  //Evaluate a tensor network component (compute its output tensor):
   auto & network = *(component->network_);
   auto submitted = submit(network); if(!submitted) return false;
+  //Scale the computed output tensor by the expansion coefficient:
   bool conjugated;
   auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
+  /**
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
   op->setTensorOperand(output_tensor);
   std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->
    resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorScale(component->coefficient_)));
   submitted = submit(op); if(!submitted) return false;
+  **/
+  //Accumulate the scaled computed output tensor into the accumulator tensor:
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
+  op->setTensorOperand(accumulator);
+  op->setTensorOperand(output_tensor);
+  op->setScalar(0,component->coefficient_);
+  submitted = submit(op); if(!submitted) return false;
  }
  return true;
 }
 
-bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion)
+bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion, std::shared_ptr<Tensor> accumulator)
 {
- if(expansion) return submit(*expansion);
+ if(expansion) return submit(*expansion,accumulator);
  return false;
 }
 
@@ -312,6 +325,7 @@ TensorElementType NumServer::getTensorElementType(const std::string & name) cons
 
 bool NumServer::destroyTensor(const std::string & name) //always synchronous
 {
+ destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
@@ -326,6 +340,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
 
 bool NumServer::destroyTensorSync(const std::string & name)
 {
+ destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
@@ -477,6 +492,22 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & nam
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()) return std::shared_ptr<talsh::Tensor>(nullptr);
  return getLocalTensor(iter->second);
+}
+
+void NumServer::destroyOrphanedTensors()
+{
+ auto iter = implicit_tensors_.begin();
+ while(iter != implicit_tensors_.end()){
+  if(iter->unique()){
+   std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+   destroy_op->setTensorOperand(*iter);
+   auto submitted = submit(destroy_op);
+   iter = implicit_tensors_.erase(iter);
+  }else{
+   ++iter;
+  }
+ }
+ return;
 }
 
 } //namespace exatn
