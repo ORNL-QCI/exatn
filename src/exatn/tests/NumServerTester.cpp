@@ -427,69 +427,109 @@ TEST(NumServerTester, HamiltonianNumServer)
 
  exatn::resetRuntimeLoggingLevel(0); //debug
 
- //Create MPS tensors:
- bool created = false;
- created = exatn::createTensor("Q0",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
- created = exatn::createTensor("Q1",TensorElementType::COMPLEX64,TensorShape{2,2,4}); assert(created);
- created = exatn::createTensor("Q2",TensorElementType::COMPLEX64,TensorShape{4,2,2}); assert(created);
- created = exatn::createTensor("Q3",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
+ //Declare MPS tensors:
+ auto q0 = std::make_shared<Tensor>("Q0",TensorShape{2,2});
+ auto q1 = std::make_shared<Tensor>("Q1",TensorShape{2,2,4});
+ auto q2 = std::make_shared<Tensor>("Q2",TensorShape{4,2,2});
+ auto q3 = std::make_shared<Tensor>("Q3",TensorShape{2,2});
 
- //Create Hamiltonian tensors:
- created = exatn::createTensor("H01",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
- created = exatn::createTensor("H12",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
- created = exatn::createTensor("H23",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+ //Declare Hamiltonian tensors:
+ auto h01 = std::make_shared<Tensor>("H01",TensorShape{2,2,2,2});
+ auto h12 = std::make_shared<Tensor>("H12",TensorShape{2,2,2,2});
+ auto h23 = std::make_shared<Tensor>("H23",TensorShape{2,2,2,2});
+ auto z0 = std::make_shared<Tensor>("Z0",TensorShape{2,2,2,2});
 
- {//Construct and evaluate the Hamiltonian expectation value:
-  //Get tensor objects:
-  auto z0 = std::make_shared<Tensor>("Z0",TensorShape{2,2,2,2});
-  auto q0 = exatn::getTensor("Q0");
-  auto q1 = exatn::getTensor("Q1");
-  auto q2 = exatn::getTensor("Q2");
-  auto q3 = exatn::getTensor("Q3");
-  auto h01 = exatn::getTensor("H01");
-  auto h12 = exatn::getTensor("H12");
-  auto h23 = exatn::getTensor("H23");
+ //Declare the Hamiltonian operator:
+ TensorOperator ham("Hamiltonian");
+ bool appended = false;
+ appended = ham.appendComponent(h01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(h12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(h23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(appended);
 
-  //Create the MPS tensor network:
-  TensorNetwork right_mps("RightMPS", "Z0(i0,i1,i2,i3)+=Q0(i0,j0)*Q1(j0,i1,j1)*Q2(j1,i2,j2)*Q3(j2,i3)",
-                          std::map<std::string,std::shared_ptr<Tensor>>{
-                           {"Z0",z0}, {"Q0",q0}, {"Q1",q1}, {"Q2",q2}, {"Q3",q3}
-                          }
-                         );
+ //Declare the ket MPS tensor network:
+ auto mps_ket = std::make_shared<TensorNetwork>("MPSKet",
+                 "Z0(i0,i1,i2,i3)+=Q0(i0,j0)*Q1(j0,i1,j1)*Q2(j1,i2,j2)*Q3(j2,i3)",
+                 std::map<std::string,std::shared_ptr<Tensor>>{
+                  {"Z0",z0}, {"Q0",q0}, {"Q1",q1}, {"Q2",q2}, {"Q3",q3}});
 
-  //Create the Hamiltonian operator:
-  TensorOperator ham("Hamiltonian");
-  bool appended = false;
-  appended = ham.appendComponent(h01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(appended);
-  appended = ham.appendComponent(h12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(appended);
-  appended = ham.appendComponent(h23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(appended);
+ //Declare the ket tensor network expansion:
+ TensorExpansion ket;
+ appended = ket.appendComponent(mps_ket,{1.0,0.0}); assert(appended);
 
-  //Create the ket tensor expansion:
+ //Declare the bra tensor network expansion (conjugated ket):
+ TensorExpansion bra(ket);
+ bra.conjugate();
 
-  //Apply the Hamiltonian to the ket tensor expansion:
+ //Declare the operator times ket product tensor expansion:
+ TensorExpansion ham_ket(ket,ham);
 
-  //Create the bra tensor expansion:
+ //Declare the full closed product tensor expansion (scalar):
+ TensorExpansion closed_prod(ham_ket,bra);
+ closed_prod.printIt(); //debug
 
-  //Form the expectation value by closing with the bra tensor expansion:
+ {//Evaluate the Hamiltonian expectation value over the MPS state:
+  //Create MPS tensors:
+  bool created = false;
+  created = exatn::createTensor(q0,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensor(q1,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensor(q2,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensor(q3,TensorElementType::COMPLEX64); assert(created);
+
+  //Create Hamiltonian tensors:
+  created = exatn::createTensor(h01,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensor(h12,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensor(h23,TensorElementType::COMPLEX64); assert(created);
+
+  //Create the Accumulator tensor:
+  created = exatn::createTensor("AC0",TensorElementType::COMPLEX64,TensorShape{}); assert(created);
+  auto accumulator = exatn::getTensor("AC0");
+
+  //Initialize all input tensors:
+  auto initialized = false;
+  initialized = exatn::initTensor("Q0",1e-2); assert(initialized);
+  initialized = exatn::initTensor("Q1",1e-2); assert(initialized);
+  initialized = exatn::initTensor("Q2",1e-2); assert(initialized);
+  initialized = exatn::initTensor("Q3",1e-2); assert(initialized);
+  initialized = exatn::initTensor("H01",1e-2); assert(initialized);
+  initialized = exatn::initTensor("H12",1e-2); assert(initialized);
+  initialized = exatn::initTensor("H23",1e-2); assert(initialized);
+  initialized = exatn::initTensor("AC0",0.0); assert(initialized);
 
   //Evaluate the expectation value:
+  bool evaluated = false;
+  evaluated = exatn::evaluateSync(closed_prod,accumulator); assert(evaluated);
+
+  //Synchronize:
+  exatn::sync();
+
+  //Retrieve the expectation value:
+  for(auto component = closed_prod.begin(); component != closed_prod.end(); ++component){
+   auto talsh_tensor = exatn::getLocalTensor(component->network_->getTensor(0)->getName());
+   const std::complex<double> * body_ptr;
+   auto access_granted = talsh_tensor->getDataAccessHostConst(&body_ptr); assert(access_granted);
+   std::cout << "Component expectation value = " << *body_ptr << " VS correct value of " << 16.384*1e-15 << std::endl;
+   body_ptr = nullptr;
+  }
+  auto talsh_tensor = exatn::getLocalTensor("AC0");
+  const std::complex<double> * body_ptr;
+  auto access_granted = talsh_tensor->getDataAccessHostConst(&body_ptr); assert(access_granted);
+  std::cout << "Expectation value = " << *body_ptr << " VS correct value of " << 3*16.384*1e-15 << std::endl;
+  body_ptr = nullptr;
+
+  //Destroy all tensors:
+  bool destroyed = false;
+  destroyed = exatn::destroyTensor("AC0"); assert(destroyed);
+  destroyed = exatn::destroyTensor("H23"); assert(destroyed);
+  destroyed = exatn::destroyTensor("H12"); assert(destroyed);
+  destroyed = exatn::destroyTensor("H01"); assert(destroyed);
+  destroyed = exatn::destroyTensor("Q3"); assert(destroyed);
+  destroyed = exatn::destroyTensor("Q2"); assert(destroyed);
+  destroyed = exatn::destroyTensor("Q1"); assert(destroyed);
+  destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
 
   //Synchronize:
   exatn::sync();
  }
-
- //Destroy all tensors:
- bool destroyed = false;
- destroyed = exatn::destroyTensor("H23"); assert(destroyed);
- destroyed = exatn::destroyTensor("H12"); assert(destroyed);
- destroyed = exatn::destroyTensor("H01"); assert(destroyed);
- destroyed = exatn::destroyTensor("Q3"); assert(destroyed);
- destroyed = exatn::destroyTensor("Q2"); assert(destroyed);
- destroyed = exatn::destroyTensor("Q1"); assert(destroyed);
- destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
-
- //Synchronize:
- exatn::sync();
  //Grab a beer!
 }
 

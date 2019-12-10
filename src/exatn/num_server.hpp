@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/09
+REVISION: 2019/12/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -209,10 +209,16 @@ public:
                    TensorElementType element_type, //in: tensor element type
                    Args&&... args);                //in: other arguments for Tensor ctor
 
+ bool createTensor(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor
+                   TensorElementType element_type); //in: tensor element type
+
  template <typename... Args>
  bool createTensorSync(const std::string & name,       //in: tensor name
                        TensorElementType element_type, //in: tensor element type
                        Args&&... args);                //in: other arguments for Tensor ctor
+
+ bool createTensorSync(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor
+                       TensorElementType element_type); //in: tensor element type
 
  /** Destroys a tensor, including its backend representation. **/
  bool destroyTensor(const std::string & name); //in: tensor name

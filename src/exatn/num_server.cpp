@@ -1,15 +1,17 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/09
+REVISION: 2019/12/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 
-#include <cassert>
 #include <vector>
+#include <list>
 #include <map>
 #include <future>
+
+#include <cassert>
 
 namespace exatn{
 
@@ -234,26 +236,26 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 bool NumServer::submit(TensorExpansion & expansion, std::shared_ptr<Tensor> accumulator)
 {
  assert(accumulator);
+ std::list<std::shared_ptr<TensorOperation>> accumulations;
  for(auto component = expansion.begin(); component != expansion.end(); ++component){
-  //Evaluate a tensor network component (compute its output tensor):
+  //Evaluate the tensor network component (compute its output tensor):
   auto & network = *(component->network_);
   auto submitted = submit(network); if(!submitted) return false;
-  //Scale the computed output tensor by the expansion coefficient:
+  //Create accumulation operation for the scaled computed output tensor:
   bool conjugated;
   auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
-  /**
-  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
-  op->setTensorOperand(output_tensor);
-  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->
-   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorScale(component->coefficient_)));
-  submitted = submit(op); if(!submitted) return false;
-  **/
-  //Accumulate the scaled computed output tensor into the accumulator tensor:
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
   op->setTensorOperand(accumulator);
   op->setTensorOperand(output_tensor);
   op->setScalar(0,component->coefficient_);
-  submitted = submit(op); if(!submitted) return false;
+  std::string add_pattern;
+  auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern); assert(generated);
+  op->setIndexPattern(add_pattern);
+  accumulations.emplace_back(op);
+ }
+ //Submit all previously created accumulation operations:
+ for(auto & accumulation: accumulations){
+  auto submitted = submit(accumulation); if(!submitted) return false;
  }
  return true;
 }
@@ -322,6 +324,29 @@ TensorElementType NumServer::getTensorElementType(const std::string & name) cons
   assert(false);
  }
  return (iter->second)->getElementType();
+}
+
+bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,
+                             TensorElementType element_type)
+{
+ assert(tensor);
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+ op->setTensorOperand(tensor);
+ std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+ auto submitted = submit(op);
+ return submitted;
+}
+
+bool NumServer::createTensorSync(std::shared_ptr<Tensor> tensor,
+                                 TensorElementType element_type)
+{
+ assert(tensor);
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+ op->setTensorOperand(tensor);
+ std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+ auto submitted = submit(op);
+ if(submitted) submitted = sync(*op);
+ return submitted;
 }
 
 bool NumServer::destroyTensor(const std::string & name) //always synchronous

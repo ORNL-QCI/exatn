@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/11/12
+REVISION: 2019/12/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -155,6 +155,19 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
                                   unsigned int left_tensor_rank,
                                   unsigned int right_tensor_rank,
                                   std::string & symb_pattern);
+
+/** Generates symbolic tensor addition pattern from the digital tensor addition pattern:
+     pattern[0..m-1] describes connectivity of dimensions of the left tensor,
+      where m is the rank of the left tensor.
+     pattern[x] is a TensorLeg specifying the dimension of the result tensor the described
+      dimension is connected to, where the result tensor is tensor 0 and the left tensor is tensor 1.
+    **/
+bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
+                               std::string & symb_pattern);
+
+/** Generates the trivial tensor addition pattern. **/
+bool generate_addition_pattern(unsigned int tensor_rank,
+                               std::string & symb_pattern);
 
 } //namespace exatn
 

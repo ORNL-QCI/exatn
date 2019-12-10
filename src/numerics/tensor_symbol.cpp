@@ -1,10 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/12/06
+REVISION: 2019/12/10
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_symbol.hpp"
+
+#include <iostream>
 
 #include <cassert>
 
@@ -200,6 +202,33 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
   std::cout << " " << symb_pattern << std::endl;
  }*/
  return true;
+}
+
+
+bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
+                               std::string & symb_pattern)
+/* pattern[left_rank] = {left_legs} */
+{
+ unsigned int rank = pattern.size();
+ auto generated = generate_contraction_pattern(pattern,rank,0,symb_pattern);
+ if(generated){
+  auto pos = symb_pattern.rfind("*R()");
+  generated = (pos != std::string::npos);
+  if(generated) symb_pattern.erase(pos);
+ }
+ //if(generated) std::cout << symb_pattern << std::endl; //debug
+ return generated;
+}
+
+
+/* Generates the trivial tensor addition pattern. */
+bool generate_addition_pattern(unsigned int tensor_rank,
+                               std::string & symb_pattern)
+{
+ std::vector<numerics::TensorLeg> pattern(tensor_rank);
+ unsigned int dim = 0;
+ for(auto & leg: pattern) leg = numerics::TensorLeg(0,dim++);
+ return generate_addition_pattern(pattern,symb_pattern);
 }
 
 } //namespace exatn
