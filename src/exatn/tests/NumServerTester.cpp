@@ -11,7 +11,6 @@ using namespace exatn::numerics;
 
 TEST(NumServerTester, checkNumServer)
 {
-
  const VectorSpace * space1;
  auto space1_id = numericalServer->createVectorSpace("Space1",1024,&space1);
  space1->printIt();
@@ -43,7 +42,6 @@ TEST(NumServerTester, checkNumServer)
  const Subspace * subspace = numericalServer->getSubspace("S11");
  subspace->printIt();
  std::cout << std::endl;
-
 }
 
 
@@ -204,7 +202,6 @@ TEST(NumServerTester, useNumServer)
  std::shared_ptr<TensorOperation> destroy_z0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
  destroy_z0->setTensorOperand(z0);
  exatn::numericalServer->submit(destroy_z0);
-
  //Grab a beer!
 }
 
@@ -263,7 +260,6 @@ TEST(NumServerTester, easyNumServer)
  destroyed = exatn::numericalServer->destroyTensor("T1"); assert(destroyed);
  destroyed = exatn::numericalServer->destroyTensor("T0"); assert(destroyed);
  destroyed = exatn::numericalServer->destroyTensor("Z0"); assert(destroyed);
-
  //Grab a beer!
 }
 
@@ -332,7 +328,6 @@ TEST(NumServerTester, superEasyNumServer)
  destroyed = exatn::destroyTensor("T1"); assert(destroyed);
  destroyed = exatn::destroyTensor("T0"); assert(destroyed);
  destroyed = exatn::destroyTensor("Z0"); assert(destroyed);
-
  //Grab a beer!
 }
 
@@ -416,7 +411,85 @@ TEST(NumServerTester, circuitNumServer)
 
  //Synchronize:
  exatn::sync();
+ //Grab a beer!
+}
 
+
+TEST(NumServerTester, HamiltonianNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::numerics::TensorSignature;
+ using exatn::numerics::TensorNetwork;
+ using exatn::numerics::TensorOperator;
+ using exatn::numerics::TensorExpansion;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Create MPS tensors:
+ bool created = false;
+ created = exatn::createTensor("Q0",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
+ created = exatn::createTensor("Q1",TensorElementType::COMPLEX64,TensorShape{2,2,4}); assert(created);
+ created = exatn::createTensor("Q2",TensorElementType::COMPLEX64,TensorShape{4,2,2}); assert(created);
+ created = exatn::createTensor("Q3",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
+
+ //Create Hamiltonian tensors:
+ created = exatn::createTensor("H01",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+ created = exatn::createTensor("H12",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+ created = exatn::createTensor("H23",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+
+ {//Construct and evaluate the Hamiltonian expectation value:
+  //Get tensor objects:
+  auto z0 = std::make_shared<Tensor>("Z0",TensorShape{2,2,2,2});
+  auto q0 = exatn::getTensor("Q0");
+  auto q1 = exatn::getTensor("Q1");
+  auto q2 = exatn::getTensor("Q2");
+  auto q3 = exatn::getTensor("Q3");
+  auto h01 = exatn::getTensor("H01");
+  auto h12 = exatn::getTensor("H12");
+  auto h23 = exatn::getTensor("H23");
+
+  //Create the MPS tensor network:
+  TensorNetwork right_mps("RightMPS", "Z0(i0,i1,i2,i3)+=Q0(i0,j0)*Q1(j0,i1,j1)*Q2(j1,i2,j2)*Q3(j2,i3)",
+                          std::map<std::string,std::shared_ptr<Tensor>>{
+                           {"Z0",z0}, {"Q0",q0}, {"Q1",q1}, {"Q2",q2}, {"Q3",q3}
+                          }
+                         );
+
+  //Create the Hamiltonian operator:
+  TensorOperator ham("Hamiltonian");
+  bool appended = false;
+  appended = ham.appendComponent(h01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(appended);
+  appended = ham.appendComponent(h12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(appended);
+  appended = ham.appendComponent(h23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(appended);
+
+  //Create the ket tensor expansion:
+
+  //Apply the Hamiltonian to the ket tensor expansion:
+
+  //Create the bra tensor expansion:
+
+  //Form the expectation value by closing with the bra tensor expansion:
+
+  //Evaluate the expectation value:
+
+  //Synchronize:
+  exatn::sync();
+ }
+
+ //Destroy all tensors:
+ bool destroyed = false;
+ destroyed = exatn::destroyTensor("H23"); assert(destroyed);
+ destroyed = exatn::destroyTensor("H12"); assert(destroyed);
+ destroyed = exatn::destroyTensor("H01"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q3"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q2"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q1"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
+
+ //Synchronize:
+ exatn::sync();
  //Grab a beer!
 }
 

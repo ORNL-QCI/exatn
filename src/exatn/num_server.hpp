@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/08
+REVISION: 2019/12/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,10 +79,12 @@ using numerics::NetworkBuildFactory;
 using numerics::ContractionSeqOptimizer;
 using numerics::ContractionSeqOptimizerFactory;
 
-using TensorMethod = talsh::TensorFunctor<Identifiable>;
 using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
+using numerics::FunctorInitDat;
 using numerics::FunctorScale;
+
+using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
 
 class NumServer final {

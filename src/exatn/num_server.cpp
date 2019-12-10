@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/08
+REVISION: 2019/12/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,13 +28,14 @@ NumServer::NumServer():
 NumServer::~NumServer()
 {
  destroyOrphanedTensors();
- for(auto & kv: tensors_){ //destroy all still existing tensors
+ auto iter = tensors_.begin();
+ while(iter != tensors_.end()){
   std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-  destroy_op->setTensorOperand(kv.second);
+  destroy_op->setTensorOperand(iter->second);
   auto submitted = submit(destroy_op);
   if(submitted) submitted = sync(*destroy_op);
+  iter = tensors_.begin();
  }
- tensors_.clear();
  tensor_rt_->closeScope();
  scopes_.pop();
 }
