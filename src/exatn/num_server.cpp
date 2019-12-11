@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/10
+REVISION: 2019/12/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -324,6 +324,27 @@ TensorElementType NumServer::getTensorElementType(const std::string & name) cons
   assert(false);
  }
  return (iter->second)->getElementType();
+}
+
+bool NumServer::registerTensorIsometry(const std::string & name,
+                                       const std::vector<unsigned int> & iso_dims)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::registerTensorIsometry): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ iter->second->registerIsometry(iso_dims);
+ return true;
+}
+
+bool NumServer::registerTensorIsometry(const std::string & name,
+                                       const std::vector<unsigned int> & iso_dims0,
+                                       const std::vector<unsigned int> & iso_dims1)
+{
+ auto registered = registerTensorIsometry(name,iso_dims0);
+ if(registered) registered = registerTensorIsometry(name,iso_dims1);
+ return registered;
 }
 
 bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,

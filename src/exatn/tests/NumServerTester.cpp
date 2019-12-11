@@ -346,7 +346,7 @@ TEST(NumServerTester, circuitNumServer)
   {1.0,0.0}, {0.0,0.0}
  };
 
- //Define quantum gates:
+ //Define quantum gates (column-wise = transposed matrices):
  std::vector<std::complex<double>> hadamard {
   {1.0,0.0}, {1.0,0.0},
   {1.0,0.0}, {-1.0,0.0}
@@ -365,8 +365,11 @@ TEST(NumServerTester, circuitNumServer)
  created = exatn::createTensor("Q2",TensorElementType::COMPLEX64,TensorShape{2}); assert(created);
 
  //Create gate tensors:
+ auto registered = false;
  created = exatn::createTensor("H",TensorElementType::COMPLEX64,TensorShape{2,2}); assert(created);
+ registered = exatn::registerTensorIsometry("H",{0},{1}); assert(registered);
  created = exatn::createTensor("CNOT",TensorElementType::COMPLEX64,TensorShape{2,2,2,2}); assert(created);
+ registered = exatn::registerTensorIsometry("CNOT",{0,1},{2,3}); assert(registered);
 
  //Initialize qubit tensors to zero state:
  auto initialized = false;

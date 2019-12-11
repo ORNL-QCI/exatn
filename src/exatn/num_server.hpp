@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/10
+REVISION: 2019/12/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -201,6 +201,15 @@ public:
 
  /** Returns the tensor element type. **/
  TensorElementType getTensorElementType(const std::string & name) const; //in: tensor name
+
+ /** Registers a group of tensor dimensions which form an isometry when
+     contracted over with the conjugated tensor (see exatn::numerics::Tensor).
+     Returns TRUE on success, FALSE on failure. **/
+ bool registerTensorIsometry(const std::string & name,                     //in: tensor name
+                             const std::vector<unsigned int> & iso_dims);  //in: tensor dimensions forming the isometry
+ bool registerTensorIsometry(const std::string & name,                     //in: tensor name
+                             const std::vector<unsigned int> & iso_dims0,  //in: tensor dimensions forming the isometry (group 0)
+                             const std::vector<unsigned int> & iso_dims1); //in: tensor dimensions forming the isometry (group 1)
 
  /** Declares, registers and actually creates a tensor via processing backend.
      See numerics::Tensor constructors for different creation options. **/

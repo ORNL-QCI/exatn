@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/12/10
+REVISION: 2019/12/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -139,6 +139,19 @@ inline Tensor & getTensorRef(const std::string & name) //in: tensor name
 /** Returns the tensor element type. **/
 inline TensorElementType getTensorElementType(const std::string & name) //in: tensor name
  {return numericalServer->getTensorElementType(name);}
+
+
+/** Registers a group of tensor dimensions which form an isometry when
+    contracted over with the conjugated tensor (see exatn::numerics::Tensor).
+    Returns TRUE on success, FALSE on failure. **/
+inline bool registerTensorIsometry(const std::string & name,                   //in: tensor name
+                                   const std::vector<unsigned int> & iso_dims) //in: tensor dimensions forming the isometry
+ {return numericalServer->registerTensorIsometry(name,iso_dims);}
+
+inline bool registerTensorIsometry(const std::string & name,                    //in: tensor name
+                                   const std::vector<unsigned int> & iso_dims0, //in: tensor dimensions forming the isometry (group 0)
+                                   const std::vector<unsigned int> & iso_dims1) //in: tensor dimensions forming the isometry (group 1)
+ {return numericalServer->registerTensorIsometry(name,iso_dims0,iso_dims1);}
 
 
 /** Destroys a tensor, including its backend representation. **/

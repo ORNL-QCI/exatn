@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/12/08
+REVISION: 2019/12/11
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -16,7 +16,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
      tensor dimensions, spit between the original and conjugated tensors.
      A tensor is isometric if it has at least one isometry group of dimensions.
      A tensor is unitary if its dimensions can be partioned into two non-overlapping
-     groups such that both groups form an isometry.
+     groups such that both groups form an isometry (in this case the volumes of both
+     dimension groups will necessarily be the same).
 
  Tensor signature identifies a full tensor or its slice. Tensor signature
  requires providing a pair<SpaceId,SubspaceId> for each tensor dimension.
