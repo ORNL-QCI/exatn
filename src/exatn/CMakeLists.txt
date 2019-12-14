@@ -1,5 +1,12 @@
 set(LIBRARY_NAME exatn)
-add_library(${LIBRARY_NAME} SHARED exatn.cpp exatn_service.cpp ServiceRegistry.cpp num_server.cpp)
+add_library(${LIBRARY_NAME}
+            SHARED
+            exatn.cpp
+            exatn_service.cpp
+            ServiceRegistry.cpp
+            num_server.cpp
+            reconstructor.cpp
+            optimizer.cpp)
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
