@@ -452,7 +452,7 @@ TEST(NumServerTester, HamiltonianNumServer)
  //Declare the ket MPS tensor network:
  // Q0----Q1----Q2----Q3
  // |     |     |     |
- auto mps_ket = std::make_shared<TensorNetwork>("MPSKet",
+ auto mps_ket = std::make_shared<TensorNetwork>("MPS",
                  "Z0(i0,i1,i2,i3)+=Q0(i0,j0)*Q1(j0,i1,j1)*Q2(j1,i2,j2)*Q3(j2,i3)",
                  std::map<std::string,std::shared_ptr<Tensor>>{
                   {"Z0",z0}, {"Q0",q0}, {"Q1",q1}, {"Q2",q2}, {"Q3",q3}});
@@ -462,12 +462,14 @@ TEST(NumServerTester, HamiltonianNumServer)
  // |     |     |     |
  TensorExpansion ket;
  appended = ket.appendComponent(mps_ket,{1.0,0.0}); assert(appended);
+ ket.rename("MPSket");
 
  //Declare the bra tensor network expansion (conjugated ket):
  // |     |     |     |
  // Q0----Q1----Q2----Q3
  TensorExpansion bra(ket);
  bra.conjugate();
+ bra.rename("MPSbra");
 
  //Declare the operator times ket product tensor expansion:
  // Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3
@@ -475,6 +477,7 @@ TEST(NumServerTester, HamiltonianNumServer)
  // ==H01==     |     |  +  |     ==H12==     |  +  |     |     ==H23==
  // |     |     |     |     |     |     |     |     |     |     |     |
  TensorExpansion ham_ket(ket,ham);
+ ham_ket.rename("HamMPSket");
 
  //Declare the full closed product tensor expansion (scalar):
  // Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3
@@ -483,9 +486,20 @@ TEST(NumServerTester, HamiltonianNumServer)
  // |     |     |     |     |     |     |     |     |     |     |     |
  // Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3
  TensorExpansion closed_prod(ham_ket,bra);
+ closed_prod.rename("MPSbraHamMPSket");
  closed_prod.printIt(); //debug
 
- {//Evaluate the Hamiltonian expectation value over the MPS state:
+ //Declare the derivative tensor expansion with respect to tensor Q1+:
+ // Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3    Q0----Q1----Q2----Q3
+ // |     |     |     |     |     |     |     |     |     |     |     |
+ // ==H01==     |     |  +  |     ==H12==     |  +  |     |     ==H23==
+ // |     |     |     |     |     |     |     |     |     |     |     |
+ // Q0--      --Q2----Q3    Q0--      --Q2----Q3    Q0--      --Q2----Q3
+ TensorExpansion deriv_q1(closed_prod,"Q1",true);
+ deriv_q1.rename("DerivativeQ1");
+ deriv_q1.printIt(); //debug
+
+ {//Numerical evaluation:
   //Create MPS tensors:
   bool created = false;
   created = exatn::createTensorSync(q0,TensorElementType::COMPLEX64); assert(created);
@@ -498,9 +512,13 @@ TEST(NumServerTester, HamiltonianNumServer)
   created = exatn::createTensorSync(h12,TensorElementType::COMPLEX64); assert(created);
   created = exatn::createTensorSync(h23,TensorElementType::COMPLEX64); assert(created);
 
-  //Create the Accumulator tensor:
+  //Create the Accumulator tensor for the closed tensor expansion:
   created = exatn::createTensorSync("AC0",TensorElementType::COMPLEX64,TensorShape{}); assert(created);
-  auto accumulator = exatn::getTensor("AC0");
+  auto accumulator0 = exatn::getTensor("AC0");
+
+  //Create the Accumulator tensor for the derivative tensor expansion:
+  created = exatn::createTensorSync("AC1",TensorElementType::COMPLEX64,q1->getShape()); assert(created);
+  auto accumulator1 = exatn::getTensor("AC1");
 
   //Initialize all input tensors:
   auto initialized = false;
@@ -512,10 +530,14 @@ TEST(NumServerTester, HamiltonianNumServer)
   initialized = exatn::initTensorSync("H12",1e-2); assert(initialized);
   initialized = exatn::initTensorSync("H23",1e-2); assert(initialized);
   initialized = exatn::initTensorSync("AC0",0.0); assert(initialized);
+  initialized = exatn::initTensorSync("AC1",0.0); assert(initialized);
 
   //Evaluate the expectation value:
   bool evaluated = false;
-  evaluated = exatn::evaluateSync(closed_prod,accumulator); assert(evaluated);
+  evaluated = exatn::evaluateSync(closed_prod,accumulator0); assert(evaluated);
+
+  //Evaluate the derivative of the expectation value w.r.t. tensor Q1:
+  evaluated = exatn::evaluateSync(deriv_q1,accumulator1); assert(evaluated);
 
   //Retrieve the expectation values:
   for(auto component = closed_prod.begin(); component != closed_prod.end(); ++component){
@@ -534,6 +556,7 @@ TEST(NumServerTester, HamiltonianNumServer)
 
   //Destroy all tensors:
   bool destroyed = false;
+  destroyed = exatn::destroyTensorSync("AC1"); assert(destroyed);
   destroyed = exatn::destroyTensorSync("AC0"); assert(destroyed);
   destroyed = exatn::destroyTensorSync("H23"); assert(destroyed);
   destroyed = exatn::destroyTensorSync("H12"); assert(destroyed);

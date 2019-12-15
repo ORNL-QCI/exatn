@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/12/14
+REVISION: 2019/12/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,6 +48,9 @@ public:
 
  /** Prints. **/
  void printIt() const;
+
+ /** Returns the tensor name. **/
+ const std::string & getName() const;
 
  /** Returns the total number of legs (tensor rank/order). **/
  unsigned int getNumLegs() const;

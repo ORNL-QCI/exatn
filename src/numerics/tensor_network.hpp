@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/14
+REVISION: 2019/12/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -244,8 +244,14 @@ public:
                   const std::vector<int> & right_dims);  //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
 
  /** Substitutes a tensor in the tensor network with another congruent tensor. **/
- bool substituteTensor(unsigned int tensor_id,
-                       std::shared_ptr<Tensor> tensor);
+ bool substituteTensor(unsigned int tensor_id,          //in: id of the tensor to be substituted
+                       std::shared_ptr<Tensor> tensor); //in: substituting tensor
+ bool substituteTensor(const std::string & name,        //in: name of the tensor to be substituted
+                       std::shared_ptr<Tensor> tensor); ////in: substituting tensor
+
+ /** Returns the list of id's the given tensor enters the tensor network with. **/
+ std::vector<unsigned int> getTensorIdsInNetwork(const std::string & name,       //in: tensor name
+                                                 bool conjugated = false) const; //in: whether or not look for conjugated tensors with the given name
 
  /** Conjugates the tensor network, which includes complex conjugation of
      all tensors as well as reversal of the direction of all tensor legs. **/

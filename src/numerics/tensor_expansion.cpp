@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/11/12
+REVISION: 2019/12/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -63,6 +63,21 @@ TensorExpansion::TensorExpansion(const TensorExpansion & left_expansion,  //in: 
 }
 
 
+TensorExpansion::TensorExpansion(const TensorExpansion & expansion, const std::string & tensor_name, bool conjugated):
+ ket_(expansion.isKet())
+{
+ assert(tensor_name.length() > 0);
+ for(auto iter = expansion.cbegin(); iter != expansion.cend(); ++iter){
+  auto ids = iter->network_->getTensorIdsInNetwork(tensor_name,conjugated);
+  for(const auto & id: ids){
+   auto derivnet = makeSharedTensorNetwork(*(iter->network_));
+   auto differentiated = derivnet->deleteTensor(id); assert(differentiated);
+   appendComponent(derivnet,iter->coefficient_);
+  }
+ }
+}
+
+
 bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network, //in: tensor network
                                       const std::complex<double> coefficient) //in: expansion coefficient
 {
@@ -107,13 +122,20 @@ void TensorExpansion::conjugate()
 }
 
 
+void TensorExpansion::rename(const std::string & name)
+{
+ name_ = name;
+ return;
+}
+
+
 void TensorExpansion::printIt() const
 {
  if(ket_){
-  std::cout << "TensorNetworkExpansion()[ket rank = " << this->getRank()
+  std::cout << "TensorNetworkExpansion(" << name_ << ")[ket rank = " << this->getRank()
             << ", size = " << this->getNumComponents() << "]{" << std::endl;
  }else{
-  std::cout << "TensorNetworkExpansion()[bra rank = " << this->getRank()
+  std::cout << "TensorNetworkExpansion(" << name_ << ")[bra rank = " << this->getRank()
             << ", size = " << this->getNumComponents() << "]{" << std::endl;
  }
  std::size_t i = 0;

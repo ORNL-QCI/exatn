@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/14
+REVISION: 2019/12/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1252,6 +1252,33 @@ bool TensorNetwork::substituteTensor(unsigned int tensor_id, std::shared_ptr<Ten
  if(!(tensor->isCongruentTo(*(old_tensor_conn->getTensor())))) return false;
  old_tensor_conn->replaceStoredTensor(tensor);
  return true;
+}
+
+
+bool TensorNetwork::substituteTensor(const std::string & name, std::shared_ptr<Tensor> tensor)
+{
+ assert(name.length() > 0);
+ int tensor_id = -1;
+ for(const auto & kv: tensors_){
+  if(kv.second.getName() == name){
+   tensor_id = static_cast<int>(kv.first);
+   break;
+  }
+ }
+ if(tensor_id < 0) return false; //tensor name not found
+ return substituteTensor(tensor_id,tensor);
+}
+
+
+std::vector<unsigned int> TensorNetwork::getTensorIdsInNetwork(const std::string & name, bool conjugated) const
+{
+ assert(name.length() > 0);
+ std::vector<unsigned int> ids;
+ for(const auto & kv: tensors_){
+  if(kv.second.getName() == name &&
+     kv.second.isComplexConjugated() == conjugated) ids.emplace_back(kv.first);
+ }
+ return ids;
 }
 
 

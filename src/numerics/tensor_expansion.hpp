@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/11/12
+REVISION: 2019/12/15
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -96,6 +96,12 @@ public:
                  const TensorExpansion & right_expansion, //in: tensor network expansion from the dual tensor space
                  const TensorOperator & tensor_operator); //in: tensor network operator
 
+ /** Produces a derivative tensor expansion by differentiating
+     the tensor expansion with respect to a given tensor (by its name). **/
+ TensorExpansion(const TensorExpansion & expansion, //in: original tensor expansion
+                 const std::string & tensor_name,   //in: the name of the tensor which the derivative is taken against
+                 bool conjugated = false);          //in: whether or not to differentiate with respect to conjugated tensors with the given name
+
  TensorExpansion(const TensorExpansion &) = default;
  TensorExpansion & operator=(const TensorExpansion &) = default;
  TensorExpansion(TensorExpansion &&) noexcept = default;
@@ -114,6 +120,10 @@ public:
 
  inline bool isBra() const{
   return !ket_;
+ }
+
+ inline const std::string & getName() const{
+  return name_;
  }
 
  /** Returns the rank of the tensor expansion (number of legs per component).
@@ -143,6 +153,9 @@ public:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
 
+ /** Renames the tensor expansion. **/
+ void rename(const std::string & name);
+
  /** Prints. **/
  void printIt() const;
 
@@ -161,6 +174,7 @@ protected:
  /** Data members: **/
  bool ket_; //ket or bra
  std::vector<ExpansionComponent> components_; //ordered components of the tensor network expansion
+ std::string name_; //tensor expansion name (optional)
 };
 
 } //namespace numerics
