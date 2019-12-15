@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/11/12
+REVISION: 2019/12/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,7 +10,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <algorithm>
 
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 namespace exatn{
 
@@ -158,6 +158,13 @@ void TensorConn::replaceStoredTensor(const std::vector<unsigned int> & order,
  auto new_name(name);
  if(new_name.empty()) new_name = tensor_hex_name(tensor_->getTensorHash());
  tensor_->rename(new_name);
+ return;
+}
+
+void TensorConn::replaceStoredTensor(std::shared_ptr<Tensor> tensor)
+{
+ assert(tensor);
+ tensor_ = tensor;
  return;
 }
 

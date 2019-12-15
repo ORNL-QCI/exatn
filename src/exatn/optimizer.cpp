@@ -6,7 +6,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "optimizer.hpp"
 
-#include <memory>
+#include <cassert>
 
 namespace exatn{
 

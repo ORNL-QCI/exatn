@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/06
+REVISION: 2019/12/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1240,6 +1240,17 @@ bool TensorNetwork::splitTensor(unsigned int tensor_id,
  }
  assert(left_rank == left_full_rank && right_rank == right_full_rank);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ return true;
+}
+
+
+bool TensorNetwork::substituteTensor(unsigned int tensor_id, std::shared_ptr<Tensor> tensor)
+{
+ assert(tensor);
+ auto * old_tensor_conn = this->getTensorConn(tensor_id);
+ if(old_tensor_conn == nullptr) return false;
+ if(!(tensor->isCongruentTo(*(old_tensor_conn->getTensor())))) return false;
+ old_tensor_conn->replaceStoredTensor(tensor);
  return true;
 }
 

@@ -3,6 +3,9 @@
 
 #include "exatn_service.hpp"
 #include "exatn_numerics.hpp"
+#include "reconstructor.hpp"
+#include "optimizer.hpp"
+#include "eigensolver.hpp"
 
 namespace exatn {
 

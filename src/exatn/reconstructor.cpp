@@ -6,6 +6,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "reconstructor.hpp"
 
+#include <cassert>
+
 namespace exatn{
 
 TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,

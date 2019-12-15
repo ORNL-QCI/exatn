@@ -346,7 +346,7 @@ TEST(NumServerTester, circuitNumServer)
   {1.0,0.0}, {0.0,0.0}
  };
 
- //Define quantum gates (column-wise = transposed matrices):
+ //Define quantum gates:
  std::vector<std::complex<double>> hadamard {
   {1.0,0.0}, {1.0,0.0},
   {1.0,0.0}, {-1.0,0.0}

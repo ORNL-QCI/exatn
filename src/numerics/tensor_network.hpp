@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/06
+REVISION: 2019/12/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -242,6 +242,10 @@ public:
                   const std::string & right_tensor_name, //in: name of the right tensor
                   const TensorShape & contracted_dims,   //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
                   const std::vector<int> & right_dims);  //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
+
+ /** Substitutes a tensor in the tensor network with another congruent tensor. **/
+ bool substituteTensor(unsigned int tensor_id,
+                       std::shared_ptr<Tensor> tensor);
 
  /** Conjugates the tensor network, which includes complex conjugation of
      all tensors as well as reversal of the direction of all tensor legs. **/

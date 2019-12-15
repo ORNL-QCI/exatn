@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/11/12
+REVISION: 2019/12/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -101,6 +101,8 @@ public:
  /** Replaces the stored tensor with a new one (permuted shape and signature). **/
  void replaceStoredTensor(const std::vector<unsigned int> & order, //in: new order of dimensions (N2O)
                           const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
+ /** Replaces the stored tensor with a new one provided explicitly. **/
+ void replaceStoredTensor(std::shared_ptr<Tensor> tensor);
 
 private:
 

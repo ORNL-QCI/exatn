@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/12/11
+REVISION: 2019/12/14
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -192,6 +192,18 @@ inline bool initTensorRnd(const std::string & name) //in: tensor name
 
 inline bool initTensorRndSync(const std::string & name) //in: tensor name
  {return numericalServer->initTensorRndSync(name);}
+
+
+/** Scales a tensor by a scalar value. **/
+template<typename NumericType>
+inline bool scaleTensor(const std::string & name, //in: tensor name
+                        NumericType value)        //in: scalar value
+ {return numericalServer->scaleTensor(name,value);}
+
+template<typename NumericType>
+inline bool scaleTensorSync(const std::string & name, //in: tensor name
+                            NumericType value)        //in: scalar value
+ {return numericalServer->scaleTensorSync(name,value);}
 
 
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
