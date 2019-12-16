@@ -341,6 +341,11 @@ TEST(NumServerTester, circuitNumServer)
 
  exatn::resetRuntimeLoggingLevel(0); //debug
 
+ //Quantum Circuit:
+ //Q0----H---------
+ //Q1----H----C----
+ //Q2----H----N----
+
  //Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero {
   {1.0,0.0}, {0.0,0.0}
