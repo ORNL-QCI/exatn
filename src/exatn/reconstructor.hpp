@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructor of an approximate tensor expansion from a given tensor expansion
-REVISION: 2019/12/14
+REVISION: 2019/12/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -21,9 +21,9 @@ class TensorNetworkReconstructor{
 
 public:
 
- TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,
-                            std::shared_ptr<TensorExpansion> approximant,
-                            double tolerance);
+ TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor expansion to be reconstructed
+                            std::shared_ptr<TensorExpansion> approximant, //in: reconstructing tensor expansion (unoptimized)
+                            double tolerance);                            //in: reconstruction convergence tolerance
 
  TensorNetworkReconstructor(const TensorNetworkReconstructor &) = default;
  TensorNetworkReconstructor & operator=(const TensorNetworkReconstructor &) = default;
@@ -35,14 +35,14 @@ public:
      Upon success, returns the achieved fidelity of the reconstruction. **/
  bool reconstruct(double * fidelity);
 
- /** Returns the reconstructing tensor expansion. **/
+ /** Returns the reconstructing (optimized) tensor expansion. **/
  std::shared_ptr<TensorExpansion> getSolution(double * fidelity = nullptr);
 
 private:
 
  std::shared_ptr<TensorExpansion> expansion_;   //tensor expansion to reconstruct
  std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor expansion
- double tolerance_;                             //reconstruction tolerance
+ double tolerance_;                             //reconstruction convergence tolerance
  double fidelity_;                              //actually achieved reconstruction fidelity
 };
 

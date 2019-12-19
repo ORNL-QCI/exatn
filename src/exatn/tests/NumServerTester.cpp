@@ -433,7 +433,7 @@ TEST(NumServerTester, HamiltonianNumServer)
  using exatn::numerics::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(2); //debug
+ exatn::resetRuntimeLoggingLevel(0); //debug
 
  //Declare MPS tensors:
  auto q0 = std::make_shared<Tensor>("Q0",TensorShape{2,2});
@@ -526,7 +526,7 @@ TEST(NumServerTester, HamiltonianNumServer)
   auto accumulator1 = exatn::getTensor("AC1");
 
   //Initialize all input tensors:
-  auto initialized = false;
+  bool initialized = false;
   initialized = exatn::initTensorSync("Q0",1e-2); assert(initialized);
   initialized = exatn::initTensorSync("Q1",1e-2); assert(initialized);
   initialized = exatn::initTensorSync("Q2",1e-2); assert(initialized);
@@ -575,6 +575,95 @@ TEST(NumServerTester, HamiltonianNumServer)
   exatn::sync();
  }
  //Grab a beer!
+}
+
+
+TEST(NumServerTester, EigenNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::numerics::TensorSignature;
+ using exatn::numerics::TensorNetwork;
+ using exatn::numerics::TensorOperator;
+ using exatn::numerics::TensorExpansion;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Define Ising Hamiltonian constants:
+ constexpr std::complex<double> ZERO{0.0,0.0};
+ constexpr std::complex<double> HAMT{-1.0,0.0};
+ constexpr std::complex<double> HAMU{-2.0,0.0};
+
+ //Declare Ising Hamiltonian tensors:
+ auto t01 = std::make_shared<Tensor>("T01",TensorShape{2,2,2,2});
+ auto t12 = std::make_shared<Tensor>("T12",TensorShape{2,2,2,2});
+ auto t23 = std::make_shared<Tensor>("T23",TensorShape{2,2,2,2});
+ auto u00 = std::make_shared<Tensor>("U00",TensorShape{2,2});
+ auto u11 = std::make_shared<Tensor>("U11",TensorShape{2,2});
+ auto u22 = std::make_shared<Tensor>("U22",TensorShape{2,2});
+ auto u33 = std::make_shared<Tensor>("U33",TensorShape{2,2});
+
+ //Define Ising Hamiltonian tensor elements:
+ std::vector<std::complex<double>> hamt { //Sigma_Z_i X Sigma_Z_(i+1)
+  HAMT,  ZERO,  ZERO,  ZERO,
+  ZERO, -HAMT,  ZERO,  ZERO,
+  ZERO,  ZERO, -HAMT,  ZERO,
+  ZERO,  ZERO,  ZERO,  HAMT
+ };
+ std::vector<std::complex<double>> hamu { //Sigma_X_i
+  ZERO,  HAMU,
+  HAMU,  ZERO
+ };
+
+ //Declare the Ising Hamiltonian operator:
+ TensorOperator ham("Hamiltonian");
+ auto appended = false;
+ appended = ham.appendComponent(t01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(t12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(t23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(u00,{{0,0}},{{0,1}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(u11,{{1,0}},{{1,1}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(u22,{{2,0}},{{2,1}},{1.0,0.0}); assert(appended);
+ appended = ham.appendComponent(u33,{{3,0}},{{3,1}},{1.0,0.0}); assert(appended);
+
+ {//Numerical evaluation:
+  //Create Hamiltonian tensors:
+  auto created = false;
+  created = exatn::createTensorSync(t01,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(t12,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(t23,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(u00,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(u11,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(u22,TensorElementType::COMPLEX64); assert(created);
+  created = exatn::createTensorSync(u33,TensorElementType::COMPLEX64); assert(created);
+
+  //Initialize Hamiltonian tensors:
+  auto initialized = false;
+  initialized = exatn::initTensorDataSync("T01",hamt); assert(initialized);
+  initialized = exatn::initTensorDataSync("T12",hamt); assert(initialized);
+  initialized = exatn::initTensorDataSync("T23",hamt); assert(initialized);
+  initialized = exatn::initTensorDataSync("U00",hamu); assert(initialized);
+  initialized = exatn::initTensorDataSync("U11",hamu); assert(initialized);
+  initialized = exatn::initTensorDataSync("U22",hamu); assert(initialized);
+  initialized = exatn::initTensorDataSync("U33",hamu); assert(initialized);
+
+  //`Finish
+
+  //Destroy all tensors:
+  auto destroyed = false;
+  destroyed = exatn::destroyTensorSync("U33"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("U22"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("U11"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("U00"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("T23"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("T12"); assert(destroyed);
+  destroyed = exatn::destroyTensorSync("T01"); assert(destroyed);
+
+  //Synchronize:
+  exatn::sync();
+ }
+
 }
 
 

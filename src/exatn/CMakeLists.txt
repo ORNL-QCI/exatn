@@ -6,7 +6,8 @@ add_library(${LIBRARY_NAME}
             ServiceRegistry.cpp
             num_server.cpp
             reconstructor.cpp
-            optimizer.cpp)
+            optimizer.cpp
+            eigensolver.cpp)
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 

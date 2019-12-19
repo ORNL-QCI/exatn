@@ -1,5 +1,5 @@
-/** ExaTN:: Reconstructor of a tensor network from a tensor expansion
-REVISION: 2019/12/14
+/** ExaTN:: Reconstructor of an approximate tensor expansion from a given tensor expansion
+REVISION: 2019/12/18
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
