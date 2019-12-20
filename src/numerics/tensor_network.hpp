@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/15
+REVISION: 2019/12/19
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -255,7 +255,10 @@ public:
 
  /** Conjugates the tensor network, which includes complex conjugation of
      all tensors as well as reversal of the direction of all tensor legs. **/
- void conjugate();
+ bool conjugate();
+
+ /** Collapses all isometric tensor pairs, thus simplifying the tensor network. **/
+ bool collapseIsometries();
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.

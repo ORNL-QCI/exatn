@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/15
+REVISION: 2019/12/19
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1282,10 +1282,36 @@ std::vector<unsigned int> TensorNetwork::getTensorIdsInNetwork(const std::string
 }
 
 
-void TensorNetwork::conjugate()
+bool TensorNetwork::conjugate()
 {
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::conjugate): Invalid request: " <<
+   "Unfinalized tensor network must not be conjugated!" << std::endl;
+  return false;
+ }
  for(auto iter = this->begin(); iter != this->end(); ++iter) (iter->second).conjugate();
- return;
+ return true;
+}
+
+
+bool TensorNetwork::collapseIsometries()
+{
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::collapseIsometries): Invalid request: " <<
+   "Unfinalized tensor network must not be simplified!" << std::endl;
+  return false;
+ }
+ //Reset the output tensor to a new one:
+ //this->resetOutputTensor();
+ for(auto iter = this->begin(); iter != this->end(); ++iter){
+  auto & tensor = iter->second; //connected tensor
+  const auto & legs = tensor.getTensorLegs(); //legs of the connected tensor
+  for(const auto & leg: legs){
+   const auto other_tensor_id = leg.getTensorId();
+   //`Finish
+  }
+ }
+ return true;
 }
 
 
