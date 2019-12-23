@@ -166,7 +166,7 @@ macro(exatn_configure_library_rpath LIBNAME)
 endmacro()
 macro(exatn_configure_plugin_rpath LIBNAME)
   if(APPLE)
-    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib")
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path/../lib/")
     set_target_properties(${LIBNAME}
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
   else()
