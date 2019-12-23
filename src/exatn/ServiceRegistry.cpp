@@ -25,14 +25,20 @@ void ServiceRegistry::initialize(const std::string pluginPath) {
 
     // std::cout << "[service-registry] ExaTN Plugin Path: " << exatnPluginPath << "\n";;
 
+    auto has_suffix = [](const std::string &str, const std::string &suffix) {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    };
+
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(exatnPluginPath.c_str())) != NULL) {
       /* print all the files and directories within directory */
       while ((ent = readdir(dir)) != NULL) {
-        if (std::string(ent->d_name).find("lib") != std::string::npos) {
+        auto fileName = std::string(ent->d_name);
+        if (fileName.find("lib") != std::string::npos && (has_suffix(fileName, ".so") || has_suffix(fileName, ".dylib"))) {
         //   printf("[service-registry] Installing Plugin: %s\n", ent->d_name);
-          context.InstallBundles(exatnPluginPath + "/" + std::string(ent->d_name));
+          context.InstallBundles(exatnPluginPath + "/" + fileName);
         }
       }
       closedir(dir);
