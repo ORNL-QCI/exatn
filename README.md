@@ -23,8 +23,8 @@ For detailed class documentation, please see our [API Documentation](https://orn
 ## Dependencies
 ```
 Compiler (C++11, optional Fortran-2003 for multi-node execution with ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
-MPI (optional): OpenMPI 3+ (version 3.1.0 is recommended), MPICH 3+
-BLAS (optional): ATLAS, MKL, ACML, ESSL
+MPI (optional): MPICH 3+ (recommended), OpenMPI 3+
+BLAS (optional): ATLAS (default Linux BLAS), MKL, ACML, ESSL
 CUDA 9+ (optional)
 CMake 3.9+ (for build)
 ```
@@ -68,6 +68,19 @@ $ cmake .. -DEXATN_BUILD_TESTS=TRUE
    also covers its derivatives, for example, Cray-MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
 $ make install
+```
+
+Note that simply typing `make` will be insufficient and running `make install` is
+mandatory, which will install all headers and libraries in the ExaTN install directory
+which defaults to ~/.exatn. The install directory is the one to refer to when linking
+your application with ExaTN.
+
+In order to fully clean the build, you will need to do the following:
+``` bash
+$ make clean (inside your ExaTN build directory)
+$ make clean (inside tpls/ExaTensor)
+$ rm -r ~/.exatn
+```
 
 Example of a typical workstation configuration with no BLAS (slow):
 cmake ..
@@ -135,7 +148,13 @@ is used as the default multi-node execution backend. Due to numerous bugs in
 Fortran compilers and MPI libraries, the only tested choices are the following:
 gcc-8 compiler, intel-18+ compiler, openmpi-3.1.0 library, mpich-3.2.1 library or later.
 
-To use python capabilities after compilation, export the library to your `PYTHONPATH`.
+To link the C++ ExaTN library with your application, use the following command which
+will show which libraries will need to be linked:
+```
+$ ~/.exatn/bin/exatn-config --ldflags --libs
+```
+
+To use python capabilities after compilation, export the library to your `PYTHONPATH`:
 ```
 $ export PYTHONPATH=$PYTHONPATH:~/.exatn
 ```
