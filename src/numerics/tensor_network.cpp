@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/22
+REVISION: 2019/12/23
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -712,6 +712,7 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
   std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders for legs
   unsigned int paired_leg_id = 0;
   unsigned int unpaired_leg_id = tensor_rank / 2;
+  if(conjugated) std::swap(paired_leg_id,unpaired_leg_id);
   for(const auto & output_tensor_leg_id: pairing){
    auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
    //Relink the input tensor with the new tensor:
@@ -1296,10 +1297,11 @@ bool TensorNetwork::conjugate()
 
 bool TensorNetwork::collapseIsometries()
 {
+ bool simplified = false;
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::collapseIsometries): Invalid request: " <<
    "Unfinalized tensor network may not be simplified!" << std::endl;
-  return false;
+  return simplified;
  }
  auto another_collapse = true;
  while(another_collapse){
@@ -1308,11 +1310,12 @@ bool TensorNetwork::collapseIsometries()
   while(!another_collapse && iter != this->end()){
    if(iter->first != 0){ //only input tensors can collapse
     auto & tensor = iter->second; //connected tensor pointed to by the iterator
+    const auto tensor_id = tensor.getTensorId();
     const auto & tensor_name = tensor.getName();
     const auto & tensor_legs = tensor.getTensorLegs(); //legs of the connected tensor
     const auto & tensor_isometries = tensor.retrieveIsometries(); //isometries of the connected tensor
     for(const auto & iso_group: tensor_isometries){
-     auto iso_match = true;
+     bool iso_match = !(iso_group.empty());
      unsigned int iso_matched_tensor_id = 0;
      for(const auto & dimsn: iso_group){
       const auto other_tensor_id = tensor_legs[dimsn].getTensorId();
@@ -1322,8 +1325,11 @@ bool TensorNetwork::collapseIsometries()
        if(other_tensor.getName() == tensor_name){
         if((tensor.isComplexConjugated() && !(other_tensor.isComplexConjugated())) ||
            (!(tensor.isComplexConjugated()) && other_tensor.isComplexConjugated())){
-         assert(iso_matched_tensor_id == 0 || other_tensor_id == iso_matched_tensor_id);
-         iso_matched_tensor_id = other_tensor_id;
+         if(iso_matched_tensor_id == 0) iso_matched_tensor_id = other_tensor_id;
+         if(other_tensor_id != iso_matched_tensor_id){
+          iso_match = false;
+          break;
+         }
         }else{
          iso_match = false;
          break;
@@ -1337,14 +1343,42 @@ bool TensorNetwork::collapseIsometries()
        break;
       }
      }
-     if(iso_match){
+     if(iso_match && iso_matched_tensor_id > 0){ // [Tensor---Isometric_group---Tensor+] detected
+      auto & conj_tensor = *(this->getTensorConn(iso_matched_tensor_id)); //conjugate tensor
+      const auto & conj_tensor_legs = conj_tensor.getTensorLegs();
       unsigned int num_iso_legs = 0;
-      for(const auto & leg: tensor_legs){
-       if(leg.getTensorId() == iso_matched_tensor_id) num_iso_legs++;
+      unsigned int num_open_legs = 0;
+      unsigned int num_spectators = 0;
+      for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
+       if(tensor_legs[i].getTensorId() == iso_matched_tensor_id) num_iso_legs++;
+       if(tensor_legs[i].getTensorId() == 0 || conj_tensor_legs[i].getTensorId() == 0) num_open_legs++;
+       if(tensor_legs[i].getTensorId() == 0 && conj_tensor_legs[i].getTensorId() == 0) num_spectators++;
       }
       if(num_iso_legs == iso_group.size()){ //isometric tensor connection identified: Collapse
-       //`Finish
-       another_collapse = true;
+       if(num_spectators == 0){ //`Spectators (orphaned legs) are not yet supported
+        if(num_open_legs > 0) this->resetOutputTensor(); //new open legs need to be appended to the output tensor
+        for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
+         auto first_tensor_id = tensor_legs[i].getTensorId();
+         if(first_tensor_id != iso_matched_tensor_id){
+          auto first_tensor_dimsn = tensor_legs[i].getDimensionId();
+          auto second_tensor_id = conj_tensor_legs[i].getTensorId();
+          assert(second_tensor_id != tensor_id);
+          auto second_tensor_dimsn = conj_tensor_legs[i].getDimensionId();
+          auto leg = this->getTensorConn(first_tensor_id)->getTensorLeg(first_tensor_dimsn);
+          leg.resetTensorId(second_tensor_id);
+          leg.resetDimensionId(second_tensor_dimsn);
+          this->getTensorConn(first_tensor_id)->resetLeg(first_tensor_dimsn,leg);
+          leg = this->getTensorConn(second_tensor_id)->getTensorLeg(second_tensor_dimsn);
+          leg.resetTensorId(first_tensor_id);
+          leg.resetDimensionId(first_tensor_dimsn);
+          this->getTensorConn(second_tensor_id)->resetLeg(second_tensor_dimsn,leg);
+         }
+        }
+        auto erased = eraseTensorConn(tensor_id); assert(erased);
+        erased = eraseTensorConn(iso_matched_tensor_id); assert(erased);
+        another_collapse = true;
+        simplified = true;
+       }
       }
      }
     }
@@ -1352,7 +1386,8 @@ bool TensorNetwork::collapseIsometries()
    ++iter;
   }
  }
- return true;
+ if(simplified) invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ return simplified;
 }
 
 

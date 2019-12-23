@@ -401,7 +401,17 @@ TEST(NumServerTester, circuitNumServer)
   appended = circuit.appendTensorGate(7,exatn::getTensor("CNOT"),{1,2}); assert(appended);
   circuit.printIt(); //debug
 
-  //Evaluate the tensor network (quantum circuit):
+  //Contract the circuit tensor network with its conjugate:
+  TensorNetwork inverse(circuit);
+  inverse.rename("InverseCircuit");
+  appended = inverse.appendTensorGate(8,exatn::getTensor("CNOT"),{1,2},true); assert(appended);
+  appended = inverse.appendTensorGate(9,exatn::getTensor("H"),{2},true); assert(appended);
+  appended = inverse.appendTensorGate(10,exatn::getTensor("H"),{1},true); assert(appended);
+  appended = inverse.appendTensorGate(11,exatn::getTensor("H"),{0},true); assert(appended);
+  auto collapsed = inverse.collapseIsometries(); assert(collapsed);
+  inverse.printIt(); //debug
+
+  //Evaluate the quantum circuit expressed as a tensor network:
   auto evaluated = false;
   evaluated = exatn::evaluateSync(circuit); assert(evaluated);
 

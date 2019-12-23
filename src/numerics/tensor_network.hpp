@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/19
+REVISION: 2019/12/23
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -257,7 +257,16 @@ public:
      all tensors as well as reversal of the direction of all tensor legs. **/
  bool conjugate();
 
- /** Collapses all isometric tensor pairs, thus simplifying the tensor network. **/
+ /** Collapses all isometric tensor pairs, thus simplifying the tensor network.
+     Returns TRUE if at least one isometric tensor pair has been collapsed.
+     An isometric tensor pair is a pair of a tensor and its conjugate which
+     are solely contracted over exactly one of their isometric dimension groups
+     while all other contracted dimensions of both tensors must involve other tensors.
+     Note that an isometric collapse may introduce trace legs in the remaining tensors
+     of the tensor network in case both tensors from the isometric tensor pair were contracted
+     with the same tensor via the same subset of tensor dimensions. In this case, make sure
+     that the tensor processing runtime of your choice supports tensor tracing, or, in case
+     of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
  bool collapseIsometries();
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
