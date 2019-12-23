@@ -56,7 +56,7 @@ endif()
 #Check to make sure that both the BLAS implementation and installation path were supplied
 if(BLAS_LIB)
 
-  if(NOT BLAS_PATH)
+  if(NOT BLAS_PATH AND NOT BLAS_LIB STREQUAL "MKL")
     message(FATAL_ERROR "If you specify the BLAS implementation, you must also specify the path to the BLAS libraries (-DBLAS_PATH). CMake is exiting.")
   endif()
 
