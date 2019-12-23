@@ -56,14 +56,20 @@ $ cmake .. -DEXATN_BUILD_TESTS=TRUE
   -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
   For CPU accelerated matrix algebra via a CPU BLAS library:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
-   where the choices are ATLAS, MKL, ACML, ESSL.
+   where the choices are ATLAS, MKL, ACML, ESSL. ATLAS is used to
+   designate any default Linux BLAS library (libblas.so).
+   If you use Intel MKL, you will need to provide the following
+   environment variable instead of BLAS_PATH:
+  -DPATH_INTEL_ROOT=<PATH_TO_INTEL_ROOT_DIRECTORY>
   For multi-node execution via MPI (ExaTENSOR backend requires Fortran):
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
-   where the choices are OPENMPI or MPICH. You may also need to set
+   where the choices are OPENMPI or MPICH. Note that the OPENMPI choice
+   also covers its derivatives, for example Spectrum MPI. The MPICH choice
+   also covers its derivatives, for example, Cray-MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
 $ make install
 
-Example of a typical workstation configuration with no BLAS:
+Example of a typical workstation configuration with no BLAS (slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -74,8 +80,14 @@ cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
--DBLAS_LIB=ATLAS
--DBLAS_PATH=/usr/lib
+-DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+
+Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
 Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
@@ -83,8 +95,15 @@ cmake ..
 -DEXATN_BUILD_TESTS=TRUE
 -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
--DBLAS_LIB=ATLAS
--DBLAS_PATH=/usr/lib
+-DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+
+Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
 Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
@@ -92,10 +111,17 @@ cmake ..
 -DEXATN_BUILD_TESTS=TRUE
 -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
--DBLAS_LIB=ATLAS
--DBLAS_PATH=/usr/lib
--DMPI_LIB=MPICH
--DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
+-DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+-DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
+
+Example of an MPI enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
+-DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 ```
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
 not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only
