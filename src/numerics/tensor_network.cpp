@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/19
+REVISION: 2019/12/22
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1286,7 +1286,7 @@ bool TensorNetwork::conjugate()
 {
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::conjugate): Invalid request: " <<
-   "Unfinalized tensor network must not be conjugated!" << std::endl;
+   "Unfinalized tensor network may not be conjugated!" << std::endl;
   return false;
  }
  for(auto iter = this->begin(); iter != this->end(); ++iter) (iter->second).conjugate();
@@ -1298,17 +1298,58 @@ bool TensorNetwork::collapseIsometries()
 {
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::collapseIsometries): Invalid request: " <<
-   "Unfinalized tensor network must not be simplified!" << std::endl;
+   "Unfinalized tensor network may not be simplified!" << std::endl;
   return false;
  }
- //Reset the output tensor to a new one:
- //this->resetOutputTensor();
- for(auto iter = this->begin(); iter != this->end(); ++iter){
-  auto & tensor = iter->second; //connected tensor
-  const auto & legs = tensor.getTensorLegs(); //legs of the connected tensor
-  for(const auto & leg: legs){
-   const auto other_tensor_id = leg.getTensorId();
-   //`Finish
+ auto another_collapse = true;
+ while(another_collapse){
+  another_collapse = false;
+  auto iter = this->begin();
+  while(!another_collapse && iter != this->end()){
+   if(iter->first != 0){ //only input tensors can collapse
+    auto & tensor = iter->second; //connected tensor pointed to by the iterator
+    const auto & tensor_name = tensor.getName();
+    const auto & tensor_legs = tensor.getTensorLegs(); //legs of the connected tensor
+    const auto & tensor_isometries = tensor.retrieveIsometries(); //isometries of the connected tensor
+    for(const auto & iso_group: tensor_isometries){
+     auto iso_match = true;
+     unsigned int iso_matched_tensor_id = 0;
+     for(const auto & dimsn: iso_group){
+      const auto other_tensor_id = tensor_legs[dimsn].getTensorId();
+      const auto other_tensor_dimsn = tensor_legs[dimsn].getDimensionId();
+      if(other_tensor_dimsn == dimsn){
+       auto & other_tensor = *(this->getTensorConn(other_tensor_id)); //other connected tensor
+       if(other_tensor.getName() == tensor_name){
+        if((tensor.isComplexConjugated() && !(other_tensor.isComplexConjugated())) ||
+           (!(tensor.isComplexConjugated()) && other_tensor.isComplexConjugated())){
+         assert(iso_matched_tensor_id == 0 || other_tensor_id == iso_matched_tensor_id);
+         iso_matched_tensor_id = other_tensor_id;
+        }else{
+         iso_match = false;
+         break;
+        }
+       }else{
+        iso_match = false;
+        break;
+       }
+      }else{
+       iso_match = false;
+       break;
+      }
+     }
+     if(iso_match){
+      unsigned int num_iso_legs = 0;
+      for(const auto & leg: tensor_legs){
+       if(leg.getTensorId() == iso_matched_tensor_id) num_iso_legs++;
+      }
+      if(num_iso_legs == iso_group.size()){ //isometric tensor connection identified: Collapse
+       //`Finish
+       another_collapse = true;
+      }
+     }
+    }
+   }
+   ++iter;
   }
  }
  return true;
