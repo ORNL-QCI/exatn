@@ -82,6 +82,7 @@ $ make clean (inside tpls/ExaTensor)
 $ rm -r ~/.exatn
 ```
 
+```
 Example of a typical workstation configuration with no BLAS (slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
@@ -136,6 +137,7 @@ cmake ..
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 ```
+
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
 not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only
 supports up to GCC 7, so if your default `g++` is version 8, then you will need to
