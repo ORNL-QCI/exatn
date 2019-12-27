@@ -30,15 +30,15 @@ option(MPI_ROOT_DIR "Provide the MPI root directory" "")
 option(MPI_BIN_PATH "Provide the MPI bin path" "")
 option(ENABLE_CUDA "Turn on CUDA support" OFF)
 
-#Check to make sure that both the MPI implementation and root installation/bin path were supplied
+#Check to make sure that both the MPI implementation and root installation/bin paths were supplied
 if(MPI_LIB)
 
   if(NOT MPI_LIB STREQUAL "MPICH" AND NOT MPI_LIB STREQUAL "OPENMPI")
-    message(FATAL_ERROR "Invalid MPI_LIB choice: Available choices: MPICH, OPENMPI. CMake is exiting.")
+    message(FATAL_ERROR "Invalid MPI_LIB choice: Available choices: MPICH (incl. Cray-MPICH), OPENMPI (incl. Spectrum-MPI). CMake is exiting.")
   endif()
 
   if(NOT MPI_ROOT_DIR)
-    message(FATAL_ERROR "If you specify the MPI implementation, please also specify the MPI root path (-DMPI_ROOT_DIR). CMake is exiting.")
+    message(FATAL_ERROR "If you specify the MPI implementation, you must also specify the MPI root path (-DMPI_ROOT_DIR). CMake is exiting.")
   endif()
 
   if(NOT MPI_BIN_PATH)
@@ -48,7 +48,7 @@ if(MPI_LIB)
 else()
 
   if(MPI_ROOT_DIR OR MPI_BIN_PATH)
-    message(FATAL_ERROR "If you don't specify the MPI implementation, please also don't specify the MPI root and/or bin paths. CMake is exiting.")
+    message(FATAL_ERROR "If you specify the MPI root and/or bin paths, you should also specify the MPI_LIB choice (-DMPI_LIB). CMake is exiting.")
   endif()
 
 endif()
@@ -57,16 +57,16 @@ endif()
 if(BLAS_LIB)
 
   if(NOT BLAS_PATH AND NOT BLAS_LIB STREQUAL "MKL")
-    message(FATAL_ERROR "If you specify the BLAS implementation, you must also specify the path to the BLAS libraries (-DBLAS_PATH). CMake is exiting.")
+    message(FATAL_ERROR "Your choice of BLAS implementation requires specification of the path to the BLAS libraries (-DBLAS_PATH). CMake is exiting.")
   endif()
 
   if(BLAS_LIB STREQUAL "ATLAS")
-    if(NOT EXISTS "${BLAS_PATH}/libblas.so" AND NOT EXISTS "${BLAS_PATH}/libblas.a")
-      message(FATAL_ERROR "The ATLAS BLAS library path does not contain libblas. CMake is exiting.")
+    if(NOT EXISTS "${BLAS_PATH}/libblas.so")
+      message(FATAL_ERROR "The ATLAS BLAS library path does not contain libblas.so. CMake is exiting.")
     endif()
   elseif(BLAS_LIB STREQUAL "MKL")
     if(NOT PATH_INTEL_ROOT)
-      message(FATAL_ERROR "The MKL BLAS library choice requires the Intel root directory (-DPATH_INTEL_ROOT), for example /opt/intel. CMake is exiting.")
+      message(FATAL_ERROR "The MKL BLAS choice requires the Intel root directory (-DPATH_INTEL_ROOT), for example /opt/intel. CMake is exiting.")
     endif()
     set(BLAS_PATH ${PATH_INTEL_ROOT}/mkl/lib/intel64)
     if(NOT EXISTS "${BLAS_PATH}/libmkl_core.so")
@@ -90,13 +90,13 @@ if(BLAS_LIB)
       message(FATAL_ERROR "The ESSL BLAS choice requires the path to IBM XL SMP runtime libraries (-DPATH_IBM_XL_SMP). CMake is exiting.")
     endif()
   else()
-    message(FATAL_ERROR "Invalid BLAS_LIB choice: Available choices: ATLAS, MKL, ACML, ESSL. CMake is exiting.")
+    message(FATAL_ERROR "Invalid BLAS_LIB choice: ATLAS (default Linux), MKL, ACML, ESSL. CMake is exiting.")
   endif()
 
 else()
 
   if(BLAS_PATH)
-    message(FATAL_ERROR "If you specify the path to the BLAS libraries, please also specify which BLAS it is: ATLAS, MKL, ACML, ESSL. CMake is exiting.")
+    message(FATAL_ERROR "If you specify the path to the BLAS libraries, you must also specify which BLAS (-DBLAS_LIB): ATLAS, MKL, ACML, ESSL. CMake is exiting.")
   endif()
 
 endif()
@@ -134,13 +134,13 @@ else()
   set(CUDA_FOUND FALSE)
 endif()
 
-#If BLAS implementation not user specified, proceed with "NONE"
+#If BLAS implementation is not user specified, proceed with "NONE"
 if(NOT BLAS_LIB)
   set(BLAS_LIB NONE)
   set(BLAS_PATH "")
 endif()
 
-#If MPI implementation not user specified, proceed with "NONE"
+#If MPI implementation is not user specified, proceed with "NONE"
 set(EXA_TALSH_ONLY "NO")
 if(NOT MPI_LIB)
   set(MPI_LIB NONE)
