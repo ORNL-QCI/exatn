@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/12/08
+REVISION: 2019/12/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -69,19 +69,21 @@ name_(name), element_type_(TensorElementType::VOID)
    ++inp_mode;
    if(argt == 1 && inp_mode == left_rank){inp_mode = 0; argt = 2;};
   }
-  assert(max_out_dim < out_mode);
   //Form the output tensor shape/signature:
-  for(unsigned int i = 0; i <= max_out_dim; ++i){
-   inp_mode = contr[i][1];
-   if(contr[i][0] == 1){
-    shape_.appendDimension(left_tensor.getDimExtent(inp_mode));
-    signature_.appendDimension(left_tensor.getDimSpaceAttr(inp_mode));
-   }else if(contr[i][0] == 2){
-    shape_.appendDimension(right_tensor.getDimExtent(inp_mode));
-    signature_.appendDimension(right_tensor.getDimSpaceAttr(inp_mode));
-   }else{
-    std::cout << "#ERROR(Tensor::Tensor): Invalid function argument: contraction: Missing output tensor mode!" << std::endl;
-    assert(false); //missing output tensor dimension
+  if(out_mode > 0){ //output tensor is not a scalar
+   assert(max_out_dim < out_mode);
+   for(unsigned int i = 0; i <= max_out_dim; ++i){
+    inp_mode = contr[i][1];
+    if(contr[i][0] == 1){
+     shape_.appendDimension(left_tensor.getDimExtent(inp_mode));
+     signature_.appendDimension(left_tensor.getDimSpaceAttr(inp_mode));
+    }else if(contr[i][0] == 2){
+     shape_.appendDimension(right_tensor.getDimExtent(inp_mode));
+     signature_.appendDimension(right_tensor.getDimSpaceAttr(inp_mode));
+    }else{
+     std::cout << "#ERROR(Tensor::Tensor): Invalid function argument: contraction: Missing output tensor mode!" << std::endl;
+     assert(false); //missing output tensor dimension
+    }
    }
   }
  }

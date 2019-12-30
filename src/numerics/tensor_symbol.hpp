@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/12/10
+REVISION: 2019/12/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -118,7 +118,7 @@ template <typename Integer>
 std::string tensor_hex_name(Integer hash)
 {
  static_assert(std::is_integral<Integer>::value,"#FATAL(tensor_hex_name): Non-integer type passed!");
- char digit[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+ static const char digit[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
  auto n = hash; if(n < 0) n = -n;
  std::string name("_z");
  while(n > 0){

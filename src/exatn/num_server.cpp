@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/12
+REVISION: 2019/12/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -210,7 +210,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 bool NumServer::submit(TensorNetwork & network)
 {
  assert(network.isValid()); //debug
- auto & op_list = network.getOperationList();
+ auto & op_list = network.getOperationList("heuro");
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
  if(iter == tensors_.end()){ //output tensor does not exist and needs to be created and initialized to zero

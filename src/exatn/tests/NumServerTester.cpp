@@ -433,6 +433,150 @@ TEST(NumServerTester, circuitNumServer)
 }
 
 
+TEST(NumServerTester, largeCircuitNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::numerics::TensorNetwork;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Quantum Circuit:
+ //Q00---H-----
+ //Q01---H-----
+ // |
+ //Q49---H-----
+
+ const unsigned int nbQubits = 10;
+
+ //Define the initial qubit state vector:
+ std::vector<std::complex<double>> qzero {
+  {1.0,0.0}, {0.0,0.0}
+ };
+
+ //Define quantum gates:
+ std::vector<std::complex<double>> hadamard {
+  {1.0,0.0}, {1.0,0.0},
+  {1.0,0.0}, {-1.0,0.0}
+ };
+
+ //Create qubit tensors:
+ for (unsigned int i = 0; i < nbQubits; ++i) {
+  const bool created = exatn::createTensor("Q" + std::to_string(i),TensorElementType::COMPLEX64,TensorShape{2});
+  assert(created);
+ }
+
+ //Create gate tensors:
+ {
+  const bool created = exatn::createTensor("H",TensorElementType::COMPLEX64,TensorShape{2,2});
+  assert(created);
+  const bool registered =(exatn::registerTensorIsometry("H",{0},{1}));
+  assert(registered);
+ }
+
+ //Initialize qubit tensors to zero state:
+ for (unsigned int i = 0; i < nbQubits; ++i) {
+  const bool initialized = exatn::initTensorData("Q" + std::to_string(i),qzero);
+  assert(initialized);
+ }
+
+ //Initialize necessary gate tensors:
+ {
+  const bool initialized = exatn::initTensorData("H",hadamard);
+  assert(initialized);
+ }
+
+ {//Open a new scope:
+  //Build a tensor network from the quantum circuit:
+  TensorNetwork circuit("QuantumCircuit");
+  unsigned int tensorCounter = 1;
+
+  // Qubit tensors:
+  for (unsigned int i = 0; i < nbQubits; ++i) {
+   const bool appended = circuit.appendTensor(tensorCounter, exatn::getTensor("Q" + std::to_string(i)),{});
+   assert(appended);
+   ++tensorCounter;
+  }
+
+  // Copy the qubit reg tensor to fully-close the entire network
+  TensorNetwork qubitReg(circuit);
+  qubitReg.rename("QubitKet");
+
+  // Hadamard tensors:
+  for (unsigned int i = 0; i < nbQubits; ++i) {
+   const bool appended = circuit.appendTensorGate(tensorCounter,exatn::getTensor("H"),{i});
+   assert(appended);
+   ++tensorCounter;
+  }
+
+  circuit.printIt(); //debug
+
+  //Contract the circuit tensor network with its conjugate:
+  TensorNetwork inverse(circuit);
+  inverse.rename("InverseCircuit");
+
+  for (unsigned int i = 0; i < nbQubits; ++i) {
+   const bool appended = inverse.appendTensorGate(tensorCounter,exatn::getTensor("H"),{nbQubits - i - 1}, true);
+   assert(appended);
+   ++tensorCounter;
+  }
+
+  const bool collapsed = inverse.collapseIsometries();
+  assert(collapsed);
+
+  inverse.printIt(); //debug
+
+  {// Closing the tensor network with the bra
+   auto bra = qubitReg;
+   bra.conjugate();
+   bra.rename("QubitBra");
+   std::vector<std::pair<unsigned int, unsigned int>> pairings;
+   for (unsigned int i = 0; i < nbQubits; ++i) {
+    pairings.emplace_back(std::make_pair(i, i));
+   }
+   inverse.appendTensorNetwork(std::move(bra), pairings);
+  }
+
+  inverse.printIt(); //debug
+
+  {
+   const bool rankEqualZero = (inverse.getRank() == 0);
+   assert(rankEqualZero);
+  }
+
+  //Evaluate the quantum circuit expressed as a tensor network:
+  // NOTE: We evaluate the *inverse* tensor which should be fully-closed.
+  const bool evaluated = exatn::evaluateSync(inverse);
+  assert(evaluated);
+
+  //Synchronize:
+  exatn::sync();
+
+  auto talsh_tensor = exatn::getLocalTensor(inverse.getTensor(0)->getName());
+  const std::complex<double>* body_ptr;
+  if (talsh_tensor->getDataAccessHostConst(&body_ptr)) {
+   std::cout << "Fina result is " << *body_ptr << "\n";
+  }
+ }
+
+ //Destroy all tensors:
+ {
+  const bool destroyed = exatn::destroyTensor("H");
+  assert(destroyed);
+ }
+
+ for (unsigned int i = 0; i < nbQubits; ++i) {
+  const bool destroyed = exatn::destroyTensor("Q" + std::to_string(i));
+  assert(destroyed);
+ }
+
+ //Synchronize:
+ exatn::sync();
+ //Grab a coffee!
+}
+
+
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::numerics::Tensor;

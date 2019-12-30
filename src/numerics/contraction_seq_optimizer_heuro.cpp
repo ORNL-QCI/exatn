@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Heuristics
-REVISION: 2019/11/08
+REVISION: 2019/12/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,7 +19,7 @@ namespace exatn{
 
 namespace numerics{
 
-static constexpr unsigned int NUM_WALKERS = 1024; //default number of walkers for tensor contraction sequence optimization
+static constexpr unsigned int NUM_WALKERS = 128; //default number of walkers for tensor contraction sequence optimization
 
 
 ContractionSeqOptimizerHeuro::ContractionSeqOptimizerHeuro():
@@ -48,7 +48,7 @@ double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNe
  auto numContractions = network.getNumTensors() - 1; //number of contractions is one less than the number of r.h.s. tensors
  if(numContractions == 0) return flops;
 
- std::cout << "#DEBUG(ContractionSeqOptimizerHeuro): Determining a pseudo-optimal tensor contraction sequence ... "; //debug
+ //std::cout << "#DEBUG(ContractionSeqOptimizerHeuro): Determining a pseudo-optimal tensor contraction sequence ... " << std::endl; //debug
  auto timeBeg = std::chrono::high_resolution_clock::now();
 
  ContractionSequence contrSeqEmpty;
@@ -59,10 +59,12 @@ double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNe
  std::priority_queue<ContrPath, std::vector<ContrPath>, decltype(cmpPaths)> priq(cmpPaths); //prioritized contraction paths
 
  for(decltype(numContractions) pass = 0; pass < numContractions; ++pass){
-  unsigned int intermediate_id = 0;
-  if(pass < numContractions - 1) intermediate_id = intermediate_num_generator(); //id of the next intermediate tensor
-  unsigned int numPassCands = 0;
+  //std::cout << "#DEBUG(ContractionSeqOptimizerHeuro): Pass " << pass << " started with "
+  //          << inputPaths.size() << " candidates" << std::endl; //debug
+  unsigned int intermediate_id = intermediate_num_generator(); //id of the next intermediate tensor
+  unsigned int numPassCands = 0, candid = 0;
   for(auto & contrPath: inputPaths){
+   //std::cout << " #DEBUG(ContractionSeqOptimizerHeuro): Processing candidate " << candid++ << std::endl; //debug
    auto & parentTensNet = std::get<0>(contrPath); //parental tensor network
    const auto numTensors = parentTensNet.getNumTensors(); //number of r.h.s. tensors in the parental tensor network
    const auto & parentContrSeq = std::get<1>(contrPath); //contraction sequence in the parental tensor network
@@ -77,7 +79,11 @@ double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNe
        TensorNetwork tensNet(parentTensNet);
        auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
        auto cSeq = parentContrSeq;
-       cSeq.emplace_back(ContrTriple{intermediate_id,i,j}); //append a new pair of contracted tensors
+       if(pass == numContractions - 1){ //the very last tensor contraction writes into the output tensor #0
+        cSeq.emplace_back(ContrTriple{0,i,j}); //append the last pair of contracted tensors
+       }else{
+        cSeq.emplace_back(ContrTriple{intermediate_id,i,j}); //append a new pair of contracted tensors
+       }
        priq.emplace(std::make_tuple(tensNet, cSeq, contrCost + std::get<2>(contrPath))); //cloning tensor network and contraction sequence
        if(priq.size() > num_walkers_) priq.pop();
        numPassCands++;
@@ -86,14 +92,14 @@ double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNe
     }
    }
   }
-  std::cout << std::endl << "Pass " << pass << ": Total number of candidates considered = " << numPassCands; //debug
+  //std::cout << "Pass " << pass << ": Total number of candidates considered = " << numPassCands << std::endl; //debug
   inputPaths.clear();
   if(pass == numContractions - 1){ //last pass
    while(priq.size() > 1) priq.pop();
    contr_seq = std::get<1>(priq.top());
    flops = std::get<2>(priq.top());
    priq.pop();
-   std::cout << std::endl << "Best tensor contraction sequence found with cost (flops) = " << flops; //debug
+   //std::cout << "Best tensor contraction sequence found with cost (flops) = " << flops << std::endl; //debug
   }else{
    while(priq.size() > 0){
     inputPaths.emplace_back(priq.top());
@@ -104,9 +110,10 @@ double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNe
 
  auto timeEnd = std::chrono::high_resolution_clock::now();
  auto timeTot = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeBeg);
- std::cout << std::endl << "Done (" << timeTot.count() << " sec):"; //debug
- for(const auto & cPair: contr_seq) std::cout << " {" << cPair.left_id << "," << cPair.right_id << "}"; //debug
- std::cout << std::endl; //debug
+ //std::cout << "Done (" << timeTot.count() << " sec):"; //debug
+ //for(const auto & cPair: contr_seq) std::cout << " {" << cPair.left_id << "," << cPair.right_id
+ //                                             << "->" << cPair.result_id <<"}"; //debug
+ //std::cout << std::endl; //debug
  return flops;
 }
 

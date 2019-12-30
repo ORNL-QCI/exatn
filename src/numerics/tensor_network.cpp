@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/23
+REVISION: 2019/12/30
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1141,7 +1141,7 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  auto res = emplaceTensorConnDirect(true,
                                     result_id,
                                     std::make_shared<Tensor>(
-                                     left_tensor->getTensor()->getName() + right_tensor->getTensor()->getName(),
+                                     "_y" + std::to_string(result_id),
                                      *(left_tensor->getTensor()),
                                      *(right_tensor->getTensor()),
                                      pattern
