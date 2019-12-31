@@ -433,6 +433,86 @@ TEST(NumServerTester, circuitNumServer)
 }
 
 
+TEST(NumServerTester, circuitConjugateNumServer)
+{
+ using exatn::numerics::Tensor;
+ using exatn::numerics::TensorShape;
+ using exatn::numerics::TensorNetwork;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Define the initial qubit state vector:
+ std::vector<std::complex<double>> qzero {
+  {1.0,0.0}, {0.0,0.0}
+ };
+
+ //Define quantum gates: *NEGATIVE* imaginary
+ std::vector<std::complex<double>> unitary {
+  {1.0, 0.0}, {0.0,-1.0},
+  {0.0,-1.0}, {1.0, 0.0}
+ };
+
+ //Create tensors:
+ bool created = exatn::createTensor("Q0", TensorElementType::COMPLEX64,TensorShape{2}); assert(created);
+ created = exatn::createTensor("U", TensorElementType::COMPLEX64, TensorShape{2,2}); assert(created);
+ bool registered = exatn::registerTensorIsometry("U", {0}, {1}); assert(registered);
+
+ //Initialize tensors:
+ bool initialized = exatn::initTensorData("Q0", qzero); assert(initialized);
+ initialized = exatn::initTensorData("U", unitary); assert(initialized);
+
+ {//Open a new scope:
+  //Build a tensor network representing the quantum circuit:
+  TensorNetwork circuit("QuantumCircuit");
+  bool appended = circuit.appendTensor(1, exatn::getTensor("Q0"), {}); assert(appended);
+  appended = circuit.appendTensorGate(2, exatn::getTensor("U"), {0}); assert(appended);
+  circuit.printIt(); //debug
+
+  //Build a conjugated tensor network:
+  TensorNetwork conj_circuit(circuit);
+  conj_circuit.rename("ConjugatedCircuit");
+  conj_circuit.conjugate();
+  conj_circuit.printIt(); //debug
+
+  bool evaluated = exatn::evaluateSync(circuit); assert(evaluated);
+  evaluated = exatn::evaluateSync(conj_circuit); assert(evaluated);
+
+  //Synchronize:
+  exatn::sync();
+
+  //Retrieve the results:
+  auto talsh_tensor0 = exatn::getLocalTensor(circuit.getTensor(0)->getName());
+  const std::complex<double> * body_ptr0;
+  if(talsh_tensor0->getDataAccessHostConst(&body_ptr0)){
+   std::cout << "[";
+   for(int i = 0; i < talsh_tensor0->getVolume(); ++i){
+    std::cout << body_ptr0[i];
+   }
+   std::cout << "]\n";
+  }
+
+  auto talsh_tensor1 = exatn::getLocalTensor(conj_circuit.getTensor(0)->getName());
+  const std::complex<double> * body_ptr1;
+  if(talsh_tensor1->getDataAccessHostConst(&body_ptr1)){
+   std::cout << "[";
+   for(int i = 0; i < talsh_tensor1->getVolume(); ++i){
+    std::cout << body_ptr1[i];
+   }
+   std::cout << "]\n";
+  }
+ }
+
+ //Destroy tensors:
+ bool destroyed = exatn::destroyTensor("U"); assert(destroyed);
+ destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
+
+ //Synchronize:
+ exatn::sync();
+ //Grab a coffee!
+}
+
+
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::numerics::Tensor;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/30
+REVISION: 2019/12/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -334,6 +334,8 @@ const std::string & TensorNetwork::getName() const
 
 void TensorNetwork::rename(const std::string & name)
 {
+ assert(finalized_ != 0);
+ resetOutputTensor();
  name_ = name;
  return;
 }
@@ -1101,10 +1103,12 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  auto * left_tensor = this->getTensorConn(left_id);
  assert(left_tensor != nullptr);
  auto left_tensor_rank = left_tensor->getNumLegs();
+ auto left_tensor_conj = left_tensor->isComplexConjugated();
  const auto & left_legs = left_tensor->getTensorLegs();
  auto * right_tensor = this->getTensorConn(right_id);
  assert(right_tensor != nullptr);
  auto right_tensor_rank = right_tensor->getNumLegs();
+ auto right_tensor_conj = right_tensor->isComplexConjugated();
  const auto & right_legs = right_tensor->getTensorLegs();
  //Count contracted and uncontracted legs:
  unsigned int num_contracted = 0;
@@ -1134,7 +1138,8 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
  assert(res_mode == num_uncontracted);
  //Generate symbolic contraction pattern if needed:
  if(contr_pattern != nullptr){
-  auto generated = generate_contraction_pattern(pattern,left_tensor_rank,right_tensor_rank,*contr_pattern);
+  auto generated = generate_contraction_pattern(pattern,left_tensor_rank,right_tensor_rank,
+                                                *contr_pattern,left_tensor_conj,right_tensor_conj);
   assert(generated);
  }
  //Append the tensor result:
@@ -1470,7 +1475,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      assert(tensor2_legs != nullptr);
      std::vector<TensorLeg> pattern(*tensor1_legs);
      pattern.insert(pattern.end(),tensor2_legs->begin(),tensor2_legs->end());
-     auto generated = generate_contraction_pattern(pattern,tensor1_legs->size(),tensor2_legs->size(),contr_pattern);
+     auto generated = generate_contraction_pattern(pattern,tensor1_legs->size(),tensor2_legs->size(),
+                                                   contr_pattern,conj1,conj2);
      assert(generated);
     }
     auto tensor0 = net.getTensor(contr->result_id);
@@ -1533,7 +1539,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    const auto * tensor1_legs = this->getTensorConnections(left_tensor_id);
    assert(tensor1_legs != nullptr);
    std::string contr_pattern;
-   auto generated = generate_contraction_pattern(*tensor1_legs,tensor1_legs->size(),0,contr_pattern);
+   auto generated = generate_contraction_pattern(*tensor1_legs,tensor1_legs->size(),0,contr_pattern,conj1);
    assert(generated);
    op->setIndexPattern(contr_pattern);
    assert(op->isSet());

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/23
+REVISION: 2019/12/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -130,7 +130,7 @@ public:
  /** Returns the name of the tensor network. **/
  const std::string & getName() const;
 
- /** Renames the tensor network. **/
+ /** Renames the tensor network. The output tensor is reset to a new one as well. **/
  void rename(const std::string & name);
 
  /** Returns a given tensor of the tensor network without its connections (legs).

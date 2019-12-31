@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/12/30
+REVISION: 2019/12/31
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
@@ -149,25 +149,27 @@ bool parse_tensor_network(const std::string & network,         //in: tensor netw
       where m and n are the ranks of the left and right contracted tensors, respectively.
      pattern[x] is a TensorLeg specifying the dimension of another tensor the described
       dimension is connected to, where the result tensor is tensor 0 while the left and
-      right contracted tensors are tensors 1 and 2, respectively.
-    **/
+      right contracted tensors are tensors 1 and 2, respectively. **/
 bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & pattern,
                                   unsigned int left_tensor_rank,
                                   unsigned int right_tensor_rank,
-                                  std::string & symb_pattern);
+                                  std::string & symb_pattern,
+                                  bool left_conjugated = false,
+                                  bool right_conjugated = false);
 
 /** Generates symbolic tensor addition pattern from the digital tensor addition pattern:
      pattern[0..m-1] describes connectivity of dimensions of the left tensor,
       where m is the rank of the left tensor.
      pattern[x] is a TensorLeg specifying the dimension of the result tensor the described
-      dimension is connected to, where the result tensor is tensor 0 and the left tensor is tensor 1.
-    **/
+      dimension is connected to, where the result tensor is tensor 0 and the left tensor is tensor 1. **/
 bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
-                               std::string & symb_pattern);
+                               std::string & symb_pattern,
+                               bool conjugated = false);
 
 /** Generates the trivial tensor addition pattern. **/
 bool generate_addition_pattern(unsigned int tensor_rank,
-                               std::string & symb_pattern);
+                               std::string & symb_pattern,
+                               bool conjugated = false);
 
 } //namespace exatn
 
