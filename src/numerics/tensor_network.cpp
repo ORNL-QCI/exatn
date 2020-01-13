@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/31
+REVISION: 2020/01/13
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
@@ -483,6 +483,16 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
   contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_,intermediate_num_generator);
  }
  return contraction_seq_flops_;
+}
+
+
+void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & contr_sequence)
+{
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ contraction_seq_.clear();
+ contraction_seq_ = contr_sequence;
+ contraction_seq_flops_ = 0.0; //flop count is unknown yet
+ return;
 }
 
 

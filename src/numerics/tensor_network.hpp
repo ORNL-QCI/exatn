@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2019/12/31
+REVISION: 2020/01/13
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network is a set of connected tensors.
@@ -331,6 +331,9 @@ protected:
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
+
+ /** Imports and caches an externally provided tensor contraction sequence. **/
+ void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
 
 private:
 
