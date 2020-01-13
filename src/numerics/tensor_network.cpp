@@ -496,6 +496,12 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
 }
 
 
+const std::list<ContrTriple> & TensorNetwork::exportContractionSequence() const
+{
+ return contraction_seq_;
+}
+
+
 bool TensorNetwork::placeTensor(unsigned int tensor_id,                     //in: tensor id (unique within the tensor network)
                                 std::shared_ptr<Tensor> tensor,             //in: appended tensor
                                 const std::vector<TensorLeg> & connections, //in: tensor connections (fully specified)

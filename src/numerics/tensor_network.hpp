@@ -335,6 +335,9 @@ protected:
  /** Imports and caches an externally provided tensor contraction sequence. **/
  void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
 
+ /** Returns the currently stored tensor contraction sequence, if any. **/
+ const std::list<ContrTriple> & exportContractionSequence() const;
+
 private:
 
  /** Resets the output tensor in a finalized tensor network to a new
