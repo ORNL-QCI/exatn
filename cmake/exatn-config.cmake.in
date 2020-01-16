@@ -151,6 +151,9 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEXATN_SERVICE -fPIC -DPATH_MAX=4096 -
 if (NOT CUDA_FOUND)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_GPU")
 endif()
+
+if (NOT TARGET CppMicroServices::CppMicroServices)
+
 # Create imported target CppMicroServices::CppMicroServices
 add_library(CppMicroServices::CppMicroServices SHARED IMPORTED)
 
@@ -166,6 +169,7 @@ set_target_properties(CppMicroServices::CppMicroServices PROPERTIES
   IMPORTED_LOCATION_RELEASE "${EXATN_ROOT}/lib/${CPPUSLIB}"
   IMPORTED_SONAME_RELEASE "${CPPUSLIB}"
   )
+endif()
 
 # Create imported target exatn::exatn
 add_library(exatn::exatn SHARED IMPORTED)
@@ -188,7 +192,7 @@ add_library(exatn::exatn-runtime SHARED IMPORTED)
 
 set_target_properties(exatn::exatn-runtime PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
-  INTERFACE_LINK_LIBRARIES "CppMicroServices;exatn::exatn-numerics;exatn::exatn-runtime-graph"
+  INTERFACE_LINK_LIBRARIES "CppMicroServices::CppMicroServices;exatn::exatn-numerics;exatn::exatn-runtime-graph"
 )
 
 # Create imported target exatn::exatn-runtime-graph
@@ -196,7 +200,7 @@ add_library(exatn::exatn-runtime-graph SHARED IMPORTED)
 
 set_target_properties(exatn::exatn-runtime-graph PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
-  INTERFACE_LINK_LIBRARIES "CppMicroServices;exatn::exatn-numerics"
+  INTERFACE_LINK_LIBRARIES "CppMicroServices::CppMicroServices;exatn::exatn-numerics"
 )
 
 
