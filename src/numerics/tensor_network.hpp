@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/01/13
+REVISION: 2020/01/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -278,6 +278,12 @@ public:
                            double * arithm_intensity = nullptr, //out: arithmetic intensity of the tensor contraction
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 
+ /** Imports and caches an externally provided tensor contraction sequence. **/
+ void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
+
+ /** Returns the currently stored tensor contraction sequence, if any. **/
+ const std::list<ContrTriple> & exportContractionSequence() const;
+
  /** Returns the list of tensor operations required for evaluating the tensor network. **/
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy");
 
@@ -331,12 +337,6 @@ protected:
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
-
- /** Imports and caches an externally provided tensor contraction sequence. **/
- void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
-
- /** Returns the currently stored tensor contraction sequence, if any. **/
- const std::list<ContrTriple> & exportContractionSequence() const;
 
 private:
 
