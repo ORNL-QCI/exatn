@@ -281,6 +281,12 @@ public:
  /** Returns the list of tensor operations required for evaluating the tensor network. **/
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy");
 
+ /** Imports and caches an externally provided tensor contraction sequence. **/
+ void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
+
+ /** Returns the currently stored tensor contraction sequence, if any. **/
+ const std::list<ContrTriple> & exportContractionSequence() const;
+
 protected:
 
  /** Emplaces a connected tensor into the tensor network. **/
@@ -331,12 +337,6 @@ protected:
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
-
- /** Imports and caches an externally provided tensor contraction sequence. **/
- void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
-
- /** Returns the currently stored tensor contraction sequence, if any. **/
- const std::list<ContrTriple> & exportContractionSequence() const;
 
 private:
 
