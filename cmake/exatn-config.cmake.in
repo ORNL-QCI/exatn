@@ -19,6 +19,9 @@ set(EXATN_INCLUDE_ROOT "${EXATN_ROOT}/include")
 set (EXATN_INCLUDE_DIRS "${EXATN_INCLUDE_ROOT}/cppmicroservices4;${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}/gtest;${EXATN_INCLUDE_ROOT}/exatensor")
 set (EXATN_LIBRARIES "exatn;exatn-numerics;exatn-utility;CppMicroServices")
 
+set (BLAS_LIB "@BLAS_LIB@")
+set (BLAS_PATH "@BLAS_PATH@")
+
 macro(exatn_add_test TESTNAME)
   add_executable(${TESTNAME} ${ARGN})
   target_link_libraries(${TESTNAME} PRIVATE gtest gmock gtest_main)
@@ -47,8 +50,9 @@ endif()
 
 add_library(ExaTensor::ExaTensor SHARED IMPORTED)
 
+
 set(REQUIRED_EXATENSOR_LIBS
-    "${OpenMP_CXX_LIBRARIES};${OpenMP_Fortran_LIBRARIES};gfortran")
+    "@OpenMP_CXX_LIBRARIES@;@OpenMP_Fortran_LIBRARIES@;gfortran")
 
 if(CUDA_FOUND)
   message(STATUS "CUDA ROOT DIR ${CUDA_TOOLKIT_ROOT_DIR}")
@@ -74,7 +78,9 @@ if(BLAS_LIB AND BLAS_PATH)
     find_library(lp64 mkl_intel_lp64 HINTS ${BLAS_PATH})
     find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH})
     find_library(core mkl_core HINTS ${BLAS_PATH})
-    set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
+    find_library(rt mkl_rt HINTS ${BLAS_PATH})
+
+    set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};${rt};pthread;m;dl")
 
   elseif(BLAS_LIB STREQUAL "ACML")
     find_library(acml_mp acml_mp HINTS ${BLAS_PATH})
