@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/30
+REVISION: 2020/01/17
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 
@@ -20,7 +20,7 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 
 
 NumServer::NumServer():
- tensor_rt_(std::make_shared<runtime::TensorRuntime>())
+ contr_seq_optimizer_("dummy"), tensor_rt_(std::make_shared<runtime::TensorRuntime>())
 {
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -46,6 +46,12 @@ void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
  tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(dag_executor_name,node_executor_name));
+ return;
+}
+
+void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name)
+{
+ contr_seq_optimizer_ = optimizer_name;
  return;
 }
 
@@ -210,7 +216,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 bool NumServer::submit(TensorNetwork & network)
 {
  assert(network.isValid()); //debug
- auto & op_list = network.getOperationList("heuro");
+ auto & op_list = network.getOperationList(contr_seq_optimizer_);
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
  if(iter == tensors_.end()){ //output tensor does not exist and needs to be created and initialized to zero

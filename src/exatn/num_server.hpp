@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2019/12/11
+REVISION: 2020/01/17
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Numerical server provides basic tensor network processing functionality:
@@ -101,6 +101,10 @@ public:
  /** Reconfigures tensor runtime implementation. **/
  void reconfigureTensorRuntime(const std::string & dag_executor_name,
                                const std::string & node_executor_name);
+
+ /** Resets the tensor contraction sequence optimizer that is
+     invoked when evaluating tensor networks. **/
+ void resetContrSeqOptimizer(const std::string & optimizer_name);
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
@@ -323,6 +327,8 @@ private:
 
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
  std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
+
+ std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
 
  std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data
