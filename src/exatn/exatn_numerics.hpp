@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2019/12/14
+REVISION: 2020/01/17
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  1. Vector space and subspace registration:
@@ -311,6 +311,12 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
+
+
+/** Resets the tensor contraction sequence optimizer that
+    is invoked when evaluating tensor networks: {dummy,heuro}. **/
+inline void resetContrSeqOptimizer(const std::string & optimizer_name)
+ {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
 
 
 /** Resets tensor runtime logging level (0:none). **/
