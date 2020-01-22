@@ -30,7 +30,19 @@ endif()
 if(EXATN_BUILD_TESTS)
   enable_testing()
 
+  # DONT BUILD GTEST IN DEBUG
+  set(GTEST_BUILD_TYPE_FLIP FALSE)
+  if (CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "DEBUG")
+    set(CMAKE_BUILD_TYPE "Release")
+    set(GTEST_BUILD_TYPE_FLIP TRUE)
+  endif()
+
   add_subdirectory(gtest)
+
+  if (GTEST_BUILD_TYPE_FLIP)
+    set(CMAKE_BUILD_TYPE "DEBUG")
+  endif()
+
   mark_as_advanced(BUILD_GMOCK
                    BUILD_GTEST
                    BUILD_SHARED_LIBS
@@ -99,6 +111,12 @@ else()
 endif()
 
 
+set(EXATENSOR_BUILD_TYPE OPT)
+if (CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "DEBUG")
+ message(STATUS "Setting ExaTensor BUILD_TYPE to DEV")
+ set(EXATENSOR_BUILD_TYPE DEV)
+endif()
+
 if(APPLE)
   message(STATUS "This is Mac OS build, building the TAL-SH CPU backend only")
 
@@ -114,6 +132,7 @@ if(APPLE)
                             CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                             CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                             CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+                            BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             TOOLKIT=${TOOLKIT}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
                             EXA_TALSH_ONLY=YES
@@ -138,6 +157,7 @@ if(APPLE)
                             OMPI_CC=${CMAKE_C_COMPILER}
                             OMPI_FC=${CMAKE_Fortran_COMPILER}
                             TOOLKIT=${TOOLKIT}
+                            BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
                             EXA_TALSH_ONLY=NO
                             EXATN_SERVICE=YES
@@ -163,6 +183,7 @@ if(APPLE)
                             MPICH_CC=${CMAKE_C_COMPILER}
                             MPICH_FC=${CMAKE_Fortran_COMPILER}
                             TOOLKIT=${TOOLKIT}
+                            BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
                             EXA_TALSH_ONLY=NO
                             EXATN_SERVICE=YES
@@ -198,6 +219,7 @@ else()
                               CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                               CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=YES
                               EXATN_SERVICE=YES
@@ -223,6 +245,7 @@ else()
                               OMPI_CC=${CMAKE_C_COMPILER}
                               OMPI_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=NO
                               EXATN_SERVICE=YES
@@ -250,6 +273,7 @@ else()
                               MPICH_CC=${CMAKE_C_COMPILER}
                               MPICH_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=NO
                               EXATN_SERVICE=YES
@@ -282,6 +306,7 @@ else()
                               CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                               CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=YES
                               EXATN_SERVICE=YES
@@ -305,6 +330,7 @@ else()
                               OMPI_CC=${CMAKE_C_COMPILER}
                               OMPI_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=NO
                               EXATN_SERVICE=YES
@@ -330,6 +356,7 @@ else()
                               MPICH_CC=${CMAKE_C_COMPILER}
                               MPICH_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
+                              BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
                               EXA_TALSH_ONLY=NO
                               EXATN_SERVICE=YES

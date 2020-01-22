@@ -30,9 +30,10 @@ if(BLAS_LIB AND BLAS_PATH)
     find_library(lp64 mkl_intel_lp64 HINTS ${BLAS_PATH})
     find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH})
     find_library(core mkl_core HINTS ${BLAS_PATH})
-    find_library(rt mkl_rt HINTS ${BLAS_PATH})
-    message (STATUS "HOWDY: ${rt}")
-    set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};${rt};pthread;m;dl")
+
+    get_filename_component(EXATN_MKL_PATH ${gnu_thread} DIRECTORY)
+
+    set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
 
   elseif(BLAS_LIB STREQUAL "ACML")
     find_library(acml_mp acml_mp HINTS ${BLAS_PATH})
@@ -48,7 +49,7 @@ if(BLAS_LIB AND BLAS_PATH)
   endif()
 
   message(STATUS "Appending ${BLAS_LIBRARIES} to ExaTensor Libraries")
-  set(REQUIRED_EXATENSOR_LIBS "${REQUIRED_EXATENSOR_LIBS};${BLAS_LIBRARIES}")
+  set(REQUIRED_EXATENSOR_LIBS "${BLAS_LIBRARIES};${REQUIRED_EXATENSOR_LIBS}")
 endif()
 
 if(WITH_LAPACK)
@@ -106,8 +107,8 @@ set_property(TARGET ExaTensor::ExaTensor
              PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 
 if(EXA_TALSH_ONLY)
-  set(FULLPATHLIBS "${CMAKE_INSTALL_PREFIX}/lib/libtalsh.so")
-  set(NOTFULLPATHLIBS "libtalsh.so")
+  set(FULLPATHLIBS "${CMAKE_INSTALL_PREFIX}/lib/libtalsh${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  set(NOTFULLPATHLIBS "libtalsh${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
   if(APPLE)
     set(FULLPATHLIBS "${CMAKE_INSTALL_PREFIX}/lib/libtalsh.a")
@@ -123,9 +124,9 @@ if(EXA_TALSH_ONLY)
 else()
   set(
     FULLPATHLIBS
-    "${CMAKE_INSTALL_PREFIX}/lib/libtalsh.so;${CMAKE_INSTALL_PREFIX}/lib/libexatensor.so"
+    "${CMAKE_INSTALL_PREFIX}/lib/libtalsh${CMAKE_SHARED_LIBRARY_SUFFIX};${CMAKE_INSTALL_PREFIX}/lib/libexatensor${CMAKE_SHARED_LIBRARY_SUFFIX}"
     )
-  set(NOTFULLPATHLIBS "libtalsh.so;libexatensor.so")
+  set(NOTFULLPATHLIBS "libtalsh${CMAKE_SHARED_LIBRARY_SUFFIX};libexatensor${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
   if(APPLE)
     set(
@@ -148,8 +149,4 @@ add_subdirectory(numerics)
 add_subdirectory(driver-rpc)
 add_subdirectory(parser)
 add_subdirectory(runtime)
-
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/exatn-config.in
-               ${CMAKE_BINARY_DIR}/scripts/exatn-config)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/scripts/exatn-config DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+add_subdirectory(scripts)

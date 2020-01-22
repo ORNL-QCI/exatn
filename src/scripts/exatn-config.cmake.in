@@ -1,0 +1,136 @@
+# - Config file for ExaTN
+# To point to your install of ExaTN, pass the
+# EXATN_ROOT flag to your cmake configure.
+#
+# It defines the following variables
+#  EXATN_INCLUDE_DIRS - include directories for XACC
+#  EXATN_LIBRARIES    - libraries to link against
+#  EXATN_LIBRARY_DIR  - the XACC library directory
+include(CTest)
+if (NOT EXATN_ROOT)
+   get_filename_component(EXATN_ROOT "${CMAKE_CURRENT_LIST_FILE}" PATH)
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${EXATN_ROOT}/share/exatn)
+
+set (EXATN_LIBRARY_DIR "${EXATN_ROOT}/lib")
+link_directories("${EXATN_ROOT}/lib")
+set(EXATN_INCLUDE_ROOT "${EXATN_ROOT}/include")
+
+set (EXATN_INCLUDE_DIRS "${EXATN_INCLUDE_ROOT}/cppmicroservices4;${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}/exatensor")
+set (EXATN_LIBRARIES "exatn;exatn-numerics;exatn-utility;CppMicroServices")
+
+set(EXATN_BLAS_LIB @BLAS_LIB@)
+if (EXATN_BLAS_LIB MATCHES MKL)
+  set(EXATN_MKL_PATH "@EXATN_MKL_PATH@")
+endif()
+
+macro(exatn_add_test TESTNAME)
+  add_executable(${TESTNAME} ${ARGN})
+  target_link_libraries(${TESTNAME} PRIVATE gtest gmock gtest_main)
+  add_test(${TESTNAME} ${TESTNAME})
+  set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
+endmacro()
+
+macro(exatn_enable_rpath LIBNAME)
+  if(APPLE)
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "@loader_path")
+    set_target_properties(${LIBNAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  else()
+    set_target_properties(${LIBNAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(${LIBNAME} PROPERTIES LINK_FLAGS "-shared")
+  endif()
+endmacro()
+
+
+set(EXATNLIB "libexatn@CMAKE_SHARED_LIBRARY_SUFFIX@")
+set(CPPUSLIB "libCppMicroServices@CMAKE_SHARED_LIBRARY_SUFFIX@.4.0.0")
+set(EXATNRUNTIMELIB "libexatn-runtime@CMAKE_SHARED_LIBRARY_SUFFIX@")
+set(EXATNNUMERICSLIB "libexatn-numerics@CMAKE_SHARED_LIBRARY_SUFFIX@")
+set(EXATNGRAPHLIB "libexatn-runtime-graph@CMAKE_SHARED_LIBRARY_SUFFIX@")
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} @CMAKE_CXX_FLAGS@")
+
+
+if (NOT TARGET CppMicroServices::CppMicroServices)
+
+  # Create imported target CppMicroServices::CppMicroServices
+  add_library(CppMicroServices::CppMicroServices SHARED IMPORTED)
+
+  set_target_properties(CppMicroServices::CppMicroServices PROPERTIES
+    INTERFACE_COMPILE_FEATURES "cxx_variadic_templates;cxx_nullptr"
+    INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/cppmicroservices4"
+    INTERFACE_LINK_LIBRARIES "dl;pthread"
+  )
+
+  # Import target "CppMicroServices::CppMicroServices" for configuration "Release"
+  set_property(TARGET CppMicroServices::CppMicroServices APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+  set_target_properties(CppMicroServices::CppMicroServices PROPERTIES
+    IMPORTED_LOCATION_RELEASE "${EXATN_ROOT}/lib/${CPPUSLIB}"
+    IMPORTED_SONAME_RELEASE "${CPPUSLIB}"
+  )
+endif()
+
+# Create imported target exatn::exatn
+add_library(exatn::exatn SHARED IMPORTED)
+
+set_target_properties(exatn::exatn PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
+  INTERFACE_LINK_LIBRARIES "CppMicroServices::CppMicroServices;exatn::exatn-numerics;exatn::exatn-runtime"
+)
+
+# Create imported target exatn::exatn-numerics
+add_library(exatn::exatn-numerics SHARED IMPORTED)
+
+set_target_properties(exatn::exatn-numerics PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
+  INTERFACE_LINK_LIBRARIES "@REQUIRED_EXATENSOR_LIBS@"
+)
+
+# Create imported target exatn::exatn-runtime
+add_library(exatn::exatn-runtime SHARED IMPORTED)
+
+set_target_properties(exatn::exatn-runtime PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
+  INTERFACE_LINK_LIBRARIES "CppMicroServices::CppMicroServices;exatn::exatn-numerics;exatn::exatn-runtime-graph"
+)
+
+# Create imported target exatn::exatn-runtime-graph
+add_library(exatn::exatn-runtime-graph SHARED IMPORTED)
+
+set_target_properties(exatn::exatn-runtime-graph PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${EXATN_INCLUDE_ROOT}/exatn;${EXATN_INCLUDE_ROOT}"
+  INTERFACE_LINK_LIBRARIES "CppMicroServices::CppMicroServices;exatn::exatn-numerics"
+)
+
+
+# Import target "exatn::exatn" for configuration "DEBUG"
+set_property(TARGET exatn::exatn APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+set_target_properties(exatn::exatn PROPERTIES
+  IMPORTED_LOCATION_DEBUG "${EXATN_ROOT}/lib/${EXATNLIB}"
+  IMPORTED_SONAME_DEBUG ${EXATNLIB}
+  )
+
+# Import target "exatn::exatn-numerics" for configuration "DEBUG"
+set_property(TARGET exatn::exatn-numerics APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+set_target_properties(exatn::exatn-numerics PROPERTIES
+  IMPORTED_LOCATION_DEBUG "${EXATN_ROOT}/lib/${EXATNNUMERICSLIB}"
+  IMPORTED_SONAME_DEBUG ${EXATNNUMERICSLIB}
+  )
+
+# Import target "exatn::exatn-runtime" for configuration "DEBUG"
+set_property(TARGET exatn::exatn-runtime APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+set_target_properties(exatn::exatn-runtime PROPERTIES
+  IMPORTED_LOCATION_DEBUG "${EXATN_ROOT}/lib/${EXATNRUNTIMELIB}"
+  IMPORTED_SONAME_DEBUG ${EXATNRUNTIMELIB}
+  )
+
+# Import target "exatn::exatn-runtime-graph" for configuration "DEBUG"
+set_property(TARGET exatn::exatn-runtime-graph APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
+set_target_properties(exatn::exatn-runtime-graph PROPERTIES
+  IMPORTED_LOCATION_DEBUG "${EXATN_ROOT}/lib/${EXATNGRAPHLIB}"
+  IMPORTED_SONAME_DEBUG ${EXATNGRAPHLIB}
+  )
+
+
+set(ExaTN_FOUND TRUE)
+set(EXATN_FOUND TRUE)

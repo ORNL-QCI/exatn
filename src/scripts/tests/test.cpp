@@ -1,11 +1,11 @@
 #include "exatn.hpp"
-
 using namespace exatn;
 using namespace exatn::numerics;
 
  int main() {
-    exatn::initialize();
-using exatn::TensorOpCode;
+
+ exatn::initialize();
+ using exatn::TensorOpCode;
  using exatn::numerics::Tensor;
  using exatn::numerics::TensorShape;
  using exatn::numerics::TensorOperation;
