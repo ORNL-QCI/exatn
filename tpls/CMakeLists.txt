@@ -30,18 +30,7 @@ endif()
 if(EXATN_BUILD_TESTS)
   enable_testing()
 
-  # DONT BUILD GTEST IN DEBUG
-  set(GTEST_BUILD_TYPE_FLIP FALSE)
-  if (CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "DEBUG")
-    set(CMAKE_BUILD_TYPE "Release")
-    set(GTEST_BUILD_TYPE_FLIP TRUE)
-  endif()
-
   add_subdirectory(gtest)
-
-  if (GTEST_BUILD_TYPE_FLIP)
-    set(CMAKE_BUILD_TYPE "DEBUG")
-  endif()
 
   mark_as_advanced(BUILD_GMOCK
                    BUILD_GTEST
