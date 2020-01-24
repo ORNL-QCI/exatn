@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/01/16
+REVISION: 2020/01/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,6 +58,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "network_build_factory.hpp"
 #include "contraction_seq_optimizer.hpp"
 
+#include <functional>
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -268,6 +269,12 @@ public:
      that the tensor processing runtime of your choice supports tensor tracing, or, in case
      of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
  bool collapseIsometries();
+
+ /** Traverses the tensor network and marks certain tensors as optimizable
+     based on the user-provided predicate function. If marked optimizable,
+     these specific tensors (in their specific positions within the tensor network)
+     will become subject to optimization when optimizing the tensor network. **/
+ void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.

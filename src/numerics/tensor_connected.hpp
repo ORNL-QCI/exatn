@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2019/12/22
+REVISION: 2020/01/24
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor inside a tensor network is generally connected
@@ -110,12 +110,23 @@ public:
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
 
+ /** Returns whether this connected tensor is optimizable or not (whether or not this
+     connected tensor should be optimized during the tensor network functional optimization).**/
+ bool isOptimizable() const;
+
+ /** Resets the optimizability attribute (whether or not this connected tensor
+     should be optimized during the tensor network functional optimization).
+     Note that this attribute specifically applies to the tensor in its current
+     connected position within the tensor network, not to the tensor per se. **/
+ void resetOptimizability(bool optimizable);
+
 private:
 
  std::shared_ptr<Tensor> tensor_; //co-owned pointer to the tensor
  unsigned int id_;                //tensor id in the tensor network
  std::vector<TensorLeg> legs_;    //tensor legs: Connections to other tensors
  bool conjugated_;                //complex conjugation flag
+ bool optimizable_;               //whether or not the tensor is subject to optimization as part of the optimized tensor network
 };
 
 } //namespace numerics

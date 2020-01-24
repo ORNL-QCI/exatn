@@ -1,8 +1,8 @@
 /** ExaTN:: Optimizer of a closed tensor expansion functional
-REVISION: 2019/12/14
+REVISION: 2020/01/24
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "optimizer.hpp"
 

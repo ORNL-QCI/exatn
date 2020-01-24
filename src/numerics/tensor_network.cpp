@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/01/13
+REVISION: 2020/01/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1409,6 +1409,16 @@ bool TensorNetwork::collapseIsometries()
  }
  if(simplified) invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return simplified;
+}
+
+
+void TensorNetwork::markOptimizableTensors(std::function<bool (const Tensor &)> predicate)
+{
+ for(auto iter = this->begin(); iter != this->end(); ++iter){
+  auto & tensor_conn = iter->second;
+  tensor_conn.resetOptimizability(predicate(*(tensor_conn.getTensor())));
+ }
+ return;
 }
 
 

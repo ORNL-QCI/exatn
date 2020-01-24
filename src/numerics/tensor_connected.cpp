@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2019/12/22
+REVISION: 2020/01/24
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
 #include "tensor_symbol.hpp"
@@ -20,7 +20,7 @@ TensorConn::TensorConn(std::shared_ptr<Tensor> tensor,
                        unsigned int id,
                        const std::vector<TensorLeg> & legs,
                        bool conjugated):
- tensor_(tensor), id_(id), legs_(legs), conjugated_(conjugated)
+ tensor_(tensor), id_(id), legs_(legs), conjugated_(conjugated), optimizable_(false)
 {
 }
 
@@ -177,6 +177,17 @@ void TensorConn::replaceStoredTensor(std::shared_ptr<Tensor> tensor)
 const std::list<std::vector<unsigned int>> & TensorConn::retrieveIsometries() const
 {
  return tensor_->retrieveIsometries();
+}
+
+bool TensorConn::isOptimizable() const
+{
+ return optimizable_;
+}
+
+void TensorConn::resetOptimizability(bool optimizable)
+{
+ optimizable_ = optimizable;
+ return;
 }
 
 } //namespace numerics

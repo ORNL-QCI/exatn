@@ -1,11 +1,16 @@
-/** ExaTN:: Reconstructor of an approximate tensor expansion from a given tensor expansion
-REVISION: 2019/12/18
+/** ExaTN:: Reconstructor of an approximate tensor network expansion from a given tensor network expansion
+REVISION: 2020/01/24
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
-
+ (A) Given a tensor network expansion of some form, the tensor network reconstructor
+     optimizes its tensor factors to maximize the overlap with another given constant
+     tensor network expansion, thus providing an approximation to it.
+     The reconstruction fidelity is the overlap between the two tensor network expansions.
+     The reconstruction tolerance is a numerical tolerance used for checking convergence
+     of the underlying linear algebra procedures.
 **/
 
 #ifndef EXATN_RECONSTRUCTOR_HPP_
@@ -21,9 +26,9 @@ class TensorNetworkReconstructor{
 
 public:
 
- TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor expansion to be reconstructed
-                            std::shared_ptr<TensorExpansion> approximant, //in: reconstructing tensor expansion (unoptimized)
-                            double tolerance);                            //in: reconstruction convergence tolerance
+ TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor expansion to be reconstructed (constant)
+                            std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor expansion (unoptimized)
+                            double tolerance);                            //in: desired reconstruction convergence tolerance
 
  TensorNetworkReconstructor(const TensorNetworkReconstructor &) = default;
  TensorNetworkReconstructor & operator=(const TensorNetworkReconstructor &) = default;
@@ -31,18 +36,19 @@ public:
  TensorNetworkReconstructor & operator=(TensorNetworkReconstructor &&) noexcept = default;
  ~TensorNetworkReconstructor() = default;
 
- /** Reconstructs a tensor expansion via another tensor expansion approximately.
-     Upon success, returns the achieved fidelity of the reconstruction. **/
+ /** Approximately reconstructs a tensor network expansion via another tensor network
+     expansion. Upon success, returns the achieved fidelity of the reconstruction,
+     that is, the overlap between the two tensor network expansions, [0..1]. **/
  bool reconstruct(double * fidelity);
 
- /** Returns the reconstructing (optimized) tensor expansion. **/
+ /** Returns the reconstructing (optimized) tensor network expansion. **/
  std::shared_ptr<TensorExpansion> getSolution(double * fidelity = nullptr);
 
 private:
 
  std::shared_ptr<TensorExpansion> expansion_;   //tensor expansion to reconstruct
  std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor expansion
- double tolerance_;                             //reconstruction convergence tolerance
+ double tolerance_;                             //numerical reconstruction convergence tolerance
  double fidelity_;                              //actually achieved reconstruction fidelity
 };
 
