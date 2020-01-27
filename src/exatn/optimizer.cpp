@@ -1,5 +1,5 @@
-/** ExaTN:: Optimizer of a closed tensor expansion functional
-REVISION: 2020/01/24
+/** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
+REVISION: 2020/01/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,26 +10,23 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
-TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorExpansion> expansion,
+TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,
+                                               std::shared_ptr<TensorExpansion> vector_expansion,
                                                double tolerance):
- expansion_(expansion), tolerance_(tolerance), accuracy_(-1.0)
+ tensor_operator_(tensor_operator), vector_expansion_(vector_expansion), tolerance_(tolerance)
 {
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(double * accuracy)
+std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution()
 {
- if(accuracy_ < 0.0) return std::shared_ptr<TensorExpansion>(nullptr);
- if(accuracy != nullptr) *accuracy = accuracy_;
- return expansion_;
+ return vector_expansion_;
 }
 
 
-bool TensorNetworkOptimizer::optimize(double * accuracy)
+bool TensorNetworkOptimizer::optimize()
 {
- assert(accuracy != nullptr);
  //`Finish
- *accuracy = accuracy_;
  return true;
 }
 
