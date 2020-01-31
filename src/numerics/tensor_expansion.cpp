@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/12/15
+REVISION: 2020/01/31
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_expansion.hpp"
 
@@ -78,8 +78,19 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion, const std::s
 }
 
 
-bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network, //in: tensor network
-                                      const std::complex<double> coefficient) //in: expansion coefficient
+TensorExpansion TensorExpansion::clone()
+{
+ TensorExpansion clon;
+ for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
+  clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network_)),iter->coefficient_);
+ }
+ //`Finish: Ket, Name
+ return clon;
+}
+
+
+bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network,
+                                      const std::complex<double> coefficient)
 {
  auto output_tensor = network->getTensor(0);
  const auto output_tensor_rank = output_tensor->getRank();
@@ -108,6 +119,20 @@ bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network, //
  //Append new component:
  components_.emplace_back(ExpansionComponent(network,coefficient));
  return true;
+}
+
+
+bool TensorExpansion::appendExpansion(const TensorExpansion & another,
+                                      const std::complex<double> coefficient)
+{
+ if(this->isKet() != another.isKet()) return false;
+ if(this->getRank() != another.getRank()) return false;
+ bool appended = true;
+ for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
+  appended = this->appendComponent(iter->network_,(iter->coefficient_)*coefficient);
+  if(!appended) break;
+ }
+ return appended;
 }
 
 

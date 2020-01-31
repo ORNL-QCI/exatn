@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2019/12/15
+REVISION: 2020/01/31
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network expansion is an ordered linear expansion
@@ -108,6 +108,8 @@ public:
  TensorExpansion & operator=(TensorExpansion &&) noexcept = default;
  virtual ~TensorExpansion() = default;
 
+ virtual TensorExpansion clone(); //deep copy
+
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
  inline ConstIterator cbegin() const {return components_.cbegin();}
@@ -118,10 +120,12 @@ public:
   return ket_;
  }
 
+ /** Returns whether the tensor network expansion is bra or not. **/
  inline bool isBra() const{
   return !ket_;
  }
 
+ /** Returns the tensor network expansion name (may be empty). **/
  inline const std::string & getName() const{
   return name_;
  }
@@ -147,6 +151,10 @@ public:
  /** Appends a new component to the tensor network expansion. **/
  bool appendComponent(std::shared_ptr<TensorNetwork> network,  //in: tensor network
                       const std::complex<double> coefficient); //in: expansion coefficient
+
+ /** Appends another tensor network expansion into the current one. **/
+ bool appendExpansion(const TensorExpansion & another,         //in: tensor network expansion
+                      const std::complex<double> coefficient); //in: scaling coefficient (applies to the appended tensor network expansion)
 
  /** Conjugates the tensor network expansion: All constituting tensors are complex conjugated,
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:

@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructor of an approximate tensor network expansion from a given tensor network expansion
-REVISION: 2020/01/24
+REVISION: 2020/01/31
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
      The reconstruction fidelity is the overlap between the two tensor network expansions.
      The reconstruction tolerance is a numerical tolerance used for checking convergence
      of the underlying linear algebra procedures.
+ (B) The reconstructed tensor network expansion must be a Ket (primary space) and
+     the reconstructing tensor network expansion must be a Bra (dual space).
 **/
 
 #ifndef EXATN_RECONSTRUCTOR_HPP_
