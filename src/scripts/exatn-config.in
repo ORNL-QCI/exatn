@@ -47,7 +47,7 @@ def main(argv=None):
 
     # Print out the CXX flags from CMake
     if '--cxxflags' in sys.argv[1:]:
-        output += ['-std=gnu++11', '-fPIC'] + ['@CMAKE_CXX_FLAGS@']
+        output += ['-std=gnu++14', '-fPIC'] + ['@CMAKE_CXX_FLAGS@']
 
     print(' '.join([c for c in output]))
     return 0
