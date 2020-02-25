@@ -2,9 +2,10 @@
 #define EXATN_DRIVER_SERVER_HPP_
 
 #include "Identifiable.hpp"
-#include <string>
-
+#include "tensor_method.hpp"
 #include "TAProLInterpreter.hpp"
+
+#include <string>
 
 namespace exatn {
 namespace rpc {
@@ -16,7 +17,8 @@ protected:
   std::shared_ptr<exatn::parser::TAProLInterpreter> parser;
 
 public:
-  DriverServer() {}
+
+  DriverServer() = default;
   virtual void start() = 0;
   virtual void stop() = 0;
 };

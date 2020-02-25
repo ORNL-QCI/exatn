@@ -2,10 +2,11 @@
 #define EXATN_DRIVER_CLIENT_HPP_
 
 #include "Identifiable.hpp"
+#include "tensor_method.hpp"
+
 #include <string>
 #include <vector>
 #include <complex>
-#include "tensor_method.hpp"
 
 namespace exatn {
 namespace rpc {

@@ -2,13 +2,12 @@
 #define EXATN_MPICLIENT_HPP_
 
 #include "DriverClient.hpp"
-#include "DriverServer.hpp"
 #include "mpi.h"
+
 #include <algorithm>
 #include <functional>
 #include <map>
 #include <iostream>
-
 
 namespace exatn {
 namespace rpc {

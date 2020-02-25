@@ -2,7 +2,6 @@
 #define EXATN_DRIVER_MPISERVER_HPP_
 
 #include "DriverServer.hpp"
-
 #include "mpi.h"
 
 #include <string>

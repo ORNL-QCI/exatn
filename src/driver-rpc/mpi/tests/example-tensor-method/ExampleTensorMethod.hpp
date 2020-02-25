@@ -1,5 +1,5 @@
-#include "tensor_method.hpp"
 #include "Identifiable.hpp"
+#include "tensor_method.hpp"
 
 namespace exatn {
 namespace test {

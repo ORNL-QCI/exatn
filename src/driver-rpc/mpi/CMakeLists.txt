@@ -37,7 +37,7 @@ usfunctionembedresources(TARGET
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 if(EXATN_BUILD_TESTS)
-  #add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
 file(GLOB HEADERS *.hpp)

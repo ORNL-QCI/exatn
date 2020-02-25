@@ -19,7 +19,7 @@ target_include_directories(${LIBRARY_NAME}
   PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn)
 
 target_link_libraries(${LIBRARY_NAME}
-                      PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph 
+                      PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph
                       PRIVATE Boost::graph)
 
 exatn_configure_library_rpath(${LIBRARY_NAME})

@@ -1,5 +1,4 @@
 #include "ExampleTensorMethod.hpp"
-
 #include "talshxx.hpp"
 
 #include <iostream>
