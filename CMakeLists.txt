@@ -94,7 +94,7 @@ if(BLAS_LIB)
       message(FATAL_ERROR "The ESSL BLAS choice requires the path to IBM XL SMP runtime libraries (-DPATH_IBM_XL_SMP). CMake is exiting.")
     endif()
   else()
-    message(FATAL_ERROR "Invalid BLAS_LIB choice: ATLAS (default Linux), MKL, ACML, ESSL. CMake is exiting.")
+    message(FATAL_ERROR "Invalid BLAS_LIB choice: ATLAS (default Linux), MKL, OPENBLAS, ACML, ESSL. CMake is exiting.")
   endif()
 
 else()

@@ -77,7 +77,7 @@ if(WITH_LAPACK)
 
   elseif(BLAS_LIB STREQUAL "OPENBLAS")
 
-    find_library(LAPACK_LIBRARY lapack HINTS ${BLAS_PATH})
+    find_library(LAPACK_LIBRARY openblas HINTS ${BLAS_PATH})
     set(LAPACK_LIBRARIES "${LAPACK_LIBRARY}")
 
   elseif(BLAS_LIB STREQUAL "ACML")
