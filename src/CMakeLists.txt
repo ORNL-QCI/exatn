@@ -35,7 +35,13 @@ if(BLAS_LIB AND BLAS_PATH)
 
     set(BLAS_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
 
+  elseif(BLAS_LIB STREQUAL "OPENBLAS")
+
+   find_library(openblas openblas HINTS ${BLAS_PATH})
+   set(BLAS_LIBRARIES "${openblas}")
+
   elseif(BLAS_LIB STREQUAL "ACML")
+
     find_library(acml_mp acml_mp HINTS ${BLAS_PATH})
     set(BLAS_LIBRARIES "${acml_mp}")
 
@@ -68,6 +74,11 @@ if(WITH_LAPACK)
     find_library(gnu_thread mkl_gnu_thread HINTS ${BLAS_PATH})
     find_library(core mkl_core HINTS ${BLAS_PATH})
     set(LAPACK_LIBRARIES "${lp64};${gnu_thread};${core};pthread;m;dl")
+
+  elseif(BLAS_LIB STREQUAL "OPENBLAS")
+
+    find_library(LAPACK_LIBRARY lapack HINTS ${BLAS_PATH})
+    set(LAPACK_LIBRARIES "${LAPACK_LIBRARY}")
 
   elseif(BLAS_LIB STREQUAL "ACML")
     find_library(acml_mp acml_mp HINTS ${BLAS_PATH})
