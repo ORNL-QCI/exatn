@@ -45,6 +45,8 @@ if(MPI_LIB)
     set(MPI_BIN_PATH ${MPI_ROOT_DIR}/bin)
   endif()
 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPI_ENABLED")
+
 else()
 
   if(MPI_ROOT_DIR OR MPI_BIN_PATH)

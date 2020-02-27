@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/12/06
+REVISION: 2020/02/27
 
-Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) The execution space consists of one or more DAGs in which nodes
@@ -49,6 +49,8 @@ Rationale:
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
+#include "mpi.h"
+
 #include <map>
 #include <list>
 #include <string>
@@ -72,6 +74,9 @@ public:
   TensorRuntime(TensorRuntime &&) noexcept = delete;
   TensorRuntime & operator=(TensorRuntime &&) noexcept = delete;
   ~TensorRuntime();
+
+  /** Sets up the parallel distributed configuration. **/
+  void enableParallelExecution(MPI_Comm communicator);
 
   /** Resets the logging level (0:none) [MAIN THREAD]. **/
   void resetLoggingLevel(int level = 0);

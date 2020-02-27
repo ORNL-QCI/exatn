@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2019/12/06
+REVISION: 2020/02/27
 
-Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "tensor_runtime.hpp"
@@ -36,6 +36,12 @@ TensorRuntime::~TensorRuntime()
     exec_thread_.join(); //wait until the execution thread has finished
 //    std::cout << "Joined" << std::endl << std::flush;
   }
+}
+
+
+void TensorRuntime::enableParallelExecution(MPI_Comm communicator)
+{
+  return;
 }
 
 
