@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/01/17
+REVISION: 2020/02/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -91,7 +91,14 @@ class NumServer final {
 
 public:
 
- NumServer();
+#ifdef MPI_ENABLED
+ NumServer(MPI_Comm communicator = MPI_COMM_WORLD,                          //MPI communicator
+           const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+           const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
+#else
+ NumServer(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+           const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
+#endif
  NumServer(const NumServer &) = delete;
  NumServer & operator=(const NumServer &) = delete;
  NumServer(NumServer &&) noexcept = delete;
@@ -99,8 +106,14 @@ public:
  ~NumServer();
 
  /** Reconfigures tensor runtime implementation. **/
+#ifdef MPI_ENABLED
+ void reconfigureTensorRuntime(MPI_Comm communicator,
+                               const std::string & dag_executor_name,
+                               const std::string & node_executor_name);
+#else
  void reconfigureTensorRuntime(const std::string & dag_executor_name,
                                const std::string & node_executor_name);
+#endif
 
  /** Resets the tensor contraction sequence optimizer that is
      invoked when evaluating tensor networks. **/
@@ -337,6 +350,8 @@ private:
 
  TensorOpFactory * tensor_op_factory_; //tensor operation factory (non-owning pointer)
 
+ int num_processes_; //total number of parallel processes
+ int process_rank_; //rank of the current parallel process
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 

@@ -49,7 +49,9 @@ Rationale:
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
+#ifdef MPI_ENABLED
 #include "mpi.h"
+#endif
 
 #include <map>
 #include <list>
@@ -67,16 +69,20 @@ namespace runtime {
 class TensorRuntime final {
 
 public:
+
+#ifdef MPI_ENABLED
+  TensorRuntime(MPI_Comm communicator = MPI_COMM_WORLD,                          //MPI communicator
+                const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+                const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
+#else
   TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
+#endif
   TensorRuntime(const TensorRuntime &) = delete;
   TensorRuntime & operator=(const TensorRuntime &) = delete;
   TensorRuntime(TensorRuntime &&) noexcept = delete;
   TensorRuntime & operator=(TensorRuntime &&) noexcept = delete;
   ~TensorRuntime();
-
-  /** Sets up the parallel distributed configuration. **/
-  void enableParallelExecution(MPI_Comm communicator);
 
   /** Resets the logging level (0:none) [MAIN THREAD]. **/
   void resetLoggingLevel(int level = 0);
@@ -152,10 +158,18 @@ private:
   inline void lockDataReqQ(){data_req_mtx_.lock();}
   inline void unlockDataReqQ(){data_req_mtx_.unlock();}
 
+#ifdef MPI_ENABLED
+  /** MPI communicator **/
+  MPI_Comm communicator_;
+#endif
   /** Tensor graph (DAG) executor name **/
   std::string graph_executor_name_;
   /** Tensor graph (DAG) node executor name **/
   std::string node_executor_name_;
+  /** Total number of parallel processes **/
+  int num_processes_;
+  /** Rank of the current parallel process **/
+  int process_rank_;
   /** Current tensor graph (DAG) executor **/
   std::shared_ptr<TensorGraphExecutor> graph_executor_;
   /** Active execution graphs (DAGs) **/
