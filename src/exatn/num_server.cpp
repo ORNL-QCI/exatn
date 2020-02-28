@@ -247,6 +247,21 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 bool NumServer::submit(TensorNetwork & network)
 {
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return submit(network,process_set);
+}
+
+bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
+{
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return submit(network,process_set);
+}
+
+bool NumServer::submit(TensorNetwork & network,
+                       const std::vector<unsigned int> & process_set)
+{
  assert(network.isValid()); //debug
  auto & op_list = network.getOperationList(contr_seq_optimizer_);
  auto output_tensor = network.getTensor(0);
@@ -272,13 +287,32 @@ bool NumServer::submit(TensorNetwork & network)
  return true;
 }
 
-bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
+bool NumServer::submit(std::shared_ptr<TensorNetwork> network,
+                       const std::vector<unsigned int> & process_set)
 {
- if(network) return submit(*network);
+ if(network) return submit(*network,process_set);
  return false;
 }
 
-bool NumServer::submit(TensorExpansion & expansion, std::shared_ptr<Tensor> accumulator)
+bool NumServer::submit(TensorExpansion & expansion,
+                       std::shared_ptr<Tensor> accumulator)
+{
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return submit(expansion,accumulator,process_set);
+}
+
+bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
+                       std::shared_ptr<Tensor> accumulator)
+{
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return submit(expansion,accumulator,process_set);
+}
+
+bool NumServer::submit(TensorExpansion & expansion,
+                       std::shared_ptr<Tensor> accumulator,
+                       const std::vector<unsigned int> & process_set)
 {
  assert(accumulator);
  std::list<std::shared_ptr<TensorOperation>> accumulations;
@@ -305,9 +339,11 @@ bool NumServer::submit(TensorExpansion & expansion, std::shared_ptr<Tensor> accu
  return true;
 }
 
-bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion, std::shared_ptr<Tensor> accumulator)
+bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
+                       std::shared_ptr<Tensor> accumulator,
+                       const std::vector<unsigned int> & process_set)
 {
- if(expansion) return submit(*expansion,accumulator);
+ if(expansion) return submit(*expansion,accumulator,process_set);
  return false;
 }
 

@@ -180,17 +180,31 @@ public:
 
  /** Submits a tensor network for processing (evaluating the output tensor-result).
      If the output (result) tensor has not been created yet, it will be created and
-     initialized to zero automatically, and later destroyed automatically when no longer needed. **/
- bool submit(TensorNetwork & network);                //in: tensor network for numerical evaluation
- bool submit(std::shared_ptr<TensorNetwork> network);
+     initialized to zero automatically, and later destroyed automatically when no longer needed.
+     By default all parallel processes will be processing the tensor network,
+     otherwise the desired process subset needs to be explicitly specified. **/
+ bool submit(TensorNetwork & network);                       //in: tensor network for numerical evaluation
+ bool submit(std::shared_ptr<TensorNetwork> network);        //in: tensor network for numerical evaluation
+ bool submit(TensorNetwork & network,                        //in: tensor network for numerical evaluation
+             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+ bool submit(std::shared_ptr<TensorNetwork> network,         //in: tensor network for numerical evaluation
+             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
 
  /** Submits a tensor network expansion for processing (evaluating output tensors of all
      constituting tensor networks and accumualting them in the provided accumulator tensor).
-     Synchronization of the tensor expansion evaluation is done via syncing on the accumulator tensor. **/
+     Synchronization of the tensor expansion evaluation is done via syncing on the accumulator
+     tensor. By default all parallel processes will be processing the tensor network,
+     otherwise the desired process subset needs to be explicitly specified. **/
  bool submit(TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
- bool submit(std::shared_ptr<TensorExpansion> expansion,
-             std::shared_ptr<Tensor> accumulator);
+ bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+ bool submit(TensorExpansion & expansion,                    //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator,            //inout: tensor accumulator (result)
+             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+ bool submit(std::shared_ptr<TensorExpansion> expansion,     //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator,            //inout: tensor accumulator (result)
+             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
