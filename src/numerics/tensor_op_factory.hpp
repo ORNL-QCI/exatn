@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2019/09/10
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Creates new tensor operations of desired kind.
@@ -16,6 +16,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_op_create.hpp"
 #include "tensor_op_destroy.hpp"
 #include "tensor_op_transform.hpp"
+#include "tensor_op_slice.hpp"
+#include "tensor_op_insert.hpp"
 #include "tensor_op_add.hpp"
 #include "tensor_op_contract.hpp"
 

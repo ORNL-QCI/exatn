@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/10/07
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_talsh.hpp"
@@ -118,6 +118,118 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
  auto & tens = *(tens_pos->second);
  int error_code = op.apply(tens); //synchronous user-defined operation
  *exec_handle = op.getId();
+ return error_code;
+}
+
+
+int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
+                               TensorOpExecHandle * exec_handle)
+{
+ assert(op.isSet());
+ const auto & tensor0 = *(op.getTensorOperand(0));
+ const auto tensor0_hash = tensor0.getTensorHash();
+ auto tens0_pos = tensors_.find(tensor0_hash);
+ if(tens0_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens0 = *(tens0_pos->second);
+
+ const auto & tensor1 = *(op.getTensorOperand(1));
+ const auto tensor1_hash = tensor1.getTensorHash();
+ auto tens1_pos = tensors_.find(tensor1_hash);
+ if(tens1_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Tensor operand 1 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens1 = *(tens1_pos->second);
+
+ *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+
+ const auto & slice_signature = tensor0.getSignature();
+ const auto slice_rank = slice_signature.getRank();
+ std::vector<int> offsets(slice_rank);
+ for(unsigned int i = 0; i < slice_rank; ++i){
+  auto space_id = slice_signature.getDimSpaceId(i);
+  auto subspace_id = slice_signature.getDimSubspaceId(i);
+  if(space_id == SOME_SPACE){
+   offsets[i] = static_cast<int>(subspace_id);
+  }else{
+   const auto * space = getSpaceRegister()->getSpace(space_id);
+   assert(false); //`finish
+  }
+ }
+
+ auto error_code = tens1.extractSlice((task_res.first)->second.get(),
+                                      tens0,
+                                      offsets,
+                                      DEV_HOST,0);
+
+ return error_code;
+}
+
+
+int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
+                               TensorOpExecHandle * exec_handle)
+{
+ assert(op.isSet());
+ const auto & tensor0 = *(op.getTensorOperand(0));
+ const auto tensor0_hash = tensor0.getTensorHash();
+ auto tens0_pos = tensors_.find(tensor0_hash);
+ if(tens0_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens0 = *(tens0_pos->second);
+
+ const auto & tensor1 = *(op.getTensorOperand(1));
+ const auto tensor1_hash = tensor1.getTensorHash();
+ auto tens1_pos = tensors_.find(tensor1_hash);
+ if(tens1_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Tensor operand 1 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ auto & tens1 = *(tens1_pos->second);
+
+ *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+
+ const auto & slice_signature = tensor1.getSignature();
+ const auto slice_rank = slice_signature.getRank();
+ std::vector<int> offsets(slice_rank);
+ for(unsigned int i = 0; i < slice_rank; ++i){
+  auto space_id = slice_signature.getDimSpaceId(i);
+  auto subspace_id = slice_signature.getDimSubspaceId(i);
+  if(space_id == SOME_SPACE){
+   offsets[i] = static_cast<int>(subspace_id);
+  }else{
+   const auto * space = getSpaceRegister()->getSpace(space_id);
+   assert(false); //`finish
+  }
+ }
+
+ auto error_code = tens0.insertSlice((task_res.first)->second.get(),
+                                     tens1,
+                                     offsets,
+                                     DEV_HOST,0);
+
  return error_code;
 }
 

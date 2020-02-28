@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/02/27
+REVISION: 2020/02/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -349,7 +349,7 @@ private:
 
  void destroyOrphanedTensors();
 
- numerics::SpaceRegister space_register_; //register of vector spaces and their named subspaces
+ std::shared_ptr<numerics::SpaceRegister> space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)

@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2019/09/10
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_op_factory.hpp"
 
@@ -15,6 +15,8 @@ TensorOpFactory::TensorOpFactory()
  registerTensorOp(TensorOpCode::CREATE,&TensorOpCreate::createNew);
  registerTensorOp(TensorOpCode::DESTROY,&TensorOpDestroy::createNew);
  registerTensorOp(TensorOpCode::TRANSFORM,&TensorOpTransform::createNew);
+ registerTensorOp(TensorOpCode::SLICE,&TensorOpSlice::createNew);
+ registerTensorOp(TensorOpCode::INSERT,&TensorOpInsert::createNew);
  registerTensorOp(TensorOpCode::ADD,&TensorOpAdd::createNew);
  registerTensorOp(TensorOpCode::CONTRACT,&TensorOpContract::createNew);
 }

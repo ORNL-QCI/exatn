@@ -16,6 +16,8 @@ add_library(${LIBRARY_NAME}
             tensor_op_create.cpp
             tensor_op_destroy.cpp
             tensor_op_transform.cpp
+            tensor_op_slice.cpp
+            tensor_op_insert.cpp
             tensor_op_add.cpp
             tensor_op_contract.cpp
             tensor_op_factory.cpp

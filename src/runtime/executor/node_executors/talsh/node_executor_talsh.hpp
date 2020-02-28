@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2019/10/07
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -40,6 +40,10 @@ public:
   int execute(numerics::TensorOpDestroy & op,
               TensorOpExecHandle * exec_handle) override;
   int execute(numerics::TensorOpTransform & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpSlice & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpInsert & op,
               TensorOpExecHandle * exec_handle) override;
   int execute(numerics::TensorOpAdd & op,
               TensorOpExecHandle * exec_handle) override;

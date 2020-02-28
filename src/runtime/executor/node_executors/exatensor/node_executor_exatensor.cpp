@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2019/10/04
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_exatensor.hpp"
@@ -33,6 +33,22 @@ int ExatensorNodeExecutor::execute(numerics::TensorOpDestroy & op,
 
 
 int ExatensorNodeExecutor::execute(numerics::TensorOpTransform & op,
+                                   TensorOpExecHandle * exec_handle)
+{
+ //`Implement
+ return 0;
+}
+
+
+int ExatensorNodeExecutor::execute(numerics::TensorOpSlice & op,
+                                   TensorOpExecHandle * exec_handle)
+{
+ //`Implement
+ return 0;
+}
+
+
+int ExatensorNodeExecutor::execute(numerics::TensorOpInsert & op,
                                    TensorOpExecHandle * exec_handle)
 {
  //`Implement

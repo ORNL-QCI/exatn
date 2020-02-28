@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/02/27
+REVISION: 2020/02/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,6 +28,7 @@ NumServer::NumServer(MPI_Comm communicator,
 {
  int mpi_error = MPI_Comm_size(communicator,&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(communicator,&process_rank_); assert(mpi_error == MPI_SUCCESS);
+ space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
  tensor_rt_->openScope("GLOBAL");
@@ -39,6 +40,7 @@ NumServer::NumServer(const std::string & graph_executor_name,
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;
+ space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
  tensor_rt_->openScope("GLOBAL");
@@ -142,8 +144,8 @@ SpaceId NumServer::createVectorSpace(const std::string & space_name, DimExtent s
                                      const VectorSpace ** space_ptr)
 {
  assert(space_name.length() > 0);
- SpaceId space_id = space_register_.registerSpace(std::make_shared<VectorSpace>(space_dim,space_name));
- if(space_ptr != nullptr) *space_ptr = space_register_.getSpace(space_id);
+ SpaceId space_id = space_register_->registerSpace(std::make_shared<VectorSpace>(space_dim,space_name));
+ if(space_ptr != nullptr) *space_ptr = space_register_->getSpace(space_id);
  return space_id;
 }
 
@@ -163,7 +165,7 @@ void NumServer::destroyVectorSpace(SpaceId space_id)
 
 const VectorSpace * NumServer::getVectorSpace(const std::string & space_name) const
 {
- return space_register_.getSpace(space_name);
+ return space_register_->getSpace(space_name);
 }
 
 
@@ -173,10 +175,10 @@ SubspaceId NumServer::createSubspace(const std::string & subspace_name,
                                      const Subspace ** subspace_ptr)
 {
  assert(subspace_name.length() > 0 && space_name.length() > 0);
- const VectorSpace * space = space_register_.getSpace(space_name);
+ const VectorSpace * space = space_register_->getSpace(space_name);
  assert(space != nullptr);
- SubspaceId subspace_id = space_register_.registerSubspace(std::make_shared<Subspace>(space,bounds,subspace_name));
- if(subspace_ptr != nullptr) *subspace_ptr = space_register_.getSubspace(space_name,subspace_name);
+ SubspaceId subspace_id = space_register_->registerSubspace(std::make_shared<Subspace>(space,bounds,subspace_name));
+ if(subspace_ptr != nullptr) *subspace_ptr = space_register_->getSubspace(space_name,subspace_name);
  auto res = subname2id_.insert({subspace_name,space->getRegisteredId()});
  if(!(res.second)) std::cout << "#ERROR(NumServer::createSubspace): Subspace already exists: " << subspace_name << std::endl;
  assert(res.second);
@@ -204,11 +206,11 @@ const Subspace * NumServer::getSubspace(const std::string & subspace_name) const
  if(it == subname2id_.end()) std::cout << "#ERROR(NumServer::getSubspace): Subspace not found: " << subspace_name << std::endl;
  assert(it != subname2id_.end());
  SpaceId space_id = (*it).second;
- const VectorSpace * space = space_register_.getSpace(space_id);
+ const VectorSpace * space = space_register_->getSpace(space_id);
  assert(space != nullptr);
  const std::string & space_name = space->getName();
  assert(space_name.length() > 0);
- return space_register_.getSubspace(space_name,subspace_name);
+ return space_register_->getSubspace(space_name,subspace_name);
 }
 
 bool NumServer::submit(std::shared_ptr<TensorOperation> operation)

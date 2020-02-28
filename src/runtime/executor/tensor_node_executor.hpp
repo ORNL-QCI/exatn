@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2019/10/04
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor node executor provides actual implementation of registered
@@ -22,6 +22,7 @@ Rationale:
 
 #include "tensor_op_factory.hpp"
 #include "tensor.hpp"
+#include "space_register.hpp"
 
 #include <vector>
 #include <memory>
@@ -51,6 +52,10 @@ public:
   virtual int execute(numerics::TensorOpDestroy & op,
                       TensorOpExecHandle * exec_handle) = 0;
   virtual int execute(numerics::TensorOpTransform & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpSlice & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpInsert & op,
                       TensorOpExecHandle * exec_handle) = 0;
   virtual int execute(numerics::TensorOpAdd & op,
                       TensorOpExecHandle * exec_handle) = 0;

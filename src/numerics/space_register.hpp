@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2019/06/06
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Any unregistered vector space has id = SOME_SPACE = 0 (anonymous vector space).
@@ -138,6 +138,9 @@ private:
 };
 
 } //namespace numerics
+
+/** Returns the global register of vector spaces and subspaces. **/
+std::shared_ptr<numerics::SpaceRegister> getSpaceRegister();
 
 } //namespace exatn
 

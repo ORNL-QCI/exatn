@@ -1,16 +1,19 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2019/06/06
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "space_register.hpp"
 
 #include <iostream>
 
-#include "assert.h"
+#include <cassert>
 
 namespace exatn{
+
+//Register of vector spaces and their subspaces (singleton):
+std::shared_ptr<numerics::SpaceRegister> space_register {nullptr};
 
 namespace numerics{
 
@@ -132,5 +135,11 @@ const Subspace * SpaceRegister::getSubspace(const std::string & space_name,
 }
 
 } //namespace numerics
+
+std::shared_ptr<numerics::SpaceRegister> getSpaceRegister()
+{
+ if(!space_register) space_register = std::make_shared<numerics::SpaceRegister>();
+ return space_register;
+}
 
 } //namespace exatn

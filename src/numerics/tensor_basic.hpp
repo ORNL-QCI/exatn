@@ -1,8 +1,8 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2019/09/01
+REVISION: 2020/02/28
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef EXATN_NUMERICS_TENSOR_BASIC_HPP_
 #define EXATN_NUMERICS_TENSOR_BASIC_HPP_
@@ -40,8 +40,12 @@ enum class TensorOpCode{
  CREATE,         //tensor creation
  DESTROY,        //tensor destruction
  TRANSFORM,      //tensor transformation/initialization
+ SLICE,          //tensor slicing
+ INSERT,         //tensor insertion
  ADD,            //tensor addition
- CONTRACT        //tensor contraction
+ CONTRACT,       //tensor contraction
+ BROADCAST,      //tensor broadcast (parallel execution only)
+ ALLREDUCE       //tensor allreduce (parallel execution only)
 };
 
 enum class TensorElementType{
