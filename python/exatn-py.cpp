@@ -292,8 +292,6 @@ void create_exatn_py_module(py::module &m) {
   py::class_<exatn::NumServer, std::shared_ptr<exatn::NumServer>>(
       m, "NumServer", "")
       .def(py::init<>())
-      .def("reconfigureTensorRuntime",
-           &exatn::NumServer::reconfigureTensorRuntime, "")
       .def("registerTensorMethod", &exatn::NumServer::registerTensorMethod, "")
       .def("getTensorMethod", &exatn::NumServer::getTensorMethod, "")
       .def("registerExternalData", &exatn::NumServer::registerExternalData, "")
