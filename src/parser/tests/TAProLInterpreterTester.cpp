@@ -8,7 +8,8 @@ TEST(TAProLInterpreterTester, checkSimple) {
 
 
   TAProLInterpreter interpreter;
-  const std::string src = R"src(entry: main
+  const std::string src = R"src(
+entry: main
 scope main group()
  subspace(): s0=[0:127]
  index(s0): a,b,c,d,i,j,k,l
@@ -23,7 +24,8 @@ scope main group()
  ~Z2
  ~T2
  ~H2
-end scope main)src";
+end scope main
+)src";
 
   interpreter.interpret(src);
 }

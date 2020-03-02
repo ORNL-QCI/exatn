@@ -48,6 +48,28 @@ if(EXATN_BUILD_TESTS)
     add_test(${TESTNAME} ${TESTNAME})
     set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
   endmacro()
+
+  if(MPI_LIB AND NOT MPI_LIB STREQUAL "NONE")
+
+    macro(exatn_add_mpi_test TESTNAME)
+      add_executable(${TESTNAME} ${ARGN})
+      target_link_libraries(${TESTNAME} PRIVATE gtest gmock gtest_main)
+      set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
+      get_filename_component(MPI_BIN_PATH ${MPI_CXX_COMPILER} DIRECTORY)
+      add_test(NAME ${TESTNAME} COMMAND ${MPI_BIN_PATH}/mpiexec -np 2 ./${TESTNAME})
+    endmacro()
+
+  else()
+
+    macro(exatn_add_mpi_test TESTNAME)
+      add_executable(${TESTNAME} ${ARGN})
+      target_link_libraries(${TESTNAME} PRIVATE gtest gmock gtest_main)
+      add_test(${TESTNAME} ${TESTNAME})
+      set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
+    endmacro()
+
+  endif()
+
 endif()
 
 set(TALSHXX_EXISTS "NO")

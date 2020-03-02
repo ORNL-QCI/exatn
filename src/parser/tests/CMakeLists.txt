@@ -1,4 +1,4 @@
-exatn_add_test(TAProLInterpreterTester TAProLInterpreterTester.cpp)
+exatn_add_mpi_test(TAProLInterpreterTester TAProLInterpreterTester.cpp)
 target_include_directories(TAProLInterpreterTester
                             PUBLIC
                             ${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src
