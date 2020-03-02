@@ -511,7 +511,11 @@ void create_exatn_py_module(py::module &m) {
       .def("registerSpace", &exatn::numerics::SpaceRegister::registerSpace, "")
       .def("registerSubspace",
            &exatn::numerics::SpaceRegister::registerSubspace, "")
-      .def("getSubspace", &exatn::numerics::SpaceRegister::getSubspace, "")
+      .def("getSubspace",
+           (const exatn::numerics::Subspace *(
+               exatn::numerics::SpaceRegister::*)(SpaceId,SubspaceId) const) &
+               exatn::numerics::SpaceRegister::getSubspace,
+           "")
       .def("getSpace",
            (const exatn::numerics::VectorSpace *(
                exatn::numerics::SpaceRegister::*)(SpaceId) const) &

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/02/28
+REVISION: 2020/03/02
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -8,6 +8,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include "node_executor_talsh.hpp"
 
 #include <complex>
+#include <limits>
 #include <mutex>
 
 #include <cstdlib>
@@ -162,10 +163,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
   auto space_id = slice_signature.getDimSpaceId(i);
   auto subspace_id = slice_signature.getDimSubspaceId(i);
   if(space_id == SOME_SPACE){
+   if(subspace_id > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
    offsets[i] = static_cast<int>(subspace_id);
   }else{
-   const auto * space = getSpaceRegister()->getSpace(space_id);
-   assert(false); //`finish
+   const auto * subspace = getSpaceRegister()->getSubspace(space_id,subspace_id);
+   auto lower_bound = subspace->getLowerBound();
+   if(lower_bound > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
+   offsets[i] = static_cast<int>(lower_bound);
   }
  }
 
@@ -218,10 +228,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
   auto space_id = slice_signature.getDimSpaceId(i);
   auto subspace_id = slice_signature.getDimSubspaceId(i);
   if(space_id == SOME_SPACE){
+   if(subspace_id > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
    offsets[i] = static_cast<int>(subspace_id);
   }else{
-   const auto * space = getSpaceRegister()->getSpace(space_id);
-   assert(false); //`finish
+   const auto * subspace = getSpaceRegister()->getSubspace(space_id,subspace_id);
+   auto lower_bound = subspace->getLowerBound();
+   if(lower_bound > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
+   offsets[i] = static_cast<int>(lower_bound);
   }
  }
 

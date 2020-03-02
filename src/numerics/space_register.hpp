@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Register of vector spaces and their subspaces
-REVISION: 2020/02/28
+REVISION: 2020/03/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -128,6 +128,8 @@ public:
  SubspaceId registerSubspace(std::shared_ptr<Subspace> subspace);
 
  /** Returns a non-owning pointer to a registerd subspace of a registered vector space. **/
+ const Subspace * getSubspace(SpaceId space_id,
+                              SubspaceId subspace_id) const;
  const Subspace * getSubspace(const std::string & space_name,
                               const std::string & subspace_name) const;
 
