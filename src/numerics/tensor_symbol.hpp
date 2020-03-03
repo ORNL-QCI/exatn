@@ -1,8 +1,8 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/12/31
+REVISION: 2020/03/03
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 (a) Valid symbolic tensor formats are (angle brackets mark placeholders for tokens):
@@ -38,6 +38,7 @@ Rationale:
 
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace exatn{
 
@@ -115,12 +116,14 @@ inline std::pair<int,int> trim_spaces_off(const std::string & str, //in: full st
 
 /** Generates a hexadecimal name for a tensor from an integer. **/
 template <typename Integer>
-std::string tensor_hex_name(Integer hash)
+std::string tensor_hex_name(const std::string & symb_part, //symbolic part of the name
+                            Integer hash)                  //hexadecimal part of the name
 {
  static_assert(std::is_integral<Integer>::value,"#FATAL(tensor_hex_name): Non-integer type passed!");
  static const char digit[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+ assert(symb_part.length() > 0);
  auto n = hash; if(n < 0) n = -n;
- std::string name("_z");
+ std::string name("_"+symb_part);
  while(n > 0){
   auto m = n%16;
   name += digit[m];

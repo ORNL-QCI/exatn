@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/01/24
+REVISION: 2020/03/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,7 +32,7 @@ TensorNetwork::TensorNetwork():
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
-                                    std::make_shared<Tensor>("_SMOKY_TENSOR_"),0U,std::vector<TensorLeg>{});
+                                    std::make_shared<Tensor>("_smoky"),0U,std::vector<TensorLeg>{});
  if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
@@ -187,7 +187,7 @@ TensorNetwork::TensorNetwork(const TensorNetwork & another)
  auto output_tensor = another.getTensor(0);
  const auto & output_legs = *(another.getTensorConnections(0));
  auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(generateTensorName(*new_output_tensor));
+ new_output_tensor->rename(generateTensorName(*new_output_tensor,"z"));
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     new_output_tensor,0U,output_legs);
@@ -212,7 +212,7 @@ TensorNetwork & TensorNetwork::operator=(const TensorNetwork & another)
  auto output_tensor = another.getTensor(0);
  const auto & output_legs = *(another.getTensorConnections(0));
  auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(generateTensorName(*new_output_tensor));
+ new_output_tensor->rename(generateTensorName(*new_output_tensor,"z"));
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     new_output_tensor,0U,output_legs);
@@ -1159,17 +1159,17 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
   assert(generated);
  }
  //Append the tensor result:
- auto res = emplaceTensorConnDirect(true,
+ auto res = emplaceTensorConnDirect(true,true,
                                     result_id,
                                     std::make_shared<Tensor>(
-                                     "_y" + std::to_string(result_id),
+                                     "_y" + std::to_string(result_id), //this is temporary name, will change to _xHASH
                                      *(left_tensor->getTensor()),
                                      *(right_tensor->getTensor()),
                                      pattern
                                     ),
                                     result_id,result_legs);
  if(!res){
-  std::cout << "#ERROR(exatn::numerics::TensorNetwork::mergeTensors): Tensor id already in use!" << std::endl;
+  std::cout << "#ERROR(exatn::numerics::TensorNetwork::mergeTensors): Unable to append the tensor-result!" << std::endl;
   return false;
  }
  //Delete two original tensors:
@@ -1491,7 +1491,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     auto tensor2 = net.getTensor(contr->right_id,&conj2);
     std::string contr_pattern;
     if(num_contractions > 1){ //intermediate contraction
-     auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id,&contr_pattern);
+     auto merged = net.mergeTensors(contr->left_id,contr->right_id,contr->result_id,&contr_pattern); //append intermediate _xHASH
      assert(merged);
     }else{ //last contraction
      assert(contr->result_id == 0); //last tensor contraction accumulates into the output tensor of the tensor network

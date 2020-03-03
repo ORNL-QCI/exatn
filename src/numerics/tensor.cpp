@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2019/12/30
+REVISION: 2020/03/03
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
 #include "tensor_symbol.hpp"
@@ -249,9 +249,10 @@ TensorHashType Tensor::getTensorHash() const
  return reinterpret_cast<TensorHashType>(this);
 }
 
-std::string generateTensorName(const Tensor & tensor)
+std::string generateTensorName(const Tensor & tensor,
+                               const std::string & prefix)
 {
- return tensor_hex_name(tensor.getTensorHash());
+ return tensor_hex_name(prefix,tensor.getTensorHash());
 }
 
 } //namespace numerics

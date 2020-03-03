@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2019/12/11
+REVISION: 2020/03/03
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** NOTES:
  Tensor specification requires:
@@ -190,7 +190,8 @@ private:
 //FREE FUNCTIONS:
 
 /** Generates a unique name for a given tensor. **/
-std::string generateTensorName(const Tensor & tensor);
+std::string generateTensorName(const Tensor & tensor,       //in: tensor
+                               const std::string & prefix); //in: name prefix
 
 
 //TEMPLATES:

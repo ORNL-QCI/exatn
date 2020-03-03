@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/01/24
+REVISION: 2020/03/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -76,7 +76,7 @@ public:
  using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
  using ConstIterator = typename std::unordered_map<unsigned int, TensorConn>::const_iterator; //constant iterator
 
- /** Creates an unnamed empty tensor network with a single scalar output tensor named "_SMOKY_TENSOR_" **/
+ /** Creates an unnamed empty tensor network with a single scalar output tensor named "_smoky" **/
  TensorNetwork();
  /** Creates a named empty tensor network with a single scalar output tensor named with the same name. **/
  TensorNetwork(const std::string & name);
@@ -308,6 +308,11 @@ protected:
  inline bool emplaceTensorConnDirect(bool dynamic_id_enabled,
                                      unsigned int tensor_id,
                                      Args&&... args); //arguments for TensorConn ctor
+ template <typename... Args>
+ inline bool emplaceTensorConnDirect(bool dynamic_name_enabled,
+                                     bool dynamic_id_enabled,
+                                     unsigned int tensor_id,
+                                     Args&&... args); //arguments for TensorConn ctor
 
  /** Erases a connected tensor from the tensor network. **/
  inline bool eraseTensorConn(unsigned int tensor_id);
@@ -422,6 +427,30 @@ inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_id_enabled,
  if(res.second){
   res.first->second.resetTensorId(tensor_id);
   updateMaxTensorIdOnAppend(tensor_id);
+ }
+ return res.second;
+}
+
+
+template <typename... Args>
+inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_name_enabled,
+                                                   bool dynamic_id_enabled,
+                                                   unsigned int tensor_id,
+                                                   Args&&... args)
+{
+ auto res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ if(!(res.second) && dynamic_id_enabled){
+  tensor_id = getMaxTensorId() + 1;
+  assert(tensor_id != 0); //unsigned int overflow
+  res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ }
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+  if(dynamic_name_enabled){
+   auto & stored_tensor = *(res.first->second.getTensor());
+   stored_tensor.rename(generateTensorName(stored_tensor,"x")); //intermediate tensor prefix "x": _xHASH
+  }
  }
  return res.second;
 }
