@@ -13,6 +13,10 @@
 #include <gtest/gtest.h>
 #include "exatn.hpp"
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 TEST(TensorRuntimeTester, checkSimple) {
 
   using exatn::numerics::Tensor;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/02/28
+REVISION: 2020/03/10
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -92,7 +92,7 @@ class NumServer final {
 public:
 
 #ifdef MPI_ENABLED
- NumServer(MPI_Comm communicator = MPI_COMM_WORLD,                          //MPI communicator
+ NumServer(MPICommProxy & communicator,                                     //MPI communicator proxy
            const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
@@ -107,7 +107,7 @@ public:
 
  /** Reconfigures tensor runtime implementation. **/
 #ifdef MPI_ENABLED
- void reconfigureTensorRuntime(MPI_Comm communicator,
+ void reconfigureTensorRuntime(MPICommProxy & communicator,
                                const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #else

@@ -3,6 +3,10 @@
 #include "exatn.hpp"
 #include "talshxx.hpp"
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 #include <iostream>
 #include <utility>
 

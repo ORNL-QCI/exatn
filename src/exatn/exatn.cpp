@@ -1,11 +1,15 @@
 #include "exatn.hpp"
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 #include <iostream>
 
 namespace exatn {
 
 #ifdef MPI_ENABLED
-void initialize(MPI_Comm communicator,
+void initialize(MPICommProxy & communicator,
                 const std::string & graph_executor_name,
                 const std::string & node_executor_name)
 {
@@ -18,7 +22,9 @@ void initialize(MPI_Comm communicator,
   }
   return;
 }
-#else
+#endif
+
+
 void initialize(const std::string & graph_executor_name,
                 const std::string & node_executor_name)
 {
@@ -26,12 +32,15 @@ void initialize(const std::string & graph_executor_name,
     serviceRegistry->initialize();
     exatnFrameworkInitialized = true;
     //std::cout << "#DEBUG(exatn): ExaTN services initialized" << std::endl << std::flush;
+#ifdef MPI_ENABLED
+    numericalServer = std::make_shared<NumServer>(???,graph_executor_name,node_executor_name);
+#else
     numericalServer = std::make_shared<NumServer>(graph_executor_name,node_executor_name);
+#endif
     //std::cout << "#DEBUG(exatn): ExaTN numerical server initialized" << std::endl << std::flush;
   }
   return;
 }
-#endif
 
 
 bool isInitialized() {

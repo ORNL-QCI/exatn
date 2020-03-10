@@ -2,6 +2,10 @@
 #include <gtest/gtest.h>
 #include "exatn.hpp"
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 using namespace exatn::parser;
 
 TEST(TAProLInterpreterTester, checkSimple) {

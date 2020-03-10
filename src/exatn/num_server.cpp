@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/02/28
+REVISION: 2020/03/10
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,10 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <map>
 #include <future>
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 #include <cassert>
 
 namespace exatn{
@@ -20,14 +24,14 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 
 
 #ifdef MPI_ENABLED
-NumServer::NumServer(MPI_Comm communicator,
+NumServer::NumServer(MPICommProxy & communicator,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("dummy"),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,graph_executor_name,node_executor_name))
 {
- int mpi_error = MPI_Comm_size(communicator,&num_processes_); assert(mpi_error == MPI_SUCCESS);
- mpi_error = MPI_Comm_rank(communicator,&process_rank_); assert(mpi_error == MPI_SUCCESS);
+ int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
+ mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -65,7 +69,7 @@ NumServer::~NumServer()
 
 
 #ifdef MPI_ENABLED
-void NumServer::reconfigureTensorRuntime(MPI_Comm communicator,
+void NumServer::reconfigureTensorRuntime(MPICommProxy & communicator,
                                          const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {

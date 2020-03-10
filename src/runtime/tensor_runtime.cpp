@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/02/27
+REVISION: 2020/03/10
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -10,6 +10,10 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 #include "talshxx.hpp"
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
 #include <vector>
 #include <iostream>
 
@@ -17,15 +21,15 @@ namespace exatn {
 namespace runtime {
 
 #ifdef MPI_ENABLED
-TensorRuntime::TensorRuntime(MPI_Comm communicator,
+TensorRuntime::TensorRuntime(MPICommProxy & communicator,
                              const std::string & graph_executor_name,
                              const std::string & node_executor_name):
- communicator_(communicator),
+ mpi_comm_(communicator),
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), executing_(false), alive_(false)
 {
-  int mpi_error = MPI_Comm_size(communicator,&num_processes_); assert(mpi_error == MPI_SUCCESS);
-  mpi_error = MPI_Comm_rank(communicator,&process_rank_); assert(mpi_error == MPI_SUCCESS);
+  int mpi_error = MPI_Comm_size(*(mpi_comm_.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
+  mpi_error = MPI_Comm_rank(*(mpi_comm_.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
   std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
             << "]: DAG executor set to " << graph_executor_name_ << " + "
