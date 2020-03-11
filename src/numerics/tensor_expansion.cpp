@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/01/31
+REVISION: 2020/03/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -78,13 +78,16 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion, const std::s
 }
 
 
-TensorExpansion TensorExpansion::clone()
+TensorExpansion TensorExpansion::clone(bool reset_output_tensors) const
 {
- TensorExpansion clon;
+ TensorExpansion clon(this->isKet());
  for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
   clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network_)),iter->coefficient_);
  }
- //`Finish: Ket, Name
+ if(reset_output_tensors){
+  for(auto iter = clon.begin(); iter != clon.end(); ++iter) iter->network_->resetOutputTensor();
+ }
+ clon.rename(this->getName());
  return clon;
 }
 

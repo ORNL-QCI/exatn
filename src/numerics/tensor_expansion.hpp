@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/01/31
+REVISION: 2020/03/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,7 +74,7 @@ public:
  using ConstIterator = typename std::vector<ExpansionComponent>::const_iterator;
 
  /** Constructs an empty ket tensor expansion. **/
- TensorExpansion(): ket_(true) {}
+ TensorExpansion(bool ket = true): ket_(ket) {}
 
  /** Constructs a tensor expansion by applying a tensor network operator
      to another tensor network expansion. **/
@@ -108,7 +108,11 @@ public:
  TensorExpansion & operator=(TensorExpansion &&) noexcept = default;
  virtual ~TensorExpansion() = default;
 
- virtual TensorExpansion clone(); //deep copy
+ /** Clones the current tensor network expansion. By default, the output
+     tensor in each tensor network component of the newly cloned tensor
+     network expansion will be reset to a new one. The name of the cloned
+     tensor network expansion will be the same as the original one.  **/
+ virtual TensorExpansion clone(bool reset_output_tensors = true) const; //deep copy
 
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
@@ -129,6 +133,9 @@ public:
  inline const std::string & getName() const{
   return name_;
  }
+
+ /** Renames the tensor expansion. **/
+ void rename(const std::string & name);
 
  /** Returns the rank of the tensor expansion (number of legs per component).
      If the expansion is empty, returns -1. **/
@@ -160,9 +167,6 @@ public:
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
-
- /** Renames the tensor expansion. **/
- void rename(const std::string & name);
 
  /** Prints. **/
  void printIt() const;

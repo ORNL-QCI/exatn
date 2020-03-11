@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/03/03
+REVISION: 2020/03/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -71,6 +71,9 @@ namespace exatn{
 namespace numerics{
 
 class TensorNetwork{
+
+ friend class TensorExpansion;
+
 public:
 
  using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
