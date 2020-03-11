@@ -291,7 +291,7 @@ void create_exatn_py_module(py::module &m) {
 
   py::class_<exatn::NumServer, std::shared_ptr<exatn::NumServer>>(
       m, "NumServer", "")
-      .def(py::init<>())
+      .def(py::init<const exatn::MPICommProxy &>())
       .def("registerTensorMethod", &exatn::NumServer::registerTensorMethod, "")
       .def("getTensorMethod", &exatn::NumServer::getTensorMethod, "")
       .def("registerExternalData", &exatn::NumServer::registerExternalData, "")
@@ -547,19 +547,25 @@ void create_exatn_py_module(py::module &m) {
   /**
    ExaTN module definitions
   */
-  m.def("Initialize", (void (*)()) & exatn::initialize,
+  m.def("Initialize",
+        [](){return exatn::initialize();},
         "Initialize the exatn framework.");
-  m.def(
-      "getDriverClient",
-      [](const std::string name) -> std::shared_ptr<exatn::rpc::DriverClient> {
-        return exatn::getService<exatn::rpc::DriverClient>(name);
-      },
-      "");
-  m.def("Finalize", &exatn::finalize, "Finalize the framework");
+  m.def("Initialize",
+        [](const exatn::MPICommProxy & communicator){
+           return exatn::initialize(communicator);
+        },
+        "Initialize the exatn framework.");
 
-  m.def(
-      "getNumServer", []() { return exatn::numericalServer; },
-      py::return_value_policy::reference, "");
+  m.def("getDriverClient",
+        [](const std::string name) -> std::shared_ptr<exatn::rpc::DriverClient> {
+           return exatn::getService<exatn::rpc::DriverClient>(name);
+        },
+        "");
+
+  m.def("Finalize", &exatn::finalize, "Finalize the framework.");
+
+  m.def("getNumServer", []() { return exatn::numericalServer; },
+        py::return_value_policy::reference, "");
 
   m.def(
       "createVectorSpace",

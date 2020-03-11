@@ -11,7 +11,7 @@ namespace exatn {
 
 /** Initializes ExaTN **/
 #ifdef MPI_ENABLED
-void initialize(MPICommProxy & communicator,                                     //MPI communicator proxy
+void initialize(const MPICommProxy & communicator,                               //MPI communicator proxy
                 const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif

@@ -92,7 +92,7 @@ class NumServer final {
 public:
 
 #ifdef MPI_ENABLED
- NumServer(MPICommProxy & communicator,                                     //MPI communicator proxy
+ NumServer(const MPICommProxy & communicator,                               //MPI communicator proxy
            const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
@@ -107,7 +107,7 @@ public:
 
  /** Reconfigures tensor runtime implementation. **/
 #ifdef MPI_ENABLED
- void reconfigureTensorRuntime(MPICommProxy & communicator,
+ void reconfigureTensorRuntime(const MPICommProxy & communicator,
                                const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #else

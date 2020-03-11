@@ -2,10 +2,6 @@
 #include <gtest/gtest.h>
 #include "exatn.hpp"
 
-#ifdef MPI_ENABLED
-#include "mpi.h"
-#endif
-
 using namespace exatn::parser;
 
 TEST(TAProLInterpreterTester, checkSimple) {
@@ -35,17 +31,11 @@ end scope main
 }
 
 int main(int argc, char **argv) {
-#ifdef MPI_ENABLED
-  int mpi_error = MPI_Init(&argc, &argv); assert(mpi_error == MPI_SUCCESS);
-#endif
   exatn::initialize();
 
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();
 
   exatn::finalize();
-#ifdef MPI_ENABLED
-  mpi_error = MPI_Finalize(); assert(mpi_error == MPI_SUCCESS);
-#endif
   return ret;
 }

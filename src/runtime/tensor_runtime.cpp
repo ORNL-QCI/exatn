@@ -21,15 +21,17 @@ namespace exatn {
 namespace runtime {
 
 #ifdef MPI_ENABLED
-TensorRuntime::TensorRuntime(MPICommProxy & communicator,
+static MPI_Comm global_mpi_comm; //MPI communicator used to initialize the tensor runtime
+
+TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
                              const std::string & graph_executor_name,
                              const std::string & node_executor_name):
- mpi_comm_(communicator),
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), executing_(false), alive_(false)
 {
-  int mpi_error = MPI_Comm_size(*(mpi_comm_.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
-  mpi_error = MPI_Comm_rank(*(mpi_comm_.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
+  global_mpi_comm = *(communicator.get<MPI_Comm>());
+  int mpi_error = MPI_Comm_size(global_mpi_comm,&num_processes_); assert(mpi_error == MPI_SUCCESS);
+  mpi_error = MPI_Comm_rank(global_mpi_comm,&process_rank_); assert(mpi_error == MPI_SUCCESS);
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
   std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
             << "]: DAG executor set to " << graph_executor_name_ << " + "

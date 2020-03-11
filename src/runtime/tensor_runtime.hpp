@@ -69,7 +69,7 @@ class TensorRuntime final {
 public:
 
 #ifdef MPI_ENABLED
-  TensorRuntime(MPICommProxy & communicator,                                     //MPI communicator proxy
+  TensorRuntime(const MPICommProxy & communicator,                               //MPI communicator proxy
                 const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
@@ -156,10 +156,6 @@ private:
   inline void lockDataReqQ(){data_req_mtx_.lock();}
   inline void unlockDataReqQ(){data_req_mtx_.unlock();}
 
-#ifdef MPI_ENABLED
-  /** MPI communicator proxy **/
-  MPICommProxy mpi_comm_;
-#endif
   /** Tensor graph (DAG) executor name **/
   std::string graph_executor_name_;
   /** Tensor graph (DAG) node executor name **/

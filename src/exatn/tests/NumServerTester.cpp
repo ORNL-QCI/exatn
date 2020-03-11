@@ -907,9 +907,15 @@ TEST(NumServerTester, EigenNumServer)
 
 int main(int argc, char **argv) {
 #ifdef MPI_ENABLED
-  int mpi_error = MPI_Init(&argc, &argv); assert(mpi_error == MPI_SUCCESS);
-#endif
+  int thread_provided;
+  int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
+  assert(mpi_error == MPI_SUCCESS);
+  assert(thread_provided == MPI_THREAD_MULTIPLE);
+  MPI_Comm global_comm = MPI_COMM_WORLD;
+  exatn::initialize(MPICommProxy(&global_comm));
+#else
   exatn::initialize();
+#endif
 
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();

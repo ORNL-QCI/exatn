@@ -11,6 +11,7 @@
 namespace exatn {
 
 extern bool exatnFrameworkInitialized;
+extern bool exatnInitializedMPI;
 extern std::shared_ptr<ServiceRegistry> serviceRegistry;
 
 template <typename Service>

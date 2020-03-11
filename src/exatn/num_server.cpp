@@ -24,7 +24,7 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 
 
 #ifdef MPI_ENABLED
-NumServer::NumServer(MPICommProxy & communicator,
+NumServer::NumServer(const MPICommProxy & communicator,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("dummy"),
@@ -69,7 +69,7 @@ NumServer::~NumServer()
 
 
 #ifdef MPI_ENABLED
-void NumServer::reconfigureTensorRuntime(MPICommProxy & communicator,
+void NumServer::reconfigureTensorRuntime(const MPICommProxy & communicator,
                                          const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
