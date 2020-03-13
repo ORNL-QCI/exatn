@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/03/03
+REVISION: 2020/03/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -39,6 +39,18 @@ const std::string & TensorConn::getName() const
 {
  assert(tensor_);
  return tensor_->getName();
+}
+
+const TensorShape & TensorConn::getShape() const
+{
+ assert(tensor_);
+ return tensor_->getShape();
+}
+
+const TensorSignature & TensorConn::getSignature() const
+{
+ assert(tensor_);
+ return tensor_->getSignature();
 }
 
 unsigned int TensorConn::getNumLegs() const
@@ -188,6 +200,12 @@ void TensorConn::resetOptimizability(bool optimizable)
 {
  optimizable_ = optimizable;
  return;
+}
+
+TensorElementType TensorConn::getElementType() const
+{
+ assert(tensor_);
+ return tensor_->getElementType();
 }
 
 } //namespace numerics

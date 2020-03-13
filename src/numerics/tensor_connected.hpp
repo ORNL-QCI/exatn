@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/01/24
+REVISION: 2020/03/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,6 +51,12 @@ public:
 
  /** Returns the tensor name. **/
  const std::string & getName() const;
+
+ /** Get the tensor shape. **/
+ const TensorShape & getShape() const;
+
+ /** Get the tensor signature. **/
+ const TensorSignature & getSignature() const;
 
  /** Returns the total number of legs (tensor rank/order). **/
  unsigned int getNumLegs() const;
@@ -119,6 +125,9 @@ public:
      Note that this attribute specifically applies to the tensor in its current
      connected position within the tensor network, not to the tensor per se. **/
  void resetOptimizability(bool optimizable);
+
+ /** Returns the tensor element type. **/
+ TensorElementType getElementType() const;
 
 private:
 
