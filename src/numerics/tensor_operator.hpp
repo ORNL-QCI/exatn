@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/11/06
+REVISION: 2020/03/14
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network vector is a vector in a given tensor space with
@@ -124,6 +124,13 @@ protected:
 };
 
 } //namespace numerics
+
+/** Creates a new tensor network operator as a shared pointer. **/
+template<typename... Args>
+inline std::shared_ptr<numerics::TensorOperator> makeSharedTensorOperator(Args&&... args)
+{
+ return std::make_shared<numerics::TensorOperator>(std::forward<Args>(args)...);
+}
 
 } //namespace exatn
 

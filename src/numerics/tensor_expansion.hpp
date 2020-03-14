@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/03/11
+REVISION: 2020/03/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -102,6 +102,15 @@ public:
                  const std::string & tensor_name,   //in: the name of the tensor which the derivative is taken against
                  bool conjugated = false);          //in: whether or not to differentiate with respect to conjugated tensors with the given name
 
+ /** Clones the given tensor network expansion. By default, the output
+     tensor in each tensor network component of the newly created tensor
+     network expansion will be reset to a new one. The name of the newly
+     created tensor network expansion will be the same as the original one,
+     unless the new name is explicitly provided. **/
+ TensorExpansion(const TensorExpansion & another,    //in: another tensor expansion to clone
+                 bool reset_output_tensors,          //in: whether or not to replace output tensors in all cloned tensor networks
+                 const std::string & new_name = ""); //in: new name for the cloned tensor network expansion
+
  TensorExpansion(const TensorExpansion &) = default;
  TensorExpansion & operator=(const TensorExpansion &) = default;
  TensorExpansion(TensorExpansion &&) noexcept = default;
@@ -111,8 +120,10 @@ public:
  /** Clones the current tensor network expansion. By default, the output
      tensor in each tensor network component of the newly cloned tensor
      network expansion will be reset to a new one. The name of the cloned
-     tensor network expansion will be the same as the original one.  **/
- virtual TensorExpansion clone(bool reset_output_tensors = true) const; //deep copy
+     tensor network expansion will be the same as the original one,
+     unless the new name is explicitly provided. **/
+ virtual TensorExpansion clone(bool reset_output_tensors = true, //in: whether or not to replace output tensors in all cloned tensor networks
+                               const std::string & new_name = "") const; //in: new name for the cloned tensor network expansion
 
  inline Iterator begin() {return components_.begin();}
  inline Iterator end() {return components_.end();}
@@ -190,6 +201,13 @@ protected:
 };
 
 } //namespace numerics
+
+/** Creates a new tensor network expansion as a shared pointer. **/
+template<typename... Args>
+inline std::shared_ptr<numerics::TensorExpansion> makeSharedTensorExpansion(Args&&... args)
+{
+ return std::make_shared<numerics::TensorExpansion>(std::forward<Args>(args)...);
+}
 
 } //namespace exatn
 

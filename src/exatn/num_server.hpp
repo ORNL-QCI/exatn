@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/03/10
+REVISION: 2020/03/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,15 +10,21 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
      + Creation/destruction of named vector spaces and their named subspaces;
      + Registration/retrieval of external data (class BytePacket);
      + Registration/retrieval of external tensor methods (class TensorFunctor);
-     + Submission for processing of individual tensor operations or tensor networks.
+     + Submission for processing of individual tensor operations, tensor networks
+       and tensor network expansions;
      + Higher-level methods for tensor creation, destruction, and operations on them,
        which use symbolic tensor names for tensor identification and processing.
- (b) Processing of individual tensor operations or tensor networks has asynchronous semantics:
-     Submit TensorOperation/TensorNetwork for processing, then synchronize on the tensor-result.
+ (b) Processing of individual tensor operations, tensor networks and tensor network expansions
+     has asynchronous semantics: Submit TensorOperation/TensorNetwork/TensorExpansion for
+     processing, then synchronize on the tensor-result or the accumulator tensor.
      Processing of a tensor operation means evaluating the output tensor operand (#0).
-     Processing of a tensor network means evaluating the output tensor (#0).
-     Synchronization of processing of a tensor operation or tensor network
-     means ensuring that the tensor-result (output tensor) has been fully computed.
+     Processing of a tensor network means evaluating the output tensor (#0),
+     which is automatically initialized to zero before the evaluation.
+     Processing of a tensor network expansion means evaluating all constituent
+     tensor network components and accumulating them into the accumulator tensor
+     with their respective prefactors. Synchronization of processing of a tensor operation,
+     tensor network or tensor network expansion means ensuring that the tensor-result,
+     either the output tensor or accumulator tensor, has been fully computed.
  (c) Namespace exatn introduces a number of aliases for types imported from exatn::numerics.
      Importantly exatn::TensorMethod, which is talsh::TensorFunctor<Indentifiable>,
      defines the interface which needs to be implemented by the application in order
@@ -227,7 +233,7 @@ public:
  /** Returns a shared pointer to the requested tensor object. **/
  std::shared_ptr<Tensor> getTensor(const std::string & name); //in: tensor name
 
- /** Returns the reference to the actual tensor object. **/
+ /** Returns a reference to the requested tensor object. **/
  Tensor & getTensorRef(const std::string & name); //in: tensor name
 
  /** Returns the tensor element type. **/

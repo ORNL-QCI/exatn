@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/03/11
+REVISION: 2020/03/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -63,7 +63,9 @@ TensorExpansion::TensorExpansion(const TensorExpansion & left_expansion,  //in: 
 }
 
 
-TensorExpansion::TensorExpansion(const TensorExpansion & expansion, const std::string & tensor_name, bool conjugated):
+TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
+                                 const std::string & tensor_name,
+                                 bool conjugated):
  ket_(expansion.isKet())
 {
  assert(tensor_name.length() > 0);
@@ -78,16 +80,36 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion, const std::s
 }
 
 
-TensorExpansion TensorExpansion::clone(bool reset_output_tensors) const
+TensorExpansion::TensorExpansion(const TensorExpansion & another,
+                                 bool reset_output_tensors,
+                                 const std::string & new_name):
+ ket_(another.isKet())
+{
+ for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
+  this->appendComponent(std::make_shared<TensorNetwork>(*(iter->network_),reset_output_tensors),
+                        iter->coefficient_);
+ }
+ if(new_name.length() > 0){
+  this->rename(new_name);
+ }else{
+  this->rename(another.getName());
+ }
+}
+
+
+TensorExpansion TensorExpansion::clone(bool reset_output_tensors,
+                                       const std::string & new_name) const
 {
  TensorExpansion clon(this->isKet());
  for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
-  clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network_)),iter->coefficient_);
+  clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network_),reset_output_tensors),
+                       iter->coefficient_);
  }
- if(reset_output_tensors){
-  for(auto iter = clon.begin(); iter != clon.end(); ++iter) iter->network_->resetOutputTensor();
+ if(new_name.length() > 0){
+  clon.rename(new_name);
+ }else{
+  clon.rename(this->getName());
  }
- clon.rename(this->getName());
  return clon;
 }
 

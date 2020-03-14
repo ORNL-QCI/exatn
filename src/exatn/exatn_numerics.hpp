@@ -1,12 +1,12 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/01/17
+REVISION: 2020/03/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  1. Vector space and subspace registration:
-    (a) Any unnamed vector space is automatically associated with a preregistered
+    (a) Any unnamed vector space is automatically associated with a pre-registered
         anonymous vector space wtih id = SOME_SPACE = 0.
     (b) Any explicitly registered (named) vector space has id > 0.
     (c) Any unregistered subspace of any named vector space has id = UNREG_SUBSPACE = max(uint64_t).
@@ -19,6 +19,57 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
  2. Index labels:
     (a) Any registered subspace can be assigned a symbolic index label serving as a placeholder for it;
         any index label can only refer to a single registered (named) subspace it is associated with.
+ 3. Tensor:
+    (a) A tensor is defined by its name, shape and signature.
+    (b) Tensor shape is an ordered list of tensor dimension extents.
+    (c) Tensor signature is an ordered list of {space_id,subspace_id} pairs
+        for each tensor dimension. In case space_id = SOME_SPACE, subspace_id
+        is simply the base offset in the anonymous vector space (min = 0).
+ 4. Tensor operation:
+    (a) Tensor operation is a mathematical operation on one or more tensor arguments.
+    (b) Evaluating a tensor operation means computing the value of all its output tensors,
+        given all input tensors.
+ 5. Tensor network:
+    (a) Tensor network is a graph of tensors in which vertices are the tensors
+        and (directed) edges show which dimensions of these tensors are contracted
+        with each other. By default, each edge connects two dimensions in two separate
+        tensors (vertices), although these tensors themselves may be identical.
+    (b) The same tensor may enter the given tensor network multiple times
+        via different vertices, either normal or conjugated.
+    (c) Each tensor network has an implicit output tensor collecting all open
+        edges from all input tensors. Evaluating the tensor network means
+        computing the value of this output tensor, given all input tensors.
+    (d) The conjugation operation applied to a tensor network performs complex conjugation
+        of all constituent input tensors, but does not apply to the output tensor per se
+        because the output tensor is simply the result of the full contraction of the tensor
+        network. The conjugation operation also reverses the direction of all edges.
+    (e) A single input tensor may enter multiple tensor networks.
+ 6. Tensor network expansion:
+    (a) Tensor network expansion is a linear combination of tensor networks
+        with some complex coefficients. The output tensors of all constituent
+        tensor networks must be congruent. Evaluating the tensor network
+        expansion means computing the sum of all these output tensors scaled
+        by their respective coefficients.
+    (b) A tensor network expansion may either belong to the ket or bra dual space.
+        The conjugation operation transitions the tensor network expansion between
+        the ket and bra spaces.
+    (c) A single tensor network may enter multiple tensor network expansions.
+ 7. Tensor network operator:
+    (a) Tensor network operator is a linear combination of tensors and/or tensor networks
+        where each tensor (or tensor network) component attributes some of its open edges
+        to the ket space and some to the dual bra space, thus establishing a map between
+        the two. Therefore, a tensor network operator has a ket shape and a bra shape.
+    (b) A tensor network operator may act on a ket tensor network expansion if its ket
+        shape matches the shape of this ket tensor network expansion.
+        A tensor network operator may act on a bra tensor network expansion if its bra
+        shape matches the shape of this bra tensor network expansion.
+    (c) A full contraction may be formed between a bra tensor network expansion,
+        a tensor network operator, and a ket tensor network expansion if the bra shape
+        of the tensor network operator matches the shape of the bra tensor network
+        expansion and the ket shape of the tensor network operator matches the shape
+        if the ket tensor network expansion.
+    (d) Any contraction of a tensor network operator with a ket/bra tensor network
+        expansion (or both) forms a tensor network expansion.
 **/
 
 #ifndef EXATN_NUMERICS_HPP_

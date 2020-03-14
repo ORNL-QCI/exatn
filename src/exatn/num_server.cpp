@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/03/10
+REVISION: 2020/03/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -272,23 +272,25 @@ bool NumServer::submit(TensorNetwork & network,
  auto & op_list = network.getOperationList(contr_seq_optimizer_);
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
- if(iter == tensors_.end()){ //output tensor does not exist and needs to be created and initialized to zero
+ bool submitted = false;
+ if(iter == tensors_.end()){ //output tensor does not exist and needs to be created
   implicit_tensors_.emplace_back(output_tensor); //list of implicitly created tensors (for garbage collection)
   //Create output tensor:
   std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op0->setTensorOperand(output_tensor);
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->
    resetTensorElementType(output_tensor->getElementType());
-  auto submitted = submit(op0); if(!submitted) return false; //this CREATE operation will also register the output tensor
-  //Initialize output tensor to zero:
-  std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
-  op1->setTensorOperand(output_tensor);
-  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
-   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
-  submitted = submit(op1); if(!submitted) return false;
+  submitted = submit(op0); if(!submitted) return false; //this CREATE operation will also register the output tensor
  }
+ //Initialize output tensor to zero:
+ std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op1->setTensorOperand(output_tensor);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+  resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
+ submitted = submit(op1); if(!submitted) return false;
+ //Submit all tensor operations for tensor network evaluation:
  for(auto op = op_list.begin(); op != op_list.end(); ++op){
-  auto submitted = submit(*op); if(!submitted) return false;
+  submitted = submit(*op); if(!submitted) return false;
  }
  return true;
 }
