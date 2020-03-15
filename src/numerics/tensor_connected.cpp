@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/03/13
+REVISION: 2020/03/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -198,6 +198,7 @@ bool TensorConn::isOptimizable() const
 
 void TensorConn::resetOptimizability(bool optimizable)
 {
+ assert(optimizable == false || id_ != 0); //output tensor cannot be optimizable
  optimizable_ = optimizable;
  return;
 }

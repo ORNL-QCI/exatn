@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/03/03
+REVISION: 2020/03/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1416,7 +1416,8 @@ void TensorNetwork::markOptimizableTensors(std::function<bool (const Tensor &)> 
 {
  for(auto iter = this->begin(); iter != this->end(); ++iter){
   auto & tensor_conn = iter->second;
-  tensor_conn.resetOptimizability(predicate(*(tensor_conn.getTensor())));
+  if(tensor_conn.getTensorId() != 0) //output tensor cannot be optimizable
+   tensor_conn.resetOptimizability(predicate(*(tensor_conn.getTensor())));
  }
  return;
 }

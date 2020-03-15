@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/03/13
+REVISION: 2020/03/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -123,7 +123,8 @@ public:
  /** Resets the optimizability attribute (whether or not this connected tensor
      should be optimized during the tensor network functional optimization).
      Note that this attribute specifically applies to the tensor in its current
-     connected position within the tensor network, not to the tensor per se. **/
+     connected position within the tensor network, not to the tensor per se.
+     The output tensor of the tensor network (id = 0) cannot be optimizable. **/
  void resetOptimizability(bool optimizable);
 
  /** Returns the tensor element type. **/
