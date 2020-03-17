@@ -1,8 +1,8 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2019/12/31
+REVISION: 2020/03/17
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_symbol.hpp"
 
@@ -138,7 +138,10 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
                                   unsigned int right_tensor_rank,
                                   std::string & symb_pattern,
                                   bool left_conjugated,
-                                  bool right_conjugated)
+                                  bool right_conjugated,
+                                  const std::string & dest_name,
+                                  const std::string & left_name,
+                                  const std::string & right_name)
 /* pattern[left_rank + right_rank] = {left_legs + right_legs} */
 {
  const std::size_t DEFAULT_STRING_CAPACITY = 256; //string capacity reserve value
@@ -147,13 +150,13 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
  symb_pattern.clear();
  if(pattern.empty()){ //multiplication of scalars
   if(left_conjugated && right_conjugated){
-   symb_pattern = "D()+=L+()*R+()";
+   symb_pattern = dest_name+"()+="+left_name+"+()*"+right_name+"+()";
   }else if(left_conjugated && !right_conjugated){
-   symb_pattern = "D()+=L+()*R()";
+   symb_pattern = dest_name+"()+="+left_name+"+()*"+right_name+"()";
   }else if(!left_conjugated && right_conjugated){
-   symb_pattern = "D()+=L()*R+()";
+   symb_pattern = dest_name+"()+="+left_name+"()*"+right_name+"+()";
   }else{
-   symb_pattern = "D()+=L()*R()";
+   symb_pattern = dest_name+"()+="+left_name+"()*"+right_name+"()";
   }
  }else{ //at least one tensor is present
   if(symb_pattern.capacity() < DEFAULT_STRING_CAPACITY) symb_pattern.reserve(DEFAULT_STRING_CAPACITY);
@@ -164,7 +167,7 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
     dest_indices[leg.getDimensionId()] = dest_tensor_rank++;
    }
   }
-  symb_pattern.append("D(");
+  symb_pattern.append(dest_name+"(");
   for(unsigned int i = 0; i < dest_tensor_rank; ++i){
    symb_pattern.append("u"+std::to_string(dest_indices[i])+",");
   }
@@ -174,9 +177,9 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
    symb_pattern.append(")");
   }
   if(left_conjugated){
-   symb_pattern.append("+=L+(");
+   symb_pattern.append("+="+left_name+"+(");
   }else{
-   symb_pattern.append("+=L(");
+   symb_pattern.append("+="+left_name+"(");
   }
   dest_tensor_rank = 0;
   unsigned int contr_ind = 0;
@@ -195,9 +198,9 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
    symb_pattern.append(")");
   }
   if(right_conjugated){
-   symb_pattern.append("*R+(");
+   symb_pattern.append("*"+right_name+"+(");
   }else{
-   symb_pattern.append("*R(");
+   symb_pattern.append("*"+right_name+"(");
   }
   for(unsigned int i = left_tensor_rank; i < left_tensor_rank + right_tensor_rank; ++i){
    if(pattern[i].getTensorId() == 0){
@@ -225,11 +228,14 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
 
 bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
                                std::string & symb_pattern,
-                               bool conjugated)
+                               bool conjugated,
+                               const std::string & dest_name,
+                               const std::string & left_name)
 /* pattern[left_rank] = {left_legs} */
 {
  unsigned int rank = pattern.size();
- auto generated = generate_contraction_pattern(pattern,rank,0,symb_pattern,conjugated,false);
+ auto generated = generate_contraction_pattern(pattern,rank,0,symb_pattern,
+                                               conjugated,false,dest_name,left_name);
  if(generated){
   auto pos = symb_pattern.rfind("*R()");
   generated = (pos != std::string::npos);
@@ -243,12 +249,14 @@ bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
 /* Generates the trivial tensor addition pattern. */
 bool generate_addition_pattern(unsigned int tensor_rank,
                                std::string & symb_pattern,
-                               bool conjugated)
+                               bool conjugated,
+                               const std::string & dest_name,
+                               const std::string & left_name)
 {
  std::vector<numerics::TensorLeg> pattern(tensor_rank);
  unsigned int dim = 0;
  for(auto & leg: pattern) leg = numerics::TensorLeg(0,dim++);
- return generate_addition_pattern(pattern,symb_pattern,conjugated);
+ return generate_addition_pattern(pattern,symb_pattern,conjugated,dest_name,left_name);
 }
 
 } //namespace exatn

@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/03/03
+REVISION: 2020/03/17
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -158,7 +158,10 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
                                   unsigned int right_tensor_rank,
                                   std::string & symb_pattern,
                                   bool left_conjugated = false,
-                                  bool right_conjugated = false);
+                                  bool right_conjugated = false,
+                                  const std::string & dest_name = "D",
+                                  const std::string & left_name = "L",
+                                  const std::string & right_name = "R");
 
 /** Generates symbolic tensor addition pattern from the digital tensor addition pattern:
      pattern[0..m-1] describes connectivity of dimensions of the left tensor,
@@ -167,12 +170,16 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
       dimension is connected to, where the result tensor is tensor 0 and the left tensor is tensor 1. **/
 bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
                                std::string & symb_pattern,
-                               bool conjugated = false);
+                               bool conjugated = false,
+                               const std::string & dest_name = "D",
+                               const std::string & left_name = "L");
 
 /** Generates the trivial tensor addition pattern. **/
 bool generate_addition_pattern(unsigned int tensor_rank,
                                std::string & symb_pattern,
-                               bool conjugated = false);
+                               bool conjugated = false,
+                               const std::string & dest_name = "D",
+                               const std::string & left_name = "L");
 
 } //namespace exatn
 
