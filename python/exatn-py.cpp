@@ -5,7 +5,10 @@
 #include "tensor_basic.hpp"
 
 #include "exatn_numerics.hpp"
+#include "tensor_expansion.hpp"
 #include "tensor_network.hpp"
+#include "tensor_operation.hpp"
+#include "tensor_operator.hpp"
 
 namespace py = pybind11;
 using namespace exatn;
@@ -22,12 +25,48 @@ void create_exatn_py_module(py::module &m) {
       .def("getName", &exatn::numerics::Tensor::getName, "")
       .def("getRank", &exatn::numerics::Tensor::getRank, "");
 
+  py::class_<TensorExpansion::ExpansionComponent, std::shared_ptr<TensorExpansion::ExpansionComponent>>(m, "ExpansionComponent", "")
+     .def_readonly("network", &TensorExpansion::ExpansionComponent::network_,"");
+     
+  py::class_<exatn::numerics::TensorOperator,
+             std::shared_ptr<exatn::numerics::TensorOperator>>(
+      m, "TensorOperator", "")
+      .def(py::init<std::string>())
+      .def(
+          "appendComponent",
+          [](TensorOperator &_operator, std::shared_ptr<Tensor> tensor,
+             const std::vector<std::pair<unsigned int, unsigned int>>
+                 &ket_pairing,
+             const std::vector<std::pair<unsigned int, unsigned int>>
+                 &bra_pairing,
+             const std::complex<double> coefficient) {
+            return _operator.appendComponent(tensor, ket_pairing, bra_pairing,
+                                             coefficient);
+          },
+          "");
+py::class_<exatn::numerics::TensorExpansion,
+             std::shared_ptr<exatn::numerics::TensorExpansion>>(m, "TensorExpansion", "")
+    .def(py::init<>())
+    .def(py::init<const TensorExpansion&>())
+    .def(py::init<const TensorExpansion&, const TensorOperator&>())
+    .def(py::init<const TensorExpansion&, const TensorExpansion&>())
+    .def(py::init<const TensorExpansion&, const TensorExpansion&, const TensorOperator&>())
+    .def(py::init<const TensorExpansion&, const std::string&, bool>())
+    .def("appendComponent", &TensorExpansion::appendComponent, "")
+    .def("conjugate", &TensorExpansion::conjugate, "")
+    .def("printIt", &TensorExpansion::printIt, "")
+    .def("rename", &TensorExpansion::rename, "")
+    .def("__iter__", [](const TensorExpansion &s) { return py::make_iterator(s.cbegin(), s.cend()); },
+                         py::keep_alive<0, 1>());
+
   py::class_<exatn::numerics::TensorNetwork,
              std::shared_ptr<exatn::numerics::TensorNetwork>>(
       m, "TensorNetwork", "")
       .def(py::init<>())
       .def(py::init<const std::string>())
       .def(py::init<const TensorNetwork &>())
+      .def(py::init<const std::string &, const std::string &,
+                    const std::map<std::string, std::shared_ptr<Tensor>>>())
       .def("printIt", &exatn::numerics::TensorNetwork::printIt, "")
       .def("rename", &exatn::numerics::TensorNetwork::rename, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
@@ -200,6 +239,19 @@ void create_exatn_py_module(py::module &m) {
         return success;
       },
       "");
+ m.def(
+      "createTensor",
+      [](const std::string &name, std::vector<std::size_t> dims,
+         std::complex<double> &init_value) {
+        auto success =
+            exatn::createTensor(name, exatn::TensorElementType::COMPLEX64,
+                                exatn::numerics::TensorShape(dims));
+        if (success) {
+          return exatn::initTensorSync(name, init_value);
+        }
+        return success;
+      },
+      "");
   m.def(
       "createTensor",
       [](const std::string &name) {
@@ -228,6 +280,8 @@ void create_exatn_py_module(py::module &m) {
   m.def(
       "evaluate", [](TensorNetwork &network) { return evaluateSync(network); },
       "");
+  m.def("evaluate", [](TensorExpansion& exp, std::shared_ptr<Tensor> accum){return exatn::evaluateSync(exp,accum);});
+  m.def("getTensor", &exatn::getTensor, "");
   m.def("print", &printTensorDataNoNumServer, "");
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
   m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");

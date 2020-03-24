@@ -188,9 +188,80 @@ assert(exatn.evaluate(inverse))
 print(exatn.getLocalTensor(inverse.getTensor(0).getName()))
 [exatn.destroyTensor('Q'+str(i)) for i in range(nQubits)]
 exatn.destroyTensor('H')
+exatn.destroyTensor('Z0')
+
 )""");
 
   py::print("[ Done ]");
+
+   py::print("\n[ Test Hamiltonian ]");
+  py::exec(
+      R"""(
+import sys
+from pathlib import Path
+sys.path.insert(1, str(Path.home()) + '/.exatn')
+import exatn, numpy as np
+
+exatn.createTensor('Q0', [2,2], 1e-2)
+exatn.createTensor('Q1', [2,2,4], 1e-2)
+exatn.createTensor('Q2', [4,2,2], 1e-2)
+exatn.createTensor('Q3', [2,2], 1e-2)
+
+exatn.createTensor('H01', [2,2,2,2], 1e-2)
+exatn.createTensor('H12', [2,2,2,2], 1e-2)
+exatn.createTensor('H23', [2,2,2,2], 1e-2)
+exatn.createTensor('Z0', [2,2,2,2], 1e-2)
+
+q0 = exatn.getTensor('Q0')
+q1 = exatn.getTensor('Q1')
+q2 = exatn.getTensor('Q2')
+q3 = exatn.getTensor('Q3')
+
+h01 = exatn.getTensor('H01')
+h12 = exatn.getTensor('H12')
+h23 = exatn.getTensor('H23')
+
+z0 = exatn.getTensor('Z0')
+
+ham = exatn.TensorOperator('Hamiltonian')
+ham.appendComponent(h01, [[0,0],[1,1]], [[0,2],[1,3]], 1.0)
+ham.appendComponent(h12, [[1,0],[2,1]], [[1,2],[2,3]], 1.0)
+ham.appendComponent(h23, [[2,0],[3,1]], [[2,2],[3,3]], 1.0)
+
+mps_ket = exatn.TensorNetwork('MPS', 'Z0(i0,i1,i2,i3)+=Q0(i0,j0)*Q1(j0,i1,j1)*Q2(j1,i2,j2)*Q3(j2,i3)', {'Z0':z0, 'Q0':q0, 'Q1':q1, 'Q2':q2, 'Q3':q3})
+
+ket = exatn.TensorExpansion()
+ket.appendComponent(mps_ket, 1.0)
+ket.rename('MPSket')
+
+bra = exatn.TensorExpansion(ket)
+bra.conjugate()
+bra.rename('MPSbra')
+
+ham_ket = exatn.TensorExpansion(ket, ham)
+ham_ket.rename('HamMPSket')
+
+closed_prod = exatn.TensorExpansion(ham_ket, bra)
+closed_prod.rename('MPSbraHamMPSket')
+closed_prod.printIt()
+
+deriv_q1 = exatn.TensorExpansion(closed_prod, 'Q1', True)
+deriv_q1.rename('DerivativeQ1')
+
+exatn.createTensor('AC0')
+accumulator0 = exatn.getTensor('AC0');
+
+exatn.createTensor('AC1',[2,2,4], 0.0)
+accumulator1 = exatn.getTensor('AC1');
+
+exatn.evaluate(closed_prod, accumulator0)
+exatn.evaluate(deriv_q1, accumulator1)
+
+
+print(exatn.getLocalTensor('AC0'))
+[print(exatn.getLocalTensor(c.network.getTensor(0).getName())) for c in closed_prod]
+)""");
+
 }
 
 int main(int argc, char **argv) {
