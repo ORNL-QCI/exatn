@@ -1,8 +1,8 @@
 include_directories(${CMAKE_SOURCE_DIR}/src/exatn)
 include_directories(${CMAKE_SOURCE_DIR}/src/driver-rpc)
 include_directories(${CMAKE_SOURCE_DIR}/src/numerics)
+include_directories(${Python_INCLUDE_DIRS})
 
-include_directories(${PYTHON_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tpls/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/tpls/ExaTensor/TALSH)
 include_directories(${CMAKE_SOURCE_DIR}/tpls/eigen)
@@ -33,3 +33,13 @@ endif()
 
 install(TARGETS _pyexatn DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(FILES exatn.py DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+if (EXATN_BUILD_TESTS)
+   execute_process(COMMAND ${Python_EXECUTABLE} -c "import numpy" RESULT_VARIABLE NUMPY_EXISTS)
+   if (NUMPY_EXISTS EQUAL "1")
+	message(STATUS "Numpy not found. Skipping ExaTN Python Tester Build. It is recommended that you install numpy if using the ExaTN Python API.")
+   else()
+     message(STATUS "Found Numpy. Building ExaTN Python Tester.")
+     add_subdirectory(tests)
+   endif()
+endif()

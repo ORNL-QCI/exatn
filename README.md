@@ -48,8 +48,6 @@ $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
 $ cmake .. -DEXATN_BUILD_TESTS=TRUE
-  For Python API:
-  -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
   For execution on NVIDIA GPU:
   -DENABLE_CUDA=True
   For GPU execution via very recent CUDA versions with GNU compiler:
@@ -87,27 +85,23 @@ Example of a typical workstation configuration with no BLAS (slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 
 Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
 Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
 
@@ -115,7 +109,6 @@ Example of a workstation configuration with Intel MKL (with Intel root in /opt/i
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
@@ -123,7 +116,6 @@ Example of an MPI enabled configuration with default Linux BLAS (found in /usr/l
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
@@ -132,7 +124,6 @@ Example of an MPI enabled configuration with Intel MKL (with Intel root in /opt/
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
@@ -174,7 +165,6 @@ $ cd exatn
 $ mkdir build && cd build
 $ FC=gfortran-8 CXX=g++-8 cmake ..
     -DEXATN_BUILD_TESTS=TRUE
-    -DPYTHON_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_paths()['platinclude'])")
 $ make install
 ```
 
