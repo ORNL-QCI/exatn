@@ -17,6 +17,29 @@ domain which heavily relies on large-scale numerical tensor algebra:
  (e) Multivariate data analytics;
  (f) Tensor-based neural network algorithms.
 
+## Quick Start
+Click [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ornl-qci/exatn) 
+to open up a pre-configured Eclipse Theia IDE. You should immediately be able to 
+run any of the C++ tests or Python examples from the included terminal:
+```bash
+[run C++ tests]
+$ cd build && ctest 
+
+[example Python scripts are in python/examples/*]
+$ python3 python/examples/simple.py
+```
+All the code is here and you can quickly start developing. We recommend 
+turning on file auto-save by clicking ``File > Auto Save ``.
+Note the Gitpod free account provides 100 hours of use for the month, so if 
+you foresee needing more time, we recommend our nightly docker images.
+
+The ExaTN nightly docker images also serve an Eclipse Theia IDE (the same IDE Gitpod uses) on port 3000. To get started, run 
+```bash
+$ docker run --security-opt seccomp=unconfined --init -it -p 3000:3000 exatn/exatn
+```
+Navigate to ``https://localhost:3000`` in your browser to open the IDE and get started with ExaTN. 
+
+
 ## API Documentation
 For detailed class documentation, please see our [API Documentation](https://ornl-qci.github.io/exatn-api-docs) page.
 

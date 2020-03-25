@@ -1,0 +1,10 @@
+{
+    "cpp.clangTidy": true,
+    "cpp.buildConfigurations": [
+      {
+         "name": "exatn",
+         "directory": "/home/dev/exatn/build"
+      }
+   ],
+   "editor.autoSave": "on"
+}
