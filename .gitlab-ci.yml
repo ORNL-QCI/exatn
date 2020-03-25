@@ -1,8 +1,11 @@
 stages:
   - build
+  - deploy
 
 build_devel:
   stage: build
+  except:
+  - schedules
   only:
   - devel
   script:
@@ -10,7 +13,19 @@ build_devel:
 
 build_master:
   stage: build
+  except:
+  - schedules
   only:
   - master
   script:
   - cd docker/ci/ubuntu1804/nocuda/master && docker build -t exatn/master . --no-cache && docker run --rm exatn/master bash -c "cd exatn/build && ctest --output-on-failure"
+
+
+docker run_docker_deploy:
+  stage: deploy
+  only:
+   - schedules
+  script:
+  - cd docker/deploy/dev && docker build -t exatn/exatn . --no-cache
+  - echo "$REGISTRY_PASSWORD" | docker login -u exatn --password-stdin
+  - docker push exatn/exatn
