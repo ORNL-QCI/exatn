@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/03/14
+REVISION: 2020/04/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -526,6 +526,78 @@ bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<Te
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
  return submitted;
+}
+
+bool NumServer::decomposeTensorSVD(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDL(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDLSync(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDR(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDRSync(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDLR(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::decomposeTensorSVDLRSync(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::orthogonalizeTensorSVD(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::orthogonalizeTensorSVDSync(const std::string & contraction)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::orthogonalizeTensorMGS(const std::string & name)
+{
+ //`Implement
+ return false;
+}
+
+bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
+{
+ //`Implement
+ return false;
 }
 
 bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network)

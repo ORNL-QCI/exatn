@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/03/14
+REVISION: 2020/04/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -329,6 +329,63 @@ public:
  template<typename NumericType>
  bool contractTensorsSync(const std::string & contraction, //in: symbolic tensor contraction specification
                           NumericType alpha);              //in: alpha prefactor
+
+ /** Decomposes a tensor into three tensor factors via SVD. The symbolic
+     tensor contraction specification specifies the decomposition,
+     for example:
+      D(a,b,c,d,e) = L(c,i,e,j) * S(i,j) * R(b,j,a,i,d)
+     where
+      L(c,i,e,j) is the left SVD factor,
+      R(b,j,a,i,d) is the right SVD factor,
+      S(i,j) is the middle SVD factor (the diagonal with singular values). **/
+ bool decomposeTensorSVD(const std::string & contraction); //in: three-factor symbolic tensor contraction specification
+
+ bool decomposeTensorSVDSync(const std::string & contraction); //in: three-factor symbolic tensor contraction specification
+
+ /** Decomposes a tensor into two tensor factors via SVD. The symbolic
+     tensor contraction specification specifies the decomposition,
+     for example:
+      D(a,b,c,d,e) = L(c,i,e,j) * R(b,j,a,i,d)
+     where
+      L(c,i,e,j) is the left SVD factor with absorbed singular values,
+      R(b,j,a,i,d) is the right SVD factor. **/
+ bool decomposeTensorSVDL(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ bool decomposeTensorSVDLSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ /** Decomposes a tensor into two tensor factors via SVD. The symbolic
+     tensor contraction specification specifies the decomposition,
+     for example:
+      D(a,b,c,d,e) = L(c,i,e,j) * R(b,j,a,i,d)
+     where
+      L(c,i,e,j) is the left SVD factor,
+      R(b,j,a,i,d) is the right SVD factor with absorbed singular values. **/
+ bool decomposeTensorSVDR(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ bool decomposeTensorSVDRSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ /** Decomposes a tensor into two tensor factors via SVD. The symbolic
+     tensor contraction specification specifies the decomposition,
+     for example:
+      D(a,b,c,d,e) = L(c,i,e,j) * R(b,j,a,i,d)
+     where
+      L(c,i,e,j) is the left SVD factor with absorbed square root of singular values,
+      R(b,j,a,i,d) is the right SVD factor with absorbed square root of singular values. **/
+ bool decomposeTensorSVDLR(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ bool decomposeTensorSVDLRSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ /** Orthogonalizes a tensor by decomposing it via SVD while discarding
+     the middle factor with singular values. The symbolic tensor contraction
+     specification specifies the decomposition. **/
+ bool orthogonalizeTensorSVD(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ bool orthogonalizeTensorSVDSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
+
+ /** Orthogonalizes a tensor over its isometric dimensions via the modified Gram-Schmidt procedure.  **/
+ bool orthogonalizeTensorMGS(const std::string & name); //in: tensor name
+
+ bool orthogonalizeTensorMGSSync(const std::string & name); //in: tensor name
 
  /** Performs a full evaluation of a tensor network based on the symbolic
      specification involving already created tensors (including the output). **/
