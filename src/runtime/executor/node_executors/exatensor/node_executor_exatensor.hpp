@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/02/28
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -44,6 +44,14 @@ public:
   int execute(numerics::TensorOpAdd & op,
               TensorOpExecHandle * exec_handle) override;
   int execute(numerics::TensorOpContract & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpDecomposeSVD3 & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpDecomposeSVD2 & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpOrthogonalizeSVD & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpOrthogonalizeMGS & op,
               TensorOpExecHandle * exec_handle) override;
 
   bool sync(TensorOpExecHandle op_handle,

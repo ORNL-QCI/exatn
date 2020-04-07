@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2020/02/28
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,6 +19,10 @@ TensorOpFactory::TensorOpFactory()
  registerTensorOp(TensorOpCode::INSERT,&TensorOpInsert::createNew);
  registerTensorOp(TensorOpCode::ADD,&TensorOpAdd::createNew);
  registerTensorOp(TensorOpCode::CONTRACT,&TensorOpContract::createNew);
+ registerTensorOp(TensorOpCode::DECOMPOSE_SVD3,&TensorOpDecomposeSVD3::createNew);
+ registerTensorOp(TensorOpCode::DECOMPOSE_SVD2,&TensorOpDecomposeSVD2::createNew);
+ registerTensorOp(TensorOpCode::ORTHOGONALIZE_SVD,&TensorOpOrthogonalizeSVD::createNew);
+ registerTensorOp(TensorOpCode::ORTHOGONALIZE_MGS,&TensorOpOrthogonalizeMGS::createNew);
 }
 
 void TensorOpFactory::registerTensorOp(TensorOpCode opcode, createTensorOpFn creator)

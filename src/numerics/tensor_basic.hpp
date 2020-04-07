@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2020/02/28
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -36,16 +36,20 @@ enum class LegDirection{
 };
 
 enum class TensorOpCode{
- NOOP,           //no operation
- CREATE,         //tensor creation
- DESTROY,        //tensor destruction
- TRANSFORM,      //tensor transformation/initialization
- SLICE,          //tensor slicing
- INSERT,         //tensor insertion
- ADD,            //tensor addition
- CONTRACT,       //tensor contraction
- BROADCAST,      //tensor broadcast (parallel execution only)
- ALLREDUCE       //tensor allreduce (parallel execution only)
+ NOOP,              //no operation
+ CREATE,            //tensor creation
+ DESTROY,           //tensor destruction
+ TRANSFORM,         //tensor transformation/initialization
+ SLICE,             //tensor slicing
+ INSERT,            //tensor insertion
+ ADD,               //tensor addition
+ CONTRACT,          //tensor contraction
+ DECOMPOSE_SVD3,    //tensor decomposition via SVD into three tensor factors
+ DECOMPOSE_SVD2,    //tensor decomposition via SVD into two tensor factors
+ ORTHOGONALIZE_SVD, //tensor orthogonalization via SVD
+ ORTHOGONALIZE_MGS, //tensor orthogonalization via Modified Gram-Schmidt
+ BROADCAST,         //tensor broadcast (parallel execution only)
+ ALLREDUCE          //tensor allreduce (parallel execution only)
 };
 
 enum class TensorElementType{

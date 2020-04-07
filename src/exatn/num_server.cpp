@@ -530,14 +530,177 @@ bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<Te
 
 bool NumServer::decomposeTensorSVD(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 4){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2,complex_conj3;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         parsed = parse_tensor(tensors[3],tensor_name,indices,complex_conj3);
+         if(parsed){
+          assert(!complex_conj3);
+          iter = tensors_.find(tensor_name);
+          if(iter != tensors_.end()){
+           auto tensor3 = iter->second;
+           std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
+           op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
+           op->setTensorOperand(tensor3,complex_conj3); //out: right tensor factor
+           op->setTensorOperand(tensor2,complex_conj2); //out: middle tensor factor
+           op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
+           op->setIndexPattern(contraction);
+           parsed = submit(op);
+          }else{
+           parsed = false;
+           std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+                     << contraction << std::endl;
+          }
+         }else{
+          std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid argument#3 in tensor contraction: "
+                    << contraction << std::endl;
+         }
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 4){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2,complex_conj3;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         parsed = parse_tensor(tensors[3],tensor_name,indices,complex_conj3);
+         if(parsed){
+          assert(!complex_conj3);
+          iter = tensors_.find(tensor_name);
+          if(iter != tensors_.end()){
+           auto tensor3 = iter->second;
+           std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
+           op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
+           op->setTensorOperand(tensor3,complex_conj3); //out: right tensor factor
+           op->setTensorOperand(tensor2,complex_conj2); //out: middle tensor factor
+           op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
+           op->setIndexPattern(contraction);
+           parsed = submit(op);
+           if(parsed) parsed = sync(*op);
+          }else{
+           parsed = false;
+           std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                     << contraction << std::endl;
+          }
+         }else{
+          std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid argument#3 in tensor contraction: "
+                    << contraction << std::endl;
+         }
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::decomposeTensorSVDL(const std::string & contraction)
@@ -566,38 +729,315 @@ bool NumServer::decomposeTensorSVDRSync(const std::string & contraction)
 
 bool NumServer::decomposeTensorSVDLR(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
+         op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
+         op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
+         op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
+         op->setIndexPattern(contraction);
+         parsed = submit(op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::decomposeTensorSVDLRSync(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
+         op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
+         op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
+         op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
+         op->setIndexPattern(contraction);
+         parsed = submit(op);
+         if(parsed) parsed = sync(*op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::orthogonalizeTensorSVD(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
+         op->setTensorOperand(tensor0,complex_conj0);
+         op->setIndexPattern(contraction);
+         parsed = submit(op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::orthogonalizeTensorSVDSync(const std::string & contraction)
 {
- //`Implement
- return false;
+ std::vector<std::string> tensors;
+ auto parsed = parse_tensor_network(contraction,tensors);
+ if(parsed){
+  if(tensors.size() == 3){
+   std::string tensor_name;
+   std::vector<IndexLabel> indices;
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
+   if(parsed){
+    assert(!complex_conj0);
+    auto iter = tensors_.find(tensor_name);
+    if(iter != tensors_.end()){
+     auto tensor0 = iter->second;
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
+     if(parsed){
+      assert(!complex_conj1);
+      iter = tensors_.find(tensor_name);
+      if(iter != tensors_.end()){
+       auto tensor1 = iter->second;
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
+       if(parsed){
+        assert(!complex_conj2);
+        iter = tensors_.find(tensor_name);
+        if(iter != tensors_.end()){
+         auto tensor2 = iter->second;
+         std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
+         op->setTensorOperand(tensor0,complex_conj0);
+         op->setIndexPattern(contraction);
+         parsed = submit(op);
+         if(parsed) parsed = sync(*op);
+        }else{
+         parsed = false;
+         std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                   << contraction << std::endl;
+        }
+       }else{
+        std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Invalid argument#2 in tensor contraction: "
+                  << contraction << std::endl;
+       }
+      }else{
+       parsed = false;
+       std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+                 << contraction << std::endl;
+      }
+     }else{
+      std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Invalid argument#1 in tensor contraction: "
+                << contraction << std::endl;
+     }
+    }else{
+     parsed = false;
+     std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
+               << contraction << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Invalid argument#0 in tensor contraction: "
+              << contraction << std::endl;
+   }
+  }else{
+   parsed = false;
+   std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Invalid number of arguments in tensor contraction: "
+             << contraction << std::endl;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Invalid tensor contraction: " << contraction << std::endl;
+ }
+ return parsed;
 }
 
 bool NumServer::orthogonalizeTensorMGS(const std::string & name)
 {
- //`Implement
- return false;
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorMGS): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_MGS);
+ op->setTensorOperand(iter->second);
+ //`Finish: Convert the isometry specification into a symbolic index pattern
+ //op->setIndexPattern(contraction);
+ bool parsed = submit(op);
+ return parsed;
 }
 
 bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
 {
- //`Implement
- return false;
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorMGSSync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_MGS);
+ op->setTensorOperand(iter->second);
+ //`Finish: Convert the isometry specification into a symbolic index pattern
+ //op->setIndexPattern(contraction);
+ bool parsed = submit(op);
+ if(parsed) parsed = sync(*op);
+ return parsed;
 }
 
 bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network)

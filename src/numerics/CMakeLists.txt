@@ -20,6 +20,10 @@ add_library(${LIBRARY_NAME}
             tensor_op_insert.cpp
             tensor_op_add.cpp
             tensor_op_contract.cpp
+            tensor_op_decompose_svd3
+            tensor_op_decompose_svd2
+            tensor_op_orthogonalize_svd
+            tensor_op_orthogonalize_mgs
             tensor_op_factory.cpp
             network_builder_mps.cpp
             network_builder_tree.cpp
