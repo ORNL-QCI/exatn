@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Inserts a slice into a tensor
-REVISION: 2020/02/28
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpInsert::TensorOpInsert():
- TensorOperation(TensorOpCode::INSERT,2,0)
+ TensorOperation(TensorOpCode::INSERT,2,0,1+0*2)
 {
 }
 

@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/10/13
+REVISION: 2020/04/07
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operation.hpp"
 
@@ -12,8 +12,12 @@ namespace exatn{
 
 namespace numerics{
 
-TensorOperation::TensorOperation(TensorOpCode opcode, unsigned int num_operands, unsigned int num_scalars):
- num_operands_(num_operands), num_scalars_(num_scalars), opcode_(opcode), id_(0),
+TensorOperation::TensorOperation(TensorOpCode opcode,
+                                 unsigned int num_operands,
+                                 unsigned int num_scalars,
+                                 std::size_t mutability):
+ num_operands_(num_operands), num_scalars_(num_scalars),
+ mutation_(mutability), opcode_(opcode), id_(0),
  scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
  operands_.reserve(num_operands);
@@ -24,7 +28,7 @@ void TensorOperation::printIt() const
  std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
-  const auto & tensor = operand.first;
+  const auto & tensor = std::get<0>(operand);
   std::cout << " ";
   tensor->printIt();
   std::cout << std::endl;
@@ -42,7 +46,7 @@ void TensorOperation::printItFile(std::ofstream & output_file) const
  output_file << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
  if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
-  const auto & tensor = operand.first;
+  const auto & tensor = std::get<0>(operand);
   output_file << " ";
   tensor->printItFile(output_file);
   output_file << std::endl;
@@ -76,21 +80,44 @@ TensorHashType TensorOperation::getTensorOperandHash(unsigned int op_num) const
  return this->getTensorOperand(op_num)->getTensorHash();
 }
 
-std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num, bool * conjugated) const
+bool TensorOperation::operandIsConjugated(unsigned int op_num) const
+{
+ assert(op_num < operands_.size());
+ return std::get<1>(operands_[op_num]);
+}
+
+bool TensorOperation::operandIsMutable(unsigned int op_num) const
+{
+ assert(op_num < operands_.size());
+ return std::get<2>(operands_[op_num]);
+}
+
+std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num,
+                                                          bool * conjugated,
+                                                          bool * mutated) const
 {
  if(op_num < operands_.size()){
-  if(conjugated != nullptr) *conjugated = operands_[op_num].second;
-  return operands_[op_num].first;
+  if(conjugated != nullptr) *conjugated = std::get<1>(operands_[op_num]);
+  if(mutated != nullptr) *mutated = std::get<2>(operands_[op_num]);
+  return std::get<0>(operands_[op_num]);
  }
  return std::shared_ptr<Tensor>(nullptr);
 }
 
-void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor, bool conjugated)
+void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
+                                       bool conjugated,
+                                       bool mutated)
 {
  assert(tensor);
  assert(operands_.size() < num_operands_);
- operands_.emplace_back(std::make_pair(tensor,conjugated));
+ operands_.emplace_back(std::make_tuple(tensor,conjugated,mutated));
  return;
+}
+
+void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
+                                       bool conjugated)
+{
+ return this->setTensorOperand(tensor,conjugated,(mutation_>>operands_.size())&(0x1U));
 }
 
 unsigned int TensorOperation::getNumScalars() const

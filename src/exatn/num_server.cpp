@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/06
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -333,7 +333,7 @@ bool NumServer::submit(TensorExpansion & expansion,
   auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
   op->setTensorOperand(accumulator);
-  op->setTensorOperand(output_tensor);
+  op->setTensorOperand(output_tensor,conjugated);
   op->setScalar(0,component->coefficient_);
   std::string add_pattern;
   auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern); assert(generated);

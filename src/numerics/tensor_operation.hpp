@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2019/10/13
+REVISION: 2020/04/07
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor operation is a formal numerical operation on one or more tensors.
@@ -14,6 +14,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
 
+#include <tuple>
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,9 +39,10 @@ public:
 
  /** Constructs a yet undefined tensor operation with
      the specified number of tensor/scalar arguments. **/
- TensorOperation(TensorOpCode opcode,       //tensor operation code
-                 unsigned int num_operands, //required number of tensor operands
-                 unsigned int num_scalars); //required number of scalar operands
+ TensorOperation(TensorOpCode opcode,       //in: tensor operation code
+                 unsigned int num_operands, //in: required number of tensor operands
+                 unsigned int num_scalars,  //in: required number of scalar operands
+                 std::size_t mutability);   //in: bit-mask for operand mutability
 
  TensorOperation(const TensorOperation &) = default;
  TensorOperation & operator=(const TensorOperation &) = default;
@@ -74,13 +76,22 @@ public:
  /** Returns a unique integer tensor operand identifier. **/
  TensorHashType getTensorOperandHash(unsigned int op_num) const;
 
+ /** Returns the complex conjugation status of a tensor operand
+     (whether or not the operand enters the operation as complex conjugated). **/
+ bool operandIsConjugated(unsigned int op_num) const;
+
+ /** Returns the mutation status of a tensor operand
+     (whether or not the operand is mutated during the tensor operation). **/
+ bool operandIsMutable(unsigned int op_num) const;
+
  /** Returns a co-owned pointer to a specific tensor operand, or nullptr if not yet set. **/
- std::shared_ptr<Tensor> getTensorOperand(unsigned int op_num,
-                                          bool * conjugated = nullptr) const;
+ std::shared_ptr<Tensor> getTensorOperand(unsigned int op_num,             //in: operand position
+                                          bool * conjugated = nullptr,     //out: complex conjugation status
+                                          bool * mutated = nullptr) const; //out: mutability status
 
  /** Sets the next tensor operand. **/
- void setTensorOperand(std::shared_ptr<Tensor> tensor,
-                       bool conjugated = false);
+ void setTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
+                       bool conjugated = false);       //in: complex conjugation status
 
  /** Returns the number of scalar arguments required for the tensor operation. **/
  unsigned int getNumScalars() const;
@@ -108,13 +119,21 @@ public:
  /** Returns the unique integer identifier of the tensor operation. **/
  std::size_t getId() const;
 
+private:
+
+ /** Sets the next tensor operand with its mutability status. **/
+ void setTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
+                       bool conjugated,                //in: complex conjugation status
+                       bool mutated);                  //in: mutability status
+
 protected:
 
  std::string pattern_; //symbolic index pattern
- std::vector<std::pair<std::shared_ptr<Tensor>,bool>> operands_; //tensor operands (non-owning pointers)
+ std::vector<std::tuple<std::shared_ptr<Tensor>,bool,bool>> operands_; //tensor operands <operand,conjugation,mutation>
  std::vector<std::complex<double>> scalars_; //additional scalars (prefactors)
  unsigned int num_operands_; //number of required tensor operands
  unsigned int num_scalars_; //number of required scalar arguments
+ std::size_t mutation_; //default operand mutability bits: Bit X --> Operand #X
  TensorOpCode opcode_; //tensor operation code
  std::size_t id_; //tensor operation id (unique integer identifier)
 };

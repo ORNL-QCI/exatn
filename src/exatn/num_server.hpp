@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/06
+REVISION: 2020/04/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -519,20 +519,21 @@ bool NumServer::addTensors(const std::string & addition,
   if(tensors.size() == 2){
    std::string tensor_name;
    std::vector<IndexLabel> indices;
-   bool complex_conj;
-   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   bool complex_conj0,complex_conj1;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
    if(parsed){
+    assert(!complex_conj0);
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
-     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
        std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
-       op->setTensorOperand(tensor0);
-       op->setTensorOperand(tensor1);
+       op->setTensorOperand(tensor0,complex_conj0);
+       op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
        parsed = submit(op);
@@ -575,20 +576,21 @@ bool NumServer::addTensorsSync(const std::string & addition,
   if(tensors.size() == 2){
    std::string tensor_name;
    std::vector<IndexLabel> indices;
-   bool complex_conj;
-   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   bool complex_conj0,complex_conj1;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
    if(parsed){
+    assert(!complex_conj0);
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
-     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
        std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
-       op->setTensorOperand(tensor0);
-       op->setTensorOperand(tensor1);
+       op->setTensorOperand(tensor0,complex_conj0);
+       op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
        parsed = submit(op);
@@ -632,26 +634,27 @@ bool NumServer::contractTensors(const std::string & contraction,
   if(tensors.size() == 3){
    std::string tensor_name;
    std::vector<IndexLabel> indices;
-   bool complex_conj;
-   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
    if(parsed){
+    assert(!complex_conj0);
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
-     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
-       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj);
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
        if(parsed){
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
-         op->setTensorOperand(tensor0);
-         op->setTensorOperand(tensor1);
-         op->setTensorOperand(tensor2);
+         op->setTensorOperand(tensor0,complex_conj0);
+         op->setTensorOperand(tensor1,complex_conj1);
+         op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
          parsed = submit(op);
@@ -703,26 +706,27 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
   if(tensors.size() == 3){
    std::string tensor_name;
    std::vector<IndexLabel> indices;
-   bool complex_conj;
-   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj);
+   bool complex_conj0,complex_conj1,complex_conj2;
+   parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
    if(parsed){
+    assert(!complex_conj0);
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
-     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj);
+     parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
-       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj);
+       parsed = parse_tensor(tensors[2],tensor_name,indices,complex_conj2);
        if(parsed){
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
-         op->setTensorOperand(tensor0);
-         op->setTensorOperand(tensor1);
-         op->setTensorOperand(tensor2);
+         op->setTensorOperand(tensor0,complex_conj0);
+         op->setTensorOperand(tensor1,complex_conj1);
+         op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
          parsed = submit(op);

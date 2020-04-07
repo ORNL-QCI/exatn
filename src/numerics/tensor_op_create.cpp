@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2019/12/06
+REVISION: 2020/04/07
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_service.hpp"
 
@@ -15,7 +15,8 @@ namespace exatn{
 namespace numerics{
 
 TensorOpCreate::TensorOpCreate():
- TensorOperation(TensorOpCode::CREATE,1,0), element_type_(TensorElementType::REAL64)
+ TensorOperation(TensorOpCode::CREATE,1,0,1),
+ element_type_(TensorElementType::REAL64)
 {
 }
 
@@ -46,7 +47,7 @@ void TensorOpCreate::printIt() const
  std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
-  const auto & tensor = operand.first;
+  const auto & tensor = std::get<0>(operand);
   std::cout << " ";
   tensor->printIt();
   std::cout << std::endl;
@@ -65,7 +66,7 @@ void TensorOpCreate::printItFile(std::ofstream & output_file) const
  output_file << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
  if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
-  const auto & tensor = operand.first;
+  const auto & tensor = std::get<0>(operand);
   output_file << " ";
   tensor->printItFile(output_file);
   output_file << std::endl;
