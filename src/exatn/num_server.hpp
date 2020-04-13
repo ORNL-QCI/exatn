@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -337,7 +337,8 @@ public:
      where
       L(c,i,e,j) is the left SVD factor,
       R(b,j,a,i,d) is the right SVD factor,
-      S(i,j) is the middle SVD factor (the diagonal with singular values). **/
+      S(i,j) is the middle SVD factor (the diagonal with singular values).
+     Note that the ordering of the contracted indices is not guaranteed! **/
  bool decomposeTensorSVD(const std::string & contraction); //in: three-factor symbolic tensor contraction specification
 
  bool decomposeTensorSVDSync(const std::string & contraction); //in: three-factor symbolic tensor contraction specification
@@ -376,13 +377,13 @@ public:
  bool decomposeTensorSVDLRSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
 
  /** Orthogonalizes a tensor by decomposing it via SVD while discarding
-     the middle factor with singular values. The symbolic tensor contraction
-     specification specifies the decomposition. **/
+     the middle tensor factor with singular values. The symbolic tensor contraction
+     specification specifies the decomposition. It must contain strictly one contracted index! **/
  bool orthogonalizeTensorSVD(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
 
  bool orthogonalizeTensorSVDSync(const std::string & contraction); //in: two-factor symbolic tensor contraction specification
 
- /** Orthogonalizes a tensor over its isometric dimensions via the modified Gram-Schmidt procedure.  **/
+ /** Orthogonalizes an isometric tensor over its isometric dimensions via the modified Gram-Schmidt procedure.  **/
  bool orthogonalizeTensorMGS(const std::string & name); //in: tensor name
 
  bool orthogonalizeTensorMGSSync(const std::string & name); //in: tensor name

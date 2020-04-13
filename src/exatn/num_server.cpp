@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -567,7 +567,8 @@ bool NumServer::decomposeTensorSVD(const std::string & contraction)
            op->setTensorOperand(tensor2,complex_conj2); //out: middle tensor factor
            op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
            op->setIndexPattern(contraction);
-           parsed = submit(op);
+           parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2) && sync(*tensor3);
+           if(parsed) parsed = submit(op);
           }else{
            parsed = false;
            std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -654,7 +655,8 @@ bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
            op->setTensorOperand(tensor2,complex_conj2); //out: middle tensor factor
            op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
            op->setIndexPattern(contraction);
-           parsed = submit(op);
+           parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2) && sync(*tensor3);
+           if(parsed) parsed = submit(op);
            if(parsed) parsed = sync(*op);
           }else{
            parsed = false;
@@ -759,7 +761,8 @@ bool NumServer::decomposeTensorSVDLR(const std::string & contraction)
          op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
          op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
          op->setIndexPattern(contraction);
-         parsed = submit(op);
+         parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2);
+         if(parsed) parsed = submit(op);
         }else{
          parsed = false;
          std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLR): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -830,7 +833,8 @@ bool NumServer::decomposeTensorSVDLRSync(const std::string & contraction)
          op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
          op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
          op->setIndexPattern(contraction);
-         parsed = submit(op);
+         parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2);
+         if(parsed) parsed = submit(op);
          if(parsed) parsed = sync(*op);
         }else{
          parsed = false;
@@ -900,7 +904,8 @@ bool NumServer::orthogonalizeTensorSVD(const std::string & contraction)
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setIndexPattern(contraction);
-         parsed = submit(op);
+         parsed = sync(*tensor0);
+         if(parsed) parsed = submit(op);
         }else{
          parsed = false;
          std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVD): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -969,7 +974,8 @@ bool NumServer::orthogonalizeTensorSVDSync(const std::string & contraction)
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setIndexPattern(contraction);
-         parsed = submit(op);
+         parsed = sync(*tensor0);
+         if(parsed) parsed = submit(op);
          if(parsed) parsed = sync(*op);
         }else{
          parsed = false;

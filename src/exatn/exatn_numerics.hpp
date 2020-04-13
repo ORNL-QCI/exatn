@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/04/06
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -298,7 +298,8 @@ inline bool contractTensorsSync(const std::string & contraction, //in: symbolic 
     where
      L(c,i,e,j) is the left SVD factor,
      R(b,j,a,i,d) is the right SVD factor,
-     S(i,j) is the middle SVD factor (the diagonal with singular values). **/
+     S(i,j) is the middle SVD factor (the diagonal with singular values).
+    Note that the ordering of the contracted indices is not guaranteed! **/
 inline bool decomposeTensorSVD(const std::string & contraction) //in: three-factor symbolic tensor contraction specification
  {return numericalServer->decomposeTensorSVD(contraction);}
 
@@ -349,8 +350,8 @@ inline bool decomposeTensorSVDLRSync(const std::string & contraction) //in: two-
 
 
 /** Orthogonalizes a tensor by decomposing it via SVD while discarding
-    the middle factor with singular values. The symbolic tensor contraction
-    specification specifies the decomposition. **/
+    the middle tensor factor with singular values. The symbolic tensor contraction
+    specification specifies the decomposition. It must contain strictly one contracted index. **/
 inline bool orthogonalizeTensorSVD(const std::string & contraction) //in: two-factor symbolic tensor contraction specification
  {return numericalServer->orthogonalizeTensorSVD(contraction);}
 
@@ -358,7 +359,7 @@ inline bool orthogonalizeTensorSVDSync(const std::string & contraction) //in: tw
  {return numericalServer->orthogonalizeTensorSVDSync(contraction);}
 
 
-/** Orthogonalizes a tensor over its isometric dimensions via the modified Gram-Schmidt procedure.  **/
+/** Orthogonalizes an isometric tensor over its isometric dimensions via the modified Gram-Schmidt procedure.  **/
 inline bool orthogonalizeTensorMGS(const std::string & name) //in: tensor name
  {return numericalServer->orthogonalizeTensorMGS(name);}
 

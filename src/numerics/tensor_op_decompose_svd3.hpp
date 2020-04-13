@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into three tensor factors via SVD
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,6 +7,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 /** Rationale:
  (a) Decomposes a tensor into three tensor factors via SVD, for example:
      D(a,b,c,d,e) = L(c,i,e,j) * S(i,j) * R(d,j,a,b,i)
+     Note that the ordering of the contracted indices is not guaranteed.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_DECOMPOSE_SVD3_HPP_
@@ -30,6 +31,9 @@ public:
  TensorOpDecomposeSVD3 & operator=(TensorOpDecomposeSVD3 &&) noexcept = default;
  virtual ~TensorOpDecomposeSVD3() = default;
 
+ /** Resets the absorption mode for the singular values factor: {'N','L','R','S'} **/
+ bool resetAbsorptionMode(const char absorb_mode = 'N');
+
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;
 
@@ -41,6 +45,8 @@ public:
  static std::unique_ptr<TensorOperation> createNew();
 
 private:
+
+ char absorb_singular_values_; //regulates the absorption of the singular values factor
 
 };
 
