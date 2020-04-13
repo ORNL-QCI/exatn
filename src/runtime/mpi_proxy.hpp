@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy
-REVISION: 2020/03/10
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -14,6 +14,8 @@ public:
 
  template<typename MPICommType>
  MPICommProxy(MPICommType * mpi_comm_ptr): mpi_comm_ptr_(static_cast<void*>(mpi_comm_ptr)) {}
+
+ MPICommProxy(): mpi_comm_ptr_(nullptr) {}
 
  MPICommProxy(const MPICommProxy &) = default;
  MPICommProxy & operator=(const MPICommProxy &) = default;

@@ -20,17 +20,6 @@ TensorOpDecomposeSVD3::TensorOpDecomposeSVD3():
 {
 }
 
-bool TensorOpDecomposeSVD3::resetAbsorptionMode(const char absorb_mode)
-{
- if(absorb_mode == 'N' || absorb_mode == 'L' ||
-    absorb_mode == 'R' || absorb_mode == 'S'){
-  absorb_singular_values_ = absorb_mode;
- }else{
-  return false;
- }
- return true;
-}
-
 bool TensorOpDecomposeSVD3::isSet() const
 {
  return (this->getNumOperandsSet() == this->getNumOperands() && this->getIndexPattern().length() > 0);
@@ -45,6 +34,17 @@ int TensorOpDecomposeSVD3::accept(runtime::TensorNodeExecutor & node_executor,
 std::unique_ptr<TensorOperation> TensorOpDecomposeSVD3::createNew()
 {
  return std::unique_ptr<TensorOperation>(new TensorOpDecomposeSVD3());
+}
+
+bool TensorOpDecomposeSVD3::resetAbsorptionMode(const char absorb_mode)
+{
+ if(absorb_mode == 'N' || absorb_mode == 'L' ||
+    absorb_mode == 'R' || absorb_mode == 'S'){
+  absorb_singular_values_ = absorb_mode;
+ }else{
+  return false;
+ }
+ return true;
 }
 
 } //namespace numerics

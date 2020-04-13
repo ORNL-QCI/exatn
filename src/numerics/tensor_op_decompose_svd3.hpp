@@ -31,9 +31,6 @@ public:
  TensorOpDecomposeSVD3 & operator=(TensorOpDecomposeSVD3 &&) noexcept = default;
  virtual ~TensorOpDecomposeSVD3() = default;
 
- /** Resets the absorption mode for the singular values factor: {'N','L','R','S'} **/
- bool resetAbsorptionMode(const char absorb_mode = 'N');
-
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;
 
@@ -43,6 +40,9 @@ public:
 
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
+
+ /** Resets the absorption mode for the singular values factor: {'N','L','R','S'} **/
+ bool resetAbsorptionMode(const char absorb_mode = 'N');
 
 private:
 

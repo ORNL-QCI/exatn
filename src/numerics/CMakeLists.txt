@@ -20,10 +20,12 @@ add_library(${LIBRARY_NAME}
             tensor_op_insert.cpp
             tensor_op_add.cpp
             tensor_op_contract.cpp
-            tensor_op_decompose_svd3
-            tensor_op_decompose_svd2
-            tensor_op_orthogonalize_svd
-            tensor_op_orthogonalize_mgs
+            tensor_op_decompose_svd3.cpp
+            tensor_op_decompose_svd2.cpp
+            tensor_op_orthogonalize_svd.cpp
+            tensor_op_orthogonalize_mgs.cpp
+            tensor_op_broadcast.cpp
+            tensor_op_allreduce.cpp
             tensor_op_factory.cpp
             network_builder_mps.cpp
             network_builder_tree.cpp
@@ -42,6 +44,7 @@ add_library(${LIBRARY_NAME}
 target_include_directories(${LIBRARY_NAME}
                     PUBLIC .
                     PRIVATE
+                           ${CMAKE_SOURCE_DIR}/src/runtime
                            ${CMAKE_SOURCE_DIR}/src/runtime/executor
                            ${CMAKE_SOURCE_DIR}/src/exatn)
 target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -24,6 +24,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_op_decompose_svd2.hpp"
 #include "tensor_op_orthogonalize_svd.hpp"
 #include "tensor_op_orthogonalize_mgs.hpp"
+#include "tensor_op_broadcast.hpp"
+#include "tensor_op_allreduce.hpp"
 
 #include <memory>
 #include <map>

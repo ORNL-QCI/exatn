@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -97,6 +97,22 @@ int ExatensorNodeExecutor::execute(numerics::TensorOpOrthogonalizeSVD & op,
 
 
 int ExatensorNodeExecutor::execute(numerics::TensorOpOrthogonalizeMGS & op,
+                                   TensorOpExecHandle * exec_handle)
+{
+ //`Implement
+ return 0;
+}
+
+
+int ExatensorNodeExecutor::execute(numerics::TensorOpBroadcast & op,
+                                   TensorOpExecHandle * exec_handle)
+{
+ //`Implement
+ return 0;
+}
+
+
+int ExatensorNodeExecutor::execute(numerics::TensorOpAllreduce & op,
                                    TensorOpExecHandle * exec_handle)
 {
  //`Implement

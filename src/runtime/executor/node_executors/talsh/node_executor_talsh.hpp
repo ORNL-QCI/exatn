@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/07
+REVISION: 2020/04/13
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -56,6 +56,10 @@ public:
   int execute(numerics::TensorOpOrthogonalizeSVD & op,
               TensorOpExecHandle * exec_handle) override;
   int execute(numerics::TensorOpOrthogonalizeMGS & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpBroadcast & op,
+              TensorOpExecHandle * exec_handle) override;
+  int execute(numerics::TensorOpAllreduce & op,
               TensorOpExecHandle * exec_handle) override;
 
   bool sync(TensorOpExecHandle op_handle,
