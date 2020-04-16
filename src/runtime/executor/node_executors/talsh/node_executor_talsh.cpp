@@ -1,11 +1,15 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/13
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_talsh.hpp"
+
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
 
 #include <complex>
 #include <limits>
@@ -21,6 +25,25 @@ bool TalshNodeExecutor::talsh_initialized_ = false;
 int TalshNodeExecutor::talsh_node_exec_count_ = 0;
 
 std::mutex talsh_init_lock;
+
+
+#ifdef MPI_ENABLED
+inline MPI_Datatype get_mpi_tensor_element_kind(int talsh_data_kind)
+{
+ MPI_Datatype mpi_data_kind;
+ switch(talsh_data_kind){
+ case talsh::REAL32: mpi_data_kind = MPI_REAL; break;
+ case talsh::REAL64: mpi_data_kind = MPI_DOUBLE_PRECISION; break;
+ case talsh::COMPLEX32: mpi_data_kind = MPI_COMPLEX; break;
+ case talsh::COMPLEX64: mpi_data_kind = MPI_DOUBLE_COMPLEX; break;
+ default:
+  std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Unknown TAL-SH data kind: "
+            << talsh_data_kind << std::endl;
+  assert(false);
+ }
+ return mpi_data_kind;
+}
+#endif
 
 
 void TalshNodeExecutor::initialize()
@@ -81,6 +104,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CREATE: Attempt to create the same tensor twice: " << std::endl;
   tensor.printIt();
   assert(false);
+ }else{
+  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): New tensor " << tensor.getName()
+            << " emplaced with hash " << tensor_hash << std::endl; //debug
  }
  *exec_handle = op.getId();
  return 0;
@@ -98,6 +124,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): DESTROY: Attempt to destroy non-existing tensor: " << std::endl;
   tensor.printIt();
   assert(false);
+ }else{
+  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor " << tensor.getName()
+            << " erased with hash " << tensor_hash << std::endl; //debug
  }
  *exec_handle = op.getId();
  return 0;
@@ -313,7 +342,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  const auto tensor1_hash = tensor1.getTensorHash();
  auto tens1_pos = tensors_.find(tensor1_hash);
  if(tens1_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 1 not found: " << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 1 not found with hash " << tensor1_hash << std::endl;
   op.printIt();
   assert(false);
  }
@@ -537,8 +566,60 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
  auto & tens = *(tens_pos->second);
 
  *exec_handle = op.getId();
+
  int error_code = 0;
- //`Call MPI_Bcast()
+#ifdef MPI_ENABLED
+ float * tens_body_r4 = nullptr;
+ double * tens_body_r8 = nullptr;
+ talshComplex4 * tens_body_c4 = nullptr;
+ talshComplex8 * tens_body_c8 = nullptr;
+ bool access_granted = false;
+ int tens_elem_type = tens.getElementType();
+ switch(tens_elem_type){
+  case(talsh::REAL32): access_granted = tens.getDataAccessHost(&tens_body_r4); break;
+  case(talsh::REAL64): access_granted = tens.getDataAccessHost(&tens_body_r8); break;
+  case(talsh::COMPLEX32): access_granted = tens.getDataAccessHost(&tens_body_c4); break;
+  case(talsh::COMPLEX64): access_granted = tens.getDataAccessHost(&tens_body_c8); break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): BROADCAST: Unknown TAL-SH data kind: "
+             << tens_elem_type << std::endl;
+   op.printIt();
+   assert(false);
+ }
+ if(access_granted){
+  auto mpi_data_kind = get_mpi_tensor_element_kind(tens_elem_type);
+  auto communicator = *(op.getMPICommunicator().get<MPI_Comm>());
+  int root_rank = op.getRootRank();
+  std::size_t tens_volume = tens.getVolume();
+  int chunk = std::numeric_limits<int>::max();
+  for(std::size_t base = 0; base < tens_volume; base += chunk){
+   int count = std::min(chunk,static_cast<int>(tens_volume-base));
+   switch(tens_elem_type){
+    case(talsh::REAL32):
+     assert(tens_body_r4 != nullptr);
+     error_code = MPI_Bcast((void*)(&(tens_body_r4[base])),count,mpi_data_kind,root_rank,communicator);
+     break;
+    case(talsh::REAL64):
+     assert(tens_body_r8 != nullptr);
+     error_code = MPI_Bcast((void*)(&(tens_body_r8[base])),count,mpi_data_kind,root_rank,communicator);
+     break;
+    case(talsh::COMPLEX32):
+     assert(tens_body_c4 != nullptr);
+     error_code = MPI_Bcast((void*)(&(tens_body_c4[base])),count,mpi_data_kind,root_rank,communicator);
+     break;
+    case(talsh::COMPLEX64):
+     assert(tens_body_c8 != nullptr);
+     error_code = MPI_Bcast((void*)(&(tens_body_c8[base])),count,mpi_data_kind,root_rank,communicator);
+     break;
+   }
+   if(error_code != MPI_SUCCESS) break;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): BROADCAST: Unable to get access to the tensor body!" << std::endl;
+  op.printIt();
+  assert(false);
+ }
+#endif
  return error_code;
 }
 
@@ -558,8 +639,59 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
  auto & tens = *(tens_pos->second);
 
  *exec_handle = op.getId();
+
  int error_code = 0;
- //`Call MPI_Allreduce()
+#ifdef MPI_ENABLED
+ float * tens_body_r4 = nullptr;
+ double * tens_body_r8 = nullptr;
+ talshComplex4 * tens_body_c4 = nullptr;
+ talshComplex8 * tens_body_c8 = nullptr;
+ bool access_granted = false;
+ int tens_elem_type = tens.getElementType();
+ switch(tens_elem_type){
+  case(talsh::REAL32): access_granted = tens.getDataAccessHost(&tens_body_r4); break;
+  case(talsh::REAL64): access_granted = tens.getDataAccessHost(&tens_body_r8); break;
+  case(talsh::COMPLEX32): access_granted = tens.getDataAccessHost(&tens_body_c4); break;
+  case(talsh::COMPLEX64): access_granted = tens.getDataAccessHost(&tens_body_c8); break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ALLREDUCE: Unknown TAL-SH data kind: "
+             << tens_elem_type << std::endl;
+   op.printIt();
+   assert(false);
+ }
+ if(access_granted){
+  auto mpi_data_kind = get_mpi_tensor_element_kind(tens_elem_type);
+  auto communicator = *(op.getMPICommunicator().get<MPI_Comm>());
+  std::size_t tens_volume = tens.getVolume();
+  int chunk = std::numeric_limits<int>::max();
+  for(std::size_t base = 0; base < tens_volume; base += chunk){
+   int count = std::min(chunk,static_cast<int>(tens_volume-base));
+   switch(tens_elem_type){
+    case(talsh::REAL32):
+     assert(tens_body_r4 != nullptr);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_r4[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     break;
+    case(talsh::REAL64):
+     assert(tens_body_r8 != nullptr);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_r8[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     break;
+    case(talsh::COMPLEX32):
+     assert(tens_body_c4 != nullptr);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_c4[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     break;
+    case(talsh::COMPLEX64):
+     assert(tens_body_c8 != nullptr);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_c8[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     break;
+   }
+   if(error_code != MPI_SUCCESS) break;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): ALLREDUCE: Unable to get access to the tensor body!" << std::endl;
+  op.printIt();
+  assert(false);
+ }
+#endif
  return error_code;
 }
 

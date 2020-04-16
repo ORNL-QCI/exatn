@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2019/12/06
+REVISION: 2020/04/16
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "network_builder_mps.hpp"
 #include "tensor_network.hpp"
@@ -116,13 +116,23 @@ void NetworkBuilderMPS::build(TensorNetwork & network)
   for(unsigned int i = 1; i < (output_tensor_rank - 1); ++i){
    left_dim = std::min(left_bonds[i],right_bonds[i-1]);
    right_dim = std::min(right_bonds[i],left_bonds[i+1]);
-   appended = network.placeTensor(1+i, //tensor id
-                                  std::make_shared<Tensor>("T"+std::to_string(1+i), //tensor name
-                                   std::initializer_list<DimExtent>{left_dim,output_dim_extents[i],right_dim}),
-                                  {TensorLeg{i,2},TensorLeg{0,i},TensorLeg{i+2,0}},
-                                  false,
-                                  false
-                                 );
+   if(i == 1){
+    appended = network.placeTensor(1+i, //tensor id
+                                   std::make_shared<Tensor>("T"+std::to_string(1+i), //tensor name
+                                    std::initializer_list<DimExtent>{left_dim,output_dim_extents[i],right_dim}),
+                                   {TensorLeg{i,1},TensorLeg{0,i},TensorLeg{i+2,0}},
+                                   false,
+                                   false
+                                  );
+   }else{
+    appended = network.placeTensor(1+i, //tensor id
+                                   std::make_shared<Tensor>("T"+std::to_string(1+i), //tensor name
+                                    std::initializer_list<DimExtent>{left_dim,output_dim_extents[i],right_dim}),
+                                   {TensorLeg{i,2},TensorLeg{0,i},TensorLeg{i+2,0}},
+                                   false,
+                                   false
+                                  );
+   }
    assert(appended);
   }
  }

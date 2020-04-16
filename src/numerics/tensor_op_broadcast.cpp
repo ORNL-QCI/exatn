@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Broadcasts a tensor
-REVISION: 2020/04/13
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,8 @@ namespace exatn{
 namespace numerics{
 
 TensorOpBroadcast::TensorOpBroadcast():
- TensorOperation(TensorOpCode::BROADCAST,1,0,1)
+ TensorOperation(TensorOpCode::BROADCAST,1,0,1),
+ root_rank_(0)
 {
 }
 
@@ -44,6 +45,17 @@ bool TensorOpBroadcast::resetMPICommunicator(const MPICommProxy & intra_comm)
 const MPICommProxy & TensorOpBroadcast::getMPICommunicator() const
 {
  return intra_comm_;
+}
+
+bool TensorOpBroadcast::resetRootRank(unsigned int rank)
+{
+ root_rank_ = static_cast<int>(rank);
+ return true;
+}
+
+int TensorOpBroadcast::getRootRank() const
+{
+ return root_rank_;
 }
 
 } //namespace numerics

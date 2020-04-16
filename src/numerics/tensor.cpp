@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/03/03
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -246,7 +246,7 @@ const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 
 TensorHashType Tensor::getTensorHash() const
 {
- return reinterpret_cast<TensorHashType>(this);
+ return reinterpret_cast<TensorHashType>((void*)this);
 }
 
 std::string generateTensorName(const Tensor & tensor,

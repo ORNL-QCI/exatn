@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Broadcasts a tensor
-REVISION: 2020/04/13
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,9 +47,16 @@ public:
  /** Returns the MPI communicator. **/
  const MPICommProxy & getMPICommunicator() const;
 
+ /** Resets the broadcast root rank. **/
+ bool resetRootRank(unsigned int rank);
+
+ /** Returns the broadcast root rank. **/
+ int getRootRank() const;
+
 private:
 
  MPICommProxy intra_comm_; //MPI intra-communicator
+ int root_rank_; //MPI broadcast root process rank
 
 };
 

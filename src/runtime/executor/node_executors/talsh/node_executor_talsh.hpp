@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/13
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -90,10 +90,10 @@ inline int get_talsh_tensor_element_kind(TensorElementType element_type)
 {
   int talsh_data_kind = NO_TYPE;
   switch(element_type){
-    case TensorElementType::REAL32: talsh_data_kind = R4; break;
-    case TensorElementType::REAL64: talsh_data_kind = R8; break;
-    case TensorElementType::COMPLEX32: talsh_data_kind = C4; break;
-    case TensorElementType::COMPLEX64: talsh_data_kind = C8; break;
+    case TensorElementType::REAL32: talsh_data_kind = talsh::REAL32; break;
+    case TensorElementType::REAL64: talsh_data_kind = talsh::REAL64; break;
+    case TensorElementType::COMPLEX32: talsh_data_kind = talsh::COMPLEX32; break;
+    case TensorElementType::COMPLEX64: talsh_data_kind = talsh::COMPLEX64; break;
   }
   return talsh_data_kind;
 }
@@ -102,10 +102,10 @@ inline int get_talsh_tensor_element_kind(TensorElementType element_type)
 inline TensorElementType get_exatn_tensor_element_kind(int element_type)
 {
   switch(element_type){
-    case R4: return TensorElementType::REAL32;
-    case R8: return TensorElementType::REAL64;
-    case C4: return TensorElementType::COMPLEX32;
-    case C8: return TensorElementType::COMPLEX64;
+    case talsh::REAL32: return TensorElementType::REAL32;
+    case talsh::REAL64: return TensorElementType::REAL64;
+    case talsh::COMPLEX32: return TensorElementType::COMPLEX32;
+    case talsh::COMPLEX64: return TensorElementType::COMPLEX64;
   }
   return TensorElementType::VOID;
 }
