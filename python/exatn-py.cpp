@@ -1,4 +1,3 @@
-
 #include "exatn_py_utils.hpp"
 #include "pybind11/pybind11.h"
 #include "talshxx.hpp"
@@ -21,13 +20,13 @@ void create_exatn_py_module(py::module &m) {
   m.doc() = "Python bindings for ExaTN.";
   py::class_<exatn::numerics::Tensor, std::shared_ptr<exatn::numerics::Tensor>>(
       m, "Tensor", "")
-      .def("printIt", &exatn::numerics::Tensor::printIt, "")
+      .def("printIt", &exatn::numerics::Tensor::printIt, "with_hash"_a = false, "")
       .def("getName", &exatn::numerics::Tensor::getName, "")
       .def("getRank", &exatn::numerics::Tensor::getRank, "");
 
   py::class_<TensorExpansion::ExpansionComponent, std::shared_ptr<TensorExpansion::ExpansionComponent>>(m, "ExpansionComponent", "")
      .def_readonly("network", &TensorExpansion::ExpansionComponent::network_,"");
-     
+
   py::class_<exatn::numerics::TensorOperator,
              std::shared_ptr<exatn::numerics::TensorOperator>>(
       m, "TensorOperator", "")
@@ -67,7 +66,7 @@ py::class_<exatn::numerics::TensorExpansion,
       .def(py::init<const TensorNetwork &>())
       .def(py::init<const std::string &, const std::string &,
                     const std::map<std::string, std::shared_ptr<Tensor>>>())
-      .def("printIt", &exatn::numerics::TensorNetwork::printIt, "")
+      .def("printIt", &exatn::numerics::TensorNetwork::printIt, "with_tensor_hash"_a = false, "")
       .def("rename", &exatn::numerics::TensorNetwork::rename, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
       .def("conjugate", &TensorNetwork::conjugate, "")

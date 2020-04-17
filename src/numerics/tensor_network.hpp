@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/03/14
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -107,7 +107,7 @@ public:
  virtual ~TensorNetwork() = default;
 
  /** Prints **/
- void printIt() const;
+ void printIt(bool with_tensor_hash = false) const;
 
  /** Returns TRUE if the tensor network is empty, FALSE otherwise. **/
  bool isEmpty() const;

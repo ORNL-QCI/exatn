@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/03/03
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -115,8 +115,9 @@ public:
  virtual ~Tensor() = default;
 
  /** Print. **/
- void printIt() const;
- void printItFile(std::ofstream & output_file) const;
+ void printIt(bool with_hash = false) const;
+ void printItFile(std::ofstream & output_file,
+                  bool with_hash = false) const;
 
  /** Rename (use this method with care as it can mess up higher-level maps). **/
  void rename(const std::string & name);

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/03/15
+REVISION: 2020/04/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,7 +47,7 @@ public:
  virtual ~TensorConn() = default;
 
  /** Prints. **/
- void printIt() const;
+ void printIt(bool with_hash = false) const;
 
  /** Returns the tensor name. **/
  const std::string & getName() const;

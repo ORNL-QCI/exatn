@@ -105,8 +105,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
   tensor.printIt();
   assert(false);
  }else{
-  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): New tensor " << tensor.getName()
-            << " emplaced with hash " << tensor_hash << std::endl; //debug
+  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): New tensor " << tensor.getName()
+  //          << " emplaced with hash " << tensor_hash << std::endl;
  }
  *exec_handle = op.getId();
  return 0;
@@ -125,8 +125,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
   tensor.printIt();
   assert(false);
  }else{
-  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor " << tensor.getName()
-            << " erased with hash " << tensor_hash << std::endl; //debug
+  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor " << tensor.getName()
+  //          << " erased with hash " << tensor_hash << std::endl;
  }
  *exec_handle = op.getId();
  return 0;
@@ -342,7 +342,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  const auto tensor1_hash = tensor1.getTensorHash();
  auto tens1_pos = tensors_.find(tensor1_hash);
  if(tens1_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 1 not found with hash " << tensor1_hash << std::endl;
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CONTRACT: Tensor operand 1 not found: " << std::endl;
   op.printIt();
   assert(false);
  }

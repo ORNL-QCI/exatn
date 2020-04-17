@@ -915,35 +915,34 @@ TEST(NumServerTester, MPSBuilderNumServer)
  using exatn::numerics::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(2); //debug
+ exatn::resetRuntimeLoggingLevel(0); //debug
 
- {
-  auto & networkBuildFactory = *(exatn::numerics::NetworkBuildFactory::get());
-  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
-  bool success = builder->setParameter("max_bond_dim",1);
-  assert(success);
-  const std::string ROOT_TENSOR_NAME = "Root";
-  success = exatn::createTensorSync(ROOT_TENSOR_NAME, TensorElementType::COMPLEX64, TensorShape{2,2,2,2});
-  assert(success);
-  auto rootTensor = exatn::getTensor(ROOT_TENSOR_NAME);
-  success = exatn::initTensorSync(ROOT_TENSOR_NAME, 0.0);
-  assert(success);
-  auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
-  tensorNetwork->printIt();
-  const std::vector<std::complex<double>> ZERO_TENSOR_BODY {{1.0, 0.0}, {0.0, 0.0}};
-  for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
-   const auto & tensorName = iter->second.getTensor()->getName();
-   if(tensorName != ROOT_TENSOR_NAME){
-    success = exatn::createTensorSync(tensorName, exatn::TensorElementType::COMPLEX64, iter->second.getTensor()->getShape());
-    assert(success);
-    success = exatn::initTensorDataSync(tensorName, ZERO_TENSOR_BODY);
-    assert(success);
-   }
+ auto & networkBuildFactory = *(exatn::numerics::NetworkBuildFactory::get());
+ auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
+ bool success = builder->setParameter("max_bond_dim",1);
+ assert(success);
+ const std::string ROOT_TENSOR_NAME = "Root";
+ success = exatn::createTensorSync(ROOT_TENSOR_NAME, TensorElementType::COMPLEX64, TensorShape{2,2,2,2});
+ assert(success);
+ auto rootTensor = exatn::getTensor(ROOT_TENSOR_NAME);
+ success = exatn::initTensorSync(ROOT_TENSOR_NAME, 0.0);
+ assert(success);
+ auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
+ tensorNetwork->printIt();
+ const std::vector<std::complex<double>> ZERO_TENSOR_BODY {{1.0, 0.0}, {0.0, 0.0}};
+ for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
+  auto tensor = iter->second.getTensor();
+  const auto & tensorName = tensor->getName();
+  if(tensorName != ROOT_TENSOR_NAME){
+   success = exatn::createTensorSync(tensor, exatn::TensorElementType::COMPLEX64);
+   assert(success);
+   success = exatn::initTensorDataSync(tensorName, ZERO_TENSOR_BODY);
+   assert(success);
   }
-  success = exatn::evaluateSync(*tensorNetwork);
-  assert(success);
-  exatn::sync();
  }
+ success = exatn::evaluateSync(*tensorNetwork);
+ assert(success);
+ exatn::sync();
 
 }
 

@@ -112,15 +112,27 @@ Tensor::Tensor(const Tensor & another,
  }
 }
 
-void Tensor::printIt() const
+void Tensor::printIt(bool with_hash) const
 {
- std::cout << name_; signature_.printIt(); shape_.printIt();
+ if(!with_hash){
+  std::cout << name_;
+ }else{
+  std::cout << name_ << "#" << this->getTensorHash();
+ }
+ signature_.printIt();
+ shape_.printIt();
  return;
 }
 
-void Tensor::printItFile(std::ofstream & output_file) const
+void Tensor::printItFile(std::ofstream & output_file, bool with_hash) const
 {
- output_file << name_; signature_.printItFile(output_file); shape_.printItFile(output_file);
+ if(!with_hash){
+  output_file << name_;
+ }else{
+  output_file << name_ << "#" << this->getTensorHash();
+ }
+ signature_.printItFile(output_file);
+ shape_.printItFile(output_file);
  return;
 }
 
