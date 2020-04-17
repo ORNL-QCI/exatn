@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/16
+REVISION: 2020/04/17
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -571,8 +571,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
 #ifdef MPI_ENABLED
  float * tens_body_r4 = nullptr;
  double * tens_body_r8 = nullptr;
- talshComplex4 * tens_body_c4 = nullptr;
- talshComplex8 * tens_body_c8 = nullptr;
+ std::complex<float> * tens_body_c4 = nullptr;
+ std::complex<double> * tens_body_c8 = nullptr;
  bool access_granted = false;
  int tens_elem_type = tens.getElementType();
  switch(tens_elem_type){
@@ -644,8 +644,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
 #ifdef MPI_ENABLED
  float * tens_body_r4 = nullptr;
  double * tens_body_r8 = nullptr;
- talshComplex4 * tens_body_c4 = nullptr;
- talshComplex8 * tens_body_c8 = nullptr;
+ std::complex<float> * tens_body_c4 = nullptr;
+ std::complex<double> * tens_body_c8 = nullptr;
  bool access_granted = false;
  int tens_elem_type = tens.getElementType();
  switch(tens_elem_type){
