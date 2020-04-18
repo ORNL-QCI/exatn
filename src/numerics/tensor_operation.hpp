@@ -1,11 +1,13 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/04/07
+REVISION: 2020/04/18
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor operation is a formal numerical operation on one or more tensors.
+ (b) A tensor operation may have mutable (output) and immutable (input) tensor operands.
+     The mutable tensor operands must always precede immutable tensor operands!
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OPERATION_HPP_
@@ -70,6 +72,9 @@ public:
  /** Returns the number of tensor operands required for the tensor operation. **/
  unsigned int getNumOperands() const;
 
+ /** Returns the number of output tensor operands required for the tensor operation. **/
+ unsigned int getNumOperandsOut() const;
+
  /** Returns the number of tensor operands set. **/
  unsigned int getNumOperandsSet() const;
 
@@ -110,7 +115,8 @@ public:
  const std::string & getIndexPattern() const;
 
  /** Sets the symbolic tensor operation specification (index pattern).
-     The tensor operation must have all its tensor/scalar operands set at this point.**/
+     The tensor operation must have all its tensor/scalar operands set at this point.
+     It is allowed to reset an already set index pattern via this function. **/
  void setIndexPattern(const std::string & pattern);
 
  /** Sets the unique integer identifier of the tensor operation. **/

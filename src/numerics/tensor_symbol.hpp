@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/03/17
+REVISION: 2020/04/18
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -144,6 +144,11 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
     the output tensor of the tensor network. **/
 bool parse_tensor_network(const std::string & network,         //in: tensor network as a string
                           std::vector<std::string> & tensors); //out: parsed (symbolic) tensors
+
+/** Assembles the symbolic indexed tensor specification from its parts. **/
+std::string assemble_symbolic_tensor(const std::string & tensor_name,         //in: tensor name
+                                     const std::vector<IndexLabel> & indices, //in: tensor indices
+                                     bool conjugated = false);                //in: tensor conjugation status
 
 /** Generates symbolic tensor contraction pattern from the digital tensor
     contraction pattern used by the contraction-based Tensor constructor:

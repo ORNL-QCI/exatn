@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/04/07
+REVISION: 2020/04/18
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -68,6 +68,16 @@ TensorOpCode TensorOperation::getOpcode() const
 unsigned int TensorOperation::getNumOperands() const
 {
  return num_operands_;
+}
+
+unsigned int TensorOperation::getNumOperandsOut() const
+{
+ std::size_t n = 0, mut = mutation_, bit0 = 1;
+ for(unsigned int i = 0; i < num_operands_; ++i){
+  n += (mut & bit0);
+  mut >>= 1;
+ }
+ return static_cast<unsigned int>(n);
 }
 
 unsigned int TensorOperation::getNumOperandsSet() const
@@ -150,8 +160,13 @@ const std::string & TensorOperation::getIndexPattern() const
 
 void TensorOperation::setIndexPattern(const std::string & pattern)
 {
- assert(operands_.size() == num_operands_ && scalars_.size() == num_scalars_);
- pattern_ = pattern;
+ if(operands_.size() == num_operands_ && scalars_.size() == num_scalars_){
+  pattern_ = pattern;
+ }else{
+  std::cout << "#ERROR(exatn::numerics::TensorOperation::setIndexPattern): "
+            << "Index pattern cannot be set until all operands and scalars have been set!\n";
+  assert(false);
+ }
  return;
 }
 

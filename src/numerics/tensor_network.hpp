@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/16
+REVISION: 2020/04/18
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -294,8 +294,12 @@ public:
  /** Returns the currently stored tensor contraction sequence, if any. **/
  const std::list<ContrTriple> & exportContractionSequence() const;
 
- /** Returns the list of tensor operations required for evaluating the tensor network. **/
- std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy");
+ /** Returns the list of tensor operations required for evaluating the tensor network.
+     Parameter universal_indices set to TRUE will activate the universal index numeration
+     such that a specific index appearing in different tensor operations will always
+     designate the same edge in the tensor network, and all tensors will carry real names. **/
+ std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy",
+                                                                bool universal_indices = false);
 
 protected:
 
@@ -352,6 +356,12 @@ protected:
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
+
+ /** Establishes a universal index numeration in the already generated tensor operation list
+     such that a specific index occuring in different tensor operations will always refer
+     to the same edge in the tensor network. It will also assure the use of real tensor names.
+     If the tensor operation list is empty, does nothing. **/
+ void establishUniversalIndexNumeration();
 
 private:
 

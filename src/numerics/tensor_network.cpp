@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/16
+REVISION: 2020/04/18
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -499,6 +499,102 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
 const std::list<ContrTriple> & TensorNetwork::exportContractionSequence() const
 {
  return contraction_seq_;
+}
+
+
+void TensorNetwork::establishUniversalIndexNumeration()
+{
+ std::unordered_map<TensorHashType,std::string> tensors; //tensor hash --> symbolic tensor with universal indices
+ std::vector<IndexLabel> indices;
+ std::string tensor_name;
+ std::string new_pattern;
+ bool conjugated = false;
+ bool output_tensor_done = false;
+ int num_internal_indices = 0;
+ //Update index patterns of all tensor operations in reverse order:
+ for(auto iter = operations_.rbegin(); iter != operations_.rend(); ++iter){
+  auto & op = *(*iter); //tensor operation
+  const auto num_operands = op.getNumOperands();
+  const auto num_operands_out = op.getNumOperandsOut();
+  assert(num_operands <= 3 && num_operands_out <= 1); //`Tensor operations with two or more output tensors will require additional work
+  const auto & old_pattern = op.getIndexPattern();
+  if(old_pattern.length() > 0){ //index pattern present
+   assert(num_operands_out == 1 && num_operands > 1);
+   std::vector<std::string> tens_operands;
+   bool success = parse_tensor_network(old_pattern,tens_operands);
+   if(success){
+    //Process all tensor operands:
+    if(tens_operands.size() == num_operands){
+     new_pattern.clear();
+     //Process the only output tensor operand (#0):
+     tensor_name.clear(); indices.clear();
+     success = parse_tensor(tens_operands[0],tensor_name,indices,conjugated);
+     if(success){
+      const auto & tens = *(op.getTensorOperand(0));
+      const auto tensor_hash = tens.getTensorHash();
+      //Pre-save the output tensor of the tensor network:
+      if(!output_tensor_done){
+       auto res = tensors.emplace(std::make_pair(tensor_hash,
+                                                 assemble_symbolic_tensor(tens.getName(),indices,conjugated)));
+       assert(res.second);
+       output_tensor_done = true;
+      }
+      //Retreive the universal output tensor:
+      auto titer = tensors.find(tensor_hash); assert(titer != tensors.end());
+      new_pattern += (titer->second + "+="); //correct output tensor operand added to the new index pattern
+      //Process input tensor operands:
+      int num_contr_indices = 0;
+      for(unsigned int op_num = 1; op_num < num_operands; ++op_num){
+       tensor_name.clear(); indices.clear();
+       success = parse_tensor(tens_operands[op_num],tensor_name,indices,conjugated);
+       if(success){
+        const auto & tens = *(op.getTensorOperand(0));
+        const auto tensor_hash = tens.getTensorHash();
+        //Update the numeration of contracted indices with global numbers:
+        int num_contr_indices = 0;
+        for(auto & index: indices){
+         if(index.label[0] == 'c'){ //contracted index requires global shift
+          num_contr_indices++;
+          auto old_number = std::stoi(index.label.substr(1));
+          index.label = ("c" + std::to_string(num_internal_indices + old_number));
+         }
+        }
+        auto res = tensors.emplace(std::make_pair(tensor_hash,
+                                                  assemble_symbolic_tensor(tens.getName(),indices,conjugated)));
+        assert(res.second);
+        if(op_num == 1){
+         new_pattern += res.first->second;
+        }else if(op_num == 2){
+         new_pattern += ("*" + res.first->second);
+        }else{
+         assert(false);
+        }
+       }else{
+        std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
+                  << "Unable to parse tensor operand: " << tens_operands[op_num] << std::endl;
+        assert(false);
+       }
+      }
+      num_internal_indices += num_contr_indices;
+      op.setIndexPattern(new_pattern);
+     }else{
+      std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
+                << "Unable to parse tensor operand: " << tens_operands[0] << std::endl;
+      assert(false);
+     }
+    }else{
+     std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
+               << "Invalid number of tensor operands parsed from: " << old_pattern << std::endl;
+     assert(false);
+    }
+   }else{
+    std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
+              << "Unable to parse tensor operation index pattern: " << old_pattern << std::endl;
+    assert(false);
+   }
+  }
+ }
+ return;
 }
 
 
@@ -1457,7 +1553,8 @@ double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int righ
 }
 
 
-std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(const std::string & contr_seq_opt_name)
+std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(const std::string & contr_seq_opt_name,
+                                                                              bool universal_indices)
 {
  if(operations_.empty()){
   //Get the tensor contraction sequence optimizer:
@@ -1573,6 +1670,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
  }
+ if(universal_indices) establishUniversalIndexNumeration();
  return operations_;
 }
 
