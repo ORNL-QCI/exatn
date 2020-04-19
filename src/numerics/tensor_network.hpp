@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/18
+REVISION: 2020/04/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -301,6 +301,10 @@ public:
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy",
                                                                 bool universal_indices = false);
 
+ /** Returns the entire tensor network printed in a symbolic form.
+     The tensor network must already have its operation list generated. **/
+ bool printTensorNetwork(std::string & network);
+
 protected:
 
  /** Emplaces a connected tensor into the tensor network. **/
@@ -392,6 +396,7 @@ private:
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
+ bool universal_indexing_; //universal indexing flag
 };
 
 

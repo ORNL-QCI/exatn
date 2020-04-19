@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/04/18
+REVISION: 2020/04/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -84,11 +84,11 @@ inline bool is_multiply_sign(const char & ch){
  return (ch == '*');
 }
 
-/** Returns TRUE if the symbolic identifier is alphanumeric_ and starts with a letter. **/
+/** Returns TRUE if the symbolic identifier is alphanumeric_ and starts with a letter or _. **/
 inline bool is_alphanumeric(const std::string & identifier)
 {
  if(identifier.empty()) return false;
- if(!is_letter(identifier[0])) return false;
+ if(!(is_letter(identifier[0]) || is_underscore(identifier[0]))) return false;
  for(const char & ch: identifier){
   if(!(is_letter(ch) || is_number(ch) || is_underscore(ch))) return false;
  }

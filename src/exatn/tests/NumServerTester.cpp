@@ -168,8 +168,12 @@ TEST(NumServerTester, useNumServer)
 
  //Evaluate the tensor network:
  exatn::numericalServer->submit(network);
- auto synced = exatn::numericalServer->sync(network,true);
- assert(synced);
+ auto synced = exatn::numericalServer->sync(network,true); assert(synced);
+
+ //Print the tensor network in a symbolic form:
+ std::string network_printed;
+ auto printed = network.printTensorNetwork(network_printed); assert(printed);
+ std::cout << "Reconstructed symbolic tensor network: " << network_printed;
 
  //Retrieve the result:
  auto talsh_tensor = exatn::numericalServer->getLocalTensor(z0);
