@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/04/16
+REVISION: 2020/04/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -150,6 +150,16 @@ const std::string & Tensor::getName() const
 unsigned int Tensor::getRank() const
 {
  return shape_.getRank();
+}
+
+std::size_t Tensor::getVolume() const
+{
+ return static_cast<std::size_t>(shape_.getVolume());
+}
+
+std::size_t Tensor::getSize() const
+{
+ return static_cast<std::size_t>(shape_.getVolume()) * tensor_element_type_size(element_type_);
 }
 
 const TensorShape & Tensor::getShape() const

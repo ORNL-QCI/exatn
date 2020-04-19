@@ -472,6 +472,7 @@ void TensorNetwork::invalidateMaxTensorId()
 
 void TensorNetwork::invalidateContractionSequence()
 {
+ split_indices_.clear();
  operations_.clear();
  contraction_seq_.clear();
  contraction_seq_flops_ = 0.0;
@@ -1705,6 +1706,171 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
  }
  if(universal_indices) establishUniversalIndexNumeration();
  return operations_;
+}
+
+
+inline IndexSplit split_dimension(std::pair<SpaceId,SubspaceId> space_attr,
+                                  DimExtent dim_extent,
+                                  std::size_t num_segments)
+{
+ assert(dim_extent >= num_segments);
+ IndexSplit split_info;
+ if(space_attr.first == SOME_SPACE){ //anonymous vector space
+  std::size_t seg_size = dim_extent/num_segments;
+  std::size_t remainder = dim_extent - seg_size * num_segments;
+  SubspaceId base = space_attr.second;
+  for(std::size_t i = 0; i < num_segments; ++i){
+   DimExtent extent = seg_size; if(i < remainder) extent++;
+   split_info.emplace_back(std::pair<SubspaceId,DimExtent>{base,extent});
+   base += extent;
+  }
+  assert(base == space_attr.second + dim_extent);
+ }else{ //registered named vector space
+  assert(false); //`Implement in future
+ }
+ return split_info;
+}
+
+inline bool is_intermediate_tensor_name(const std::string & tensor_name)
+{
+ if(tensor_name.length() >= 2){
+  if(tensor_name[0] == '_' && tensor_name[1] == 'x') return true;
+ }
+ return false;
+}
+
+void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
+{
+ assert(!operations_.empty());
+ std::unordered_map<std::string,            //index label
+                    std::pair<unsigned int, //global index id
+                              IndexSplit>   //splitting info
+                   > splitted;
+ std::vector<std::string> tens_operands; //extracted tensor operands
+ std::vector<IndexLabel> indices; //indices extracted from a tensor
+ std::vector<std::pair<unsigned int, //dimension position in the tensor
+                       std::size_t>  //number of segments to split into
+                      > dims;        //for each tensor dimension
+ std::vector<std::tuple<unsigned int, //global id of the split index
+                        unsigned int, //dimension position in the tensor
+                        IndexSplit>   //splitting info for the dimension
+                      > split_dims;   //for each tensor dimension split
+ std::string tensor_name;
+ bool conjugated = false;
+ split_indices_.clear();
+ establishUniversalIndexNumeration();
+ //Traverse all tensor operations in reverse order:
+ unsigned int num_split_indices = 0;
+ for(auto op_iter = operations_.rbegin(); op_iter != operations_.rend(); ++op_iter){
+  const auto & op = *(*op_iter);
+  const auto num_operands = op.getNumOperands();
+  const auto num_operands_out = op.getNumOperandsOut();
+  const auto & pattern = op.getIndexPattern();
+  if(!pattern.empty()){ //tensor operation with two or more tensor operands
+   assert(num_operands > 1 && num_operands_out == 1); //`Expecting only a single output operand so far
+   tens_operands.clear();
+   bool success = parse_tensor_network(pattern,tens_operands);
+   if(success){
+    assert(tens_operands.size() == num_operands);
+    //Inspect the output tensor operand:
+    tensor_name.clear(); indices.clear();
+    success = parse_tensor(tens_operands[0],tensor_name,indices,conjugated);
+    if(success){
+     const auto & intermediate = *(op.getTensorOperand(0));
+     const auto & intermediate_name = intermediate.getName();
+     assert(intermediate_name == tensor_name);
+     assert(indices.size() == intermediate.getRank());
+     //Split dimensions of the intermediate if needed:
+     if(is_intermediate_tensor_name(intermediate_name)){ //only interested in intermediates here (not the output tensor of the network)
+      const auto intermediate_hash = intermediate.getTensorHash();
+      //Compute intermediate volume and find its full dimensions:
+      split_dims.clear(); dims.clear();
+      std::size_t intermediate_volume = 1;
+      for(unsigned int i = 0; i < indices.size(); ++i){
+       auto index_iter = splitted.find(indices[i].label);
+       if(index_iter != splitted.end()){
+        intermediate_volume *= index_iter->second.second[0].second; //segment extent (already split dimension)
+        split_dims.emplace_back(std::make_tuple(index_iter->second.first,i,index_iter->second.second));
+       }else{
+        intermediate_volume *= intermediate.getDimExtent(i); //full dimension extent
+        dims.emplace_back(std::pair<unsigned int,std::size_t>{i,1});
+       }
+      }
+      //Split the found full dimensions of the intermediate:
+      if(intermediate_volume > max_intermediate_volume){
+       //Reduce the intermediate volume by increasing the number of segments:
+       assert(dims.size() > 0); //at least one full dimension is expected
+       int i = dims.size() - 1; //split dimensions from the right (because of column-wise storage)
+       while(intermediate_volume > max_intermediate_volume){
+        dims[i].second <<= 1; intermediate_volume >>= 1;
+        if(--i < 0) i = dims.size() - 1;
+       }
+       //Split full dimensions into segments:
+       for(const auto & dim: dims){
+        const auto & num_dim_segs = dim.second;
+        if(num_dim_segs > 1){ //number of segments
+         num_split_indices++;
+         const auto & dim_pos = dim.first;
+         IndexSplit split_info = split_dimension(intermediate.getDimSpaceAttr(dim_pos),
+                                                 intermediate.getDimExtent(dim_pos),
+                                                 num_dim_segs);
+         auto saved = splitted.emplace(std::make_pair(indices[dim_pos].label,
+                                                      std::make_pair(num_split_indices,split_info)));
+         assert(saved.second);
+         split_dims.emplace_back(std::make_tuple(num_split_indices,dim_pos,split_info));
+        }
+       }
+      }
+      //Save dimension splitting info for the tensor:
+      if(split_dims.size() > 0){
+       auto saved = split_indices_.emplace(std::make_pair(intermediate_hash,split_dims));
+       assert(saved.second);
+      }
+     }
+     //Inspect input tensor operands and save dimension splitting info:
+     for(unsigned int op_num = 1; op_num < num_operands; ++op_num){
+      const auto & tensor = *(op.getTensorOperand(op_num));
+      const auto tensor_hash = tensor.getTensorHash();
+      const auto & input_tensor_name = tensor.getName();
+      //Only input tensors of the tensor network need to be inspected:
+      if(!is_intermediate_tensor_name(input_tensor_name)){
+       //Inspect indices of the input tensor for being previously split:
+       tensor_name.clear(); indices.clear();
+       success = parse_tensor(tens_operands[op_num],tensor_name,indices,conjugated);
+       if(success){
+        assert(input_tensor_name == tensor_name);
+        split_dims.clear();
+        for(unsigned int i = 0; i < indices.size(); ++i){
+         auto index_iter = splitted.find(indices[i].label);
+         if(index_iter != splitted.end()){
+          split_dims.emplace_back(std::make_tuple(index_iter->second.first,i,index_iter->second.second));
+         }
+        }
+        //Save dimension splitting info for the tensor:
+        if(split_dims.size() > 0){
+         auto saved = split_indices_.emplace(std::make_pair(tensor_hash,split_dims));
+         assert(saved.second);
+        }
+       }else{
+        std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitInternalIndices): "
+                  << "Unable to parse an input tensor: " << tens_operands[op_num] << std::endl;
+        assert(false);
+       }
+      }
+     }
+    }else{
+     std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitInternalIndices): "
+               << "Unable to parse the output tensor: " << tens_operands[0] << std::endl;
+     assert(false);
+    }
+   }else{
+    std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitInternalIndices): "
+              << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
+    assert(false);
+   }
+  }
+ }
+ return;
 }
 
 

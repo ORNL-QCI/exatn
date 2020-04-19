@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2019/12/08
+REVISION: 2020/04/19
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
 **/
@@ -23,7 +23,7 @@ public:
 
  inline TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                     const std::vector<DimExtent> & extents,  //in: extent of each dimension (on top of the base offset)
-                    const std::vector<DimExtent> & strides); //in: stride of each dimension
+                    const std::vector<DimExtent> & strides); //in: stride of each dimension (global increment caused by local increment)
 
  TensorRange(const TensorRange &) = default;
  TensorRange & operator=(const TensorRange &) = default;

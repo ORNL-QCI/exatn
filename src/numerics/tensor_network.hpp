@@ -63,12 +63,17 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <map>
 #include <vector>
 #include <list>
+#include <tuple>
 #include <string>
 #include <memory>
 
 namespace exatn{
 
 namespace numerics{
+
+//Index (dimension) split information: Vector of segments the full dimension is split into:
+using IndexSplit = std::vector<std::pair<SubspaceId, DimExtent>>; //Segment = [subspace_base, segment_extent]
+
 
 class TensorNetwork{
 
@@ -301,6 +306,12 @@ public:
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy",
                                                                 bool universal_indices = false);
 
+ /** Splits internal (contracted) indices of the tensor network into smaller segments
+     in order to make sure all intermediates from the operation list will fit within
+     the given memory limit. The generated information will be available to
+     the processing backend when the tensor network is submitted for evaluation. **/
+ void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
+
  /** Returns the entire tensor network printed in a symbolic form.
      The tensor network must already have its operation list generated. **/
  bool printTensorNetwork(std::string & network);
@@ -396,6 +407,11 @@ private:
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
+ std::unordered_map<TensorHashType, //tensor identifier (hash)
+                    std::vector<std::tuple<unsigned int, //global id of the split index: [0..max]
+                                           unsigned int, //position of the split index in the tensor: [0..max]
+                                           IndexSplit>   //information on the segments the index is split into
+                               >> split_indices_; //internal tensor network indices which were split
  bool universal_indexing_; //universal indexing flag
 };
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/04/16
+REVISION: 2020/04/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -125,6 +125,10 @@ public:
  const std::string & getName() const;
  /** Get the tensor rank (order). **/
  unsigned int getRank() const;
+ /** Get the tensor volume (number of elements). **/
+ std::size_t getVolume() const;
+ /** Get the tensor size (bytes). **/
+ std::size_t getSize() const;
  /** Get the tensor shape. **/
  const TensorShape & getShape() const;
  /** Get the tensor signature. **/
@@ -189,6 +193,20 @@ private:
 
 
 //FREE FUNCTIONS:
+
+/** Returns the size of a tensor element type in bytes. **/
+inline std::size_t tensor_element_type_size(TensorElementType tensor_element_type)
+{
+ switch(tensor_element_type){
+  case(TensorElementType::REAL16): return TensorElementTypeSize<TensorElementType::REAL16>();
+  case(TensorElementType::REAL32): return TensorElementTypeSize<TensorElementType::REAL32>();
+  case(TensorElementType::REAL64): return TensorElementTypeSize<TensorElementType::REAL64>();
+  case(TensorElementType::COMPLEX16): return TensorElementTypeSize<TensorElementType::COMPLEX16>();
+  case(TensorElementType::COMPLEX32): return TensorElementTypeSize<TensorElementType::COMPLEX32>();
+  case(TensorElementType::COMPLEX64): return TensorElementTypeSize<TensorElementType::COMPLEX64>();
+ }
+ return TensorElementTypeSize<TensorElementType::VOID>();
+}
 
 /** Generates a unique name for a given tensor. **/
 std::string generateTensorName(const Tensor & tensor,       //in: tensor

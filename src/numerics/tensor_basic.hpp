@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2020/04/07
+REVISION: 2020/04/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -61,6 +61,15 @@ enum class TensorElementType{
  COMPLEX32,
  COMPLEX64
 };
+
+template <TensorElementType> constexpr std::size_t TensorElementTypeSize();
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::VOID>(){return 0;} //0 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::REAL16>(){return 2;} //2 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::REAL32>(){return 4;} //4 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::REAL64>(){return 8;} //8 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX16>(){return 4;} //4 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX32>(){return 8;} //8 bytes
+template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX64>(){return 16;} //16 bytes
 
 } //namespace exatn
 
