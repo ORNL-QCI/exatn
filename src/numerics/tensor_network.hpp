@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/19
+REVISION: 2020/04/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -405,6 +405,7 @@ private:
 
  /** Data members: Contraction sequence: **/
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
+ double max_intermediate_volume_; //volume of the largest intermediate tensor
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
  std::unordered_map<TensorHashType, //tensor identifier (hash)

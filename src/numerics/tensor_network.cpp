@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/19
+REVISION: 2020/04/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,7 +29,7 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(1), max_tensor_id_(0),
- contraction_seq_flops_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -43,7 +43,7 @@ TensorNetwork::TensorNetwork():
 
 TensorNetwork::TensorNetwork(const std::string & name):
  explicit_output_(0), finalized_(1), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -59,7 +59,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -75,7 +75,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
 {
  //Convert tensor hypernetwork into regular tensor network, if needed:
  //`Finish
@@ -156,7 +156,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -180,57 +180,6 @@ TensorNetwork::TensorNetwork(const TensorNetwork & another,
  if(replace_output) this->resetOutputTensor(new_output_name);
 }
 
-/*
-TensorNetwork::TensorNetwork(const TensorNetwork & another)
-{
- explicit_output_ = 1;
- finalized_ = 0;
- name_ = another.getName();
- max_tensor_id_ = 0;
- contraction_seq_flops_ = 0.0;
-
- auto output_tensor = another.getTensor(0);
- const auto & output_legs = *(another.getTensorConnections(0));
- auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(generateTensorName(*new_output_tensor,"z"));
- auto res = emplaceTensorConnDirect(false,
-                                    0U, //output tensor (id = 0)
-                                    new_output_tensor,0U,output_legs);
- assert(res);
- for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
-  if(iter->first != 0){ //only input tensors
-   res = emplaceTensorConn(iter->first,iter->second); assert(res);
-  }
- }
- finalized_ = 1;
-}
-
-
-TensorNetwork & TensorNetwork::operator=(const TensorNetwork & another)
-{
- explicit_output_ = 1;
- finalized_ = 0;
- name_ = another.getName();
- max_tensor_id_ = 0;
- contraction_seq_flops_ = 0.0;
-
- auto output_tensor = another.getTensor(0);
- const auto & output_legs = *(another.getTensorConnections(0));
- auto new_output_tensor = makeSharedTensor(*output_tensor);
- new_output_tensor->rename(generateTensorName(*new_output_tensor,"z"));
- auto res = emplaceTensorConnDirect(false,
-                                    0U, //output tensor (id = 0)
-                                    new_output_tensor,0U,output_legs);
- assert(res);
- for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
-  if(iter->first != 0){ //only input tensors
-   res = emplaceTensorConn(iter->first,iter->second); assert(res);
-  }
- }
- finalized_ = 1;
- return *this;
-}
-*/
 
 void TensorNetwork::printIt(bool with_tensor_hash) const
 {
@@ -476,6 +425,7 @@ void TensorNetwork::invalidateContractionSequence()
  operations_.clear();
  contraction_seq_.clear();
  contraction_seq_flops_ = 0.0;
+ max_intermediate_volume_ = 0.0;
  universal_indexing_ = false;
  return;
 }
@@ -499,6 +449,7 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
  contraction_seq_flops_ = 0.0; //flop count is unknown yet
+ max_intermediate_volume_ = 0.0; //max intermediate volume is unknown yet
  return;
 }
 
@@ -1608,6 +1559,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    }
   }
   //Determine the pseudo-optimal sequence of tensor contractions:
+  max_intermediate_volume_ = 0.0;
   double flops = determineContractionSequence(*(iter->second));
   //Generate the list of operations:
   auto & tensor_op_factory = *(TensorOpFactory::get());
@@ -1638,6 +1590,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      assert(generated);
     }
     auto tensor0 = net.getTensor(contr->result_id);
+    max_intermediate_volume_ = std::max(max_intermediate_volume_,static_cast<double>(tensor0->getVolume()));
     if(contr->result_id != 0){ //intermediate tensors need to be created/destroyed
      auto op_create = tensor_op_factory.createTensorOpShared(TensorOpCode::CREATE); //create intermediate
      op_create->setTensorOperand(tensor0);
