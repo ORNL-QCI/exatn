@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/20
+REVISION: 2020/04/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -253,20 +253,16 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 bool NumServer::submit(TensorNetwork & network)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return submit(network,process_set);
+ return submit(network,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return submit(network,process_set);
+ return submit(network,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::submit(TensorNetwork & network,
-                       const std::vector<unsigned int> & process_set)
+                       const ProcessGroup & process_group)
 {
  assert(network.isValid()); //debug
  auto & op_list = network.getOperationList(contr_seq_optimizer_);
@@ -296,31 +292,27 @@ bool NumServer::submit(TensorNetwork & network,
 }
 
 bool NumServer::submit(std::shared_ptr<TensorNetwork> network,
-                       const std::vector<unsigned int> & process_set)
+                       const ProcessGroup & process_group)
 {
- if(network) return submit(*network,process_set);
+ if(network) return submit(*network,process_group);
  return false;
 }
 
 bool NumServer::submit(TensorExpansion & expansion,
                        std::shared_ptr<Tensor> accumulator)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return submit(expansion,accumulator,process_set);
+ return submit(expansion,accumulator,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
                        std::shared_ptr<Tensor> accumulator)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return submit(expansion,accumulator,process_set);
+ return submit(expansion,accumulator,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::submit(TensorExpansion & expansion,
                        std::shared_ptr<Tensor> accumulator,
-                       const std::vector<unsigned int> & process_set)
+                       const ProcessGroup & process_group)
 {
  assert(accumulator);
  std::list<std::shared_ptr<TensorOperation>> accumulations;
@@ -349,9 +341,9 @@ bool NumServer::submit(TensorExpansion & expansion,
 
 bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
                        std::shared_ptr<Tensor> accumulator,
-                       const std::vector<unsigned int> & process_set)
+                       const ProcessGroup & process_group)
 {
- if(expansion) return submit(*expansion,accumulator,process_set);
+ if(expansion) return submit(*expansion,accumulator,process_group);
  return false;
 }
 
@@ -1214,13 +1206,11 @@ bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
 
 bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return evaluateTensorNetwork(name,network,process_set);
+ return evaluateTensorNetwork(name,network,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network,
-                                      const std::vector<unsigned int> & process_set)
+                                      const ProcessGroup & process_group)
 {
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
@@ -1248,7 +1238,7 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
-   parsed = submit(tensnet,process_set);
+   parsed = submit(tensnet,process_group);
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
@@ -1258,13 +1248,11 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
 
 bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::string & network)
 {
- std::vector<unsigned int> process_set(num_processes_);
- for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
- return evaluateTensorNetworkSync(name,network,process_set);
+ return evaluateTensorNetworkSync(name,network,ProcessGroup(intra_comm_,num_processes_));
 }
 
 bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::string & network,
-                                          const std::vector<unsigned int> & process_set)
+                                          const ProcessGroup & process_group)
 {
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
@@ -1292,7 +1280,7 @@ bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::s
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
-   parsed = submit(tensnet,process_set);
+   parsed = submit(tensnet,process_group);
    if(parsed) parsed = sync(tensnet);
   }
  }else{

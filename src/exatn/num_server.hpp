@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/20
+REVISION: 2020/04/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -192,9 +192,9 @@ public:
  bool submit(TensorNetwork & network);                       //in: tensor network for numerical evaluation
  bool submit(std::shared_ptr<TensorNetwork> network);        //in: tensor network for numerical evaluation
  bool submit(TensorNetwork & network,                        //in: tensor network for numerical evaluation
-             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+             const ProcessGroup & process_group);            //in: chosen group of MPI processes
  bool submit(std::shared_ptr<TensorNetwork> network,         //in: tensor network for numerical evaluation
-             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+             const ProcessGroup & process_group);            //in: chosen group of MPI processes
 
  /** Submits a tensor network expansion for processing (evaluating output tensors of all
      constituting tensor networks and accumualting them in the provided accumulator tensor).
@@ -205,12 +205,12 @@ public:
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
  bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
- bool submit(TensorExpansion & expansion,                    //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator,            //inout: tensor accumulator (result)
-             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
- bool submit(std::shared_ptr<TensorExpansion> expansion,     //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator,            //inout: tensor accumulator (result)
-             const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+ bool submit(TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             const ProcessGroup & process_group);         //in: chosen group of MPI processes
+ bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             const ProcessGroup & process_group);         //in: chosen group of MPI processes
 
  /** Synchronizes all update operations on a given tensor. **/
  bool sync(const Tensor & tensor,
@@ -428,17 +428,17 @@ public:
 
  /** Performs a full evaluation of a tensor network based on the symbolic
      specification involving already created tensors (including the output). **/
- bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
-                            const std::string & network); //in: symbolic tensor network specification
- bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
-                            const std::string & network,  //in: symbolic tensor network specification
-                            const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+ bool evaluateTensorNetwork(const std::string & name,            //in: tensor network name
+                            const std::string & network);        //in: symbolic tensor network specification
+ bool evaluateTensorNetwork(const std::string & name,            //in: tensor network name
+                            const std::string & network,         //in: symbolic tensor network specification
+                            const ProcessGroup & process_group); //in: chosen group of MPI processes
 
- bool evaluateTensorNetworkSync(const std::string & name,     //in: tensor network name
-                                const std::string & network); //in: symbolic tensor network specification
- bool evaluateTensorNetworkSync(const std::string & name,     //in: tensor network name
-                                const std::string & network,  //in: symbolic tensor network specification
-                                const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
+ bool evaluateTensorNetworkSync(const std::string & name,            //in: tensor network name
+                                const std::string & network);        //in: symbolic tensor network specification
+ bool evaluateTensorNetworkSync(const std::string & name,            //in: tensor network name
+                                const std::string & network,         //in: symbolic tensor network specification
+                                const ProcessGroup & process_group); //in: chosen group of MPI processes
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

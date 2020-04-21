@@ -293,8 +293,8 @@ py::class_<exatn::numerics::TensorExpansion,
       "");
   m.def(
       "evaluateTensorNetwork",
-      [](const std::string& name, const std::string& network, const std::vector<unsigned int> & process_set){
-         return exatn::evaluateTensorNetworkSync(name,network,process_set);},
+      [](const std::string& name, const std::string& network, const ProcessGroup & process_group){
+         return exatn::evaluateTensorNetworkSync(name,network,process_group);},
       "");
   m.def("getTensorData", &getTensorData, "");
   m.def("getLocalTensor", [](const std::string &name) {
