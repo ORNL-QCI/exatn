@@ -1,11 +1,12 @@
 /** ExaTN::Numerics: Tensor operation: Inserts a slice into a tensor
-REVISION: 2020/02/28
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Inserts a slice into a tensor inside the processing backend.
+ (a) Inserts a slice into a tensor inside the processing backend:
+     Operand 0 <= Operand 1 (slice)
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_INSERT_HPP_

@@ -277,13 +277,25 @@ py::class_<exatn::numerics::TensorExpansion,
       },
       "");
   m.def(
-      "evaluate", [](TensorNetwork &network) { return evaluateSync(network); },
+      "evaluate",
+      [](TensorNetwork &network) { return evaluateSync(network); },
       "");
-  m.def("evaluate", [](TensorExpansion& exp, std::shared_ptr<Tensor> accum){return exatn::evaluateSync(exp,accum);});
+  m.def(
+      "evaluate",
+      [](TensorExpansion& exp, std::shared_ptr<Tensor> accum){return exatn::evaluateSync(exp,accum);});
   m.def("getTensor", &exatn::getTensor, "");
   m.def("print", &printTensorDataNoNumServer, "");
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
-  m.def("evaluateTensorNetwork", &evaluateTensorNetwork, "");
+  m.def(
+      "evaluateTensorNetwork",
+      [](const std::string& name, const std::string& network){
+         return exatn::evaluateTensorNetworkSync(name,network);},
+      "");
+  m.def(
+      "evaluateTensorNetwork",
+      [](const std::string& name, const std::string& network, const std::vector<unsigned int> & process_set){
+         return exatn::evaluateTensorNetworkSync(name,network,process_set);},
+      "");
   m.def("getTensorData", &getTensorData, "");
   m.def("getLocalTensor", [](const std::string &name) {
     auto local_tensor = exatn::getLocalTensor(name);

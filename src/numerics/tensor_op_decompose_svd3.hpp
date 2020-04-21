@@ -1,12 +1,13 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into three tensor factors via SVD
-REVISION: 2020/04/13
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Decomposes a tensor into three tensor factors via SVD, for example:
-     D(a,b,c,d,e) = L(c,i,e,j) * S(i,j) * R(d,j,a,b,i)
+     D(a,b,c,d,e) = L(c,i,e,j) * S(i,j)    * R(d,j,a,b,i)
+     Operand 3    = Operand 0  * Operand 2 * Operand 1
      Note that the ordering of the contracted indices is not guaranteed.
 **/
 

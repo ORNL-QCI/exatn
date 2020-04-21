@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/04/13
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -257,6 +257,34 @@ inline bool scaleTensorSync(const std::string & name, //in: tensor name
  {return numericalServer->scaleTensorSync(name,value);}
 
 
+/** Broadcast a tensor among all MPI processes within an intra-communicator.
+    This function is needed when a tensor is updated in an operation
+    submitted to a subset of MPI processes such that the excluded
+    MPI processes can receive an updated version of the tensor. **/
+inline bool broadcastTensor(const std::string & name, //in: tensor name
+                            int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
+                            MPICommProxy intra_comm = MPICommProxy()) //in: MPI intra-communicator, defaults to all processes
+ {return numericalServer->broadcastTensor(name,root_process_rank,intra_comm);}
+
+inline bool broadcastTensorSync(const std::string & name, //in: tensor name
+                                int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
+                                MPICommProxy intra_comm = MPICommProxy()) //in: MPI intra-communicator, defaults to all processes
+ {return numericalServer->broadcastTensorSync(name,root_process_rank,intra_comm);}
+
+
+/** Performs a global sum reduction on a tensor among all MPI processes within
+    an intra-communicator. This function is needed when multiple MPI processes
+    compute their local updates to the tensor, thus requiring a global sum
+    reduction such that each MPI process will get the final (same) tensor value. **/
+inline bool allreduceTensor(const std::string & name, //in: tensor name
+                            MPICommProxy intra_comm = MPICommProxy()) //in: MPI intra-communicator, defaults to all processes
+ {return numericalServer->allreduceTensor(name,intra_comm);}
+
+inline bool allreduceTensorSync(const std::string & name, //in: tensor name
+                                MPICommProxy intra_comm = MPICommProxy()) //in: MPI intra-communicator, defaults to all processes
+ {return numericalServer->allreduceTensorSync(name,intra_comm);}
+
+
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
 inline bool transformTensor(const std::string & name,              //in: tensor name
                             std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
@@ -265,6 +293,28 @@ inline bool transformTensor(const std::string & name,              //in: tensor 
 inline bool transformTensorSync(const std::string & name,              //in: tensor name
                                 std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
  {return numericalServer->transformTensorSync(name,functor);}
+
+
+/** Extracts a slice from a tensor and stores it in another tensor
+    the signature and shape of which determines which slice to extract. **/
+inline bool extractTensorSlice(const std::string & tensor_name, //in: tensor name
+                               const std::string & slice_name)  //in: slice name
+ {return numericalServer->extractTensorSlice(tensor_name,slice_name);}
+
+inline bool extractTensorSliceSync(const std::string & tensor_name, //in: tensor name
+                                   const std::string & slice_name)  //in: slice name
+ {return numericalServer->extractTensorSliceSync(tensor_name,slice_name);}
+
+
+/** Inserts a slice into a tensor. The signature and shape of the slice
+    determines the position in the tensor where the slice will be inserted. **/
+inline bool insertTensorSlice(const std::string & tensor_name, //in: tensor name
+                              const std::string & slice_name)  //in: slice name
+ {return numericalServer->insertTensorSlice(tensor_name,slice_name);}
+
+inline bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
+                                  const std::string & slice_name)  //in: slice name
+ {return numericalServer->insertTensorSliceSync(tensor_name,slice_name);}
 
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/
@@ -377,6 +427,16 @@ inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor 
                                       const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetworkSync(name,network);}
 
+inline bool evaluateTensorNetwork(const std::string & name,    //in: tensor network name
+                                  const std::string & network, //in: symbolic tensor network specification
+                                  const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {return numericalServer->evaluateTensorNetwork(name,network,process_set);}
+
+inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor network name
+                                      const std::string & network, //in: symbolic tensor network specification
+                                      const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {return numericalServer->evaluateTensorNetworkSync(name,network,process_set);}
+
 
 /** Synchronizes all outstanding update operations on a given tensor
     specified by its symbolic name. **/
@@ -391,6 +451,16 @@ inline bool evaluate(TensorNetwork & network) //in: finalized tensor network
 
 inline bool evaluateSync(TensorNetwork & network) //in: finalized tensor network
  {bool success = numericalServer->submit(network);
+  if(success) success = numericalServer->sync(network);
+  return success;}
+
+inline bool evaluate(TensorNetwork & network, //in: finalized tensor network
+                     const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {return numericalServer->submit(network,process_set);}
+
+inline bool evaluateSync(TensorNetwork & network, //in: finalized tensor network
+                         const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {bool success = numericalServer->submit(network,process_set);
   if(success) success = numericalServer->sync(network);
   return success;}
 
@@ -410,6 +480,19 @@ inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor netwo
                          std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
  {if(!accumulator) return false;
   bool success = numericalServer->submit(expansion,accumulator);
+  if(success) success = numericalServer->sync(*accumulator);
+  return success;}
+
+inline bool evaluate(TensorExpansion & expansion,         //in: tensor network expansion
+                     std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                     const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {return numericalServer->submit(expansion,accumulator,process_set);}
+
+inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor network expansion
+                         std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                         const std::vector<unsigned int> & process_set) //in: chosen set of parallel processes (by their ranks)
+ {if(!accumulator) return false;
+  bool success = numericalServer->submit(expansion,accumulator,process_set);
   if(success) success = numericalServer->sync(*accumulator);
   return success;}
 

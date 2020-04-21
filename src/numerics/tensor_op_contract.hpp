@@ -1,12 +1,13 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2019/08/30
+REVISION: 2020/04/20
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Contracts two tensors and accumulates the result into another tensor
-     inside the processing backend.
+     inside the processing backend:
+     Operand 0 += Operand 1 * Operand 2 * prefactor
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_CONTRACT_HPP_

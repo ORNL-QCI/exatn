@@ -1,11 +1,12 @@
 /** ExaTN::Numerics: Tensor operation: Extracts a slice from a tensor
-REVISION: 2020/02/28
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Extracts a slice from a tensor inside the processing backend.
+ (a) Extracts a slice from a tensor inside the processing backend:
+     Operand 0 (slice) <= Operand 1
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_SLICE_HPP_

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into two tensor factors via SVD
-REVISION: 2020/04/07
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,6 +7,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 /** Rationale:
  (a) Decomposes a tensor into two tensor factors via SVD, for example:
      D(a,b,c,d,e) = L(c,i,e,j) * R(d,j,a,b,i)
+     Operand 2    = Operand 0  * Operand 1
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OP_DECOMPOSE_SVD2_HPP_

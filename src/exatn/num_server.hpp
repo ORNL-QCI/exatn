@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/13
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -296,6 +296,28 @@ public:
 
  bool initTensorRndSync(const std::string & name); //in: tensor name
 
+ /** Broadcast a tensor among all MPI processes within an intra-communicator.
+     This function is needed when a tensor is updated in an operation
+     submitted to a subset of MPI processes such that the excluded
+     MPI processes can receive an updated version of the tensor. **/
+ bool broadcastTensor(const std::string & name, //in: tensor name
+                      int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
+                      MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+
+ bool broadcastTensorSync(const std::string & name, //in: tensor name
+                          int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
+                          MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+
+ /** Performs a global sum reduction on a tensor among all MPI processes within
+     an intra-communicator. This function is needed when multiple MPI processes
+     compute their local updates to the tensor, thus requiring a global sum
+     reduction such that each MPI process will get the final (same) tensor value. **/
+ bool allreduceTensor(const std::string & name, //in: tensor name
+                      MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+
+ bool allreduceTensorSync(const std::string & name, //in: tensor name
+                          MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+
  /** Scales a tensor by a scalar value. **/
  template<typename NumericType>
  bool scaleTensor(const std::string & name, //in: tensor name
@@ -311,6 +333,22 @@ public:
 
  bool transformTensorSync(const std::string & name,               //in: tensor name
                           std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+
+ /** Extracts a slice from a tensor and stores it in another tensor
+     the signature and shape of which determines which slice to extract. **/
+ bool extractTensorSlice(const std::string & tensor_name, //in: tensor name
+                         const std::string & slice_name); //in: slice name
+
+ bool extractTensorSliceSync(const std::string & tensor_name, //in: tensor name
+                             const std::string & slice_name); //in: slice name
+
+ /** Inserts a slice into a tensor. The signature and shape of the slice
+     determines the position in the tensor where the slice will be inserted. **/
+ bool insertTensorSlice(const std::string & tensor_name, //in: tensor name
+                        const std::string & slice_name); //in: slice name
+
+ bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
+                            const std::string & slice_name); //in: slice name
 
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
@@ -392,9 +430,15 @@ public:
      specification involving already created tensors (including the output). **/
  bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
                             const std::string & network); //in: symbolic tensor network specification
+ bool evaluateTensorNetwork(const std::string & name,     //in: tensor network name
+                            const std::string & network,  //in: symbolic tensor network specification
+                            const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
 
  bool evaluateTensorNetworkSync(const std::string & name,     //in: tensor network name
                                 const std::string & network); //in: symbolic tensor network specification
+ bool evaluateTensorNetworkSync(const std::string & name,     //in: tensor network name
+                                const std::string & network,  //in: symbolic tensor network specification
+                                const std::vector<unsigned int> & process_set); //in: chosen set of parallel processes
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
@@ -430,6 +474,7 @@ private:
 
  int num_processes_; //total number of parallel processes
  int process_rank_; //rank of the current parallel process
+ MPICommProxy intra_comm_; //MPI intra-communicator used to initialize the Numerical Server
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 

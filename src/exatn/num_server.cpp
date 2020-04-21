@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/13
+REVISION: 2020/04/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,7 +27,7 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 NumServer::NumServer(const MPICommProxy & communicator,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("dummy"),
+ contr_seq_optimizer_("dummy"), intra_comm_(communicator),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,graph_executor_name,node_executor_name))
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
@@ -499,6 +499,70 @@ bool NumServer::initTensorRndSync(const std::string & name)
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
 }
 
+bool NumServer::broadcastTensor(const std::string & name, int root_process_rank, MPICommProxy intra_comm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::broadcastTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
+ op->setTensorOperand(iter->second);
+ if(intra_comm.isEmpty()) intra_comm = intra_comm_;
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
+ auto submitted = submit(op);
+ return submitted;
+}
+
+bool NumServer::broadcastTensorSync(const std::string & name, int root_process_rank, MPICommProxy intra_comm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::broadcastTensorSync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
+ op->setTensorOperand(iter->second);
+ if(intra_comm.isEmpty()) intra_comm = intra_comm_;
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
+ auto submitted = submit(op);
+ if(submitted) submitted = sync(*op);
+ return submitted;
+}
+
+bool NumServer::allreduceTensor(const std::string & name, MPICommProxy intra_comm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::allreduceTensor): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+ op->setTensorOperand(iter->second);
+ if(intra_comm.isEmpty()) intra_comm = intra_comm_;
+ std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(intra_comm);
+ auto submitted = submit(op);
+ return submitted;
+}
+
+bool NumServer::allreduceTensorSync(const std::string & name, MPICommProxy intra_comm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::allreduceTensorSync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+ op->setTensorOperand(iter->second);
+ if(intra_comm.isEmpty()) intra_comm = intra_comm_;
+ std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(intra_comm);
+ auto submitted = submit(op);
+ if(submitted) submitted = sync(*op);
+ return submitted;
+}
+
 bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
 {
  auto iter = tensors_.find(name);
@@ -526,6 +590,108 @@ bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<Te
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
  return submitted;
+}
+
+bool NumServer::extractTensorSlice(const std::string & tensor_name,
+                                   const std::string & slice_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(tensor_name);
+ if(iter != tensors_.end()){
+  auto tensor0 = iter->second;
+  iter = tensors_.find(slice_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
+   op->setTensorOperand(tensor1);
+   op->setTensorOperand(tensor0);
+   success = submit(op);
+  }else{
+   success = false;
+   std::cout << "#ERROR(exatn::NumServer::extractTensorSlice): Tensor " << slice_name << " not found!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::extractTensorSlice): Tensor " << tensor_name << " not found!\n";
+ }
+ return success;
+}
+
+bool NumServer::extractTensorSliceSync(const std::string & tensor_name,
+                                       const std::string & slice_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(tensor_name);
+ if(iter != tensors_.end()){
+  auto tensor0 = iter->second;
+  iter = tensors_.find(slice_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
+   op->setTensorOperand(tensor1);
+   op->setTensorOperand(tensor0);
+   success = submit(op);
+   if(success) success = sync(*op);
+  }else{
+   success = false;
+   std::cout << "#ERROR(exatn::NumServer::extractTensorSliceSync): Tensor " << slice_name << " not found!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::extractTensorSliceSync): Tensor " << tensor_name << " not found!\n";
+ }
+ return success;
+}
+
+bool NumServer::insertTensorSlice(const std::string & tensor_name,
+                                  const std::string & slice_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(tensor_name);
+ if(iter != tensors_.end()){
+  auto tensor0 = iter->second;
+  iter = tensors_.find(slice_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::INSERT);
+   op->setTensorOperand(tensor0);
+   op->setTensorOperand(tensor1);
+   success = submit(op);
+  }else{
+   success = false;
+   std::cout << "#ERROR(exatn::NumServer::insertTensorSlice): Tensor " << slice_name << " not found!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::insertTensorSlice): Tensor " << tensor_name << " not found!\n";
+ }
+ return success;
+}
+
+bool NumServer::insertTensorSliceSync(const std::string & tensor_name,
+                                      const std::string & slice_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(tensor_name);
+ if(iter != tensors_.end()){
+  auto tensor0 = iter->second;
+  iter = tensors_.find(slice_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::INSERT);
+   op->setTensorOperand(tensor0);
+   op->setTensorOperand(tensor1);
+   success = submit(op);
+   if(success) success = sync(*op);
+  }else{
+   success = false;
+   std::cout << "#ERROR(exatn::NumServer::insertTensorSliceSync): Tensor " << slice_name << " not found!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::insertTensorSliceSync): Tensor " << tensor_name << " not found!\n";
+ }
+ return success;
 }
 
 bool NumServer::decomposeTensorSVD(const std::string & contraction)
@@ -1048,6 +1214,14 @@ bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
 
 bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network)
 {
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return evaluateTensorNetwork(name,network,process_set);
+}
+
+bool NumServer::evaluateTensorNetwork(const std::string & name, const std::string & network,
+                                      const std::vector<unsigned int> & process_set)
+{
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
  if(parsed){
@@ -1074,7 +1248,7 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
-   parsed = submit(tensnet);
+   parsed = submit(tensnet,process_set);
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetwork): Invalid tensor network: " << network << std::endl;
@@ -1083,6 +1257,14 @@ bool NumServer::evaluateTensorNetwork(const std::string & name, const std::strin
 }
 
 bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::string & network)
+{
+ std::vector<unsigned int> process_set(num_processes_);
+ for(unsigned int i = 0; i < num_processes_; ++i) process_set[i] = i;
+ return evaluateTensorNetworkSync(name,network,process_set);
+}
+
+bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::string & network,
+                                          const std::vector<unsigned int> & process_set)
 {
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
@@ -1110,7 +1292,7 @@ bool NumServer::evaluateTensorNetworkSync(const std::string & name, const std::s
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
-   parsed = submit(tensnet);
+   parsed = submit(tensnet,process_set);
    if(parsed) parsed = sync(tensnet);
   }
  }else{
