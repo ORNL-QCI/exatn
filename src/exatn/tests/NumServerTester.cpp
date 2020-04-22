@@ -752,6 +752,79 @@ TEST(NumServerTester, Sycamore8NumServer)
 }
 
 
+TEST(NumServerTester, BigMPSNumServer)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ const int nbQubits = 32;
+ const std::vector<int> qubitTensorDim(nbQubits, 2);
+ const std::string ROOT_TENSOR_NAME = "Root";
+ auto rootTensor = std::make_shared<Tensor>(ROOT_TENSOR_NAME, qubitTensorDim);
+
+ auto & networkBuildFactory = *(exatn::numerics::NetworkBuildFactory::get());
+ auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
+ bool success = builder->setParameter("max_bond_dim", 1);
+ assert(success);
+
+ std::cout << "Building MPS tensor network ... " << std::flush;
+ auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
+ std::cout << "Done\n" << std::flush;
+ tensorNetwork->printIt();
+
+ std::cout << "Creating/Initializing MPS tensors ... " << std::flush;
+ const std::vector<std::complex<double>> ZERO_TENSOR_BODY {{1.0, 0.0}, {0.0, 0.0}};
+ for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
+  auto tensor = iter->second.getTensor();
+  const auto & tensorName = tensor->getName();
+  if(tensorName != ROOT_TENSOR_NAME){
+   success = exatn::createTensorSync(tensor, exatn::TensorElementType::COMPLEX64);
+   assert(success);
+   success = exatn::initTensorDataSync(tensorName, ZERO_TENSOR_BODY);
+   assert(success);
+  }
+ }
+ std::cout << "Done\n" << std::flush;
+
+ exatn::TensorNetwork ket(*tensorNetwork);
+ ket.rename("MPSket");
+ exatn::TensorNetwork bra(ket);
+ bra.conjugate();
+ bra.rename("MPSbra");
+
+ std::cout << "Constructing 1-RDM contracted tensor network ... " << std::flush;
+ const std::size_t qubitIdx = 12; //qubit Id of the leg that will be left open to calculate RDM
+ std::vector<std::pair<unsigned int, unsigned int>> pairings;
+ for(std::size_t i = 0; i < nbQubits; ++i){
+  //Connect the original tensor network with its inverse but leave the measure qubit line open:
+  if(i != qubitIdx) pairings.emplace_back(std::make_pair(i,i));
+ }
+ success = ket.appendTensorNetwork(std::move(bra), pairings);
+ assert(success);
+ std::cout << "Done\n" << std::flush;
+
+ /*
+ std::cout << "Collapsing isometries ... ";
+ success = ket.collapseIsometries();
+ assert(success);
+ std::cout << "Done\n";
+ */
+
+ std::cout << "Evaluating 1-RDM ... " << std::flush;
+ success = exatn::evaluateSync(ket);
+ assert(success);
+ std::cout << "Done\n" << std::flush;
+ exatn::sync();
+}
+
+
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::numerics::Tensor;

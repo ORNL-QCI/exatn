@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/04/19
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -209,8 +209,8 @@ inline std::size_t tensor_element_type_size(TensorElementType tensor_element_typ
 }
 
 /** Generates a unique name for a given tensor. **/
-std::string generateTensorName(const Tensor & tensor,       //in: tensor
-                               const std::string & prefix); //in: name prefix
+std::string generateTensorName(const Tensor & tensor,       //in: tensor stored on heap
+                               const std::string & prefix); //in: desired name prefix
 
 
 //TEMPLATES:
