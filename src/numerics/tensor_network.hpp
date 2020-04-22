@@ -321,13 +321,19 @@ public:
      the processing backend when the tensor network is submitted for evaluation. **/
  void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
 
+ /** Prints information on index splitting in the tensor operation list. **/
+ void printIndexSplitInfo() const;
+
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
      if available (if getOperationList has already been invoked). **/
  double getFMAFlops() const;
 
+ /** Returns the maximal cumulative volume of intermediate tensors present at a time. **/
+ double getMaxIntermediatePresenceVolume() const;
+
  /** Returns the volume of the largest intermediate tensor required for evaluating
      the tensor network, if available (if getOperationList has already been invoked). **/
- double getMaxIntermediateVolume(unsigned int * intermediate_rank) const;
+ double getMaxIntermediateVolume(unsigned int * intermediate_rank = nullptr) const;
 
  /** Returns the entire tensor network printed in a symbolic form.
      The tensor network must already have its operation list generated. **/
@@ -422,6 +428,7 @@ private:
 
  /** Data members: Contraction sequence: **/
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
+ double max_intermediate_presence_volume_; //max cumulative volume of intermediates present at a time
  double max_intermediate_volume_; //volume of the largest intermediate tensor
  unsigned int max_intermediate_rank_; //rank of the largest intermediate tensor
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
@@ -429,10 +436,11 @@ private:
  std::vector<std::pair<std::string, //universal (unique) label of the index that was split
                        IndexSplit>  //information on the segments the index is split into
             > split_indices_;       //internal tensor network indices which were split
- std::unordered_map<TensorHashType, //tensor identifier (hash)
-                    std::vector<std::pair<unsigned int,  //global id of the split index (in split_indices_): [0..max]
-                                          unsigned int>> //position of the split index in the tensor: [0..max]
-                   > split_tensors_; //information on tensors with split dimensions
+ std::map<std::pair<TensorHashType,  //tensor operation identifier (hash), only for input tensors (0 for intermediates)
+                    TensorHashType>, //tensor operand identifier (tensor hash for intermediates, tensor operand position for input tensors)
+          std::vector<std::pair<unsigned int,  //global id of the split index (in split_indices_): [0..max]
+                                unsigned int>> //position of the split index in the tensor operand: [0..max]
+         > split_tensors_; //information on tensors with split dimensions
  bool universal_indexing_; //universal indexing flag
 };
 

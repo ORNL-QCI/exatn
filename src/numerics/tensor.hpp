@@ -179,7 +179,7 @@ public:
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
 
- /** Get the unique integer tensor id. **/
+ /** Returns a unique integer hash for the tensor object. **/
  TensorHashType getTensorHash() const;
 
 private:

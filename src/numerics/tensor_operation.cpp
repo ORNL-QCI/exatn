@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/04/18
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -179,6 +179,11 @@ void TensorOperation::setId(std::size_t id)
 std::size_t TensorOperation::getId() const
 {
  return id_;
+}
+
+TensorHashType TensorOperation::getTensorOpHash() const
+{
+ return reinterpret_cast<TensorHashType>((void*)this);
 }
 
 } //namespace numerics

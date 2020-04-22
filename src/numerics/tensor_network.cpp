@@ -29,8 +29,8 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(1), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
- universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
+ max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -44,8 +44,8 @@ TensorNetwork::TensorNetwork():
 
 TensorNetwork::TensorNetwork(const std::string & name):
  explicit_output_(0), finalized_(1), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
- universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
+ max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -61,8 +61,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
- universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
+ max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -78,8 +78,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
- universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
+ max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  //Convert tensor hypernetwork into regular tensor network, if needed:
  //`Finish
@@ -160,8 +160,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
- universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
+ max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -431,6 +431,7 @@ void TensorNetwork::invalidateContractionSequence()
  operations_.clear();
  contraction_seq_.clear();
  contraction_seq_flops_ = 0.0;
+ max_intermediate_presence_volume_ = 0.0;
  max_intermediate_volume_ = 0.0;
  max_intermediate_rank_ = 0;
  universal_indexing_ = false;
@@ -456,6 +457,7 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
  contraction_seq_flops_ = 0.0; //flop count is unknown yet
+ max_intermediate_presence_volume_ = 0.0; //max cumulative volume of intermediates present at a time
  max_intermediate_volume_ = 0.0; //max intermediate tensor volume is unknown yet
  max_intermediate_rank_ = 0; //max intermediate tensor rank
  return;
@@ -1621,10 +1623,12 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    }
   }
   //Determine the pseudo-optimal sequence of tensor contractions:
+  max_intermediate_presence_volume_ = 0.0;
   max_intermediate_volume_ = 0.0;
   max_intermediate_rank_ = 0;
   double flops = determineContractionSequence(*(iter->second));
   //Generate the list of operations:
+  std::size_t intermediates_vol = 0;
   auto & tensor_op_factory = *(TensorOpFactory::get());
   if(this->getNumTensors() > 1){ //two or more input tensors: One or more contractions
    TensorNetwork net(*this);
@@ -1656,6 +1660,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     max_intermediate_volume_ = std::max(max_intermediate_volume_,static_cast<double>(tensor0->getVolume()));
     max_intermediate_rank_ = std::max(max_intermediate_rank_,tensor0->getRank());
     if(contr->result_id != 0){ //intermediate tensors need to be created/destroyed
+     intermediates_vol += tensor0->getVolume();
+     max_intermediate_presence_volume_ = std::max(max_intermediate_presence_volume_,static_cast<double>(intermediates_vol));
      auto op_create = tensor_op_factory.createTensorOpShared(TensorOpCode::CREATE); //create intermediate
      op_create->setTensorOperand(tensor0);
      if(tensor0->getElementType() != TensorElementType::VOID)
@@ -1679,14 +1685,16 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
     auto left_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->left_id);
     if(left_intermediate != intermediates.end()){
-     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY);
+     intermediates_vol -= tensor1->getVolume();
+     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY); //destroy intermediate
      op_destroy->setTensorOperand(tensor1);
      operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_destroy)));
      intermediates.erase(left_intermediate);
     }
     auto right_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->right_id);
     if(right_intermediate != intermediates.end()){
-     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY);
+     intermediates_vol -= tensor2->getVolume();
+     auto op_destroy = tensor_op_factory.createTensorOp(TensorOpCode::DESTROY); //destroy intermediate
      op_destroy->setTensorOperand(tensor2);
      operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op_destroy)));
      intermediates.erase(right_intermediate);
@@ -1694,6 +1702,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     --num_contractions;
    }
    assert(intermediates.empty());
+   assert(intermediates_vol == 0);
   }else{ //one input tensor: Single addition
    std::shared_ptr<Tensor> tensor0(nullptr);
    std::shared_ptr<Tensor> tensor1(nullptr);
@@ -1721,6 +1730,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
   //std::cout << "#DEBUG(exatn::numerics::TensorNetwork::getOperationList): Flop count = " << flops
+  //          << "; Max intermediate presence volume = " << max_intermediate_presence_volume_
   //          << "; Max intermediate volume = " << max_intermediate_volume_
   //          << "; Max intermediate rank = " << max_intermediate_rank_ << std::endl; //debug
  }
@@ -1752,7 +1762,8 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
  //Traverse all tensor operations in reverse order:
  unsigned int num_split_indices = 0;
  for(auto op_iter = operations_.rbegin(); op_iter != operations_.rend(); ++op_iter){
-  const auto & op = *(*op_iter);
+  const auto & op = *(*op_iter); //tensor operation
+  const auto op_hash = op.getTensorOpHash();
   const auto num_operands = op.getNumOperands();
   const auto num_operands_out = op.getNumOperandsOut();
   const auto & pattern = op.getIndexPattern();
@@ -1814,14 +1825,15 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
         }
        }
       }
-      //Save dimension splitting info for the tensor:
+      //Save dimension splitting info for the intermediate tensor (no operation hash necessary):
       if(split_dims.size() > 0){
-       auto saved = split_tensors_.emplace(std::make_pair(intermediate_hash,split_dims));
+       auto saved = split_tensors_.emplace(std::make_pair(std::make_pair(0,intermediate_hash),
+                                                          split_dims));
        assert(saved.second);
       }
      }
      //Inspect input tensor operands and save dimension splitting info:
-     for(unsigned int op_num = 1; op_num < num_operands; ++op_num){
+     for(unsigned int op_num = 1; op_num < num_operands; ++op_num){ //input tensor operands
       const auto & tensor = *(op.getTensorOperand(op_num));
       const auto tensor_hash = tensor.getTensorHash();
       const auto & input_tensor_name = tensor.getName();
@@ -1839,9 +1851,10 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
           split_dims.emplace_back(std::make_pair(index_iter->second.first,i));
          }
         }
-        //Save dimension splitting info for the tensor:
+        //Save dimension splitting info for the input tensor (operation hash is necessary):
         if(split_dims.size() > 0){
-         auto saved = split_tensors_.emplace(std::make_pair(tensor_hash,split_dims));
+         auto saved = split_tensors_.emplace(std::make_pair(std::make_pair(op_hash,static_cast<TensorHashType>(op_num)),
+                                                            split_dims));
          assert(saved.second);
         }
        }else{
@@ -1868,9 +1881,27 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
 }
 
 
+void TensorNetwork::printIndexSplitInfo() const
+{
+ std::cout << "#INFO(TensorNetwork::printIndexSplitInfo):\n";
+ for(unsigned int i = 0; i < split_indices_.size(); ++i){
+  std::cout << i << ": " << split_indices_[i].first << ": Number of segments = "
+            << split_indices_[i].second.size() << std::endl;
+ }
+ std::cout << "#END INFO\n";
+ return;
+}
+
+
 double TensorNetwork::getFMAFlops() const
 {
  return contraction_seq_flops_;
+}
+
+
+double TensorNetwork::getMaxIntermediatePresenceVolume() const
+{
+ return max_intermediate_presence_volume_;
 }
 
 

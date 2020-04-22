@@ -698,6 +698,8 @@ TEST(NumServerTester, Sycamore8NumServer)
  };
  assert(num_gates <= sycamore_8_cnot.size());
 
+ std::cout << "Building the circuit ... " << std::flush;
+
  TensorNetwork circuit("Sycamore8_CNOT");
  unsigned int tensor_counter = 0;
 
@@ -729,7 +731,9 @@ TEST(NumServerTester, Sycamore8NumServer)
   assert(success);
  }
  unsigned int last_p_tensor = tensor_counter;
+ std::cout << "Done\n" << std::flush;
 
+ std::cout << "Simplifying the circuit ... " << std::flush;
  //Merge qubit tensors into adjacent CNOTs:
  for(unsigned int i = first_p_tensor; i <= last_p_tensor; ++i){
   const auto & tensor_legs = *(circuit.getTensorConnections(i));
@@ -743,15 +747,24 @@ TEST(NumServerTester, Sycamore8NumServer)
   bool success = circuit.mergeTensors(other_tensor_id,i,++tensor_counter);
   assert(success);
  }
+ std::cout << "Done\n" << std::flush;
 
  circuit.printIt(); //debug
 
  //Generate the list of tensor operations for the circuit:
+ std::cout << "Generating the list of tensor operations for the circuit ... " << std::flush;
  auto & operations = circuit.getOperationList("greed",true);
+ std::cout << "Done\n" << std::flush;
  unsigned int max_rank = 0;
  std::cout << "Total FMA flop count = " << circuit.getFMAFlops()
+           << ": Max intermdediate presence volume = " << circuit.getMaxIntermediatePresenceVolume()
            << ": Max intermdediate volume = " << circuit.getMaxIntermediateVolume(&max_rank)
            << ": Max intermdediate rank = " << max_rank << std::endl;
+
+ std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
+ circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
+ std::cout << "Done\n" << std::flush;
+ circuit.printIndexSplitInfo();
 }
 
 
