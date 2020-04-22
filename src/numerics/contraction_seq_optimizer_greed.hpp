@@ -5,11 +5,12 @@ Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Greedy heuristics based on the individual tensor contraction cost.
+ (a) Greedy heuristics based on the differential tensor volume
+     in individual tensor contractions.
 **/
 
-#ifndef EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_HEURO_HPP_
-#define EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_HEURO_HPP_
+#ifndef EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_GREED_HPP_
+#define EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_GREED_HPP_
 
 #include "contraction_seq_optimizer.hpp"
 
@@ -17,14 +18,16 @@ namespace exatn{
 
 namespace numerics{
 
-class ContractionSeqOptimizerHeuro: public ContractionSeqOptimizer{
+class ContractionSeqOptimizerGreed: public ContractionSeqOptimizer{
 
 public:
 
- ContractionSeqOptimizerHeuro();
- virtual ~ContractionSeqOptimizerHeuro() = default;
+ ContractionSeqOptimizerGreed();
+ virtual ~ContractionSeqOptimizerGreed() = default;
 
  void resetNumWalkers(unsigned int num_walkers);
+
+ void resetAcceptanceTolerance(double acceptance_tolerance);
 
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
@@ -35,10 +38,11 @@ public:
 protected:
 
  unsigned int num_walkers_;
+ double acceptance_tolerance_;
 };
 
 } //namespace numerics
 
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_HEURO_HPP_
+#endif //EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_GREED_HPP_

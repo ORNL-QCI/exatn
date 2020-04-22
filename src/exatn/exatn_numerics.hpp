@@ -524,7 +524,7 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) /
 
 
 /** Resets the tensor contraction sequence optimizer that
-    is invoked when evaluating tensor networks: {dummy,heuro}. **/
+    is invoked when evaluating tensor networks: {dummy,heuro,greed}. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name)
  {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
 

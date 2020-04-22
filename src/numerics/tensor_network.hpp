@@ -74,6 +74,13 @@ namespace numerics{
 //Index (dimension) split information: Vector of segments the full dimension is split into:
 using IndexSplit = std::vector<std::pair<SubspaceId, DimExtent>>; //Segment = [subspace_base, segment_extent]
 
+//Free function analogue of TensorNetwork::getContractionCost:
+double getTensorContractionCost(const TensorConn & left_tensor,
+                                const TensorConn & right_tensor,
+                                double * diff_volume = nullptr,
+                                double * arithm_intensity = nullptr,
+                                bool adjust_cost = false);
+
 
 class TensorNetwork{
 
@@ -285,11 +292,13 @@ public:
  void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
-     in the tensor network. Optionally returns the arithmetic intensity of the tensor contraction as well.
-     Additionally, it also allows rescaling of the tensor contraction cost with the adjustment
-     by the arithmetic intensity (lower arithmetic intensity will increase the cost). **/
+     in the tensor network. Optionally returns the volume difference. Optionally also returns
+     the arithmetic intensity of the tensor contraction. Additionally, it also allows rescaling
+     of the tensor contraction cost with the adjustment by the arithmetic intensity (lower
+     arithmetic intensity will effectively increase the flop cost). **/
  double getContractionCost(unsigned int left_id,  //in: left tensor id (present in the tensor network)
                            unsigned int right_id, //in: right tensor id (present in the tensor network)
+                           double * diff_volume = nullptr, //out: vol(result) - vol(left) - vol(right)
                            double * arithm_intensity = nullptr, //out: arithmetic intensity of the tensor contraction
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 

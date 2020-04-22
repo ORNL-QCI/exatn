@@ -1504,35 +1504,51 @@ void TensorNetwork::markOptimizableTensors(std::function<bool (const Tensor &)> 
 }
 
 
-double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int right_id,
-                                         double * arithm_intensity, bool adjust_cost)
+double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn & right_tensor,
+                                double * diff_volume, double * arithm_intensity, bool adjust_cost)
 {
  double flops = 0.0, left_vol = 1.0, right_vol = 1.0, contr_vol = 1.0;
+ const auto left_id = left_tensor.getTensorId();
+ const auto left_rank = left_tensor.getNumLegs();
+ const auto right_id = right_tensor.getTensorId();
+ const auto right_rank = right_tensor.getNumLegs();
+ const auto & right_legs = right_tensor.getTensorLegs();
+ for(unsigned int i = 0; i < left_rank; ++i){
+  left_vol *= static_cast<double>(left_tensor.getDimExtent(i));
+ }
+ for(unsigned int i = 0; i < right_rank; ++i){
+  double dim_ext = static_cast<double>(right_tensor.getDimExtent(i));
+  if(right_legs[i].getTensorId() == left_id) contr_vol *= dim_ext; //contracted dimension
+  right_vol *= dim_ext;
+ }
+ flops = left_vol * right_vol / contr_vol; //FMA flops (no FMA prefactor)
+ if(diff_volume != nullptr) *diff_volume = flops / contr_vol - (left_vol + right_vol);
+ if(arithm_intensity != nullptr) *arithm_intensity = flops / (left_vol + right_vol);
+ if(adjust_cost){ //increase the "effective" flop count if arithmetic intensity is low
+  //`Finish: flops *= f(arithm_intensity): [max --> 1]
+ }
+ return flops;
+}
+
+
+double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int right_id,
+                                         double * diff_volume, double * arithm_intensity, bool adjust_cost)
+{
+ double flops = -1.0; //error
  if(left_id != 0 && right_id != 0){
-  const auto * left_tensor = this->getTensorConn(left_id);
-  assert(left_tensor != nullptr);
-  const auto left_rank = left_tensor->getNumLegs();
-  const auto * right_tensor = this->getTensorConn(right_id);
-  assert(right_tensor != nullptr);
-  const auto right_rank = right_tensor->getNumLegs();
-  const auto & right_legs = right_tensor->getTensorLegs();
-  for(unsigned int i = 0; i < left_rank; ++i){
-   left_vol *= static_cast<double>(left_tensor->getDimExtent(i));
-  }
-  for(unsigned int i = 0; i < right_rank; ++i){
-   double dim_ext = static_cast<double>(right_tensor->getDimExtent(i));
-   if(right_legs[i].getTensorId() == left_id) contr_vol *= dim_ext; //contracted dimension
-   right_vol *= dim_ext;
-  }
-  flops = left_vol * right_vol / contr_vol;
-  if(arithm_intensity != nullptr) *arithm_intensity = flops / (left_vol + right_vol);
-  if(adjust_cost){ //increase the "effective" flop count if arithmetic intensity is low
-   //`Finish: flops *= f(arithm_intensity): [max --> 1]
+  if(left_id != right_id){
+   const auto * left_tensor = this->getTensorConn(left_id);
+   assert(left_tensor != nullptr);
+   const auto * right_tensor = this->getTensorConn(right_id);
+   assert(right_tensor != nullptr);
+   flops = getTensorContractionCost(*left_tensor,*right_tensor,diff_volume,arithm_intensity,adjust_cost);
+  }else{
+   std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: " <<
+   "Two tensors to be contracted are identical!" << std::endl;
   }
  }else{
   std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: " <<
    "The output tensor of the tensor network (tensor 0) cannot be contracted!" << std::endl;
-  flops = -1.0; //error
  }
  return flops;
 }
@@ -1656,6 +1672,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    assert(op->isSet());
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
+  std::cout << "#DEBUG(exatn::numerics::TensorNetwork::getOperationList): Flop count = " << flops
+            << "; Max intermediate volume = " << max_intermediate_volume_ << std::endl; //debug
  }
  if(universal_indices) establishUniversalIndexNumeration();
  return operations_;
