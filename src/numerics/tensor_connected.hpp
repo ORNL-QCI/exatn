@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/04/16
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -60,6 +60,7 @@ public:
 
  /** Returns the total number of legs (tensor rank/order). **/
  unsigned int getNumLegs() const;
+ unsigned int getRank() const;
 
  /** Returns the complex conjugation status of the tensor. **/
  bool isComplexConjugated() const;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/21
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,7 +29,8 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(1), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
+ universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -43,7 +44,8 @@ TensorNetwork::TensorNetwork():
 
 TensorNetwork::TensorNetwork(const std::string & name):
  explicit_output_(0), finalized_(1), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
+ universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -59,7 +61,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
+ universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -75,7 +78,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
+ universal_indexing_(false)
 {
  //Convert tensor hypernetwork into regular tensor network, if needed:
  //`Finish
@@ -156,7 +160,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
- contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), universal_indexing_(false)
+ contraction_seq_flops_(0.0), max_intermediate_volume_(0.0), max_intermediate_rank_(0),
+ universal_indexing_(false)
 {
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
@@ -426,6 +431,7 @@ void TensorNetwork::invalidateContractionSequence()
  contraction_seq_.clear();
  contraction_seq_flops_ = 0.0;
  max_intermediate_volume_ = 0.0;
+ max_intermediate_rank_ = 0;
  universal_indexing_ = false;
  return;
 }
@@ -449,7 +455,8 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
  contraction_seq_flops_ = 0.0; //flop count is unknown yet
- max_intermediate_volume_ = 0.0; //max intermediate volume is unknown yet
+ max_intermediate_volume_ = 0.0; //max intermediate tensor volume is unknown yet
+ max_intermediate_rank_ = 0; //max intermediate tensor rank
  return;
 }
 
@@ -1576,6 +1583,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
   }
   //Determine the pseudo-optimal sequence of tensor contractions:
   max_intermediate_volume_ = 0.0;
+  max_intermediate_rank_ = 0;
   double flops = determineContractionSequence(*(iter->second));
   //Generate the list of operations:
   auto & tensor_op_factory = *(TensorOpFactory::get());
@@ -1607,6 +1615,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     }
     auto tensor0 = net.getTensor(contr->result_id);
     max_intermediate_volume_ = std::max(max_intermediate_volume_,static_cast<double>(tensor0->getVolume()));
+    max_intermediate_rank_ = std::max(max_intermediate_rank_,tensor0->getRank());
     if(contr->result_id != 0){ //intermediate tensors need to be created/destroyed
      auto op_create = tensor_op_factory.createTensorOpShared(TensorOpCode::CREATE); //create intermediate
      op_create->setTensorOperand(tensor0);
@@ -1673,7 +1682,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
   //std::cout << "#DEBUG(exatn::numerics::TensorNetwork::getOperationList): Flop count = " << flops
-  //          << "; Max intermediate volume = " << max_intermediate_volume_ << std::endl; //debug
+  //          << "; Max intermediate volume = " << max_intermediate_volume_
+  //          << "; Max intermediate rank = " << max_intermediate_rank_ << std::endl; //debug
  }
  if(universal_indices) establishUniversalIndexNumeration();
  return operations_;
@@ -1842,6 +1852,19 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
   }
  }
  return;
+}
+
+
+double TensorNetwork::getFMAFlops() const
+{
+ return contraction_seq_flops_;
+}
+
+
+double TensorNetwork::getMaxIntermediateVolume(unsigned int * intermediate_rank) const
+{
+ if(intermediate_rank != nullptr) *intermediate_rank = max_intermediate_rank_;
+ return max_intermediate_volume_;
 }
 
 

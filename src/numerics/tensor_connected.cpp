@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/04/16
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -54,6 +54,11 @@ const TensorSignature & TensorConn::getSignature() const
 }
 
 unsigned int TensorConn::getNumLegs() const
+{
+ return tensor_->getRank();
+}
+
+unsigned int TensorConn::getRank() const
 {
  return tensor_->getRank();
 }

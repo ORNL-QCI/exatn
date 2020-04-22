@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/21
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -321,6 +321,14 @@ public:
      the processing backend when the tensor network is submitted for evaluation. **/
  void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
 
+ /** Returns the FMA flop count estimate required for evaluating the tensor network,
+     if available (if getOperationList has already been invoked). **/
+ double getFMAFlops() const;
+
+ /** Returns the volume of the largest intermediate tensor required for evaluating
+     the tensor network, if available (if getOperationList has already been invoked). **/
+ double getMaxIntermediateVolume(unsigned int * intermediate_rank) const;
+
  /** Returns the entire tensor network printed in a symbolic form.
      The tensor network must already have its operation list generated. **/
  bool printTensorNetwork(std::string & network);
@@ -415,6 +423,7 @@ private:
  /** Data members: Contraction sequence: **/
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence
  double max_intermediate_volume_; //volume of the largest intermediate tensor
+ unsigned int max_intermediate_rank_; //rank of the largest intermediate tensor
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
  std::unordered_map<TensorHashType, //tensor identifier (hash)
