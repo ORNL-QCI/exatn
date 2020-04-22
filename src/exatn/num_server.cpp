@@ -27,7 +27,7 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 NumServer::NumServer(const MPICommProxy & communicator,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("dummy"), intra_comm_(communicator),
+ contr_seq_optimizer_("greed"), intra_comm_(communicator),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,graph_executor_name,node_executor_name))
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
@@ -40,7 +40,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 #else
 NumServer::NumServer(const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("dummy"),
+ contr_seq_optimizer_("greed"),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;

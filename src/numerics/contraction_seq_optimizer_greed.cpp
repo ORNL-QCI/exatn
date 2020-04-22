@@ -19,7 +19,7 @@ namespace exatn{
 
 namespace numerics{
 
-static constexpr unsigned int NUM_WALKERS = 8; //default number of walkers for tensor contraction sequence optimization
+static constexpr unsigned int NUM_WALKERS = 1; //default number of walkers for tensor contraction sequence optimization
 
 
 ContractionSeqOptimizerGreed::ContractionSeqOptimizerGreed():
@@ -46,6 +46,7 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
+ constexpr bool debugging = false;
  using ContractionSequence = std::list<ContrTriple>;
  using ContrPath = std::tuple<TensorNetwork,       //0: current state of the tensor network
                               ContractionSequence, //1: tensor contraction sequence resulted in this state
@@ -58,7 +59,7 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
  auto numContractions = network.getNumTensors() - 1; //number of contractions is one less than the number of r.h.s. tensors
  if(numContractions == 0) return flops;
 
- std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Determining a pseudo-optimal tensor contraction sequence ... \n"; //debug
+ if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Determining a pseudo-optimal tensor contraction sequence ... \n"; //debug
  auto timeBeg = std::chrono::high_resolution_clock::now();
 
  ContractionSequence contrSeqEmpty;
@@ -70,8 +71,10 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
 
  //Loop over the tensor contractions (passes):
  for(decltype(numContractions) pass = 0; pass < numContractions; ++pass){
-  std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Pass " << pass << " started with "
-            << inputPaths.size() << " candidates" << std::endl; //debug
+  if(debugging){
+   std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Pass " << pass << " started with "
+             << inputPaths.size() << " candidates" << std::endl; //debug
+  }
   unsigned int intermediate_id = intermediate_num_generator(); //id of the next intermediate tensor
   unsigned int numPassCands = 0, candid = 0;
   //Update the list of promising contraction path candidates due to a new tensor contraction:
@@ -110,8 +113,10 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
     }
    }
   }
-  std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Pass " << pass << ": Total number of candidates considered = "
-            << numPassCands << std::endl; //debug
+  if(debugging){
+   std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Pass " << pass << ": Total number of candidates considered = "
+             << numPassCands << std::endl; //debug
+  }
   //Collect the cheapest contraction paths left:
   inputPaths.clear();
   if(pass == numContractions - 1){ //last pass
@@ -119,8 +124,10 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
    contr_seq = std::get<1>(priq.top());
    flops = std::get<2>(priq.top());
    priq.pop();
-   std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Best tensor contraction sequence found has cost (flops) = "
-             << flops << std::endl; //debug
+   if(debugging){
+    std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Best tensor contraction sequence found has cost (flops) = "
+              << flops << std::endl; //debug
+   }
   }else{ //intermediate pass
    while(priq.size() > 0){
     inputPaths.emplace_back(priq.top());
@@ -131,10 +138,12 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
 
  auto timeEnd = std::chrono::high_resolution_clock::now();
  auto timeTot = std::chrono::duration_cast<std::chrono::duration<double>>(timeEnd - timeBeg);
- std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Done (" << timeTot.count() << " sec):"; //debug
- for(const auto & cPair: contr_seq) std::cout << " {" << cPair.left_id << "," << cPair.right_id
-                                              << "->" << cPair.result_id <<"}"; //debug
- std::cout << std::endl; //debug
+ if(debugging){
+  std::cout << "#DEBUG(ContractionSeqOptimizerGreed): Done (" << timeTot.count() << " sec):"; //debug
+  for(const auto & cPair: contr_seq) std::cout << " {" << cPair.left_id << "," << cPair.right_id
+                                               << "->" << cPair.result_id <<"}"; //debug
+  std::cout << std::endl; //debug
+ }
  return flops;
 }
 
