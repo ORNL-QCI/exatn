@@ -426,6 +426,7 @@ void TensorNetwork::invalidateMaxTensorId()
 
 void TensorNetwork::invalidateContractionSequence()
 {
+ split_tensors_.clear();
  split_indices_.clear();
  operations_.clear();
  contraction_seq_.clear();
@@ -1725,19 +1726,19 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
  assert(!operations_.empty());
  std::unordered_map<std::string,            //index label
                     std::pair<unsigned int, //global index id
-                              IndexSplit>   //splitting info
-                   > splitted;
- std::vector<std::string> tens_operands; //extracted tensor operands
- std::vector<IndexLabel> indices; //indices extracted from a tensor
+                              IndexSplit>   //splitting info (segment composition)
+                   > splitted; //info on splitted indices
+ std::vector<std::pair<unsigned int, //global id of the split index
+                       unsigned int> //dimension position in the tensor
+            > split_dims; //for each tensor dimension split
  std::vector<std::pair<unsigned int, //dimension position in the tensor
                        std::size_t>  //number of segments to split into
-                      > dims;        //for each tensor dimension
- std::vector<std::tuple<unsigned int, //global id of the split index
-                        unsigned int, //dimension position in the tensor
-                        IndexSplit>   //splitting info for the dimension
-                      > split_dims;   //for each tensor dimension split
+            > dims; //for each tensor dimension
+ std::vector<std::string> tens_operands; //extracted tensor operands
+ std::vector<IndexLabel> indices; //indices extracted from a tensor
  std::string tensor_name;
  bool conjugated = false;
+ split_tensors_.clear();
  split_indices_.clear();
  establishUniversalIndexNumeration();
  //Traverse all tensor operations in reverse order:
@@ -1771,7 +1772,7 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
        auto index_iter = splitted.find(indices[i].label);
        if(index_iter != splitted.end()){
         intermediate_volume *= index_iter->second.second[0].second; //segment extent (already split dimension)
-        split_dims.emplace_back(std::make_tuple(index_iter->second.first,i,index_iter->second.second));
+        split_dims.emplace_back(std::make_pair(index_iter->second.first,i));
        }else{
         intermediate_volume *= intermediate.getDimExtent(i); //full dimension extent
         dims.emplace_back(std::pair<unsigned int,std::size_t>{i,1});
@@ -1783,14 +1784,15 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
        assert(dims.size() > 0); //at least one full dimension is expected
        int i = dims.size() - 1; //split dimensions from the right (because of column-wise storage)
        while(intermediate_volume > max_intermediate_volume){
-        dims[i].second <<= 1; intermediate_volume >>= 1;
+        if((dims[i].second)*2 <= intermediate.getDimExtent(dims[i].first)){
+         dims[i].second <<= 1; intermediate_volume >>= 1; //split tensor dimension in half
+        }
         if(--i < 0) i = dims.size() - 1;
        }
        //Split full dimensions into segments:
        for(const auto & dim: dims){
         const auto & num_dim_segs = dim.second;
         if(num_dim_segs > 1){ //number of segments
-         num_split_indices++;
          const auto & dim_pos = dim.first;
          IndexSplit split_info = split_dimension(intermediate.getDimSpaceAttr(dim_pos),
                                                  intermediate.getDimExtent(dim_pos),
@@ -1798,13 +1800,15 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
          auto saved = splitted.emplace(std::make_pair(indices[dim_pos].label,
                                                       std::make_pair(num_split_indices,split_info)));
          assert(saved.second);
-         split_dims.emplace_back(std::make_tuple(num_split_indices,dim_pos,split_info));
+         split_indices_.emplace_back(std::make_pair(indices[dim_pos].label,split_info));
+         split_dims.emplace_back(std::make_pair(num_split_indices,dim_pos));
+         num_split_indices++;
         }
        }
       }
       //Save dimension splitting info for the tensor:
       if(split_dims.size() > 0){
-       auto saved = split_indices_.emplace(std::make_pair(intermediate_hash,split_dims));
+       auto saved = split_tensors_.emplace(std::make_pair(intermediate_hash,split_dims));
        assert(saved.second);
       }
      }
@@ -1824,12 +1828,12 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
         for(unsigned int i = 0; i < indices.size(); ++i){
          auto index_iter = splitted.find(indices[i].label);
          if(index_iter != splitted.end()){
-          split_dims.emplace_back(std::make_tuple(index_iter->second.first,i,index_iter->second.second));
+          split_dims.emplace_back(std::make_pair(index_iter->second.first,i));
          }
         }
         //Save dimension splitting info for the tensor:
         if(split_dims.size() > 0){
-         auto saved = split_indices_.emplace(std::make_pair(tensor_hash,split_dims));
+         auto saved = split_tensors_.emplace(std::make_pair(tensor_hash,split_dims));
          assert(saved.second);
         }
        }else{
@@ -1851,6 +1855,7 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
    }
   }
  }
+ assert(split_indices_.size() == num_split_indices);
  return;
 }
 

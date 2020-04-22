@@ -426,11 +426,13 @@ private:
  unsigned int max_intermediate_rank_; //rank of the largest intermediate tensor
  std::list<ContrTriple> contraction_seq_; //cached tensor contraction sequence
  std::list<std::shared_ptr<TensorOperation>> operations_; //cached tensor operations required for evaluating the tensor network
+ std::vector<std::pair<std::string, //universal (unique) label of the index that was split
+                       IndexSplit>  //information on the segments the index is split into
+            > split_indices_;       //internal tensor network indices which were split
  std::unordered_map<TensorHashType, //tensor identifier (hash)
-                    std::vector<std::tuple<unsigned int, //global id of the split index: [0..max]
-                                           unsigned int, //position of the split index in the tensor: [0..max]
-                                           IndexSplit>   //information on the segments the index is split into
-                               >> split_indices_; //internal tensor network indices which were split
+                    std::vector<std::pair<unsigned int,  //global id of the split index (in split_indices_): [0..max]
+                                          unsigned int>> //position of the split index in the tensor: [0..max]
+                   > split_tensors_; //information on tensors with split dimensions
  bool universal_indexing_; //universal indexing flag
 };
 
