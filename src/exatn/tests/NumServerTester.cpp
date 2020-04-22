@@ -747,7 +747,7 @@ TEST(NumServerTester, Sycamore8NumServer)
  circuit.printIt(); //debug
 
  //Generate the list of tensor operations for the circuit:
- auto & operations = circuit.getOperationList("greed");
+ //auto & operations = circuit.getOperationList("greed");
 
 }
 

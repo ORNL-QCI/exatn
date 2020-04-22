@@ -1672,8 +1672,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    assert(op->isSet());
    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
   }
-  std::cout << "#DEBUG(exatn::numerics::TensorNetwork::getOperationList): Flop count = " << flops
-            << "; Max intermediate volume = " << max_intermediate_volume_ << std::endl; //debug
+  //std::cout << "#DEBUG(exatn::numerics::TensorNetwork::getOperationList): Flop count = " << flops
+  //          << "; Max intermediate volume = " << max_intermediate_volume_ << std::endl; //debug
  }
  if(universal_indices) establishUniversalIndexNumeration();
  return operations_;
