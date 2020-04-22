@@ -66,7 +66,11 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
  std::vector<ContrPath> inputPaths; //considered contraction paths
  inputPaths.emplace_back(std::make_tuple(network,contrSeqEmpty,0.0,0.0)); //initial configuration
 
- auto cmpPaths = [](const ContrPath & left, const ContrPath & right){return (std::get<3>(left) < std::get<3>(right));};
+ //auto cmpPaths = [](const ContrPath & left, const ContrPath & right){return (std::get<3>(left) < std::get<3>(right));};
+ auto cmpPaths = [](const ContrPath & left, const ContrPath & right){
+                    if(std::get<3>(left) == std::get<3>(right)) return (std::get<2>(left) < std::get<2>(right));
+                    return (std::get<3>(left) < std::get<3>(right));
+                   };
  std::priority_queue<ContrPath, std::vector<ContrPath>, decltype(cmpPaths)> priq(cmpPaths); //prioritized contraction paths
 
  //Loop over the tensor contractions (passes):
