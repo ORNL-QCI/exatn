@@ -747,12 +747,11 @@ TEST(NumServerTester, Sycamore8NumServer)
  circuit.printIt(); //debug
 
  //Generate the list of tensor operations for the circuit:
- //auto & operations = circuit.getOperationList("greed");
+ auto & operations = circuit.getOperationList("greed",true);
  unsigned int max_rank = 0;
- std::cout << "Total FMA flop count = " << circuit.getFMAFlops() << std::endl;
- std::cout << "Max intermdediate volume = " << circuit.getMaxIntermediateVolume(&max_rank)
-           << "Max intermdediate rank = " << max_rank << std::endl;
-
+ std::cout << "Total FMA flop count = " << circuit.getFMAFlops()
+           << ": Max intermdediate volume = " << circuit.getMaxIntermediateVolume(&max_rank)
+           << ": Max intermdediate rank = " << max_rank << std::endl;
 }
 
 

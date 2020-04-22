@@ -468,6 +468,37 @@ const std::list<ContrTriple> & TensorNetwork::exportContractionSequence() const
 }
 
 
+inline IndexSplit split_dimension(std::pair<SpaceId,SubspaceId> space_attr,
+                                  DimExtent dim_extent,
+                                  std::size_t num_segments)
+{
+ assert(dim_extent >= num_segments);
+ IndexSplit split_info;
+ if(space_attr.first == SOME_SPACE){ //anonymous vector space
+  std::size_t seg_size = dim_extent/num_segments;
+  std::size_t remainder = dim_extent - seg_size * num_segments;
+  SubspaceId base = space_attr.second;
+  for(std::size_t i = 0; i < num_segments; ++i){
+   DimExtent extent = seg_size; if(i < remainder) extent++;
+   split_info.emplace_back(std::pair<SubspaceId,DimExtent>{base,extent});
+   base += extent;
+  }
+  assert(base == space_attr.second + dim_extent);
+ }else{ //registered named vector space
+  assert(false); //`Implement in future
+ }
+ return split_info;
+}
+
+inline bool is_intermediate_tensor_name(const std::string & tensor_name)
+{
+ if(tensor_name.length() >= 2){
+  if(tensor_name[0] == '_' && tensor_name[1] == 'x') return true;
+ }
+ return false;
+}
+
+
 void TensorNetwork::establishUniversalIndexNumeration()
 {
  if(universal_indexing_) return;
@@ -549,14 +580,21 @@ void TensorNetwork::establishUniversalIndexNumeration()
           assert(false);
          }
         }
-        auto res = intermediates.emplace(std::make_pair(tensor_hash,
-                    assemble_symbolic_tensor(tens.getName(),indices,conjugated)));
-        assert(res.second);
-        //std::cout << " Saved tensor: " << res.first->second << std::endl; //debug
+        const auto symb_tensor = assemble_symbolic_tensor(tens.getName(),indices,conjugated);
+        if(is_intermediate_tensor_name(symb_tensor)){
+         assert(!conjugated); //intermediate tensor do not appear conjugated
+         auto res = intermediates.emplace(std::make_pair(tensor_hash,symb_tensor));
+         if(!res.second){
+          std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
+                    << "Intermediate tensor already saved previously: " << symb_tensor << std::endl;
+          assert(false);
+         }
+         //std::cout << " Saved tensor: " << res.first->second << std::endl; //debug
+        }
         if(op_num == 1){
-         new_pattern += res.first->second;
+         new_pattern += symb_tensor;
         }else if(op_num == 2){
-         new_pattern += ("*" + res.first->second);
+         new_pattern += ("*" + symb_tensor);
         }else{
          assert(false); //`At most three tensor operands are expected so far
         }
@@ -568,7 +606,7 @@ void TensorNetwork::establishUniversalIndexNumeration()
       }
       num_internal_indices += num_contr_indices;
       op.setIndexPattern(new_pattern);
-      std::cout << " New index pattern: " << new_pattern << std::endl;
+      //std::cout << " New index pattern: " << new_pattern << std::endl; //debug
      }else{
       std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
                 << "Unable to parse tensor operand: " << tens_operands[0] << std::endl;
@@ -1690,36 +1728,6 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
  return operations_;
 }
 
-
-inline IndexSplit split_dimension(std::pair<SpaceId,SubspaceId> space_attr,
-                                  DimExtent dim_extent,
-                                  std::size_t num_segments)
-{
- assert(dim_extent >= num_segments);
- IndexSplit split_info;
- if(space_attr.first == SOME_SPACE){ //anonymous vector space
-  std::size_t seg_size = dim_extent/num_segments;
-  std::size_t remainder = dim_extent - seg_size * num_segments;
-  SubspaceId base = space_attr.second;
-  for(std::size_t i = 0; i < num_segments; ++i){
-   DimExtent extent = seg_size; if(i < remainder) extent++;
-   split_info.emplace_back(std::pair<SubspaceId,DimExtent>{base,extent});
-   base += extent;
-  }
-  assert(base == space_attr.second + dim_extent);
- }else{ //registered named vector space
-  assert(false); //`Implement in future
- }
- return split_info;
-}
-
-inline bool is_intermediate_tensor_name(const std::string & tensor_name)
-{
- if(tensor_name.length() >= 2){
-  if(tensor_name[0] == '_' && tensor_name[1] == 'x') return true;
- }
- return false;
-}
 
 void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
 {
