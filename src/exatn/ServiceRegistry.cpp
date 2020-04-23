@@ -1,5 +1,6 @@
 #include "ServiceRegistry.hpp"
 #include <dirent.h>
+#include "exatn_config.hpp"
 
 namespace exatn {
 
@@ -18,7 +19,7 @@ void ServiceRegistry::initialize(const std::string pluginPath) {
     // Get the paths/files we'll be searching
     std::string exatnPluginPath = pluginPath;
     if (exatnPluginPath.empty()) {
-       exatnPluginPath = std::getenv("HOME") + std::string("/.exatn/plugins");
+       exatnPluginPath = std::string(EXATN_INSTALL_DIR) + std::string("/plugins");
     }
 
     std::string parentPath = "";

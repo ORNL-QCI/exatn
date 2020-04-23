@@ -4,6 +4,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 
+#include "exatn_config.hpp"
 // #include "exatn.hpp"
 
 // using namespace exatn;
@@ -13,11 +14,13 @@ TEST(ExaTN_PythonTester, checkExaTNPyAPI) {
   py::scoped_interpreter guard{};
 
   py::print("\n[ Test Simple ]");
+
+  std::stringstream ss;
+  ss << "import sys\nsys.path.insert(1, '" << EXATN_INSTALL_DIR << "')";
+  py::exec(ss.str());
+
   py::exec(
       R"""(
-import sys
-from pathlib import Path
-sys.path.insert(1, str(Path.home()) + '/.exatn')
 import exatn
 
 exatn.createTensor('Z0')
@@ -39,9 +42,6 @@ assert(abs(z0 - 5.12e-12) < 1e-12)
   py::print("\n[ Test Quantum Circuit Network ]");
   py::exec(
       R"""(
-import sys
-from pathlib import Path
-sys.path.insert(1, str(Path.home()) + '/.exatn')
 import exatn, numpy as np
 
 #Quantum Circuit:
@@ -100,9 +100,7 @@ exatn.destroyTensor('H')
   py::print("\n[ Test Circuit Conjugate ]");
   py::exec(
       R"""(
-import sys
-from pathlib import Path
-sys.path.insert(1, str(Path.home()) + '/.exatn')
+
 import exatn, numpy as np
 
 qzero = np.array([1.0, 0.0], dtype=complex)
@@ -136,9 +134,7 @@ exatn.destroyTensor('Q0')
   py::print("\n[ Test Large Circuit ]");
   py::exec(
       R"""(
-import sys
-from pathlib import Path
-sys.path.insert(1, str(Path.home()) + '/.exatn')
+
 import exatn, numpy as np
 
 qzero = np.array([1.0, 0.0], dtype=complex)
@@ -197,9 +193,7 @@ exatn.destroyTensor('Z0')
    py::print("\n[ Test Hamiltonian ]");
   py::exec(
       R"""(
-import sys
-from pathlib import Path
-sys.path.insert(1, str(Path.home()) + '/.exatn')
+
 import exatn, numpy as np
 
 exatn.createTensor('Q0', [2,2], 1e-2)
