@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/04/22
+REVISION: 2020/04/23
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -45,6 +45,8 @@ public:
  inline TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                     const std::vector<DimExtent> & extents); //in: extent of each dimension (on top of the base offset)
 
+ inline TensorRange(const std::vector<DimExtent> & extents); //in: extent of each dimension (base offset = 0)
+
  TensorRange(const TensorRange &) = default;
  TensorRange & operator=(const TensorRange &) = default;
  TensorRange(TensorRange &&) noexcept = default;
@@ -59,6 +61,9 @@ public:
 
  /** Resets the current multi-index value to the beginning. **/
  inline void reset();
+
+ /** Retrieves a specific index from the multi-index. **/
+ inline DimOffset getIndex(unsigned int position) const;
 
  /** Returns the flat offset produced by the current multi-index value per se. **/
  inline DimOffset localOffset() const; //little endian
@@ -117,6 +122,22 @@ inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: b
 }
 
 
+inline TensorRange::TensorRange(const std::vector<DimExtent> & extents): //in: extent of each dimension (base offset = 0)
+ bases_(extents.size(),0), extents_(extents), strides_(extents.size()), mlndx_(extents.size())
+{
+ if(extents_.size() > 0){
+  volume_ = 1;
+  for(unsigned int i = 0; i < extents_.size(); ++i){
+   strides_[i] = volume_;
+   volume_ *= extents_[i];
+  }
+ }else{
+  volume_ = 0;
+ }
+ reset();
+}
+
+
 inline DimExtent TensorRange::localVolume() const
 {
  return volume_;
@@ -135,6 +156,13 @@ inline void TensorRange::reset()
 {
  for(auto & ind: mlndx_) ind = 0;
  return;
+}
+
+
+inline DimOffset TensorRange::getIndex(unsigned int position) const
+{
+ assert(position < mlndx_.size());
+ return mlndx_[position];
 }
 
 

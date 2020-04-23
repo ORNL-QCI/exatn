@@ -42,11 +42,83 @@ void FunctorDiagRank::unpack(BytePacket & packet)
 
 int FunctorDiagRank::apply(talsh::Tensor & local_tensor) //tensor slice (in general)
 {
- unsigned int rank;
- const auto * extents = local_tensor.getDimExtents(rank); //rank is returned by reference
- const auto tensor_volume = local_tensor.getVolume(); //volume of the given tensor slice
+ unsigned int tensor_rank;
+ const auto * tensor_dims = local_tensor.getDimExtents(tensor_rank); //rank is returned by reference
+ const auto tensor_volume = local_tensor.getVolume(); //volume of the given tensor
+ std::vector<DimExtent> extents(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i) extents[i] = tensor_dims[i];
 
- return 0;
+ assert(tensor_dimension_ < tensor_rank);
+ DimExtent pnorms_size = extents[tensor_dimension_];
+ partial_norms_.resize(pnorms_size);
+ for(auto & norm: partial_norms_) norm = 0.0;
+
+ TensorRange body_range(extents); //`Needs multithreading
+ bool active = (body_range.localVolume() > 0);
+ assert(active);
+
+ { //Try float
+  float * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
+  if(access_granted){
+   while(active){
+    const auto index_value = body_range.getIndex(tensor_dimension_);
+    const auto offset = body_range.localOffset();
+    double val = std::abs(tensor_body[offset]);
+    partial_norms_[index_value] += val * val;
+    active = body_range.next();
+   }
+   return 0;
+  }
+ }
+
+ { //Try double
+  double * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
+  if(access_granted){
+   while(active){
+    const auto index_value = body_range.getIndex(tensor_dimension_);
+    const auto offset = body_range.localOffset();
+    double val = std::abs(tensor_body[offset]);
+    partial_norms_[index_value] += val * val;
+    active = body_range.next();
+   }
+   return 0;
+  }
+ }
+
+ { //Try complex<float>
+  std::complex<float> * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
+  if(access_granted){
+   while(active){
+    const auto index_value = body_range.getIndex(tensor_dimension_);
+    const auto offset = body_range.localOffset();
+    double val = std::abs(tensor_body[offset]);
+    partial_norms_[index_value] += val * val;
+    active = body_range.next();
+   }
+   return 0;
+  }
+ }
+
+ { //Try complex<double>
+  std::complex<double> * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
+  if(access_granted){
+   while(active){
+    const auto index_value = body_range.getIndex(tensor_dimension_);
+    const auto offset = body_range.localOffset();
+    double val = std::abs(tensor_body[offset]);
+    partial_norms_[index_value] += val * val;
+    active = body_range.next();
+   }
+   return 0;
+  }
+ }
+
+ std::cout << "#ERROR(exatn::numerics::FunctorDiagRank): Unknown data kind in talsh::Tensor!" << std::endl;
+ return 1;
 }
 
 } //namespace numerics
