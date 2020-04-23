@@ -154,8 +154,11 @@ public:
  std::shared_ptr<Tensor> getTensor(unsigned int tensor_id,
                                    bool * conjugated = nullptr) const;
 
- /** Get tensor connections. **/
+ /** Returns tensor connections. **/
  const std::vector<TensorLeg> * getTensorConnections(unsigned int tensor_id) const;
+
+ /** Returns a list of the tensors adjacent to a given tensor by their Ids. **/
+ std::list<unsigned int> getAdjacentTensors(unsigned int tensor_id) const;
 
  /** Begin iterator **/
  inline Iterator begin() {return tensors_.begin();}
@@ -339,6 +342,10 @@ public:
      The tensor network must already have its operation list generated. **/
  bool printTensorNetwork(std::string & network);
 
+ /** Returns a non-owning pointer to a given tensor of the tensor network
+     together with its connections (legs). If not found, returns nullptr. **/
+ TensorConn * getTensorConn(unsigned int tensor_id);
+
 protected:
 
  /** Emplaces a connected tensor into the tensor network. **/
@@ -361,10 +368,6 @@ protected:
 
  /** Erases a connected tensor from the tensor network. **/
  inline bool eraseTensorConn(unsigned int tensor_id);
-
- /** Returns a non-owning pointer to a given tensor of the tensor network
-     together with its connections (legs). If not found, returns nullptr. **/
- TensorConn * getTensorConn(unsigned int tensor_id);
 
  /** Returns a vector of non-owning pointers to all tensors in the tensor network,
      except the output tensor. **/

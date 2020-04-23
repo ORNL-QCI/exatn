@@ -336,6 +336,23 @@ const std::vector<TensorLeg> * TensorNetwork::getTensorConnections(unsigned int 
 }
 
 
+std::list<unsigned int> TensorNetwork::getAdjacentTensors(unsigned int tensor_id) const
+{
+ std::list<unsigned int> tensor_ids;
+ const auto * legs = this->getTensorConnections(tensor_id);
+ if(legs != nullptr){
+  for(const auto & leg: *legs){
+   const auto new_tensor_id = leg.getTensorId();
+   if(new_tensor_id != 0){ //ignore the output tensor
+    auto iter = std::find(tensor_ids.begin(),tensor_ids.end(),new_tensor_id);
+    if(iter == tensor_ids.end()) tensor_ids.emplace_back(new_tensor_id);
+   }
+  }
+ }
+ return tensor_ids;
+}
+
+
 bool TensorNetwork::finalize(bool check_validity)
 {
  if(finalized_ == 0){

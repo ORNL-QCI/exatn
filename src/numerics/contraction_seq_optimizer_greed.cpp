@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Greedy heuristics
-REVISION: 2020/04/21
+REVISION: 2020/04/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,6 +47,8 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
  constexpr bool debugging = false;
+ constexpr bool only_connected = true;
+
  using ContractionSequence = std::list<ContrTriple>;
  using ContrPath = std::tuple<TensorNetwork,       //0: current state of the tensor network
                               ContractionSequence, //1: tensor contraction sequence resulted in this state
@@ -93,25 +95,49 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
     if(i != 0){ //exclude output tensor
      const auto & tensor_i = iter_i->second; //connected tensor i
      //std::cout << "  First tensor id " << i << std::endl; //debug
-     for(auto iter_j = std::next(iter_i); iter_j != parentTensNet.end(); ++iter_j){ //r.h.s. tensors
-      auto j = iter_j->first;
-      if(j != 0){ //exclude output tensor
-       const auto & tensor_j = iter_j->second; //connected tensor j
-       double diff_vol;
-       double contrCost = getTensorContractionCost(tensor_i,tensor_j,&diff_vol); //tensor contraction cost (flops)
-       //double contrCost = parentTensNet.getContractionCost(i,j,&diff_vol); //tensor contraction cost (flops)
-       //std::cout << "  New candidate contracted pair of tensors is {" << i << "," << j << "} with cost " << contrCost << std::endl; //debug
-       TensorNetwork tensNet(parentTensNet);
-       auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
-       auto cSeq = parentContrSeq;
-       if(pass == numContractions - 1){ //the very last tensor contraction writes into the output tensor #0
-        cSeq.emplace_back(ContrTriple{0,i,j}); //append the last pair of contracted tensors
-       }else{
-        cSeq.emplace_back(ContrTriple{intermediate_id,i,j}); //append a new pair of contracted tensors
+     const auto adjacent_tensors = parentTensNet.getAdjacentTensors(i);
+     if(only_connected && !adjacent_tensors.empty()){
+      for(auto & j: adjacent_tensors){
+       if(j > i){ //unique pairs
+        const auto & tensor_j = *(parentTensNet.getTensorConn(j));
+        double diff_vol;
+        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&diff_vol); //tensor contraction cost (flops)
+        //double contrCost = parentTensNet.getContractionCost(i,j,&diff_vol); //tensor contraction cost (flops)
+        //std::cout << "  New candidate contracted pair of tensors is {" << i << "," << j << "} with cost " << contrCost << std::endl; //debug
+        TensorNetwork tensNet(parentTensNet);
+        auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
+        auto cSeq = parentContrSeq;
+        if(pass == numContractions - 1){ //the very last tensor contraction writes into the output tensor #0
+         cSeq.emplace_back(ContrTriple{0,i,j}); //append the last pair of contracted tensors
+        }else{
+         cSeq.emplace_back(ContrTriple{intermediate_id,i,j}); //append a new pair of contracted tensors
+        }
+        priq.emplace(std::make_tuple(tensNet, cSeq, contrCost + std::get<2>(contrPath), diff_vol)); //cloning tensor network and contraction sequence
+        if(priq.size() > num_walkers_) priq.pop(); //remove the top-costly contraction path when limit achieved
+        numPassCands++;
        }
-       priq.emplace(std::make_tuple(tensNet, cSeq, contrCost + std::get<2>(contrPath), diff_vol)); //cloning tensor network and contraction sequence
-       if(priq.size() > num_walkers_) priq.pop(); //remove the top-costly contraction path when limit achieved
-       numPassCands++;
+      }
+     }else{
+      for(auto iter_j = std::next(iter_i); iter_j != parentTensNet.end(); ++iter_j){ //r.h.s. tensors
+       auto j = iter_j->first;
+       if(j != 0){ //exclude output tensor
+        const auto & tensor_j = iter_j->second; //connected tensor j
+        double diff_vol;
+        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&diff_vol); //tensor contraction cost (flops)
+        //double contrCost = parentTensNet.getContractionCost(i,j,&diff_vol); //tensor contraction cost (flops)
+        //std::cout << "  New candidate contracted pair of tensors is {" << i << "," << j << "} with cost " << contrCost << std::endl; //debug
+        TensorNetwork tensNet(parentTensNet);
+        auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
+        auto cSeq = parentContrSeq;
+        if(pass == numContractions - 1){ //the very last tensor contraction writes into the output tensor #0
+         cSeq.emplace_back(ContrTriple{0,i,j}); //append the last pair of contracted tensors
+        }else{
+         cSeq.emplace_back(ContrTriple{intermediate_id,i,j}); //append a new pair of contracted tensors
+        }
+        priq.emplace(std::make_tuple(tensNet, cSeq, contrCost + std::get<2>(contrPath), diff_vol)); //cloning tensor network and contraction sequence
+        if(priq.size() > num_walkers_) priq.pop(); //remove the top-costly contraction path when limit achieved
+        numPassCands++;
+       }
       }
      }
     }
