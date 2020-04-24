@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/21
+REVISION: 2020/04/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -490,6 +490,40 @@ bool NumServer::initTensorRndSync(const std::string & name)
 {
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
 }
+
+
+bool NumServer::computePartialNormsSync(const std::string & name,            //in: tensor name
+                                        unsigned int tensor_dimension,       //in: chosen tensor dimension
+                                        std::vector<double> & partial_norms) //out: partial 2-norms over the chosen tensor dimension
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::computePartialNormsSync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ if(tensor_dimension >= iter->second->getRank()){
+  std::cout << "#ERROR(exatn::NumServer::computePartialNormsSync): Chosen tensor dimension " << tensor_dimension
+            << " does not exist for tensor " << name << std::endl;
+  return false;
+ }
+ auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorDiagRank(tensor_dimension));
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op->setTensorOperand(iter->second);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
+ auto submitted = submit(op);
+ if(submitted){
+  submitted = sync(*op);
+  if(submitted){
+   const auto & norms = std::dynamic_pointer_cast<numerics::FunctorDiagRank>(functor)->getPartialNorms();
+   if(!norms.empty()){
+    partial_norms.resize(norms.size());
+    for(std::size_t i = 0; i < norms.size(); ++i) partial_norms[i] = norms[i];
+   }
+  }
+ }
+ return submitted;
+}
+
 
 bool NumServer::broadcastTensor(const std::string & name, int root_process_rank, MPICommProxy intra_comm)
 {

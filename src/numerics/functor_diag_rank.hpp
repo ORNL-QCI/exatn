@@ -62,6 +62,8 @@ public:
      shape that both can be accessed by talsh::Tensor methods. **/
  virtual int apply(talsh::Tensor & local_tensor) override;
 
+ const std::vector<double> & getPartialNorms() const {return partial_norms_;}
+
 private:
 
  unsigned int tensor_dimension_;     //specific tensor dimension: [0..order-1]

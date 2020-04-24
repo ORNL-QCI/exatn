@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/21
+REVISION: 2020/04/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_rnd.hpp"
 #include "functor_init_dat.hpp"
 #include "functor_scale.hpp"
+#include "functor_diag_rank.hpp"
 
 #include <memory>
 #include <vector>
@@ -295,6 +296,11 @@ public:
  bool initTensorRnd(const std::string & name); //in: tensor name
 
  bool initTensorRndSync(const std::string & name); //in: tensor name
+
+ /** Computes partial 2-norms over a chosen tensor dimension. **/
+ bool computePartialNormsSync(const std::string & name,             //in: tensor name
+                              unsigned int tensor_dimension,        //in: chosen tensor dimension
+                              std::vector<double> & partial_norms); //out: partial 2-norms over the chosen tensor dimension
 
  /** Broadcast a tensor among all MPI processes within an intra-communicator.
      This function is needed when a tensor is updated in an operation

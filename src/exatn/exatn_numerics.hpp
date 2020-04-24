@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/04/21
+REVISION: 2020/04/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -243,6 +243,13 @@ inline bool initTensorRnd(const std::string & name) //in: tensor name
 
 inline bool initTensorRndSync(const std::string & name) //in: tensor name
  {return numericalServer->initTensorRndSync(name);}
+
+
+/** Computes partial 2-norms over a chosen tensor dimension. **/
+inline bool computePartialNormsSync(const std::string & name,            //in: tensor name
+                                    unsigned int tensor_dimension,       //in: chosen tensor dimension
+                                    std::vector<double> & partial_norms) //out: partial 2-norms over the chosen tensor dimension
+ {return numericalServer->computePartialNormsSync(name,tensor_dimension,partial_norms);}
 
 
 /** Scales a tensor by a scalar value. **/

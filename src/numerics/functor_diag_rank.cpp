@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Computes partial 2-norms over a given tensor dimension
-REVISION: 2020/04/23
+REVISION: 2020/04/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -53,68 +53,41 @@ int FunctorDiagRank::apply(talsh::Tensor & local_tensor) //tensor slice (in gene
  partial_norms_.resize(pnorms_size);
  for(auto & norm: partial_norms_) norm = 0.0;
 
- TensorRange body_range(extents); //`Needs multithreading
- bool active = (body_range.localVolume() > 0);
- assert(active);
+ auto procedure = [&](const auto * tens_body){ //`Needs multi-threading
+  TensorRange body_range(extents);
+  bool active = (body_range.localVolume() > 0);
+  while(active){
+   const auto index_value = body_range.getIndex(tensor_dimension_);
+   const auto offset = body_range.localOffset();
+   double val = std::abs(tens_body[offset]);
+   partial_norms_[index_value] += val * val;
+   active = body_range.next();
+  }
+  return 0;
+ };
 
  { //Try float
-  float * tensor_body;
-  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
-  if(access_granted){
-   while(active){
-    const auto index_value = body_range.getIndex(tensor_dimension_);
-    const auto offset = body_range.localOffset();
-    double val = std::abs(tensor_body[offset]);
-    partial_norms_[index_value] += val * val;
-    active = body_range.next();
-   }
-   return 0;
-  }
+  const float * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHostConst(&tensor_body);
+  if(access_granted) return procedure(tensor_body);
  }
 
  { //Try double
-  double * tensor_body;
-  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
-  if(access_granted){
-   while(active){
-    const auto index_value = body_range.getIndex(tensor_dimension_);
-    const auto offset = body_range.localOffset();
-    double val = std::abs(tensor_body[offset]);
-    partial_norms_[index_value] += val * val;
-    active = body_range.next();
-   }
-   return 0;
-  }
+  const double * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHostConst(&tensor_body);
+  if(access_granted) return procedure(tensor_body);
  }
 
- { //Try complex<float>
-  std::complex<float> * tensor_body;
-  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
-  if(access_granted){
-   while(active){
-    const auto index_value = body_range.getIndex(tensor_dimension_);
-    const auto offset = body_range.localOffset();
-    double val = std::abs(tensor_body[offset]);
-    partial_norms_[index_value] += val * val;
-    active = body_range.next();
-   }
-   return 0;
-  }
+ { //Try double
+  const std::complex<float> * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHostConst(&tensor_body);
+  if(access_granted) return procedure(tensor_body);
  }
 
- { //Try complex<double>
-  std::complex<double> * tensor_body;
-  bool access_granted = local_tensor.getDataAccessHost(&tensor_body);
-  if(access_granted){
-   while(active){
-    const auto index_value = body_range.getIndex(tensor_dimension_);
-    const auto offset = body_range.localOffset();
-    double val = std::abs(tensor_body[offset]);
-    partial_norms_[index_value] += val * val;
-    active = body_range.next();
-   }
-   return 0;
-  }
+ { //Try double
+  const std::complex<double> * tensor_body;
+  bool access_granted = local_tensor.getDataAccessHostConst(&tensor_body);
+  if(access_granted) return procedure(tensor_body);
  }
 
  std::cout << "#ERROR(exatn::numerics::FunctorDiagRank): Unknown data kind in talsh::Tensor!" << std::endl;
