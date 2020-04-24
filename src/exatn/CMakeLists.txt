@@ -11,7 +11,7 @@ add_library(${LIBRARY_NAME}
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
-target_include_directories(${LIBRARY_NAME} PUBLIC .)
+target_include_directories(${LIBRARY_NAME} PUBLIC . ${CMAKE_BINARY_DIR})
 
 target_link_libraries(${LIBRARY_NAME}
                       PUBLIC CppMicroServices exatn-numerics exatn-runtime)

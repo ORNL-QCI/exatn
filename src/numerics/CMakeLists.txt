@@ -46,10 +46,11 @@ add_library(${LIBRARY_NAME}
 target_include_directories(${LIBRARY_NAME}
                     PUBLIC .
                     PRIVATE
+                           ${CMAKE_SOURCE_DIR}/tpls/metis/include
                            ${CMAKE_SOURCE_DIR}/src/runtime
                            ${CMAKE_SOURCE_DIR}/src/runtime/executor
                            ${CMAKE_SOURCE_DIR}/src/exatn)
-target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor metis)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
