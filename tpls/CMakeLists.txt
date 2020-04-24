@@ -9,6 +9,9 @@ endif()
 
 add_subdirectory(cppmicroservices)
 
+set(GKLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/metis/GKlib")
+add_subdirectory(metis)
+
 find_package(Git QUIET)
 
 if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
