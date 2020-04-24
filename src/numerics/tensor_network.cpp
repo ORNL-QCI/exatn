@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/22
+REVISION: 2020/04/24
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_symbol.hpp"
 #include "contraction_seq_optimizer_factory.hpp"
 #include "functor_init_val.hpp"
+#include "metis_graph.hpp"
 
 #include <iostream>
 #include <cassert>
