@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/04/22
+REVISION: 2020/04/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,6 +79,9 @@ public:
 
  /** Returns all tensor legs. **/
  const std::vector<TensorLeg> & getTensorLegs() const;
+
+ /** Returns the tensor dimension extents. **/
+ const std::vector<DimExtent> & getDimExtents() const;
 
  /** Returns the dimension extent of a specific tensor leg. **/
  DimExtent getDimExtent(unsigned int dim_id) const;

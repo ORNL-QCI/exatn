@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/24
+REVISION: 2020/04/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -485,6 +485,69 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
 const std::list<ContrTriple> & TensorNetwork::exportContractionSequence() const
 {
  return contraction_seq_;
+}
+
+
+MetisGraph generateMetisGraph(const TensorNetwork & network)
+{
+ MetisGraph graph;
+ //Map tensor Ids to a consecutive integer range [0..N-1], N is the number of input tensors:
+ std::unordered_map<unsigned int, unsigned int> tensor_id_map;
+ unsigned int vertex_id = 0;
+ for(auto iter = network.cbegin(); iter != network.cend(); ++iter){
+  if(iter->first != 0){ //ignore the output tensor
+   auto res = tensor_id_map.emplace(std::make_pair(iter->first,vertex_id++));
+   assert(res.second);
+  }
+ }
+ //Generate the adjacency list:
+ auto cmp = [](std::pair<unsigned int, DimExtent> & a,
+               std::pair<unsigned int, DimExtent> & b){return (a.first < b.first);};
+ for(auto iter = network.cbegin(); iter != network.cend(); ++iter){
+  if(iter->first != 0){ //ignore the output tensor
+   const auto tensor_rank = iter->second.getRank();
+   const auto & tensor_dims = iter->second.getDimExtents();
+   const auto & tensor_legs = iter->second.getTensorLegs();
+   std::vector<std::pair<unsigned int, DimExtent>> edges(tensor_rank);
+   for(unsigned int i = 0; i < tensor_rank; ++i){
+    edges[i] = std::pair<unsigned int, DimExtent>{tensor_legs[i].getTensorId(),
+                                                  tensor_dims[i]};
+   }
+   std::sort(edges.begin(),edges.end(),cmp);
+   std::size_t adj_vertices[tensor_rank], edge_weights[tensor_rank];
+   std::size_t vertex_weight = 1;
+   std::size_t num_vertices = 0;
+   unsigned int first_vertex_pos = tensor_rank;
+   for(unsigned int i = 0; i < tensor_rank; ++i){
+    if(edges[i].first == 0){
+     vertex_weight *= edges[i].second;
+    }else{
+     if(first_vertex_pos == tensor_rank) first_vertex_pos = i;
+     edges[i].first = tensor_id_map[edges[i].first];
+    }
+   }
+   std::size_t edge_weight = 1;
+   int current_vertex = -1;
+   for(int i = first_vertex_pos; i < tensor_rank; ++i){
+    if(edges[i].first != current_vertex){
+     if(current_vertex >= 0){
+      adj_vertices[num_vertices] = current_vertex;
+      edge_weights[num_vertices++] = edge_weight;
+     }
+     current_vertex = edges[i].first;
+     edge_weight = edges[i].second;
+    }else{
+     edge_weight *= edges[i].second;
+    }
+   }
+   if(current_vertex >= 0){
+    adj_vertices[num_vertices] = current_vertex;
+    edge_weights[num_vertices++] = edge_weight;
+   }
+   graph.appendEdges(num_vertices,adj_vertices,edge_weights,vertex_weight);
+  }
+ }
+ return graph;
 }
 
 

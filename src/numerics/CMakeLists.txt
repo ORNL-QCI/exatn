@@ -3,6 +3,7 @@ set(LIBRARY_NAME exatn-numerics)
 add_library(${LIBRARY_NAME}
             SHARED
             tensor_symbol.cpp
+            metis_graph.cpp
             basis_vector.cpp
             space_basis.cpp
             spaces.cpp
