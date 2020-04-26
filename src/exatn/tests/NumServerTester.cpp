@@ -787,7 +787,7 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "Done\n" << std::flush;
  circuit.printIndexSplitInfo();
 
- std::size_t num_parts = 32;
+ std::size_t num_parts = 7;
  double imbalance = 1.3;
  std::size_t edge_cut = 0;
  std::vector<std::vector<std::size_t>> parts;
@@ -798,7 +798,7 @@ TEST(NumServerTester, Sycamore8NumServer)
            << " achieving edge cut of " << edge_cut << ":\n" << std::flush;
  std::size_t total_vertices = 0;
  for(unsigned int i = 0; i < parts.size(); ++i){
-  std::cout << "Partition " << i << ":";
+  std::cout << "Partition " << i << " of size " << parts[i].size() << ":\n";
   for(const auto & vertex: parts[i]) std::cout << " " << vertex;
   total_vertices += parts[i].size();
   std::cout << std::endl;

@@ -62,7 +62,8 @@ public:
                      double imbalance);     //in: imbalance tolerance (>= 1.0)
 
  /** Retrieves the graph partitions and the achieved edge cut value. **/
- const std::vector<idx_t> & getPartitions(std::size_t * edge_cut = nullptr) const;
+ const std::vector<idx_t> & getPartitions(std::size_t * edge_cut = nullptr,
+                                          const std::vector<idx_t> ** renumbering = nullptr) const;
 
 protected:
 
@@ -73,6 +74,7 @@ private:
  idx_t options_[METIS_NOPTIONS];   //METIS options
 
  idx_t num_vertices_;              //number of vertices in the graph
+ std::vector<idx_t> renumber_;     //new vertex id --> old vertex id (if renumbering was done)
  std::vector<idx_t> xadj_,adjncy_; //graph structure stored in the CSR format
  std::vector<idx_t> vwgt_;         //vertex weights
  std::vector<idx_t> adjwgt_;       //edge weights

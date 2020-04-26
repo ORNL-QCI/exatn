@@ -51,6 +51,7 @@ MetisGraph::MetisGraph(const TensorNetwork & network):
  unsigned int vertex_id = 0;
  for(auto iter = network.cbegin(); iter != network.cend(); ++iter){
   if(iter->first != 0){ //ignore the output tensor
+   renumber_.emplace_back(iter->first);
    auto res = tensor_id_map.emplace(std::make_pair(iter->first,vertex_id++));
    assert(res.second);
   }
@@ -109,6 +110,7 @@ MetisGraph::MetisGraph(const TensorNetwork & network):
 
 void MetisGraph::clear()
 {
+ renumber_.clear();
  xadj_.clear();
  adjncy_.clear();
  vwgt_.clear();
@@ -196,9 +198,17 @@ bool MetisGraph::partitionGraph(std::size_t num_parts, //in: number of parts (>0
 }
 
 
-const std::vector<idx_t> & MetisGraph::getPartitions(std::size_t * edge_cut) const
+const std::vector<idx_t> & MetisGraph::getPartitions(std::size_t * edge_cut,
+                                                     const std::vector<idx_t> ** renumbering) const
 {
  if(edge_cut != nullptr) *edge_cut = edge_cut_;
+ if(renumbering != nullptr){
+  if(renumber_.empty()){
+   *renumbering = nullptr;
+  }else{
+   *renumbering = &renumber_;
+  }
+ }
  return partitions_;
 }
 

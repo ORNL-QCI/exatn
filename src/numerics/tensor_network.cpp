@@ -1569,10 +1569,18 @@ bool TensorNetwork::partition(std::size_t num_parts, //in: desired number of par
  bool success = graph.partitionGraph(num_parts,imbalance);
  if(success){
   parts.resize(num_parts);
-  const auto & partitions = graph.getPartitions(edge_cut);
-  for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
-   const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
-   parts[part_id].emplace_back(vertex);
+  const std::vector<idx_t> * renumbering = nullptr;
+  const auto & partitions = graph.getPartitions(edge_cut,&renumbering);
+  if(renumbering == nullptr){
+   for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
+    const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
+    parts[part_id].emplace_back(vertex);
+   }
+  }else{
+   for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
+    const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
+    parts[part_id].emplace_back((*renumbering)[vertex]);
+   }
   }
  }
  return success;
