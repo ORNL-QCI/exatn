@@ -20,11 +20,17 @@ namespace exatn{
 
 namespace numerics{
 
+class TensorNetwork;
+
+
 class MetisGraph{
 
 public:
 
  MetisGraph();
+
+ MetisGraph(const TensorNetwork & network);
+
  MetisGraph(const MetisGraph &) = default;
  MetisGraph & operator=(const MetisGraph &) = default;
  MetisGraph(MetisGraph &&) noexcept = default;
