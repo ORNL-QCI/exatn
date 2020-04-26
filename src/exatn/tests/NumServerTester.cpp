@@ -10,9 +10,23 @@
 #include <iostream>
 #include <utility>
 
+#define EXATN_TEST1
+#define EXATN_TEST2
+#define EXATN_TEST3
+#define EXATN_TEST4
+#define EXATN_TEST5
+#define EXATN_TEST6
+#define EXATN_TEST7
+#define EXATN_TEST8
+#define EXATN_TEST9
+#define EXATN_TEST10
+#define EXATN_TEST11
+#define EXATN_TEST12
+
 using namespace exatn;
 using namespace exatn::numerics;
 
+#ifdef EXATN_TEST1
 TEST(NumServerTester, checkNumServer)
 {
  const VectorSpace * space1;
@@ -47,8 +61,9 @@ TEST(NumServerTester, checkNumServer)
  subspace->printIt();
  std::cout << std::endl;
 }
+#endif
 
-
+#ifdef EXATN_TEST2
 TEST(NumServerTester, useNumServer)
 {
  using exatn::TensorOpCode;
@@ -212,8 +227,9 @@ TEST(NumServerTester, useNumServer)
  exatn::numericalServer->submit(destroy_z0);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST3
 TEST(NumServerTester, easyNumServer)
 {
  using exatn::numerics::Tensor;
@@ -270,8 +286,9 @@ TEST(NumServerTester, easyNumServer)
  destroyed = exatn::numericalServer->destroyTensor("Z0"); assert(destroyed);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST4
 TEST(NumServerTester, superEasyNumServer)
 {
  using exatn::numerics::Tensor;
@@ -338,8 +355,9 @@ TEST(NumServerTester, superEasyNumServer)
  destroyed = exatn::destroyTensor("Z0"); assert(destroyed);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST5
 TEST(NumServerTester, circuitNumServer)
 {
  using exatn::numerics::Tensor;
@@ -439,8 +457,9 @@ TEST(NumServerTester, circuitNumServer)
  exatn::sync();
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST6
 TEST(NumServerTester, circuitConjugateNumServer)
 {
  using exatn::numerics::Tensor;
@@ -519,8 +538,9 @@ TEST(NumServerTester, circuitConjugateNumServer)
  exatn::sync();
  //Grab a coffee!
 }
+#endif
 
-
+#ifdef EXATN_TEST7
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::numerics::Tensor;
@@ -663,8 +683,9 @@ TEST(NumServerTester, largeCircuitNumServer)
  exatn::sync();
  //Grab a coffee!
 }
+#endif
 
-
+#ifdef EXATN_TEST8
 TEST(NumServerTester, Sycamore8NumServer)
 {
  using exatn::Tensor;
@@ -766,8 +787,9 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "Done\n" << std::flush;
  circuit.printIndexSplitInfo();
 }
+#endif
 
-
+#ifdef EXATN_TEST9
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -839,8 +861,9 @@ TEST(NumServerTester, BigMPSNumServer)
  std::cout << "Done\n" << std::flush;
  exatn::sync();
 }
+#endif
 
-
+#ifdef EXATN_TEST10
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::numerics::Tensor;
@@ -994,8 +1017,9 @@ TEST(NumServerTester, HamiltonianNumServer)
  }
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST11
 TEST(NumServerTester, EigenNumServer)
 {
  using exatn::numerics::Tensor;
@@ -1083,8 +1107,9 @@ TEST(NumServerTester, EigenNumServer)
  }
 
 }
+#endif
 
-
+#ifdef EXATN_TEST12
 TEST(NumServerTester, MPSBuilderNumServer)
 {
  using exatn::numerics::Tensor;
@@ -1125,7 +1150,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
  exatn::sync();
 
 }
-
+#endif
 
 int main(int argc, char **argv) {
 #ifdef MPI_ENABLED
