@@ -10,18 +10,18 @@
 #include <iostream>
 #include <utility>
 
-#define EXATN_TEST1
-#define EXATN_TEST2
-#define EXATN_TEST3
-#define EXATN_TEST4
-#define EXATN_TEST5
-#define EXATN_TEST6
-#define EXATN_TEST7
+//#define EXATN_TEST1
+//#define EXATN_TEST2
+//#define EXATN_TEST3
+//#define EXATN_TEST4
+//#define EXATN_TEST5
+//#define EXATN_TEST6
+//#define EXATN_TEST7
 #define EXATN_TEST8
-#define EXATN_TEST9
-#define EXATN_TEST10
-#define EXATN_TEST11
-#define EXATN_TEST12
+//#define EXATN_TEST9
+//#define EXATN_TEST10
+//#define EXATN_TEST11
+//#define EXATN_TEST12
 
 using namespace exatn;
 using namespace exatn::numerics;
@@ -786,6 +786,24 @@ TEST(NumServerTester, Sycamore8NumServer)
  circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
  std::cout << "Done\n" << std::flush;
  circuit.printIndexSplitInfo();
+
+ std::size_t num_parts = 32;
+ double imbalance = 1.3;
+ std::size_t edge_cut = 0;
+ std::vector<std::vector<std::size_t>> parts;
+ bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut);
+ assert(success);
+ std::cout << "Partitioned tensor network into " << num_parts
+           << " parts with tolerated imbalance " << imbalance
+           << " achieving edge cut of " << edge_cut << ":\n" << std::flush;
+ std::size_t total_vertices = 0;
+ for(unsigned int i = 0; i < parts.size(); ++i){
+  std::cout << "Partition " << i << ":";
+  for(const auto & vertex: parts[i]) std::cout << " " << vertex;
+  total_vertices += parts[i].size();
+  std::cout << std::endl;
+ }
+ std::cout << "Total number of vertices in all partitions = " << total_vertices << std::endl;
 }
 #endif
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/25
+REVISION: 2020/04/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -287,6 +287,13 @@ public:
      that the tensor processing runtime of your choice supports tensor tracing, or, in case
      of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
  bool collapseIsometries();
+
+ /** Partitions the tensor network into multiple parts by minimizing the edge cut.
+     The returned vector parts: parts[i] = Ordered list of vertices forming part i. **/
+ bool partition(std::size_t num_parts, //in: desired number of parts
+                double imbalance,      //in: tolerated imbalance in the weighted size of the parts
+                std::vector<std::vector<std::size_t>> & parts, //out: parts
+                std::size_t * edge_cut = nullptr) const; //out: achieved edge cut value
 
  /** Traverses the tensor network and marks certain tensors as optimizable
      based on the user-provided predicate function. If marked optimizable,

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/25
+REVISION: 2020/04/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_symbol.hpp"
 #include "contraction_seq_optimizer_factory.hpp"
 #include "functor_init_val.hpp"
+
+#include "metis_graph.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -1555,6 +1557,25 @@ bool TensorNetwork::collapseIsometries()
  }
  if(simplified) invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return simplified;
+}
+
+
+bool TensorNetwork::partition(std::size_t num_parts, //in: desired number of parts
+                              double imbalance,      //in: tolerated imbalance in the weighted size of the parts
+                              std::vector<std::vector<std::size_t>> & parts, //out: parts
+                              std::size_t * edge_cut) const //out: achieved edge cut value
+{
+ MetisGraph graph(*this);
+ bool success = graph.partitionGraph(num_parts,imbalance);
+ if(success){
+  parts.resize(num_parts);
+  const auto & partitions = graph.getPartitions(edge_cut);
+  for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
+   const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
+   parts[part_id].emplace_back(vertex);
+  }
+ }
+ return success;
 }
 
 
