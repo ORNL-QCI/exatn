@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/24
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -90,6 +90,7 @@ using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
 using numerics::FunctorScale;
+using numerics::FunctorDiagRank;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
@@ -100,10 +101,12 @@ public:
 
 #ifdef MPI_ENABLED
  NumServer(const MPICommProxy & communicator,                               //MPI communicator proxy
+           const ParamConf & parameters,                                    //runtime configuration parameters
            const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
- NumServer(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+ NumServer(const ParamConf & parameters,                                    //runtime configuration parameters
+           const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
  NumServer(const NumServer &) = delete;
@@ -115,10 +118,12 @@ public:
  /** Reconfigures tensor runtime implementation. **/
 #ifdef MPI_ENABLED
  void reconfigureTensorRuntime(const MPICommProxy & communicator,
+                               const ParamConf & parameters,
                                const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #else
- void reconfigureTensorRuntime(const std::string & dag_executor_name,
+ void reconfigureTensorRuntime(const ParamConf & parameters,
+                               const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #endif
 

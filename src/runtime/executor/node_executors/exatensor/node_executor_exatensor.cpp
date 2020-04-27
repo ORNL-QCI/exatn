@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/04/13
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -10,7 +10,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 namespace exatn {
 namespace runtime {
 
-void ExatensorNodeExecutor::initialize()
+void ExatensorNodeExecutor::initialize(const ParamConf & parameters)
 {
  return;
 }

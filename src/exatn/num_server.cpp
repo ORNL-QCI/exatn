@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/24
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,10 +25,11 @@ std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::in
 
 #ifdef MPI_ENABLED
 NumServer::NumServer(const MPICommProxy & communicator,
+                     const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("greed"), intra_comm_(communicator),
- tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,graph_executor_name,node_executor_name))
+ tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,parameters,graph_executor_name,node_executor_name))
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
@@ -38,10 +39,11 @@ NumServer::NumServer(const MPICommProxy & communicator,
  tensor_rt_->openScope("GLOBAL");
 }
 #else
-NumServer::NumServer(const std::string & graph_executor_name,
+NumServer::NumServer(const ParamConf & parameters,
+                     const std::string & graph_executor_name,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("greed"),
- tensor_rt_(std::make_shared<runtime::TensorRuntime>(graph_executor_name,node_executor_name))
+ tensor_rt_(std::make_shared<runtime::TensorRuntime>(parameters,graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;
  space_register_ = getSpaceRegister(); assert(space_register_);
@@ -70,19 +72,21 @@ NumServer::~NumServer()
 
 #ifdef MPI_ENABLED
 void NumServer::reconfigureTensorRuntime(const MPICommProxy & communicator,
+                                         const ParamConf & parameters,
                                          const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
  bool synced = tensor_rt_->sync(); assert(synced);
- tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(communicator,dag_executor_name,node_executor_name));
+ tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(communicator,parameters,dag_executor_name,node_executor_name));
  return;
 }
 #else
-void NumServer::reconfigureTensorRuntime(const std::string & dag_executor_name,
+void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
+                                         const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
  bool synced = tensor_rt_->sync(); assert(synced);
- tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(dag_executor_name,node_executor_name));
+ tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(parameters,dag_executor_name,node_executor_name));
  return;
 }
 #endif
