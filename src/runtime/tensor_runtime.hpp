@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/03/10
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -49,6 +49,7 @@ Rationale:
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
+#include "param_conf.hpp"
 #include "mpi_proxy.hpp"
 
 #include <map>
