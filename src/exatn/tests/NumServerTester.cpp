@@ -787,15 +787,16 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "Done\n" << std::flush;
  circuit.printIndexSplitInfo();
 
- std::size_t num_parts = 7;
- double imbalance = 1.3;
- std::size_t edge_cut = 0;
+ std::size_t num_parts = 2;
+ double imbalance = 1.001;
+ std::size_t edge_cut = 0, num_cross_edges = 0;
  std::vector<std::vector<std::size_t>> parts;
- bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut);
+ bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut,&num_cross_edges);
  assert(success);
  std::cout << "Partitioned tensor network into " << num_parts
            << " parts with tolerated imbalance " << imbalance
-           << " achieving edge cut of " << edge_cut << ":\n" << std::flush;
+           << " achieving edge cut of " << edge_cut
+           << " with total cross edges = " << num_cross_edges << ":\n" << std::flush;
  std::size_t total_vertices = 0;
  for(unsigned int i = 0; i < parts.size(); ++i){
   std::cout << "Partition " << i << " of size " << parts[i].size() << ":\n";

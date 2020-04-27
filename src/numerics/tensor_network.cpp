@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/26
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1560,17 +1560,18 @@ bool TensorNetwork::collapseIsometries()
 }
 
 
-bool TensorNetwork::partition(std::size_t num_parts, //in: desired number of parts
-                              double imbalance,      //in: tolerated imbalance in the weighted size of the parts
+bool TensorNetwork::partition(std::size_t num_parts,  //in: desired number of parts
+                              double imbalance,       //in: tolerated imbalance in the weighted size of the parts
                               std::vector<std::vector<std::size_t>> & parts, //out: parts
-                              std::size_t * edge_cut) const //out: achieved edge cut value
+                              std::size_t * edge_cut, //out: achieved edge cut value
+                              std::size_t * num_cross_edges) const //out: total number of cross edges
 {
  MetisGraph graph(*this);
  bool success = graph.partitionGraph(num_parts,imbalance);
  if(success){
   parts.resize(num_parts);
   const std::vector<idx_t> * renumbering = nullptr;
-  const auto & partitions = graph.getPartitions(edge_cut,&renumbering);
+  const auto & partitions = graph.getPartitions(edge_cut,num_cross_edges,&renumbering);
   if(renumbering == nullptr){
    for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
     const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
