@@ -29,7 +29,7 @@ void TAProLListenerImpl::enterEntry(TAProLParser::EntryContext *ctx){
 }
 
 void TAProLListenerImpl::enterScope(TAProLParser::ScopeContext *ctx){
- std::cout << "SCOPE: " << ctx->id()->getText() << std::endl;
+ std::cout << "SCOPE: " << ctx->id(0)->getText() << std::endl;
 }
 
 void TAProLListenerImpl::enterSpace(TAProLParser::SpaceContext *ctx){

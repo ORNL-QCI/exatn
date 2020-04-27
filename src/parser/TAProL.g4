@@ -10,7 +10,7 @@ entry
    ;
 
 scope
-   : 'scope' scopename=id 'group' '(' groupnamelist? ')' code 'end'
+   : 'scope' scopename=id 'group' '(' groupnamelist? ')' code 'end scope' endscopename=id 
    ;
 
 groupnamelist
@@ -27,11 +27,11 @@ line
    ;
 
 statement
-   : space EOL
-   | subspace EOL
-   | index EOL
-   | simpleop EOL
-   | compositeop EOL
+   : space 
+   | subspace 
+   | index 
+   | simpleop 
+   | compositeop 
    ;
 
 compositeop
@@ -169,7 +169,7 @@ conjtensor
    ;
 
 tensor
-   : tensorname '(' (indexlist)? ')'
+   : tensorname ('(' (indexlist)? ')')?
    ;
 
 tensorname
@@ -200,7 +200,7 @@ comment
 
 /* Comment */
 COMMENT
-   : '#' ~ [\r\n]* EOL
+   : '#' ~ [\r\n]* 
    ;
 
 /* Alphanumeric_ identifier */

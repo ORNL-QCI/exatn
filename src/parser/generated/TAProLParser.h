@@ -122,10 +122,12 @@ public:
   class  ScopeContext : public antlr4::ParserRuleContext {
   public:
     TAProLParser::IdContext *scopename = nullptr;;
+    TAProLParser::IdContext *endscopename = nullptr;;
     ScopeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     CodeContext *code();
-    IdContext *id();
+    std::vector<IdContext *> id();
+    IdContext* id(size_t i);
     GroupnamelistContext *groupnamelist();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -183,7 +185,6 @@ public:
     StatementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     SpaceContext *space();
-    antlr4::tree::TerminalNode *EOL();
     SubspaceContext *subspace();
     IndexContext *index();
     SimpleopContext *simpleop();
