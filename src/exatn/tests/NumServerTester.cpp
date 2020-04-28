@@ -790,20 +790,23 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::size_t num_parts = 2;
  double imbalance = 1.001;
  std::size_t edge_cut = 0, num_cross_edges = 0;
- std::vector<std::vector<std::size_t>> parts;
- bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut,&num_cross_edges);
- assert(success);
+ std::vector<std::pair<std::size_t,std::vector<std::size_t>>> parts;
+ bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut,&num_cross_edges); assert(success);
  std::cout << "Partitioned tensor network into " << num_parts
-           << " parts with tolerated imbalance " << imbalance
+           << " parts with tolerated weight imbalance " << imbalance
            << " achieving edge cut of " << edge_cut
            << " with total cross edges = " << num_cross_edges << ":\n" << std::flush;
+ std::size_t total_weight = 0;
  std::size_t total_vertices = 0;
- for(unsigned int i = 0; i < parts.size(); ++i){
-  std::cout << "Partition " << i << " of size " << parts[i].size() << ":\n";
-  for(const auto & vertex: parts[i]) std::cout << " " << vertex;
-  total_vertices += parts[i].size();
+ for(std::size_t i = 0; i < parts.size(); ++i){
+  std::cout << "Partition " << i << " of size " << parts[i].second.size()
+            << " with weight " << parts[i].first << ":\n";
+  for(const auto & vertex: parts[i].second) std::cout << " " << vertex;
+  total_weight += parts[i].first;
+  total_vertices += parts[i].second.size();
   std::cout << std::endl;
  }
+ std::cout << "Total weight of vertices in all partitions = " << total_weight << std::endl;
  std::cout << "Total number of vertices in all partitions = " << total_vertices << std::endl;
 }
 #endif

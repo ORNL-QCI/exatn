@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/27
+REVISION: 2020/04/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1561,8 +1561,8 @@ bool TensorNetwork::collapseIsometries()
 
 
 bool TensorNetwork::partition(std::size_t num_parts,  //in: desired number of parts
-                              double imbalance,       //in: tolerated imbalance in the weighted size of the parts
-                              std::vector<std::vector<std::size_t>> & parts, //out: parts
+                              double imbalance,       //in: tolerated partition weight imbalance
+                              std::vector<std::pair<std::size_t,std::vector<std::size_t>>> & parts, //out: partitions
                               std::size_t * edge_cut, //out: achieved edge cut value
                               std::size_t * num_cross_edges) const //out: total number of cross edges
 {
@@ -1570,17 +1570,19 @@ bool TensorNetwork::partition(std::size_t num_parts,  //in: desired number of pa
  bool success = graph.partitionGraph(num_parts,imbalance);
  if(success){
   parts.resize(num_parts);
+  const std::vector<idx_t> * part_weights = nullptr;
   const std::vector<idx_t> * renumbering = nullptr;
-  const auto & partitions = graph.getPartitions(edge_cut,num_cross_edges,&renumbering);
+  const auto & partitions = graph.getPartitions(edge_cut,num_cross_edges,&part_weights,&renumbering);
+  for(std::size_t i = 0; i < num_parts; ++i) parts[i].first = (*part_weights)[i]; //partition weights
   if(renumbering == nullptr){
    for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
     const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
-    parts[part_id].emplace_back(vertex);
+    parts[part_id].second.emplace_back(vertex); //vertex id
    }
   }else{
    for(std::size_t vertex = 0; vertex < partitions.size(); ++vertex){
     const auto & part_id = partitions[vertex]; assert(part_id < num_parts);
-    parts[part_id].emplace_back((*renumbering)[vertex]);
+    parts[part_id].second.emplace_back((*renumbering)[vertex]); //original tensor id
    }
   }
  }
