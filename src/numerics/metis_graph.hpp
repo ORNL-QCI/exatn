@@ -64,6 +64,13 @@ public:
  /** Clears the graph back to an empty state. **/
  void clear();
 
+ /** Returns the number of vertices in the graph. **/
+ std::size_t getNumVertices() const;
+
+ /** Returns the number of partitions the most recent partitioning
+     resulted in, or zero otherwise. **/
+ std::size_t getNumPartitions() const;
+
  /** Appends a new vertex with its edges. **/
  void appendVertex(std::size_t num_edges,      //in: number of edges (number of adjacent vertices)
                    std::size_t * adj_vertices, //in: adjacent vertices (numbering starts from 0)

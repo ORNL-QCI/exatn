@@ -20,7 +20,7 @@ namespace exatn{
 namespace numerics{
 
 ContractionSeqOptimizerGreed::ContractionSeqOptimizerGreed():
- num_walkers_(NUM_WALKERS)
+ num_walkers_(NUM_WALKERS), acceptance_tolerance_(ACCEPTANCE_TOLERANCE)
 {
 }
 

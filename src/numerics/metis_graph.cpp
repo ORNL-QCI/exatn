@@ -180,6 +180,18 @@ void MetisGraph::clear()
 }
 
 
+std::size_t MetisGraph::getNumVertices() const
+{
+ return static_cast<std::size_t>(num_vertices_);
+}
+
+
+std::size_t MetisGraph::getNumPartitions() const
+{
+ return static_cast<std::size_t>(num_parts_);
+}
+
+
 void MetisGraph::appendVertex(std::size_t num_edges,      //in: number of edges (number of adjacent vertices)
                               std::size_t * adj_vertices, //in: adjacent vertices (numbering starts from 0)
                               std::size_t * edge_weights, //in: edge weights (>0)

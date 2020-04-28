@@ -34,7 +34,7 @@ public:
 
 protected:
 
- static const unsigned int NUM_WALKERS = 8;
+ static constexpr const unsigned int NUM_WALKERS = 8;
 
  unsigned int num_walkers_;
 };

@@ -37,7 +37,8 @@ public:
 
 protected:
 
- static const unsigned int NUM_WALKERS = 1;
+ static constexpr const unsigned int NUM_WALKERS = 1;
+ static constexpr const double ACCEPTANCE_TOLERANCE = 0.0;
 
  unsigned int num_walkers_;
  double acceptance_tolerance_;
