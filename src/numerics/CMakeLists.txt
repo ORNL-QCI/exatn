@@ -34,6 +34,7 @@ add_library(${LIBRARY_NAME}
             contraction_seq_optimizer_dummy.cpp
             contraction_seq_optimizer_heuro.cpp
             contraction_seq_optimizer_greed.cpp
+            contraction_seq_optimizer_metis.cpp
             contraction_seq_optimizer_factory.cpp
             tensor_network.cpp
             tensor_operator.cpp

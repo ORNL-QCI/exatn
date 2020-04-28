@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Greedy heuristics
-REVISION: 2020/04/21
+REVISION: 2020/04/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,6 +33,8 @@ public:
  static std::unique_ptr<ContractionSeqOptimizer> createNew();
 
 protected:
+
+ static const unsigned int NUM_WALKERS = 8;
 
  unsigned int num_walkers_;
 };
