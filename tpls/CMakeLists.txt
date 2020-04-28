@@ -89,9 +89,12 @@ if(NOT CUDA_HOST_COMPILER)
   set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
+set(ExaTensor_WITH_LAPACK NO)
+
 if(WITH_LAPACK)
   set(LAPACK_LIBRARIES "")
-  if    (BLAS_LIB STREQUAL "ATLAS")
+  set (ExaTensor_WITH_LAPACK YES)
+  if (BLAS_LIB STREQUAL "ATLAS")
     set(LAPACK_LIBRARIES "-llapack")
   elseif(BLAS_LIB STREQUAL "MKL")
   elseif(BLAS_LIB STREQUAL "OPENBLAS")
@@ -107,7 +110,7 @@ message(STATUS "The MPI root path is set to ${MPI_ROOT_DIR}")
 message(STATUS "The MPI bin path is set to ${MPI_BIN_PATH}")
 message(STATUS "The BLAS implementation is set to ${BLAS_LIB}")
 message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
-message(STATUS "The BLAS library must also have LAPACK: ${WITH_LAPACK}")
+message(STATUS "The BLAS library must also have LAPACK: ${WITH_LAPACK}, ${LAPACK_LIBRARIES}, ${ExaTensor_WITH_LAPACK}")
 message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
 message(STATUS "Solely TAL-SH backend single-node build: ${EXA_TALSH_ONLY}")
 
@@ -157,7 +160,7 @@ if(APPLE)
                             BLASLIB=${BLAS_LIB}
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
-                            WITH_LAPACK=${WITH_LAPACK}
+                            WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
                             LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
@@ -183,7 +186,7 @@ if(APPLE)
                             BLASLIB=${BLAS_LIB}
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
-                            WITH_LAPACK=${WITH_LAPACK}
+                            WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
                             LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
@@ -209,7 +212,7 @@ if(APPLE)
                             BLASLIB=${BLAS_LIB}
                             PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                             PATH_INTEL=${PATH_INTEL_ROOT}
-                            WITH_LAPACK=${WITH_LAPACK}
+                            WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                             PATH_LAPACK_LIB=${BLAS_PATH}
                             LAPACK_LIBS="${LAPACK_LIBRARIES}"
                             make
@@ -245,7 +248,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
@@ -273,7 +276,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
@@ -301,7 +304,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
@@ -330,7 +333,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
@@ -356,7 +359,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
@@ -382,7 +385,7 @@ else()
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
                               PATH_INTEL=${PATH_INTEL_ROOT}
-                              WITH_LAPACK=${WITH_LAPACK}
+                              WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
                               make
