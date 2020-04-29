@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/04/28
+REVISION: 2020/04/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -100,6 +100,9 @@ public:
                                           std::size_t * num_cross_edges = nullptr, //out: total number of cross edges
                                           const std::vector<idx_t> ** part_weights = nullptr, //out: partition weights
                                           const std::vector<idx_t> ** renumbering = nullptr) const; //out: vertex id renumbering
+
+ /** Returns the original id for a given graph vertex. **/
+ std::size_t getOriginalVertexId(std::size_t vertex_id) const; //in: current vertex id [0..N-1]
 
 protected:
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/04/28
+REVISION: 2020/04/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -383,6 +383,13 @@ const std::vector<idx_t> & MetisGraph::getPartitions(std::size_t * edge_cut,
   }
  }
  return partitions_;
+}
+
+
+std::size_t MetisGraph::getOriginalVertexId(std::size_t vertex_id) const
+{
+ if(!renumber_.empty()) return static_cast<std::size_t>(renumber_[vertex_id]);
+ return vertex_id;
 }
 
 } //namespace numerics
