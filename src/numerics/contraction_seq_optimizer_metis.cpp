@@ -103,10 +103,26 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
    unsigned int right_id = graph.getOriginalVertexId(1);
    contr_seq.emplace_front(ContrTriple{graph_entry.second,left_id,right_id});
   }else{
-   assert(false);
+   unsigned int intermediate_id = graph_entry.second;
+   unsigned int tensor_id = graph.getOriginalVertexId(0);
+   for(auto & contr_triple: contr_seq){
+    if(contr_triple.left_id == intermediate_id) contr_triple.left_id = tensor_id;
+    if(contr_triple.right_id == intermediate_id) contr_triple.right_id = tensor_id;
+   }
   }
  }
  assert(contr_seq.size() == num_contractions);
+ //Compute the total FMA flop count:
+ TensorNetwork net(network);
+ for(const auto & contr_triple: contr_seq){
+  flops += net.getContractionCost(contr_triple.left_id,contr_triple.right_id);
+  if(contr_triple.result_id != 0){ //intermediate tensor contraction
+   bool success = net.mergeTensors(contr_triple.left_id,contr_triple.right_id,contr_triple.result_id);
+   assert(success);
+  }else{ //last tensor contraction (into the output tensor)
+   assert(net.getNumTensors() == 2);
+  }
+ }
 
  auto time_end = std::chrono::high_resolution_clock::now();
  auto time_total = std::chrono::duration_cast<std::chrono::duration<double>>(time_end - time_beg);

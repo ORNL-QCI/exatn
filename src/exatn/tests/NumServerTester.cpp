@@ -10,18 +10,18 @@
 #include <iostream>
 #include <utility>
 
-//#define EXATN_TEST1
-//#define EXATN_TEST2
-//#define EXATN_TEST3
-//#define EXATN_TEST4
-//#define EXATN_TEST5
-//#define EXATN_TEST6
-//#define EXATN_TEST7
+#define EXATN_TEST1
+#define EXATN_TEST2
+#define EXATN_TEST3
+#define EXATN_TEST4
+#define EXATN_TEST5
+#define EXATN_TEST6
+#define EXATN_TEST7
 #define EXATN_TEST8
-//#define EXATN_TEST9
-//#define EXATN_TEST10
-//#define EXATN_TEST11
-//#define EXATN_TEST12
+#define EXATN_TEST9
+#define EXATN_TEST10
+#define EXATN_TEST11
+#define EXATN_TEST12
 
 using namespace exatn;
 using namespace exatn::numerics;
@@ -774,7 +774,7 @@ TEST(NumServerTester, Sycamore8NumServer)
 
  //Generate the list of tensor operations for the circuit:
  std::cout << "Generating the list of tensor operations for the circuit ... " << std::flush;
- auto & operations = circuit.getOperationList("greed",true);
+ auto & operations = circuit.getOperationList("metis",true);
  std::cout << "Done\n" << std::flush;
  unsigned int max_rank = 0;
  std::cout << "Total FMA flop count = " << circuit.getFMAFlops()

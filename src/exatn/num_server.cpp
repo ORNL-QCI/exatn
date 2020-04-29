@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/27
+REVISION: 2020/04/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,7 +28,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("greed"), intra_comm_(communicator),
+ contr_seq_optimizer_("metis"), intra_comm_(communicator),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(communicator,parameters,graph_executor_name,node_executor_name))
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
@@ -42,7 +42,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 NumServer::NumServer(const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("greed"),
+ contr_seq_optimizer_("metis"),
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(parameters,graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;
