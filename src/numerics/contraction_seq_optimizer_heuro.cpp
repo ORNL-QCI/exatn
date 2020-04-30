@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Greedy heuristics
-REVISION: 2020/04/21
+REVISION: 2020/04/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,9 +18,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
-
-static constexpr unsigned int NUM_WALKERS = 8; //default number of walkers for tensor contraction sequence optimization
-
 
 ContractionSeqOptimizerHeuro::ContractionSeqOptimizerHeuro():
  num_walkers_(NUM_WALKERS)

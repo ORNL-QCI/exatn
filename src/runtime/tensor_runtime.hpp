@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/03/10
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -49,6 +49,7 @@ Rationale:
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
+#include "param_conf.hpp"
 #include "mpi_proxy.hpp"
 
 #include <map>
@@ -70,10 +71,12 @@ public:
 
 #ifdef MPI_ENABLED
   TensorRuntime(const MPICommProxy & communicator,                               //MPI communicator proxy
+                const ParamConf & parameters,                                    //runtime configuration parameters
                 const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
-  TensorRuntime(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+  TensorRuntime(const ParamConf & parameters,                                    //runtime configuration parameters
+                const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
   TensorRuntime(const TensorRuntime &) = delete;
@@ -156,6 +159,8 @@ private:
   inline void lockDataReqQ(){data_req_mtx_.lock();}
   inline void unlockDataReqQ(){data_req_mtx_.unlock();}
 
+  /** Runtime configuration parameters **/
+  ParamConf parameters_;
   /** Tensor graph (DAG) executor name **/
   std::string graph_executor_name_;
   /** Tensor graph (DAG) node executor name **/

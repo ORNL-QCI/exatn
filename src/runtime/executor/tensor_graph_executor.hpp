@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2019/10/13
+REVISION: 2020/04/27
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph executor traverses the tensor graph (DAG) and
@@ -21,6 +21,8 @@ Rationale:
 #include "tensor_graph.hpp"
 #include "tensor_node_executor.hpp"
 #include "tensor_operation.hpp"
+
+#include "param_conf.hpp"
 
 #include <memory>
 #include <atomic>
@@ -48,9 +50,10 @@ public:
   }
 
   /** Sets/resets the DAG node executor (tensor operation executor). **/
-  void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor) {
+  void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
+                         const ParamConf & parameters) {
     node_executor_ = node_executor;
-    if(node_executor_) node_executor_->initialize();
+    if(node_executor_) node_executor_->initialize(parameters);
     return;
   }
 

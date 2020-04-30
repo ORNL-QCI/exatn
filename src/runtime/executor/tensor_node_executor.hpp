@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2020/04/13
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -24,6 +24,8 @@ Rationale:
 #include "tensor.hpp"
 #include "space_register.hpp"
 
+#include "param_conf.hpp"
+
 #include <vector>
 #include <memory>
 
@@ -41,7 +43,7 @@ public:
   virtual ~TensorNodeExecutor() = default;
 
   /** Explicitly initializes the underlying numerical service, if needed **/
-  virtual void initialize() = 0;
+  virtual void initialize(const ParamConf & parameters) = 0;
 
   /** Executes the tensor operation found in a DAG node asynchronously,
       returning the execution handle in exec_handle that can later be

@@ -10,6 +10,7 @@ namespace exatn {
 
 #ifdef MPI_ENABLED
 void initialize(const MPICommProxy & communicator,
+                const ParamConf & parameters,
                 const std::string & graph_executor_name,
                 const std::string & node_executor_name)
 {
@@ -18,7 +19,7 @@ void initialize(const MPICommProxy & communicator,
     exatnFrameworkInitialized = true;
     exatnInitializedMPI = false;
     //std::cout << "#DEBUG(exatn): ExaTN services initialized" << std::endl << std::flush;
-    numericalServer = std::make_shared<NumServer>(communicator,graph_executor_name,node_executor_name);
+    numericalServer = std::make_shared<NumServer>(communicator,parameters,graph_executor_name,node_executor_name);
     //std::cout << "#DEBUG(exatn): ExaTN numerical server initialized with MPI" << std::endl << std::flush;
   }
   return;
@@ -26,7 +27,8 @@ void initialize(const MPICommProxy & communicator,
 #endif
 
 
-void initialize(const std::string & graph_executor_name,
+void initialize(const ParamConf & parameters,
+                const std::string & graph_executor_name,
                 const std::string & node_executor_name)
 {
   if(!exatnFrameworkInitialized){
@@ -40,11 +42,11 @@ void initialize(const std::string & graph_executor_name,
     assert(thread_provided == MPI_THREAD_MULTIPLE);
     exatnInitializedMPI = true;
     MPI_Comm global_comm = MPI_COMM_WORLD;
-    numericalServer = std::make_shared<NumServer>(MPICommProxy(&global_comm),
+    numericalServer = std::make_shared<NumServer>(MPICommProxy(&global_comm),parameters,
                                                   graph_executor_name,node_executor_name);
     //std::cout << "#DEBUG(exatn): ExaTN numerical server initialized with MPI" << std::endl << std::flush;
 #else
-    numericalServer = std::make_shared<NumServer>(graph_executor_name,node_executor_name);
+    numericalServer = std::make_shared<NumServer>(parameters,graph_executor_name,node_executor_name);
     //std::cout << "#DEBUG(exatn): ExaTN numerical server initialized" << std::endl << std::flush;
 #endif
   }

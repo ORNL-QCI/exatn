@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/16
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -26,6 +26,8 @@ class TalshNodeExecutor : public TensorNodeExecutor {
 
 public:
 
+  static constexpr std::size_t DEFAULT_MEM_BUFFER_SIZE = 1024*1024*1024; //bytes
+
   TalshNodeExecutor() = default;
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
@@ -33,7 +35,7 @@ public:
   TalshNodeExecutor & operator=(TalshNodeExecutor &&) noexcept = delete;
   virtual ~TalshNodeExecutor();
 
-  void initialize() override;
+  void initialize(const ParamConf & parameters) override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;

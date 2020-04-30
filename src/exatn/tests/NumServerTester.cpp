@@ -10,9 +10,24 @@
 #include <iostream>
 #include <utility>
 
+#define EXATN_TEST1
+#define EXATN_TEST2
+#define EXATN_TEST3
+#define EXATN_TEST4
+#define EXATN_TEST5
+#define EXATN_TEST6
+#define EXATN_TEST7
+#define EXATN_TEST8
+#define EXATN_TEST9
+#define EXATN_TEST10
+#define EXATN_TEST11
+#define EXATN_TEST12
+#define EXATN_TEST13
+
 using namespace exatn;
 using namespace exatn::numerics;
 
+#ifdef EXATN_TEST1
 TEST(NumServerTester, checkNumServer)
 {
  const VectorSpace * space1;
@@ -47,8 +62,9 @@ TEST(NumServerTester, checkNumServer)
  subspace->printIt();
  std::cout << std::endl;
 }
+#endif
 
-
+#ifdef EXATN_TEST2
 TEST(NumServerTester, useNumServer)
 {
  using exatn::TensorOpCode;
@@ -212,8 +228,9 @@ TEST(NumServerTester, useNumServer)
  exatn::numericalServer->submit(destroy_z0);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST3
 TEST(NumServerTester, easyNumServer)
 {
  using exatn::numerics::Tensor;
@@ -270,8 +287,9 @@ TEST(NumServerTester, easyNumServer)
  destroyed = exatn::numericalServer->destroyTensor("Z0"); assert(destroyed);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST4
 TEST(NumServerTester, superEasyNumServer)
 {
  using exatn::numerics::Tensor;
@@ -338,8 +356,9 @@ TEST(NumServerTester, superEasyNumServer)
  destroyed = exatn::destroyTensor("Z0"); assert(destroyed);
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST5
 TEST(NumServerTester, circuitNumServer)
 {
  using exatn::numerics::Tensor;
@@ -439,8 +458,9 @@ TEST(NumServerTester, circuitNumServer)
  exatn::sync();
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST6
 TEST(NumServerTester, circuitConjugateNumServer)
 {
  using exatn::numerics::Tensor;
@@ -519,8 +539,9 @@ TEST(NumServerTester, circuitConjugateNumServer)
  exatn::sync();
  //Grab a coffee!
 }
+#endif
 
-
+#ifdef EXATN_TEST7
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::numerics::Tensor;
@@ -663,8 +684,9 @@ TEST(NumServerTester, largeCircuitNumServer)
  exatn::sync();
  //Grab a coffee!
 }
+#endif
 
-
+#ifdef EXATN_TEST8
 TEST(NumServerTester, Sycamore8NumServer)
 {
  using exatn::Tensor;
@@ -753,7 +775,144 @@ TEST(NumServerTester, Sycamore8NumServer)
 
  //Generate the list of tensor operations for the circuit:
  std::cout << "Generating the list of tensor operations for the circuit ... " << std::flush;
- auto & operations = circuit.getOperationList("greed",true);
+ auto & operations = circuit.getOperationList("metis",true);
+ std::cout << "Done\n" << std::flush;
+ unsigned int max_rank = 0;
+ std::cout << "Total FMA flop count = " << circuit.getFMAFlops()
+           << ": Max intermdediate presence volume = " << circuit.getMaxIntermediatePresenceVolume()
+           << ": Max intermdediate volume = " << circuit.getMaxIntermediateVolume(&max_rank)
+           << ": Max intermdediate rank = " << max_rank << std::endl;
+
+ std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
+ circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
+ std::cout << "Done\n" << std::flush;
+ circuit.printIndexSplitInfo();
+
+ std::size_t num_parts = 2;
+ double imbalance = 1.001;
+ std::size_t edge_cut = 0, num_cross_edges = 0;
+ std::vector<std::pair<std::size_t,std::vector<std::size_t>>> parts;
+ bool success = circuit.partition(num_parts,imbalance,parts,&edge_cut,&num_cross_edges); assert(success);
+ std::cout << "Partitioned tensor network into " << num_parts
+           << " parts with tolerated weight imbalance " << imbalance
+           << " achieving edge cut of " << edge_cut
+           << " with total cross edges = " << num_cross_edges << ":\n" << std::flush;
+ std::size_t total_weight = 0;
+ std::size_t total_vertices = 0;
+ for(std::size_t i = 0; i < parts.size(); ++i){
+  std::cout << "Partition " << i << " of size " << parts[i].second.size()
+            << " with weight " << parts[i].first << ":\n";
+  for(const auto & vertex: parts[i].second) std::cout << " " << vertex;
+  total_weight += parts[i].first;
+  total_vertices += parts[i].second.size();
+  std::cout << std::endl;
+ }
+ std::cout << "Total weight of vertices in all partitions = " << total_weight << std::endl;
+ std::cout << "Total number of vertices in all partitions = " << total_vertices << std::endl;
+}
+#endif
+
+#ifdef EXATN_TEST9
+TEST(NumServerTester, Sycamore12NumServer)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ const unsigned int num_qubits = 53;
+ const unsigned int num_gates = 258; //total number of gates is 258
+ std::vector<std::pair<unsigned int, unsigned int>> sycamore_12_cnot
+ {
+  {1,4},{3,7},{5,9},{6,13},{8,15},{10,17},{12,21},{14,23},{16,25},{18,27},
+  {20,30},{22,32},{24,34},{26,36},{29,37},{31,39},{33,41},{35,43},{38,44},
+  {40,46},{42,48},{45,49},{47,51},{50,52},{0,3},{2,6},{4,8},{7,14},{9,16},
+  {11,20},{13,22},{15,24},{17,26},{19,29},{21,31},{23,33},{25,35},{30,38},
+  {32,40},{34,42},{39,45},{41,47},{46,50},{0,1},{2,3},{4,5},{7,8},{9,10},
+  {11,12},{13,14},{15,16},{17,18},{19,20},{21,22},{23,24},{25,26},{28,29},
+  {30,31},{32,33},{34,35},{37,38},{39,40},{41,42},{44,45},{46,47},{49,50},
+  {3,4},{6,7},{8,9},{12,13},{14,15},{16,17},{20,21},{22,23},{24,25},{26,27},
+  {29,30},{31,32},{33,34},{35,36},{38,39},{40,41},{42,43},{45,46},{47,48},
+  {50,51},{0,1},{2,3},{4,5},{7,8},{9,10},{11,12},{13,14},{15,16},{17,18},
+  {19,20},{21,22},{23,24},{25,26},{28,29},{30,31},{32,33},{34,35},{37,38},
+  {39,40},{41,42},{44,45},{46,47},{49,50},{3,4},{6,7},{8,9},{12,13},{14,15},
+  {16,17},{20,21},{22,23},{24,25},{26,27},{29,30},{31,32},{33,34},{35,36},
+  {38,39},{40,41},{42,43},{45,46},{47,48},{50,51},{1,4},{3,7},{5,9},{6,13},
+  {8,15},{10,17},{12,21},{14,23},{16,25},{18,27},{20,30},{22,32},{24,34},
+  {26,36},{29,37},{31,39},{33,41},{35,43},{38,44},{40,46},{42,48},{45,49},
+  {47,51},{50,52},{0,3},{2,6},{4,8},{7,14},{9,16},{11,20},{13,22},{15,24},
+  {17,26},{19,29},{21,31},{23,33},{25,35},{30,38},{32,40},{34,42},{39,45},
+  {41,47},{46,50},{1,4},{3,7},{5,9},{6,13},{8,15},{10,17},{12,21},{14,23},
+  {16,25},{18,27},{20,30},{22,32},{24,34},{26,36},{29,37},{31,39},{33,41},
+  {35,43},{38,44},{40,46},{42,48},{45,49},{47,51},{50,52},{0,3},{2,6},{4,8},
+  {7,14},{9,16},{11,20},{13,22},{15,24},{17,26},{19,29},{21,31},{23,33},
+  {25,35},{30,38},{32,40},{34,42},{39,45},{41,47},{46,50},{0,1},{2,3},{4,5},
+  {7,8},{9,10},{11,12},{13,14},{15,16},{17,18},{19,20},{21,22},{23,24},
+  {25,26},{28,29},{30,31},{32,33},{34,35},{37,38},{39,40},{41,42},{44,45},
+  {46,47},{49,50},{3,4},{6,7},{8,9},{12,13},{14,15},{16,17},{20,21},{22,23},
+  {24,25},{26,27},{29,30},{31,32},{33,34},{35,36},{38,39},{40,41},{42,43},
+  {45,46},{47,48},{50,51}
+ };
+ assert(num_gates <= sycamore_12_cnot.size());
+
+ std::cout << "Building the circuit ... " << std::flush;
+
+ TensorNetwork circuit("Sycamore12_CNOT");
+ unsigned int tensor_counter = 0;
+
+ //Left qubit tensors:
+ unsigned int first_q_tensor = tensor_counter + 1;
+ for(unsigned int i = 0; i < num_qubits; ++i){
+  bool success = circuit.appendTensor(++tensor_counter,
+                                      std::make_shared<Tensor>("Q"+std::to_string(i),TensorShape{2}),
+                                      {});
+  assert(success);
+ }
+ unsigned int last_q_tensor = tensor_counter;
+
+ //CNOT gates:
+ auto cnot = std::make_shared<Tensor>("CNOT",TensorShape{2,2,2,2});
+ for(unsigned int i = 0; i < num_gates; ++i){
+  bool success = circuit.appendTensorGate(++tensor_counter,
+                                          cnot,
+                                          {sycamore_12_cnot[i].first,sycamore_12_cnot[i].second});
+  assert(success);
+ }
+
+ //Right qubit tensors:
+ unsigned int first_p_tensor = tensor_counter + 1;
+ for(unsigned int i = 0; i < num_qubits; ++i){
+  bool success = circuit.appendTensor(++tensor_counter,
+                                      std::make_shared<Tensor>("P"+std::to_string(i),TensorShape{2}),
+                                      {{0,0}});
+  assert(success);
+ }
+ unsigned int last_p_tensor = tensor_counter;
+ std::cout << "Done\n" << std::flush;
+
+ std::cout << "Simplifying the circuit ... " << std::flush;
+ //Merge qubit tensors into adjacent CNOTs:
+ for(unsigned int i = first_p_tensor; i <= last_p_tensor; ++i){
+  const auto & tensor_legs = *(circuit.getTensorConnections(i));
+  const auto other_tensor_id = tensor_legs[0].getTensorId();
+  bool success = circuit.mergeTensors(other_tensor_id,i,++tensor_counter);
+  assert(success);
+ }
+ for(unsigned int i = first_q_tensor; i <= last_q_tensor; ++i){
+  const auto & tensor_legs = *(circuit.getTensorConnections(i));
+  const auto other_tensor_id = tensor_legs[0].getTensorId();
+  bool success = circuit.mergeTensors(other_tensor_id,i,++tensor_counter);
+  assert(success);
+ }
+ std::cout << "Done\n" << std::flush;
+
+ circuit.printIt(); //debug
+
+ //Generate the list of tensor operations for the circuit:
+ std::cout << "Generating the list of tensor operations for the circuit ... " << std::flush;
+ auto & operations = circuit.getOperationList("metis",true);
  std::cout << "Done\n" << std::flush;
  unsigned int max_rank = 0;
  std::cout << "Total FMA flop count = " << circuit.getFMAFlops()
@@ -766,8 +925,9 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "Done\n" << std::flush;
  circuit.printIndexSplitInfo();
 }
+#endif
 
-
+#ifdef EXATN_TEST10
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -839,8 +999,9 @@ TEST(NumServerTester, BigMPSNumServer)
  std::cout << "Done\n" << std::flush;
  exatn::sync();
 }
+#endif
 
-
+#ifdef EXATN_TEST11
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::numerics::Tensor;
@@ -994,8 +1155,9 @@ TEST(NumServerTester, HamiltonianNumServer)
  }
  //Grab a beer!
 }
+#endif
 
-
+#ifdef EXATN_TEST12
 TEST(NumServerTester, EigenNumServer)
 {
  using exatn::numerics::Tensor;
@@ -1083,8 +1245,9 @@ TEST(NumServerTester, EigenNumServer)
  }
 
 }
+#endif
 
-
+#ifdef EXATN_TEST13
 TEST(NumServerTester, MPSBuilderNumServer)
 {
  using exatn::numerics::Tensor;
@@ -1125,7 +1288,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
  exatn::sync();
 
 }
-
+#endif
 
 int main(int argc, char **argv) {
 #ifdef MPI_ENABLED

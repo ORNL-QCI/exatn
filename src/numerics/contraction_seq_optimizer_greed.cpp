@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Greedy heuristics
-REVISION: 2020/04/22
+REVISION: 2020/04/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,11 +19,8 @@ namespace exatn{
 
 namespace numerics{
 
-static constexpr unsigned int NUM_WALKERS = 1; //default number of walkers for tensor contraction sequence optimization
-
-
 ContractionSeqOptimizerGreed::ContractionSeqOptimizerGreed():
- num_walkers_(NUM_WALKERS)
+ num_walkers_(NUM_WALKERS), acceptance_tolerance_(ACCEPTANCE_TOLERANCE)
 {
 }
 
@@ -46,8 +43,8 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
- constexpr bool debugging = false;
- constexpr bool only_connected = true;
+ const bool debugging = false;
+ const bool only_connected = true;
 
  using ContractionSequence = std::list<ContrTriple>;
  using ContrPath = std::tuple<TensorNetwork,       //0: current state of the tensor network

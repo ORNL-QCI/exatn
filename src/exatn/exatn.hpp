@@ -12,10 +12,12 @@ namespace exatn {
 /** Initializes ExaTN **/
 #ifdef MPI_ENABLED
 void initialize(const MPICommProxy & communicator,                               //MPI communicator proxy
+                const ParamConf & parameters = ParamConf(),                      //runtime configuration parameters
                 const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
-void initialize(const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+void initialize(const ParamConf & parameters = ParamConf(),                      //runtime configuration parameters
+                const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 
 /** Returns whether or not ExaTN has been initialized **/

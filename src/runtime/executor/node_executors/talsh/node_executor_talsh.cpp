@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/17
+REVISION: 2020/04/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -46,11 +46,14 @@ inline MPI_Datatype get_mpi_tensor_element_kind(int talsh_data_kind)
 #endif
 
 
-void TalshNodeExecutor::initialize()
+void TalshNodeExecutor::initialize(const ParamConf & parameters)
 {
  talsh_init_lock.lock();
  if(!talsh_initialized_){
-  std::size_t host_buffer_size = 1024*1024*1024; //`Get max Host memory from OS
+  std::size_t host_buffer_size = DEFAULT_MEM_BUFFER_SIZE;
+  int64_t provided_buf_size = 0;
+  if(parameters.getParameter("host_memory_buffer_size",&provided_buf_size))
+   host_buffer_size = provided_buf_size;
   auto error_code = talsh::initialize(&host_buffer_size);
   if(error_code == TALSH_SUCCESS){
    //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
