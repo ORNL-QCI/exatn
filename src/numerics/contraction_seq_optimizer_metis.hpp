@@ -40,7 +40,7 @@ protected:
 
  static constexpr const std::size_t PARTITION_FACTOR = 2;
  static constexpr const std::size_t PARTITION_MAX_SIZE = 3;
- static constexpr const double PARTITION_IMBALANCE = 1.001;
+ static constexpr const double PARTITION_IMBALANCE = 1.1;
 
  unsigned int num_walkers_;
  double acceptance_tolerance_;
