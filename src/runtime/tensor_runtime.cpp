@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/04/27
+REVISION: 2020/04/30
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,7 +29,7 @@ TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
                              const std::string & node_executor_name):
  parameters_(parameters),
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
- current_dag_(nullptr), executing_(false), alive_(false)
+ current_dag_(nullptr), executing_(false), scope_set_(false), alive_(false)
 {
   global_mpi_comm = *(communicator.get<MPI_Comm>());
   int mpi_error = MPI_Comm_size(global_mpi_comm,&num_processes_); assert(mpi_error == MPI_SUCCESS);
@@ -46,7 +46,7 @@ TensorRuntime::TensorRuntime(const ParamConf & parameters,
                              const std::string & node_executor_name):
  parameters_(parameters),
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
- current_dag_(nullptr), executing_(false), alive_(false)
+ current_dag_(nullptr), executing_(false), scope_set_(false), alive_(false)
 {
   num_processes_ = 1; process_rank_ = 0;
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
@@ -87,13 +87,13 @@ void TensorRuntime::executionThreadWorkflow()
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
             //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){ //alive_ is set by the main thread
-    while(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations are submitted
+    while(executing_.load()){ //executing_ is set to TRUE by the main thread when new operations and syncs are submitted
       graph_executor_->execute(*current_dag_);
       processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
       if(current_dag_->hasUnexecutedNodes()){
-        executing_.store(true); //reaffirm that DAG is still executing
+       executing_.store(true); //reaffirm that DAG is still executing
       }else{
-        executing_.store(false); //executing_ is set to FALSE by the execution thread
+       executing_.store(false); //executing_ is set to FALSE by the execution thread
       }
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
@@ -141,6 +141,7 @@ void TensorRuntime::openScope(const std::string & scope_name) {
   assert(new_dag.second); // make sure there was no other scope with the same name
   current_dag_ = (new_dag.first)->second; //storing a shared pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
+  scope_set_.store(true);
   return;
 }
 
@@ -158,6 +159,7 @@ void TensorRuntime::resumeScope(const std::string & scope_name) {
   while(executing_.load()){}; //wait until the execution thread stops executing previous DAG
   current_dag_ = dags_[scope_name]; //storing a shared pointer to the DAG
   current_scope_ = scope_name; // change the name of the current scope
+  scope_set_.store(true);
   executing_.store(true); //will trigger DAG execution by the execution thread
   return;
 }
@@ -165,8 +167,10 @@ void TensorRuntime::resumeScope(const std::string & scope_name) {
 
 void TensorRuntime::closeScope() {
   if(currentScopeIsSet()){
-    const std::string scope_name = current_scope_;
+    sync();
     while(executing_.load()){}; //wait until the execution thread has completed execution of the current DAG
+    const std::string scope_name = current_scope_;
+    scope_set_.store(false);
     current_scope_ = "";
     current_dag_.reset();
     auto num_deleted = dags_.erase(scope_name);
@@ -191,7 +195,10 @@ bool TensorRuntime::sync(TensorOperation & op, bool wait) {
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
   auto opid = op.getId();
   bool completed = current_dag_->nodeExecuted(opid);
-  while(wait && (!completed)) completed = current_dag_->nodeExecuted(opid);
+  while(wait && (!completed)){
+   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+   completed = current_dag_->nodeExecuted(opid);
+  }
   return completed;
 }
 
@@ -201,7 +208,10 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
   assert(currentScopeIsSet());
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
   bool completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
-  while(wait && (!completed)) completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+  while(wait && (!completed)){
+   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+   completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+  }
   //if(wait) std::cout << "Synced" << std::endl; //debug
   return completed;
 }
@@ -209,8 +219,12 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 
 bool TensorRuntime::sync(bool wait) {
   assert(currentScopeIsSet());
+  if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
   bool still_working = executing_.load();
-  while(wait && still_working) still_working = executing_.load();
+  while(wait && still_working){
+   if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
+   still_working = executing_.load();
+  }
   return !still_working;
 }
 

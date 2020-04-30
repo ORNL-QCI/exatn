@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/04/27
+REVISION: 2020/04/30
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -104,7 +104,7 @@ public:
   void closeScope();
 
   /** Returns TRUE if there is the current scope is set. **/
-  inline bool currentScopeIsSet() const {return !(current_scope_.empty());}
+  inline bool currentScopeIsSet() const {return scope_set_.load();}
 
   /** Submits a tensor operation into the current execution graph and returns its integer id.  **/
   VertexIdType submit(std::shared_ptr<TensorOperation> op);
@@ -183,6 +183,8 @@ private:
   int logging_;
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
+  /** Current scope status **/
+  std::atomic<bool> scope_set_; //TRUE if the current scope is set
   /** End of life flag **/
   std::atomic<bool> alive_; //TRUE while the main thread is accepting new operations from Client
   /** Execution thread **/
