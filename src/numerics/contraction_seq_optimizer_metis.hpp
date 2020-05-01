@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/04/30
+REVISION: 2020/05/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_NUMERICS_CONTRACTION_SEQ_OPTIMIZER_METIS_HPP_
 
 #include "contraction_seq_optimizer.hpp"
+
+#include <vector>
 
 namespace exatn{
 
@@ -41,19 +43,20 @@ protected:
                              std::list<ContrTriple> & contr_seq,
                              std::function<unsigned int ()> intermediate_num_generator);
 
- static constexpr const unsigned int NUM_WALKERS = 1;
+ static constexpr const unsigned int NUM_WALKERS = 4096;
  static constexpr const double ACCEPTANCE_TOLERANCE = 0.0;
 
  static constexpr const std::size_t PARTITION_FACTOR = 2;
  static constexpr const std::size_t PARTITION_MAX_SIZE = 3;
- static constexpr const double PARTITION_IMBALANCE = 1.001;
+ static constexpr const std::size_t PARTITION_IMBALANCE_DEPTH = 5;
+ static constexpr const double PARTITION_IMBALANCE = 1.9;
 
  unsigned int num_walkers_;
  double acceptance_tolerance_;
 
  std::size_t partition_factor_;
  std::size_t partition_max_size_;
- double partition_imbalance_;
+ std::vector<double> partition_imbalance_;
 };
 
 } //namespace numerics

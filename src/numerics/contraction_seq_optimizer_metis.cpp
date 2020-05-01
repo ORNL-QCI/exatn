@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/04/30
+REVISION: 2020/05/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,20 +9,26 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "metis_graph.hpp"
 
-#include <cassert>
-
+#include <algorithm>
+#include <random>
 #include <deque>
 #include <tuple>
 #include <chrono>
+
+#include <cmath>
+#include <cassert>
 
 namespace exatn{
 
 namespace numerics{
 
+constexpr const double ContractionSeqOptimizerMetis::PARTITION_IMBALANCE;
+
+
 ContractionSeqOptimizerMetis::ContractionSeqOptimizerMetis():
  num_walkers_(NUM_WALKERS), acceptance_tolerance_(ACCEPTANCE_TOLERANCE),
  partition_factor_(PARTITION_FACTOR), partition_max_size_(PARTITION_MAX_SIZE),
- partition_imbalance_(PARTITION_IMBALANCE)
+ partition_imbalance_(PARTITION_IMBALANCE_DEPTH,PARTITION_IMBALANCE)
 {
 }
 
@@ -45,7 +51,8 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
- const bool debugging = false;
+ const bool debugging = true;
+ const bool deterministic = false;
 
  double flops = 0.0;
  contr_seq.clear();
@@ -54,17 +61,22 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
 
  //Search for the optimal tensor contraction sequence:
  if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Searching for a pseudo-optimal tensor contraction sequence:\n"; //debug
- const auto partition_imbalance_original = partition_imbalance_;
- bool not_done = true;
- while(not_done){
+ std::random_device seeder;
+ std::default_random_engine generator(seeder());
+ std::uniform_real_distribution<double> distribution(1.0,2.0);
+ auto rnd = std::bind(distribution,generator);
+ double max_flop = 0.0;
+ while(num_walkers_-- > 0){
   //Determine a tensor contraction sequence:
   std::list<ContrTriple> cseq;
   determineContrSequence(network,cseq,intermediate_num_generator);
   //Compute the total FMA flop count:
   TensorNetwork net(network);
-  double flps = 0.0;
+  std::vector<double> contr_flops(cseq.size(),0.0);
+  double flps = 0.0; std::size_t i = 0;
   for(const auto & contr_triple: cseq){
-   flps += net.getContractionCost(contr_triple.left_id,contr_triple.right_id);
+   contr_flops[i] = net.getContractionCost(contr_triple.left_id,contr_triple.right_id);
+   flps += contr_flops[i++];
    if(contr_triple.result_id != 0){ //intermediate tensor contraction
     bool success = net.mergeTensors(contr_triple.left_id,contr_triple.right_id,contr_triple.result_id);
     assert(success);
@@ -75,23 +87,58 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
   //Compare with previous best:
   if(flops > 0.0){
    if(flops > flps){
+    max_flop = *(std::max_element(contr_flops.cbegin(),contr_flops.cend()));
     contr_seq = cseq;
     flops = flps;
-    if(debugging) std::cout << " A better tensor contraction sequence found with Flop count = " << flops
-                            << " under imbalance = " << partition_imbalance_ << std::endl; //debug
+    if(debugging){
+     std::cout << " A faster tensor contraction sequence found with Flop count = " << flops << " under imbalances:";
+     for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
+     std::cout << ":\n"; //debug
+     for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost; //debug
+     std::cout << std::endl; //debug
+    }
    }
   }else{
+   max_flop = *(std::max_element(contr_flops.cbegin(),contr_flops.cend()));
    contr_seq = cseq;
    flops = flps;
-   if(debugging) std::cout << " A better tensor contraction sequence found with Flop count = " << flops
-                           << " under imbalance = " << partition_imbalance_ << std::endl; //debug
+   if(debugging){
+    std::cout << " A faster tensor contraction sequence found with Flop count = " << flops << " under imbalances:";
+    for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
+    std::cout << ":\n"; //debug
+    for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost; //debug
+    std::cout << std::endl; //debug
+   }
   }
-  //Next iteration:
-  cseq.clear();
-  partition_imbalance_ += 0.01;
-  not_done = (partition_imbalance_ < 2.0);
+  //Update partition imbalances:
+  if(deterministic){ //deterministic update
+   auto adjust_func = [](double z, double x){return z/(z + (1.0 - z) * std::exp(-0.33 * x));};
+   auto contr = cseq.size(); //last tensor contraction
+   for(auto & imbalance: partition_imbalance_){
+    const double diff = std::log10(contr_flops[--contr]) - std::log10(max_flop);
+    imbalance = std::pow(2.0,adjust_func(std::log2(imbalance),diff));
+    if(contr == 0) break;
+   }
+  }else{ //random update
+   for(auto & imbalance: partition_imbalance_) imbalance = rnd();
+  }
+/**
+  if(debugging){
+   std::cout << " Updated imbalances: "; //debug
+   for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
+   std::cout << std::endl; //debug
+   std::cout << " Reverse contraction costs: "; //debug
+   contr = cseq.size(); //debug
+   for(const auto & imbalance: partition_imbalance_){ //debug
+    std::cout << " " << contr_flops[--contr]; //debug
+    if(contr == 0) break; //debug
+   }
+   std::cout << std::endl; //debug
+  }
+**/
  }
- partition_imbalance_ = partition_imbalance_original;
+ //Reset partition imbalances:
+ for(auto & imbalance: partition_imbalance_) imbalance = PARTITION_IMBALANCE;
  if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): The pseudo-optimal Flop count found = " << flops << std::endl; //debug
  return flops;
 }
@@ -115,6 +162,7 @@ void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & 
                       unsigned int> //tensor id for the intermediate output tensor of the sub-network
            > graphs; //graphs of tensor sub-networks
  graphs.emplace_back(std::make_pair(MetisGraph(network),0)); //original full tensor network graph
+ std::size_t contr = 0;
  bool not_done = true;
  while(not_done){
   not_done = false;
@@ -123,7 +171,9 @@ void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & 
    auto & graph = graphs[i].first; //parent graph
    if(graph.getNumVertices() > partition_max_size_){
     not_done = true;
-    bool success = graph.partitionGraph(partition_factor_,partition_imbalance_); assert(success);
+    auto imbalance = PARTITION_IMBALANCE;
+    if(contr < partition_imbalance_.size()) imbalance = partition_imbalance_[contr++];
+    bool success = graph.partitionGraph(partition_factor_,imbalance); assert(success);
     const auto num_partitions = graph.getNumPartitions(); assert(num_partitions == 2);
     for(std::size_t j = 0; j < num_partitions; ++j){
      graphs.emplace_back(std::make_pair(MetisGraph(graph,j),
