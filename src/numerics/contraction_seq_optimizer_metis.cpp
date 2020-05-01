@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/04/29
+REVISION: 2020/04/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -45,15 +45,67 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
- const bool debugging = true;
+ const bool debugging = false;
 
- using ContractionSequence = std::list<ContrTriple>;
-
- contr_seq.clear();
  double flops = 0.0;
-
+ contr_seq.clear();
  auto num_contractions = (network.getNumTensors() - 1); //number of contractions is one less than the number of r.h.s. tensors
  if(num_contractions == 0) return flops;
+
+ //Search for the optimal tensor contraction sequence:
+ if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Searching for a pseudo-optimal tensor contraction sequence:\n"; //debug
+ const auto partition_imbalance_original = partition_imbalance_;
+ bool not_done = true;
+ while(not_done){
+  //Determine a tensor contraction sequence:
+  std::list<ContrTriple> cseq;
+  determineContrSequence(network,cseq,intermediate_num_generator);
+  //Compute the total FMA flop count:
+  TensorNetwork net(network);
+  double flps = 0.0;
+  for(const auto & contr_triple: cseq){
+   flps += net.getContractionCost(contr_triple.left_id,contr_triple.right_id);
+   if(contr_triple.result_id != 0){ //intermediate tensor contraction
+    bool success = net.mergeTensors(contr_triple.left_id,contr_triple.right_id,contr_triple.result_id);
+    assert(success);
+   }else{ //last tensor contraction (into the output tensor)
+    assert(net.getNumTensors() == 2);
+   }
+  }
+  //Compare with previous best:
+  if(flops > 0.0){
+   if(flops > flps){
+    contr_seq = cseq;
+    flops = flps;
+    if(debugging) std::cout << " A better tensor contraction sequence found with Flop count = " << flops
+                            << " under imbalance = " << partition_imbalance_ << std::endl; //debug
+   }
+  }else{
+   contr_seq = cseq;
+   flops = flps;
+   if(debugging) std::cout << " A better tensor contraction sequence found with Flop count = " << flops
+                           << " under imbalance = " << partition_imbalance_ << std::endl; //debug
+  }
+  //Next iteration:
+  cseq.clear();
+  partition_imbalance_ += 0.01;
+  not_done = (partition_imbalance_ < 2.0);
+ }
+ partition_imbalance_ = partition_imbalance_original;
+ if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): The pseudo-optimal Flop count found = " << flops << std::endl; //debug
+ return flops;
+}
+
+
+void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & network,
+                                                          std::list<ContrTriple> & contr_seq,
+                                                          std::function<unsigned int ()> intermediate_num_generator)
+{
+ const bool debugging = false;
+
+ contr_seq.clear();
+ auto num_contractions = (network.getNumTensors() - 1); //number of contractions is one less than the number of r.h.s. tensors
+ if(num_contractions == 0) return;
 
  if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Determining a pseudo-optimal tensor contraction sequence ... \n"; //debug
  auto time_beg = std::chrono::high_resolution_clock::now();
@@ -112,17 +164,6 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
   }
  }
  assert(contr_seq.size() == num_contractions);
- //Compute the total FMA flop count:
- TensorNetwork net(network);
- for(const auto & contr_triple: contr_seq){
-  flops += net.getContractionCost(contr_triple.left_id,contr_triple.right_id);
-  if(contr_triple.result_id != 0){ //intermediate tensor contraction
-   bool success = net.mergeTensors(contr_triple.left_id,contr_triple.right_id,contr_triple.result_id);
-   assert(success);
-  }else{ //last tensor contraction (into the output tensor)
-   assert(net.getNumTensors() == 2);
-  }
- }
 
  auto time_end = std::chrono::high_resolution_clock::now();
  auto time_total = std::chrono::duration_cast<std::chrono::duration<double>>(time_end - time_beg);
@@ -133,7 +174,7 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
                                                             << contr_pair.result_id << "}"; //debug
   std::cout << std::endl; //debug
  }
- return flops;
+ return;
 }
 
 

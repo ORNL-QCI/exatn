@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/04/29
+REVISION: 2020/04/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,12 +35,18 @@ public:
 
 protected:
 
+ using ContractionSequence = std::list<ContrTriple>;
+
+ void determineContrSequence(const TensorNetwork & network,
+                             std::list<ContrTriple> & contr_seq,
+                             std::function<unsigned int ()> intermediate_num_generator);
+
  static constexpr const unsigned int NUM_WALKERS = 1;
  static constexpr const double ACCEPTANCE_TOLERANCE = 0.0;
 
  static constexpr const std::size_t PARTITION_FACTOR = 2;
  static constexpr const std::size_t PARTITION_MAX_SIZE = 3;
- static constexpr const double PARTITION_IMBALANCE = 1.1;
+ static constexpr const double PARTITION_IMBALANCE = 1.001;
 
  unsigned int num_walkers_;
  double acceptance_tolerance_;

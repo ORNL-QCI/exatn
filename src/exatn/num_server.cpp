@@ -519,10 +519,8 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
   submitted = sync(*op);
   if(submitted){
    const auto & norms = std::dynamic_pointer_cast<numerics::FunctorDiagRank>(functor)->getPartialNorms();
-   if(!norms.empty()){
-    partial_norms.resize(norms.size());
-    for(std::size_t i = 0; i < norms.size(); ++i) partial_norms[i] = norms[i];
-   }
+   submitted = !norms.empty();
+   if(submitted) partial_norms.assign(norms.cbegin(),norms.cend());
   }
  }
  return submitted;
