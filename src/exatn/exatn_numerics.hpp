@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/04/24
+REVISION: 2020/05/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -243,6 +243,18 @@ inline bool initTensorRnd(const std::string & name) //in: tensor name
 
 inline bool initTensorRndSync(const std::string & name) //in: tensor name
  {return numericalServer->initTensorRndSync(name);}
+
+
+/** Computes 1-norm of a tensor. **/
+inline bool computeNorm1Sync(const std::string & name, //in: tensor name
+                             double & norm)            //out: tensor norm
+ {return numericalServer->computeNorm1Sync(name,norm);}
+
+
+/** Computes 2-norm of a tensor. **/
+inline bool computeNorm2Sync(const std::string & name, //in: tensor name
+                             double & norm)            //out: tensor norm
+ {return numericalServer->computeNorm2Sync(name,norm);}
 
 
 /** Computes partial 2-norms over a chosen tensor dimension. **/

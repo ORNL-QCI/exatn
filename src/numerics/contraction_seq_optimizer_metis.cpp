@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/05/01
+REVISION: 2020/05/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,7 +51,7 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
- const bool debugging = true;
+ const bool debugging = false;
  const bool deterministic = false;
 
  double flops = 0.0;
@@ -63,10 +63,11 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
  if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Searching for a pseudo-optimal tensor contraction sequence:\n"; //debug
  std::random_device seeder;
  std::default_random_engine generator(seeder());
- std::uniform_real_distribution<double> distribution(1.0,2.0);
+ std::uniform_real_distribution<double> distribution(1.001,1.999);
  auto rnd = std::bind(distribution,generator);
  double max_flop = 0.0;
- while(num_walkers_-- > 0){
+ auto num_walkers = num_walkers_;
+ while(num_walkers-- > 0){
   //Determine a tensor contraction sequence:
   std::list<ContrTriple> cseq;
   determineContrSequence(network,cseq,intermediate_num_generator);
@@ -91,11 +92,13 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
     contr_seq = cseq;
     flops = flps;
     if(debugging){
-     std::cout << " A faster tensor contraction sequence found with Flop count = " << flops << " under imbalances:";
-     for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
-     std::cout << ":\n"; //debug
-     for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost; //debug
-     std::cout << std::endl; //debug
+     std::cout << " Iteration " << (num_walkers + 1)
+               << ": A faster tensor contraction sequence found with Flop count = " << flops
+               << " under imbalances:";
+     for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance;
+     std::cout << ":\n";
+     for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost;
+     std::cout << std::endl;
     }
    }
   }else{
@@ -103,11 +106,13 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
    contr_seq = cseq;
    flops = flps;
    if(debugging){
-    std::cout << " A faster tensor contraction sequence found with Flop count = " << flops << " under imbalances:";
-    for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
-    std::cout << ":\n"; //debug
-    for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost; //debug
-    std::cout << std::endl; //debug
+    std::cout << " Iteration " << (num_walkers + 1)
+              << ": A faster tensor contraction sequence found with Flop count = " << flops
+              << " under imbalances:";
+    for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance;
+    std::cout << ":\n";
+    for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost;
+    std::cout << std::endl;
    }
   }
   //Update partition imbalances:
@@ -124,22 +129,22 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
   }
 /**
   if(debugging){
-   std::cout << " Updated imbalances: "; //debug
-   for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance; //debug
-   std::cout << std::endl; //debug
-   std::cout << " Reverse contraction costs: "; //debug
-   contr = cseq.size(); //debug
-   for(const auto & imbalance: partition_imbalance_){ //debug
-    std::cout << " " << contr_flops[--contr]; //debug
-    if(contr == 0) break; //debug
+   std::cout << " Updated imbalances: ";
+   for(const auto & imbalance: partition_imbalance_) std::cout << " " << imbalance;
+   std::cout << std::endl;
+   std::cout << " Reverse contraction costs: ";
+   contr = cseq.size();
+   for(const auto & imbalance: partition_imbalance_){
+    std::cout << " " << contr_flops[--contr];
+    if(contr == 0) break;
    }
-   std::cout << std::endl; //debug
+   std::cout << std::endl;
   }
 **/
  }
  //Reset partition imbalances:
  for(auto & imbalance: partition_imbalance_) imbalance = PARTITION_IMBALANCE;
- if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): The pseudo-optimal Flop count found = " << flops << std::endl; //debug
+ if(debugging) std::cout << "#DEBUG(ContractionSeqOptimizerMetis): The pseudo-optimal Flop count found = " << flops << std::endl;
  return flops;
 }
 
@@ -178,6 +183,7 @@ void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & 
     for(std::size_t j = 0; j < num_partitions; ++j){
      graphs.emplace_back(std::make_pair(MetisGraph(graph,j),
                                         intermediate_num_generator())); //child graphs
+     assert(graphs.back().first.getNumVertices() > 0); //empty partitions are not allowed
     }
     const auto last_tensor_pos = graphs.size() - 1;
     contr_seq.emplace_front(ContrTriple{graphs[i].second,
@@ -218,11 +224,11 @@ void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & 
  auto time_end = std::chrono::high_resolution_clock::now();
  auto time_total = std::chrono::duration_cast<std::chrono::duration<double>>(time_end - time_beg);
  if(debugging){
-  std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Done (" << time_total.count() << " sec):"; //debug
+  std::cout << "#DEBUG(ContractionSeqOptimizerMetis): Done (" << time_total.count() << " sec):";
   for(const auto & contr_pair: contr_seq) std::cout << " {" << contr_pair.left_id << ","
                                                             << contr_pair.right_id << "->"
-                                                            << contr_pair.result_id << "}"; //debug
-  std::cout << std::endl; //debug
+                                                            << contr_pair.result_id << "}";
+  std::cout << std::endl;
  }
  return;
 }

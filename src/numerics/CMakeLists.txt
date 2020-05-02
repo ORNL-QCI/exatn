@@ -43,6 +43,8 @@ add_library(${LIBRARY_NAME}
             functor_init_rnd.cpp
             functor_init_dat.cpp
             functor_scale.cpp
+            functor_norm1.cpp
+            functor_norm2.cpp
             functor_diag_rank.cpp)
 
 target_include_directories(${LIBRARY_NAME}

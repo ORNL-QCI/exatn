@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/04/29
+REVISION: 2020/05/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -493,6 +493,48 @@ bool NumServer::initTensorRnd(const std::string & name)
 bool NumServer::initTensorRndSync(const std::string & name)
 {
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+}
+
+
+bool NumServer::computeNorm1Sync(const std::string & name,
+                                 double & norm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::computeNorm1Sync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorNorm1());
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op->setTensorOperand(iter->second);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
+ auto submitted = submit(op);
+ if(submitted){
+  submitted = sync(*op);
+  if(submitted) norm = std::dynamic_pointer_cast<numerics::FunctorNorm1>(functor)->getNorm();
+ }
+ return submitted;
+}
+
+
+bool NumServer::computeNorm2Sync(const std::string & name,
+                                 double & norm)
+{
+ auto iter = tensors_.find(name);
+ if(iter == tensors_.end()){
+  std::cout << "#ERROR(exatn::NumServer::computeNorm2Sync): Tensor " << name << " not found!" << std::endl;
+  return false;
+ }
+ auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorNorm2());
+ std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+ op->setTensorOperand(iter->second);
+ std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
+ auto submitted = submit(op);
+ if(submitted){
+  submitted = sync(*op);
+  if(submitted) norm = std::dynamic_pointer_cast<numerics::FunctorNorm2>(functor)->getNorm();
+ }
+ return submitted;
 }
 
 
