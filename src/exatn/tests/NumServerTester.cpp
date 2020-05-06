@@ -23,42 +23,44 @@
 #define EXATN_TEST11
 #define EXATN_TEST12
 #define EXATN_TEST13
+#define EXATN_TEST14
 
-using namespace exatn;
-using namespace exatn::numerics;
 
 #ifdef EXATN_TEST1
 TEST(NumServerTester, checkNumServer)
 {
+ using exatn::VectorSpace;
+ using exatn::Subspace;
+
  const VectorSpace * space1;
- auto space1_id = numericalServer->createVectorSpace("Space1",1024,&space1);
+ auto space1_id = exatn::numericalServer->createVectorSpace("Space1",1024,&space1);
  space1->printIt();
  std::cout << std::endl;
 
  const VectorSpace * space2;
- auto space2_id = numericalServer->createVectorSpace("Space2",2048,&space2);
+ auto space2_id = exatn::numericalServer->createVectorSpace("Space2",2048,&space2);
  space2->printIt();
  std::cout << std::endl;
 
  const Subspace * subspace1;
- auto subspace1_id = numericalServer->createSubspace("S11","Space1",{13,246},&subspace1);
+ auto subspace1_id = exatn::numericalServer->createSubspace("S11","Space1",{13,246},&subspace1);
  subspace1->printIt();
  std::cout << std::endl;
 
  const Subspace * subspace2;
- auto subspace2_id = numericalServer->createSubspace("S21","Space2",{1056,1068},&subspace2);
+ auto subspace2_id = exatn::numericalServer->createSubspace("S21","Space2",{1056,1068},&subspace2);
  subspace2->printIt();
  std::cout << std::endl;
 
- const VectorSpace * space = numericalServer->getVectorSpace("");
+ const VectorSpace * space = exatn::numericalServer->getVectorSpace("");
  space->printIt();
  std::cout << std::endl;
 
- space = numericalServer->getVectorSpace("Space2");
+ space = exatn::numericalServer->getVectorSpace("Space2");
  space->printIt();
  std::cout << std::endl;
 
- const Subspace * subspace = numericalServer->getSubspace("S11");
+ const Subspace * subspace = exatn::numericalServer->getSubspace("S11");
  subspace->printIt();
  std::cout << std::endl;
 }
@@ -68,10 +70,11 @@ TEST(NumServerTester, checkNumServer)
 TEST(NumServerTester, useNumServer)
 {
  using exatn::TensorOpCode;
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorOperation;
- using exatn::numerics::TensorOpFactory;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorOperation;
+ using exatn::TensorOpFactory;
+ using exatn::TensorNetwork;
 
  auto & op_factory = *(TensorOpFactory::get()); //tensor operation factory
 
@@ -136,50 +139,50 @@ TEST(NumServerTester, useNumServer)
  //Initialize participating ExaTN tensors:
  std::shared_ptr<TensorOperation> init_z0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_z0->setTensorOperand(z0);
- std::dynamic_pointer_cast<TensorOpTransform>(init_z0)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.0)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_z0)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.0)));
  exatn::numericalServer->submit(init_z0);
 
  std::shared_ptr<TensorOperation> init_t0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_t0->setTensorOperand(t0);
- std::dynamic_pointer_cast<TensorOpTransform>(init_t0)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t0)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_t0);
 
  std::shared_ptr<TensorOperation> init_t1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_t1->setTensorOperand(t1);
- std::dynamic_pointer_cast<TensorOpTransform>(init_t1)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t1)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_t1);
 
  std::shared_ptr<TensorOperation> init_t2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_t2->setTensorOperand(t2);
- std::dynamic_pointer_cast<TensorOpTransform>(init_t2)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t2)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_t2);
 
  std::shared_ptr<TensorOperation> init_h0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_h0->setTensorOperand(h0);
- std::dynamic_pointer_cast<TensorOpTransform>(init_h0)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_h0)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_h0);
 
  std::shared_ptr<TensorOperation> init_s0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_s0->setTensorOperand(s0);
- std::dynamic_pointer_cast<TensorOpTransform>(init_s0)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s0)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_s0);
 
  std::shared_ptr<TensorOperation> init_s1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_s1->setTensorOperand(s1);
- std::dynamic_pointer_cast<TensorOpTransform>(init_s1)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s1)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_s1);
 
  std::shared_ptr<TensorOperation> init_s2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
  init_s2->setTensorOperand(s2);
- std::dynamic_pointer_cast<TensorOpTransform>(init_s2)->
-  resetFunctor(std::shared_ptr<TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
+ std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s2)->
+  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
  exatn::numericalServer->submit(init_s2);
 
  //Evaluate the tensor network:
@@ -233,8 +236,8 @@ TEST(NumServerTester, useNumServer)
 #ifdef EXATN_TEST3
 TEST(NumServerTester, easyNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
+ using exatn::Tensor;
+ using exatn::TensorShape;
  using exatn::TensorElementType;
 
  //Example of tensor network processing:
@@ -292,8 +295,8 @@ TEST(NumServerTester, easyNumServer)
 #ifdef EXATN_TEST4
 TEST(NumServerTester, superEasyNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
+ using exatn::Tensor;
+ using exatn::TensorShape;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -338,7 +341,7 @@ TEST(NumServerTester, superEasyNumServer)
 
  //Retrieve the result (Z0):
  auto access_granted = false;
- auto talsh_tensor = getLocalTensor("Z0");
+ auto talsh_tensor = exatn::getLocalTensor("Z0");
  const double * body_ptr;
  access_granted = talsh_tensor->getDataAccessHostConst(&body_ptr); assert(access_granted);
  std::cout << "Final Z0 value = " << *body_ptr << " VS correct value of " << 512e-14 << std::endl;
@@ -361,9 +364,9 @@ TEST(NumServerTester, superEasyNumServer)
 #ifdef EXATN_TEST5
 TEST(NumServerTester, circuitNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorNetwork;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -463,9 +466,9 @@ TEST(NumServerTester, circuitNumServer)
 #ifdef EXATN_TEST6
 TEST(NumServerTester, circuitConjugateNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorNetwork;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -544,9 +547,9 @@ TEST(NumServerTester, circuitConjugateNumServer)
 #ifdef EXATN_TEST7
 TEST(NumServerTester, largeCircuitNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorNetwork;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -928,6 +931,187 @@ TEST(NumServerTester, Sycamore12NumServer)
 #endif
 
 #ifdef EXATN_TEST10
+TEST(NumServerTester, rcsNumServer)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(0); //debug
+
+ //Configuration:
+ const int NB_QUBITS = 52;
+ const int NB_LAYERS = 12;
+ //Define the initial qubit state vector:
+ std::vector<std::complex<double>> qzero {
+  {1.0,0.0}, {0.0,0.0}
+ };
+ //Define quantum gates:
+ std::vector<std::complex<double>> hadamard {
+  {1.0/sqrt(2.0),0.0}, {1.0/sqrt(2.0),0.0},
+  {1.0/sqrt(2.0),0.0}, {-1.0/sqrt(2.0),0.0}
+ };
+ std::vector<std::complex<double>> pauliX {
+  {0.0,0.0}, {1.0,0.0},
+  {1.0,0.0}, {0.0,0.0}
+ };
+ std::vector<std::complex<double>> pauliY {
+  {0.0,0.0}, {0.0,-1.0},
+  {0.0,1.0}, {0.0,0.0}
+ };
+ std::vector<std::complex<double>> pauliZ {
+  {1.0,0.0}, {0.0,0.0},
+  {0.0,0.0}, {-1.0,0.0}
+ };
+ std::vector<std::complex<double>> cnot {
+  {1.0,0.0}, {0.0,0.0}, {0.0,0.0}, {0.0,0.0},
+  {0.0,0.0}, {1.0,0.0}, {0.0,0.0}, {0.0,0.0},
+  {0.0,0.0}, {0.0,0.0}, {0.0,0.0}, {1.0,0.0},
+  {0.0,0.0}, {0.0,0.0}, {1.0,0.0}, {0.0,0.0}
+ };
+ //Create qubit tensors:
+ for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+  const bool created = exatn::createTensor("Q" + std::to_string(i),TensorElementType::COMPLEX64,TensorShape{2});
+  assert(created);
+ }
+ //Create gate tensors:
+ {
+  const bool created = exatn::createTensor("H",TensorElementType::COMPLEX64,TensorShape{2,2});
+  assert(created);
+  const bool registered = exatn::registerTensorIsometry("H",{0},{1});
+  assert(registered);
+ }
+ {
+  const bool created = exatn::createTensor("X",TensorElementType::COMPLEX64,TensorShape{2,2});
+  assert(created);
+  const bool registered = exatn::registerTensorIsometry("X",{0},{1});
+  assert(registered);
+ }
+ {
+  const bool created = exatn::createTensor("Y",TensorElementType::COMPLEX64,TensorShape{2,2});
+  assert(created);
+  const bool registered = exatn::registerTensorIsometry("Y",{0},{1});
+  assert(registered);
+ }
+ {
+  const bool created = exatn::createTensor("Z",TensorElementType::COMPLEX64,TensorShape{2,2});
+  assert(created);
+  const bool registered = exatn::registerTensorIsometry("Z",{0},{1});
+  assert(registered);
+ }
+ {
+  const bool created = exatn::createTensor("CNOT",TensorElementType::COMPLEX64,TensorShape{2,2,2,2});
+  assert(created);
+  const bool registered = exatn::registerTensorIsometry("CNOT",{0,1},{2,3});
+  assert(registered);
+ }
+ //Initialize qubit tensors to zero state:
+ for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+  const bool initialized = exatn::initTensorData("Q" + std::to_string(i),qzero);
+  assert(initialized);
+ }
+ //Initialize necessary gate tensors:
+ {
+  const bool initialized = exatn::initTensorData("H",hadamard);
+  assert(initialized);
+ }
+ {
+  const bool initialized = exatn::initTensorData("X",pauliX);
+  assert(initialized);
+ }
+ {
+  const bool initialized = exatn::initTensorData("Y",pauliY);
+  assert(initialized);
+ }
+ {
+  const bool initialized = exatn::initTensorData("Z",pauliZ);
+  assert(initialized);
+ }
+ {
+  const bool initialized = exatn::initTensorData("CNOT",cnot);
+  assert(initialized);
+ }
+ //Build a tensor network from the quantum circuit:
+ TensorNetwork circuit("QuantumCircuit");
+ unsigned int tensorCounter = 1;
+ //Qubit tensors:
+ for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+  const bool appended = circuit.appendTensor(tensorCounter, exatn::getTensor("Q" + std::to_string(i)),{});
+  assert(appended);
+  ++tensorCounter;
+ }
+ const std::vector<std::string> GATE_SET { "H", "X", "Y", "Z" };
+ for (unsigned int j = 0; j < NB_LAYERS; ++j)
+ {
+  for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+   auto randIt = GATE_SET.begin();
+   std::advance(randIt, std::rand() % GATE_SET.size());
+   const std::string selectedGate = *randIt;
+   const bool appended = circuit.appendTensorGate(tensorCounter,exatn::getTensor(selectedGate),{i});
+   assert(appended);
+   ++tensorCounter;
+  }
+  for (unsigned int i = 0; i < NB_QUBITS - 1; ++i)
+  {
+   const bool appended = circuit.appendTensorGate(tensorCounter, exatn::getTensor("CNOT"),{i, i + 1});
+   assert(appended);
+   ++tensorCounter;
+  }
+ }
+ circuit.printIt(); //debug
+ auto inverseTensorNetwork = circuit;
+ inverseTensorNetwork.rename("InverseQuantumCircuit");
+ inverseTensorNetwork.conjugate();
+ auto combinedNetwork = circuit;
+ combinedNetwork.rename("CombinedQuantumCircuit");
+ //Append the conjugate tensor network to calculate the RDM of the measure:
+ std::vector<std::pair<unsigned int, unsigned int>> pairings;
+ const int NB_OPEN_LEGS = 4;
+ for (size_t i = NB_OPEN_LEGS; i < NB_QUBITS; ++i) {
+  // Connect the original tensor network with its inverse
+  // but leave the measure qubit line open:
+  pairings.emplace_back(std::make_pair(i, i));
+ }
+ combinedNetwork.appendTensorNetwork(std::move(inverseTensorNetwork), pairings);
+ const bool collapsed = combinedNetwork.collapseIsometries();
+ assert(collapsed);
+ combinedNetwork.printIt(); //debug
+ //Evaluate
+ const bool evalOk = exatn::evaluateSync(combinedNetwork);
+ assert(evalOk);
+ //Destroy all tensors:
+ {
+  const bool destroyed = exatn::destroyTensor("H");
+  assert(destroyed);
+ }
+ {
+  const bool destroyed = exatn::destroyTensor("X");
+  assert(destroyed);
+ }
+ {
+  const bool destroyed = exatn::destroyTensor("Y");
+  assert(destroyed);
+ }
+ {
+  const bool destroyed = exatn::destroyTensor("Z");
+  assert(destroyed);
+ }
+ {
+  const bool destroyed = exatn::destroyTensor("CNOT");
+  assert(destroyed);
+ }
+ for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+  const bool destroyed = exatn::destroyTensor("Q" + std::to_string(i));
+  assert(destroyed);
+ }
+ //Synchronize:
+ exatn::sync();
+ //Grab a coffee!
+}
+#endif
+
+#ifdef EXATN_TEST11
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -945,7 +1129,7 @@ TEST(NumServerTester, BigMPSNumServer)
  const std::string ROOT_TENSOR_NAME = "Root";
  auto rootTensor = std::make_shared<Tensor>(ROOT_TENSOR_NAME, qubitTensorDim);
 
- auto & networkBuildFactory = *(exatn::numerics::NetworkBuildFactory::get());
+ auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
  bool success = builder->setParameter("max_bond_dim", 1);
  assert(success);
@@ -1001,15 +1185,15 @@ TEST(NumServerTester, BigMPSNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST11
+#ifdef EXATN_TEST12
 TEST(NumServerTester, HamiltonianNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorSignature;
- using exatn::numerics::TensorNetwork;
- using exatn::numerics::TensorOperator;
- using exatn::numerics::TensorExpansion;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -1157,15 +1341,15 @@ TEST(NumServerTester, HamiltonianNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST12
+#ifdef EXATN_TEST13
 TEST(NumServerTester, EigenNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorSignature;
- using exatn::numerics::TensorNetwork;
- using exatn::numerics::TensorOperator;
- using exatn::numerics::TensorExpansion;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
@@ -1247,20 +1431,20 @@ TEST(NumServerTester, EigenNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST13
+#ifdef EXATN_TEST14
 TEST(NumServerTester, MPSBuilderNumServer)
 {
- using exatn::numerics::Tensor;
- using exatn::numerics::TensorShape;
- using exatn::numerics::TensorSignature;
- using exatn::numerics::TensorNetwork;
- using exatn::numerics::TensorOperator;
- using exatn::numerics::TensorExpansion;
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
  exatn::resetRuntimeLoggingLevel(0); //debug
 
- auto & networkBuildFactory = *(exatn::numerics::NetworkBuildFactory::get());
+ auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
  bool success = builder->setParameter("max_bond_dim",1);
  assert(success);
