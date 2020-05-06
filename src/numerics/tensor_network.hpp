@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/28
+REVISION: 2020/05/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -325,7 +325,7 @@ public:
      Parameter universal_indices set to TRUE will activate the universal index numeration
      such that a specific index appearing in different tensor operations will always
      designate the same edge in the tensor network, and all tensors will carry real names. **/
- std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "dummy",
+ std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "metis",
                                                                 bool universal_indices = false);
 
  /** Splits internal (contracted) indices of the tensor network into smaller segments

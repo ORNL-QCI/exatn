@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/05/02
+REVISION: 2020/05/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -543,7 +543,7 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) /
 
 
 /** Resets the tensor contraction sequence optimizer that
-    is invoked when evaluating tensor networks: {dummy,heuro,greed}. **/
+    is invoked when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name)
  {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
 
