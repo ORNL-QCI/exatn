@@ -1077,9 +1077,14 @@ TEST(NumServerTester, rcsNumServer)
  const bool collapsed = combinedNetwork.collapseIsometries();
  assert(collapsed);
  combinedNetwork.printIt(); //debug
- //Evaluate
- const bool evalOk = exatn::evaluateSync(combinedNetwork);
- assert(evalOk);
+ combinedNetwork.getOperationList();
+ double flops = combinedNetwork.getFMAFlops();
+ double intermediates_volume = combinedNetwork.getMaxIntermediatePresenceVolume();
+ std::cout << "Combined circuit requires " << flops << " FMA flops and "
+           << intermediates_volume * sizeof(std::complex<double>) << " bytes\n";
+ //Evaluate:
+ //const bool evalOk = exatn::evaluateSync(combinedNetwork);
+ //assert(evalOk);
  //Destroy all tensors:
  {
   const bool destroyed = exatn::destroyTensor("H");
