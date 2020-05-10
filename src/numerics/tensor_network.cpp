@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/04/28
+REVISION: 2020/05/10
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1560,6 +1560,13 @@ bool TensorNetwork::collapseIsometries()
 }
 
 
+bool TensorNetwork::decomposeTensors()
+{
+ //`Finish
+ return true;
+}
+
+
 bool TensorNetwork::partition(std::size_t num_parts,  //in: desired number of parts
                               double imbalance,       //in: tolerated partition weight imbalance
                               std::vector<std::pair<std::size_t,std::vector<std::size_t>>> & parts, //out: partitions
@@ -1667,7 +1674,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     iter = res.first;
    }else{
     std::cout << "#ERROR(TensorNetwork::getOperationList): Invalid request: " <<
-     "Tensor contraction sequence optimizer" << contr_seq_opt_name << "has not been registered before!" << std::endl;
+     "Tensor contraction sequence optimizer " << contr_seq_opt_name << " has not been registered before!" << std::endl;
     assert(false);
    }
   }

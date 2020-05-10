@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/06
+REVISION: 2020/05/10
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -287,6 +287,9 @@ public:
      that the tensor processing runtime of your choice supports tensor tracing, or, in case
      of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
  bool collapseIsometries();
+
+ /** Decomposes all tensors in the tensor network to limit the highest tensor order to 3. **/
+ bool decomposeTensors();
 
  /** Partitions the tensor network into multiple parts by minimizing the weighted edge cut.
      The returned vector <parts> is:
