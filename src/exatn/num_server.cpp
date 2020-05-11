@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/02
+REVISION: 2020/05/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -435,6 +435,19 @@ bool NumServer::registerTensorIsometry(const std::string & name,
 bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,
                              TensorElementType element_type)
 {
+ return createTensor(ProcessGroup(intra_comm_,num_processes_),tensor,element_type);
+}
+
+bool NumServer::createTensorSync(std::shared_ptr<Tensor> tensor,
+                                 TensorElementType element_type)
+{
+ return createTensorSync(ProcessGroup(intra_comm_,num_processes_),tensor,element_type);
+}
+
+bool NumServer::createTensor(const ProcessGroup & process_group,
+                             std::shared_ptr<Tensor> tensor,
+                             TensorElementType element_type)
+{
  assert(tensor);
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
  op->setTensorOperand(tensor);
@@ -443,7 +456,8 @@ bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,
  return submitted;
 }
 
-bool NumServer::createTensorSync(std::shared_ptr<Tensor> tensor,
+bool NumServer::createTensorSync(const ProcessGroup & process_group,
+                                 std::shared_ptr<Tensor> tensor,
                                  TensorElementType element_type)
 {
  assert(tensor);

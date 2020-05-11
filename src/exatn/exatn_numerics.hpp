@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/05/06
+REVISION: 2020/05/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -175,6 +175,30 @@ inline bool createTensorSync(const std::string & name,       //in: tensor name
 inline bool createTensorSync(std::shared_ptr<Tensor> tensor, //in: existing declared tensor
                              TensorElementType element_type) //in: tensor element type
  {return numericalServer->createTensorSync(tensor,element_type);}
+
+template <typename... Args>
+inline bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                         const std::string & name,           //in: tensor name
+                         TensorElementType element_type,     //in: tensor element type
+                         Args&&... args)                     //in: other arguments for Tensor ctor
+ {return numericalServer->createTensor(process_group,name,element_type,std::forward<Args>(args)...);}
+
+inline bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                         std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
+                         TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensor(process_group,tensor,element_type);}
+
+template <typename... Args>
+inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                             const std::string & name,           //in: tensor name
+                             TensorElementType element_type,     //in: tensor element type
+                             Args&&... args)                     //in: other arguments for Tensor ctor
+ {return numericalServer->createTensorSync(process_group,name,element_type,std::forward<Args>(args)...);}
+
+inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                             std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
+                             TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensorSync(process_group,tensor,element_type);}
 
 
 /** Returns a shared pointer to the actual tensor object. **/
