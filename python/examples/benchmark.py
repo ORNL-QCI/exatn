@@ -21,7 +21,7 @@ def getTensorDimArray(tensorStr, varDimMap):
 
 while True: 
     count += 1
-  
+    gFlops = 2.0/1e9  
     # Get next line from file 
     line = inputFile.readline() 
   
@@ -38,6 +38,7 @@ while True:
     for var in dimVarList:
         varName, varVal = var.split(":")
         vardict[varName] = varVal
+        gFlops *= float(varVal)
     exprSplits = re.split(' = | * ', expr)
     rhsTensor = exprSplits[0]
     lhsTensorOperand1 = exprSplits[1]
@@ -64,7 +65,8 @@ while True:
     exatn.destroyTensor("A")
     exatn.destroyTensor("B")
     exatn.destroyTensor("C")
-
-    print("Test {}: {} ({}) || Time elapsed: {} [sec]".format(count, expr, dimVars, elapsedTime)) 
+    # Calc. GFlops/sec
+    gFlops = gFlops/elapsedTime
+    print("Test {}: {} ({}) || Time elapsed: {} [sec]; GFlops/sec: {}".format(count, expr, dimVars, elapsedTime, gFlops)) 
 
 inputFile.close() 
