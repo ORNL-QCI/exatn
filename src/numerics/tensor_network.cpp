@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/10
+REVISION: 2020/05/12
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,6 +27,21 @@ namespace numerics{
 
 //Tensor contraction sequence optmizers:
 std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
+
+
+//Helpers:
+bool tensorIsIntermediate(const Tensor & tensor,
+                          bool * network_output)
+{
+ bool res = false, out = false;
+ const auto & tens_name = tensor.getName();
+ if(tens_name.length() >= 2){
+  res = (tens_name[0] == '_');
+  out = res && (tens_name[1] == 'z');
+ }
+ if(network_output != nullptr) *network_output = out;
+ return res;
+}
 
 
 TensorNetwork::TensorNetwork():
@@ -1937,12 +1952,34 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
 }
 
 
-void TensorNetwork::printIndexSplitInfo() const
+void TensorNetwork::printIndexSplitInfo(bool with_affected_tensors) const
 {
  std::cout << "#INFO(TensorNetwork::printIndexSplitInfo):\n";
  for(unsigned int i = 0; i < split_indices_.size(); ++i){
   std::cout << i << ": " << split_indices_[i].first << ": Number of segments = "
             << split_indices_[i].second.size() << std::endl;
+ }
+ if(with_affected_tensors){
+  for(const auto & op: operations_){
+   bool op_affected = false;
+   const auto num_operands = op->getNumOperands();
+   for(unsigned int i = 0; i < num_operands; ++i){
+    const auto & tens = *(op->getTensorOperand(i));
+    auto iter = split_tensors_.cend();
+    if(tensorIsIntermediate(tens)){ //intermediate tensor (includes output tensor of the tensor network)
+     const auto key = std::pair<TensorHashType,TensorHashType>{0,tens.getTensorHash()};
+     iter = split_tensors_.find(key);
+    }else{ //input tensor
+     const auto key = std::pair<TensorHashType,TensorHashType>{op->getTensorOpHash(),i};
+     iter = split_tensors_.find(key);
+    }
+    if(iter != split_tensors_.cend()){
+     tens.printIt();
+     op_affected = true;
+    }
+   }
+   if(op_affected) op->printIt();
+  }
  }
  std::cout << "#END INFO\n";
  return;

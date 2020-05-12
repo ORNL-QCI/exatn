@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/10
+REVISION: 2020/05/12
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,6 +73,11 @@ namespace numerics{
 
 //Index (dimension) split information: Vector of segments the full dimension is split into:
 using IndexSplit = std::vector<std::pair<SubspaceId, DimExtent>>; //Segment = [subspace_base, segment_extent]
+
+
+//Tests whether a given tensor is an intermediate tensor of a tensor network:
+bool tensorIsIntermediate(const Tensor & tensor,            //in: tensor
+                          bool * network_output = nullptr); //out: TRUE if the tensor is the output tensor of the tensor network
 
 //Free function analogue of TensorNetwork::getContractionCost:
 double getTensorContractionCost(const TensorConn & left_tensor,
@@ -337,8 +342,8 @@ public:
      the processing backend when the tensor network is submitted for evaluation. **/
  void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
 
- /** Prints information on index splitting in the tensor operation list. **/
- void printIndexSplitInfo() const;
+ /** Prints information on index splitting within the tensor operation list. **/
+ void printIndexSplitInfo(bool with_affected_tensors = false) const;
 
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
      if available (if getOperationList has already been invoked). **/
