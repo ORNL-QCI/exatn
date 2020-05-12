@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/11
+REVISION: 2020/05/12
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -197,12 +197,12 @@ public:
      initialized to zero automatically, and later destroyed automatically when no longer needed.
      By default all parallel processes will be processing the tensor network,
      otherwise the desired process subset needs to be explicitly specified. **/
- bool submit(TensorNetwork & network);                       //in: tensor network for numerical evaluation
- bool submit(std::shared_ptr<TensorNetwork> network);        //in: tensor network for numerical evaluation
- bool submit(TensorNetwork & network,                        //in: tensor network for numerical evaluation
-             const ProcessGroup & process_group);            //in: chosen group of MPI processes
- bool submit(std::shared_ptr<TensorNetwork> network,         //in: tensor network for numerical evaluation
-             const ProcessGroup & process_group);            //in: chosen group of MPI processes
+ bool submit(TensorNetwork & network);                    //in: tensor network for numerical evaluation
+ bool submit(std::shared_ptr<TensorNetwork> network);     //in: tensor network for numerical evaluation
+ bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
+             TensorNetwork & network);                    //in: tensor network for numerical evaluation
+ bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
+             std::shared_ptr<TensorNetwork> network);     //in: tensor network for numerical evaluation
 
  /** Submits a tensor network expansion for processing (evaluating output tensors of all
      constituting tensor networks and accumualting them in the provided accumulator tensor).
@@ -213,23 +213,27 @@ public:
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
  bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
- bool submit(TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
-             const ProcessGroup & process_group);         //in: chosen group of MPI processes
- bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
-             const ProcessGroup & process_group);         //in: chosen group of MPI processes
+ bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
+             TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+ bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
+             std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
+             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
 
- /** Synchronizes all update operations on a given tensor. **/
+ /** Synchronizes all update operations on a given tensor.
+     Changing wait to FALSE, only tests for completion. **/
  bool sync(const Tensor & tensor,
            bool wait = true);
- /** Synchronizes execution of a specific tensor operation. **/
+ /** Synchronizes execution of a specific tensor operation.
+     Changing wait to FALSE, only tests for completion. **/
  bool sync(TensorOperation & operation,
            bool wait = true);
- /** Synchronizes execution of a specific tensor network. **/
+ /** Synchronizes execution of a specific tensor network.
+     Changing wait to FALSE, only tests for completion. **/
  bool sync(TensorNetwork & network,
            bool wait = true);
- /** Synchronizes execution of all outstanding tensor operations. **/
+ /** Synchronizes execution of all outstanding tensor operations.
+     Changing wait to FALSE, only tests for completion. **/
  bool sync(bool wait = true);
 
  /** HIGHER-LEVEL WRAPPERS **/
@@ -469,17 +473,17 @@ public:
 
  /** Performs a full evaluation of a tensor network based on the symbolic
      specification involving already created tensors (including the output). **/
- bool evaluateTensorNetwork(const std::string & name,            //in: tensor network name
-                            const std::string & network);        //in: symbolic tensor network specification
- bool evaluateTensorNetwork(const std::string & name,            //in: tensor network name
-                            const std::string & network,         //in: symbolic tensor network specification
-                            const ProcessGroup & process_group); //in: chosen group of MPI processes
+ bool evaluateTensorNetwork(const std::string & name,           //in: tensor network name
+                            const std::string & network);       //in: symbolic tensor network specification
+ bool evaluateTensorNetwork(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                            const std::string & name,           //in: tensor network name
+                            const std::string & network);       //in: symbolic tensor network specification
 
- bool evaluateTensorNetworkSync(const std::string & name,            //in: tensor network name
-                                const std::string & network);        //in: symbolic tensor network specification
- bool evaluateTensorNetworkSync(const std::string & name,            //in: tensor network name
-                                const std::string & network,         //in: symbolic tensor network specification
-                                const ProcessGroup & process_group); //in: chosen group of MPI processes
+ bool evaluateTensorNetworkSync(const std::string & name,           //in: tensor network name
+                                const std::string & network);       //in: symbolic tensor network specification
+ bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                const std::string & name,           //in: tensor network name
+                                const std::string & network);       //in: symbolic tensor network specification
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

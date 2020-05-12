@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/05/11
+REVISION: 2020/05/12
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -470,15 +470,15 @@ inline bool evaluateTensorNetworkSync(const std::string & name,    //in: tensor 
                                       const std::string & network) //in: symbolic tensor network specification
  {return numericalServer->evaluateTensorNetworkSync(name,network);}
 
-inline bool evaluateTensorNetwork(const std::string & name,           //in: tensor network name
-                                  const std::string & network,        //in: symbolic tensor network specification
-                                  const ProcessGroup & process_group) //in: chosen group of MPI processes
- {return numericalServer->evaluateTensorNetwork(name,network,process_group);}
+inline bool evaluateTensorNetwork(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                  const std::string & name,           //in: tensor network name
+                                  const std::string & network)        //in: symbolic tensor network specification
+ {return numericalServer->evaluateTensorNetwork(process_group,name,network);}
 
-inline bool evaluateTensorNetworkSync(const std::string & name,           //in: tensor network name
-                                      const std::string & network,        //in: symbolic tensor network specification
-                                      const ProcessGroup & process_group) //in: chosen group of MPI processes
- {return numericalServer->evaluateTensorNetworkSync(name,network,process_group);}
+inline bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                      const std::string & name,           //in: tensor network name
+                                      const std::string & network)        //in: symbolic tensor network specification
+ {return numericalServer->evaluateTensorNetworkSync(process_group,name,network);}
 
 
 /** Synchronizes all outstanding update operations on a given tensor
@@ -497,13 +497,13 @@ inline bool evaluateSync(TensorNetwork & network) //in: finalized tensor network
   if(success) success = numericalServer->sync(network);
   return success;}
 
-inline bool evaluate(TensorNetwork & network,            //in: finalized tensor network
-                     const ProcessGroup & process_group) //in: chosen group of MPI processes
- {return numericalServer->submit(network,process_group);}
+inline bool evaluate(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                     TensorNetwork & network)            //in: finalized tensor network
+ {return numericalServer->submit(process_group,network);}
 
-inline bool evaluateSync(TensorNetwork & network,            //in: finalized tensor network
-                         const ProcessGroup & process_group) //in: chosen group of MPI processes
- {bool success = numericalServer->submit(network,process_group);
+inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                         TensorNetwork & network)            //in: finalized tensor network
+ {bool success = numericalServer->submit(process_group,network);
   if(success) success = numericalServer->sync(network);
   return success;}
 
@@ -526,16 +526,16 @@ inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor netwo
   if(success) success = numericalServer->sync(*accumulator);
   return success;}
 
-inline bool evaluate(TensorExpansion & expansion,         //in: tensor network expansion
-                     std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
-                     const ProcessGroup & process_group)  //in: chosen group of MPI processes
- {return numericalServer->submit(expansion,accumulator,process_group);}
+inline bool evaluate(const ProcessGroup & process_group,  //in: chosen group of MPI processes
+                     TensorExpansion & expansion,         //in: tensor network expansion
+                     std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
+ {return numericalServer->submit(process_group,expansion,accumulator);}
 
-inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor network expansion
-                         std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
-                         const ProcessGroup & process_group)  //in: chosen group of MPI processes
+inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group of MPI processes
+                         TensorExpansion & expansion,         //in: tensor network expansion
+                         std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
  {if(!accumulator) return false;
-  bool success = numericalServer->submit(expansion,accumulator,process_group);
+  bool success = numericalServer->submit(process_group,expansion,accumulator);
   if(success) success = numericalServer->sync(*accumulator);
   return success;}
 
