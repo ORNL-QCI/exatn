@@ -44,22 +44,30 @@ while True:
     lhsTensorOperand1 = exprSplits[1]
     lhsTensorOperand2 = exprSplits[3]
     #print("{}:{}:{}".format(rhsTensor, lhsTensorOperand1, lhsTensorOperand2)) 
+    
     # LHS (result) 'C' tensor
     assert(rhsTensor[0] == "C")
     exatn.createTensor("C", getTensorDimArray(rhsTensor, vardict), 0.0)
     
     # RHS A tensor
     assert(lhsTensorOperand1[0] == "A") 
-    exatn.createTensor("A", getTensorDimArray(lhsTensorOperand1, vardict), np.random.normal())
+    exatn.createTensor("A", getTensorDimArray(lhsTensorOperand1, vardict), 0.0)
+    # Initialize random tensor body
+    exatn.initTensorRnd("A")
+    
     # RHS B tensor
     assert(lhsTensorOperand2[0] == "B") 
-    exatn.createTensor("B", getTensorDimArray(lhsTensorOperand2, vardict), np.random.normal())
+    exatn.createTensor("B", getTensorDimArray(lhsTensorOperand2, vardict), 0.0)
+    # Initialize random tensor body
+    exatn.initTensorRnd("B")
+
     # Convert [] to () (ExaTN convention)
     exatnExpr = expr.replace('[','(').replace(']',')')
-    # Evaluate
+    # Evaluate by tensor contraction
     start = time.process_time()
-    exatn.evaluateTensorNetwork('Test', exatnExpr)
+    contractOk = exatn.contractTensors(exatnExpr)
     elapsedTime = time.process_time() - start
+    assert(contractOk is True)
     
     # Destroy tensors
     exatn.destroyTensor("A")
