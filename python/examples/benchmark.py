@@ -77,4 +77,20 @@ while True:
     gFlops = gFlops/elapsedTime
     print("Test {}: {} ({}) || Time elapsed: {} [sec]; GFlops/sec: {}".format(count, expr, dimVars, elapsedTime, gFlops)) 
 
+    # Compare with numpy
+    sizeA = getTensorDimArray(lhsTensorOperand1, vardict)
+    sizeB = getTensorDimArray(lhsTensorOperand2, vardict)
+    A = np.empty(sizeA, dtype = np.float64)
+    B = np.empty(sizeB, dtype = np.float64)
+    randA = np.random.randn(*A.shape)
+    randB = np.random.randn(*B.shape)
+    indA = lhsTensorOperand1[2:-1]
+    indB = lhsTensorOperand2[2:-1]
+    indC = rhsTensor[2:-1]
+    npStart = time.process_time()
+    # Use numpy einsum to perform tensor contraction
+    C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''), indB.replace(',',''), indC.replace(',','')), randA, randB)
+    npElapsedTime = time.process_time() - start
+    print("  ==> Test {}: Numpy time elapsed: {} [sec]; ExaTN speed-up: {}".format(count, npElapsedTime, npElapsedTime/elapsedTime)) 
+
 inputFile.close() 
