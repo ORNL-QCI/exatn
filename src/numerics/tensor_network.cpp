@@ -1974,7 +1974,7 @@ void TensorNetwork::printIndexSplitInfo(bool with_affected_tensors) const
      iter = split_tensors_.find(key);
     }
     if(iter != split_tensors_.cend()){
-     tens.printIt();
+     tens.printIt(); std::cout << std::endl;
      op_affected = true;
     }
    }
