@@ -346,6 +346,72 @@ py::class_<exatn::numerics::TensorExpansion,
     return py::array();
   });
   m.def("destroyTensor", &destroyTensor, "");
+  // exatn_numerics API
+  // Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha 
+  // Input: symbolic tensor contraction specification & alpha factor (default = 1.0)
+  m.def(
+    "contractTensors", 
+    // Default contraction: alpha = 1.0
+    [](const std::string& contraction) {
+      return exatn::contractTensorsSync(contraction, 1.0);
+    },
+    "");
+  m.def(
+    "contractTensors", 
+    // Floating-point alpha
+    [](const std::string& contraction, double alpha) {
+      return exatn::contractTensorsSync(contraction, alpha);
+    },
+    "");
+  m.def(
+    "contractTensors", 
+    // Complex alpha
+    [](const std::string& contraction, std::complex<double> alpha) {
+      return exatn::contractTensorsSync(contraction, alpha);
+    },
+    "");
+  // Initializes the tensor body with random values.
+  m.def(
+    "initTensorRnd", 
+    [](const std::string& name) {
+      return exatn::initTensorRndSync(name);
+    },
+    "");
+  // Decomposes a tensor into three tensor factors via SVD. The symbolic
+  // tensor contraction specification specifies the decomposition,
+  // for example:
+  //   D(a,b,c,d,e) = L(c,i,e,j) * S(i,j) * R(b,j,a,i,d)
+  // where
+  //   L(c,i,e,j) is the left SVD factor,
+  //   R(b,j,a,i,d) is the right SVD factor,
+  //   S(i,j) is the middle SVD factor (the diagonal with singular values).
+  m.def(
+    "svd", 
+    [](const std::string& contraction) {
+      return exatn::decomposeTensorSVDSync(contraction);
+    },
+    "");
+  // SVD with singular values absorbed by the left tensor
+  m.def(
+    "svdL", 
+    [](const std::string& contraction) {
+      return exatn::decomposeTensorSVDLSync(contraction);
+    },
+    "");
+  // SVD with singular values absorbed by the right tensor
+  m.def(
+    "svdR", 
+    [](const std::string& contraction) {
+      return exatn::decomposeTensorSVDRSync(contraction);
+    },
+    "");
+  // SVD with square root of singular values absorbed by the left and right tensors
+  m.def(
+    "svdLR", 
+    [](const std::string& contraction) {
+      return exatn::decomposeTensorSVDLRSync(contraction);
+    },
+    "");
 }
 } // namespace exatn
 
