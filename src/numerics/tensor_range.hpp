@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/04/23
+REVISION: 2020/05/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,6 +62,11 @@ public:
  /** Resets the current multi-index value to the beginning. **/
  inline void reset();
 
+ /** Resets the current multi-index for a number of concurrent progress agents,
+     each given an exclusive subrange of this range to iterate within. **/
+ inline void reset(unsigned int num_agents,  //number of concurrent agents (iterators)
+                   unsigned int agent_rank); //current agend id: [0..num_agents-1]
+
  /** Retrieves a specific index from the multi-index. **/
  inline DimOffset getIndex(unsigned int position) const;
 
@@ -73,28 +78,30 @@ public:
 
  /** Increments the current multi-index value.
      If the tensor range is over, return false. **/
- inline bool next(DimOffset increment = 1);
+ inline bool next(DimOffset increment = 1); //increment value
 
  /** Decrements the current multi-index value.
      If the tensor range is over, return false. **/
- inline bool prev(DimOffset increment = 1);
+ inline bool prev(DimOffset increment = 1); //increment value
 
 private:
 
- std::vector<DimOffset> bases_;
- std::vector<DimExtent> extents_;
- std::vector<DimExtent> strides_;
- std::vector<DimOffset> mlndx_;
- DimExtent volume_;
+ std::vector<DimOffset> bases_;   //local base offsets
+ std::vector<DimExtent> extents_; //local extents on top of base offsets
+ std::vector<DimExtent> strides_; //strides (based on global extents)
+ std::vector<DimOffset> mlndx_;   //current local multi-index value
+ DimExtent volume_;               //total local volume
+ DimOffset subrange_begin_;       //subrange begin (if multiple agents iterate through the range)
+ DimOffset subrange_end_;         //subrange end (if multiple agents iterate through the range)
 };
 
 
 inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                                 const std::vector<DimExtent> & extents,  //in: extent of each dimension (on top of the base offset)
                                 const std::vector<DimExtent> & strides): //in: stride of each dimension
- bases_(bases), extents_(extents), strides_(strides), mlndx_(bases.size())
+ bases_(bases), extents_(extents), strides_(strides), mlndx_(extents.size())
 {
- assert(bases_.size() == extents_.size() && bases_.size() == strides_.size());
+ assert(bases_.size() == extents_.size() && strides_.size() == extents_.size());
  if(extents_.size() > 0){
   volume_ = 1; for(const auto & extent: extents_) volume_ *= extent;
  }else{
@@ -106,7 +113,7 @@ inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: b
 
 inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                                 const std::vector<DimExtent> & extents): //in: extent of each dimension (on top of the base offset)
- bases_(bases), extents_(extents), strides_(bases.size()), mlndx_(bases.size())
+ bases_(bases), extents_(extents), strides_(extents.size()), mlndx_(extents.size())
 {
  assert(bases_.size() == extents_.size());
  if(extents_.size() > 0){
@@ -155,6 +162,19 @@ inline DimExtent TensorRange::globalVolume() const
 inline void TensorRange::reset()
 {
  for(auto & ind: mlndx_) ind = 0;
+ subrange_begin_ = volume_;
+ subrange_end_ = 0;
+ return;
+}
+
+
+inline void TensorRange::reset(unsigned int num_agents,
+                               unsigned int agent_rank)
+{
+ //`Split the range uniformly into num_agents segments
+ //`Set the initial multi-index for the current agent
+ //`Set subrange_begin_ for the current agent
+ //`Set subrange_end_ for the current agent
  return;
 }
 
@@ -189,12 +209,16 @@ inline bool TensorRange::next(DimOffset increment)
  while(i < rank){
   if(mlndx_[i] + 1 < extents_[i]){
    mlndx_[i]++;
+   if(subrange_end_ > 0){ //subranging is set
+    if(localOffset() >= subrange_end_) break;
+   }
    if(--increment == 0) return true;
    i = 0;
   }else{
    mlndx_[i++] = 0;
   }
  }
+ reset();
  return false;
 }
 
@@ -206,6 +230,9 @@ inline bool TensorRange::prev(DimOffset increment)
  while(i < rank){
   if(mlndx_[i] > 0){
    mlndx_[i]--;
+   if(subrange_begin_ < volume_){
+    if(localOffset() < subrange_begin_) break;
+   }
    if(--increment == 0) return true;
    i = 0;
   }else{
