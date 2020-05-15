@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2020/04/27
+REVISION: 2020/05/15
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -80,6 +80,9 @@ public:
   virtual bool sync(TensorOpExecHandle op_handle,
                     int * error_code,
                     bool wait = false) = 0;
+
+  /** Discards a previously submitted tensor operation. **/
+  virtual bool discard(TensorOpExecHandle op_handle) = 0;
 
   /** Returns a local copy of a given tensor slice. **/
   virtual std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,

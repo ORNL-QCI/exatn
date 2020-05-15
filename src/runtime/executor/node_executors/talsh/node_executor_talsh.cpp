@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/04/27
+REVISION: 2020/05/15
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -720,6 +720,17 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
   if(synced) tasks_.erase(iter);
  }
  return synced;
+}
+
+
+bool TalshNodeExecutor::discard(TensorOpExecHandle op_handle)
+{
+ auto iter = tasks_.find(op_handle);
+ if(iter != tasks_.end()){
+  tasks_.erase(iter);
+  return true;
+ }
+ return false;
 }
 
 

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/04/27
+REVISION: 2020/05/15
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -61,6 +61,8 @@ public:
   bool sync(TensorOpExecHandle op_handle,
             int * error_code,
             bool wait = false) override;
+
+  bool discard(TensorOpExecHandle op_handle) override;
 
   std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;

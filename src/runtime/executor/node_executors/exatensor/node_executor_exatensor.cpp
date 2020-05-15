@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/04/27
+REVISION: 2020/05/15
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -125,6 +125,13 @@ bool ExatensorNodeExecutor::sync(TensorOpExecHandle op_handle,
                                  bool wait)
 {
  *error_code = 0;
+ //`Implement
+ return false;
+}
+
+
+bool ExatensorNodeExecutor::discard(TensorOpExecHandle op_handle)
+{
  //`Implement
  return false;
 }

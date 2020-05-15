@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2020/05/04
+REVISION: 2020/05/15
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -50,7 +50,8 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
           }
           dag.progressFrontNode(current);
           ++current;
-        }else{
+        }else{ //failed to synchronize the submitted tensor operation
+          node_executor_->discard(exec_handle);
           if(error_code != 0) dag.setNodeExecuted(current,error_code);
           if(logging_.load() != 0){
             logfile_ << "Failed to synchronize tensor operation: Error " << error_code << std::endl;
@@ -60,7 +61,8 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
                     << error_code << std::endl << std::flush;
           assert(false);
         }
-      }else{
+      }else{ //failed to submit the tensor operation
+        node_executor_->discard(exec_handle);
         dag.setNodeIdle(current);
         if(error_code != TRY_LATER && error_code != DEVICE_UNABLE){
          std::cout << "#ERROR(exatn::TensorRuntime::GraphExecutorEager): Failed to submit tensor operation: Error "
