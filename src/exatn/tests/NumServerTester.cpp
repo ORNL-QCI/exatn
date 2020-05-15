@@ -1486,7 +1486,7 @@ int main(int argc, char **argv) {
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
   MPI_Comm global_comm = MPI_COMM_WORLD;
-  exatn::initialize(MPICommProxy(&global_comm));
+  exatn::initialize(exatn::MPICommProxy(&global_comm));
 #else
   exatn::initialize();
 #endif
