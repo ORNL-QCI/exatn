@@ -10,6 +10,7 @@
 #include <iostream>
 #include <utility>
 
+
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -911,6 +912,8 @@ TEST(NumServerTester, Sycamore12NumServer)
  }
  std::cout << "Done\n" << std::flush;
 
+ //Decompose all higher-than-rank-3 tensors:
+ //circuit.decomposeTensors(); //optional
  circuit.printIt(); //debug
 
  //Generate the list of tensor operations for the circuit:

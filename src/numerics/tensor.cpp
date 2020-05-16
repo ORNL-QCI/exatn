@@ -144,7 +144,7 @@ void Tensor::rename(const std::string & name)
 
 void Tensor::rename()
 {
- name_ = tensor_hex_name("_",this->getTensorHash());
+ name_ = tensor_hex_name("",this->getTensorHash());
  return;
 }
 
