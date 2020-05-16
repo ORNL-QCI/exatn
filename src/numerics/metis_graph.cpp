@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/04/29
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -364,6 +364,20 @@ bool MetisGraph::partitionGraph(std::size_t num_parts, //in: number of parts (>0
   std::cout << "#ERROR(exatn::numerics::MetisGraph): METIS_PartGraphKway error " << errc << std::endl;
  }
  return (errc == METIS_OK);
+}
+
+
+bool MetisGraph::partitionGraph(std::size_t num_parts,     //in: number of parts (>0)
+                                std::size_t num_miniparts, //in: number of minipartitions prior to merging
+                                double imbalance)          //in: imbalance tolerance (>= 1.0)
+{
+ //Partition the graph into minipartitions:
+ bool success = partitionGraph(num_miniparts,imbalance);
+ //Merge minipartitions into macropartitions:
+ if(success){
+  //`Finish
+ }
+ return success;
 }
 
 

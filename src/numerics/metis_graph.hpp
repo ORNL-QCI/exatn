@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/04/29
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -92,6 +92,13 @@ public:
      the weighted edge cut under tolerated partition weight imbalance. **/
  bool partitionGraph(std::size_t num_parts, //in: number of partitions (>0)
                      double imbalance);     //in: partition weight imbalance tolerance (>= 1.0)
+
+ /** Partitions the graph into a desired number of partitions while minimizing
+     the weighted edge cut under tolerated partition weight imbalance.
+     The partitions are formed by merging together smaller partitions (miniparts). **/
+ bool partitionGraph(std::size_t num_parts,     //in: number of partitions (>0)
+                     std::size_t num_miniparts, //in: number of minipartitions prior to merging
+                     double imbalance);         //in: partition weight imbalance tolerance (>= 1.0)
 
  /** Retrieves the graph partitions and the achieved edge cut value.
      The renumbering vector returns the new-to-old vertex id mapping for
