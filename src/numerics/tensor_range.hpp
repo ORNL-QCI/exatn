@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/05/13
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,6 +22,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
      global offset in the parental flattened 1d super-range, which
      is equal to the local offset when the tensor range does not
      contain subranges (tensor range = parental tensor range).
+ (e) A tensor range can also be split into disjoint chunks such
+     that each chunk can be iterated over by a concurrent agent.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_RANGE_HPP_
@@ -120,7 +122,7 @@ inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: b
   volume_ = 1;
   for(unsigned int i = 0; i < extents_.size(); ++i){
    strides_[i] = volume_;
-   volume_ *= extents_[i];
+   volume_ *= (bases_[i] + extents_[i]);
   }
  }else{
   volume_ = 0;
@@ -171,10 +173,18 @@ inline void TensorRange::reset()
 inline void TensorRange::reset(unsigned int num_agents,
                                unsigned int agent_rank)
 {
- //`Split the range uniformly into num_agents segments
- //`Set the initial multi-index for the current agent
- //`Set subrange_begin_ for the current agent
- //`Set subrange_end_ for the current agent
+ if(volume_ > 0){
+  auto chunk = volume_ / num_agents;
+  auto remainder = volume_ % num_agents;
+  subrange_begin_ = chunk * agent_rank + std::min(static_cast<decltype(remainder)>(agent_rank),remainder);
+  if(agent_rank < remainder) chunk++;
+  subrange_end_ = subrange_begin_ + chunk;
+  auto offs = subrange_begin_;
+  for(unsigned int i = 0; i < extents_.size(); ++i){
+   mlndx_[i] = offs % extents_[i];
+   offs /= extents_[i];
+  }
+ }
  return;
 }
 
