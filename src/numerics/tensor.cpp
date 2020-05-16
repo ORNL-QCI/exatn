@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/04/19
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -139,6 +139,12 @@ void Tensor::printItFile(std::ofstream & output_file, bool with_hash) const
 void Tensor::rename(const std::string & name)
 {
  name_ = name;
+ return;
+}
+
+void Tensor::rename()
+{
+ name_ = tensor_hex_name("_",this->getTensorHash());
  return;
 }
 

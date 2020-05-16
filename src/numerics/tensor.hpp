@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/04/22
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -121,21 +121,29 @@ public:
 
  /** Rename (use this method with care as it can mess up higher-level maps). **/
  void rename(const std::string & name);
+ void rename(); //a unique tensor name will be generated automatically via tensor hash
+
  /** Get tensor name. **/
  const std::string & getName() const;
+
  /** Get the tensor rank (order). **/
  unsigned int getRank() const;
+
  /** Get the tensor volume (number of elements). **/
  std::size_t getVolume() const;
+
  /** Get the tensor size (bytes). **/
  std::size_t getSize() const;
+
  /** Get the tensor shape. **/
  const TensorShape & getShape() const;
+
  /** Get the tensor signature. **/
  const TensorSignature & getSignature() const;
 
  /** Get the extent of a specific tensor dimension. **/
  DimExtent getDimExtent(unsigned int dim_id) const;
+
  /** Get the extents of all tensor dimensions. **/
  const std::vector<DimExtent> & getDimExtents() const;
 

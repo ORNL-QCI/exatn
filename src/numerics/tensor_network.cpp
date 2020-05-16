@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/12
+REVISION: 2020/05/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1577,7 +1577,41 @@ bool TensorNetwork::collapseIsometries()
 
 bool TensorNetwork::decomposeTensors()
 {
- //`Finish
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::decomposeTensors): Invalid request: " <<
+   "Unfinalized tensor network may not be decomposed!" << std::endl;
+  return false;
+ }
+ bool splitting = true;
+ while(splitting){
+  splitting = false;
+  for(auto iter = this->begin(); iter != this->end(); ++iter){
+   const auto tensor_id = iter->first;
+   const auto & tensor = *((iter->second).getTensor());
+   const auto tensor_rank = tensor.getRank();
+   if(tensor_rank > 3){
+    const auto left_rank = tensor_rank / 2;
+    const auto right_rank = tensor_rank - left_rank;
+    const auto & extents = tensor.getDimExtents();
+    auto cmp = [&extents](const int & i1, const int & i2) {return extents[i1] < extents[i2];};
+    std::vector<int> dims(tensor_rank);
+    for(int i = 0; i < tensor_rank; ++i) dims[i] = i;
+    std::sort(dims.begin(),dims.end(),cmp);
+    std::vector<int> right_dims(tensor_rank);
+    for(int i = 0; i < left_rank; ++i) right_dims[dims[i]] = 0;
+    for(int i = left_rank; i < tensor_rank; ++i) right_dims[dims[i]] = 1;
+    DimExtent contr_dim = 1; for(int i = 0; i < left_rank; ++i) contr_dim *= extents[dims[i]];
+    const auto left_tensor_id = this->getMaxTensorId() + 1;
+    const auto right_tensor_id = this->getMaxTensorId() + 2;
+    splitting = this->splitTensor(tensor_id,left_tensor_id,"_left",right_tensor_id,"_right",
+                                  TensorShape(std::initializer_list<DimExtent>{contr_dim}),right_dims);
+    assert(splitting);
+    this->getTensor(left_tensor_id)->rename(); //automatic unique name
+    this->getTensor(right_tensor_id)->rename(); //automatic unique name
+    break;
+   }
+  }
+ }
  return true;
 }
 
