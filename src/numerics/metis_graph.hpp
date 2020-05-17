@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/16
+REVISION: 2020/05/17
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -126,10 +126,10 @@ private:
  std::vector<idx_t> adjwgt_;       //edge weights
  //Partitioning:
  idx_t num_parts_;                 //number of parts in graph partitioning
- std::vector<real_t> tpwgts_;      //desired weight of each partition (adds up to 1.0)
+ std::vector<real_t> tpwgts_;      //desired fractional weight of each partition (must add up to 1.0)
  std::vector<real_t> ubvec_;       //weight imbalance tolerance for each partition (>= 1.0)
  std::vector<idx_t> partitions_;   //computed partitions
- std::vector<idx_t> part_weights_; //actual partition weights
+ std::vector<idx_t> part_weights_; //actual (absolute) partition weights
  idx_t edge_cut_;                  //achieved edge cut
  idx_t num_cross_edges_;           //number of cross edges in the edge cut
 };

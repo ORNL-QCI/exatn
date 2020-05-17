@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/16
+REVISION: 2020/05/17
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -114,7 +114,7 @@ MetisGraph::MetisGraph(const TensorNetwork & network):
 
 
 MetisGraph::MetisGraph(const MetisGraph & parent, //in: partitioned parental graph
-                       std::size_t partition):   //in: partition of the parental graph
+                       std::size_t partition):    //in: partition of the parental graph
  MetisGraph()
 {
  if(partition < parent.num_parts_){
@@ -375,7 +375,49 @@ bool MetisGraph::partitionGraph(std::size_t num_parts,     //in: number of parts
  bool success = partitionGraph(num_miniparts,imbalance);
  //Merge minipartitions into macropartitions:
  if(success){
-  //`Finish
+  //Compute the coarse adjacency matrix:
+  std::size_t adj[num_miniparts][num_miniparts] = {0};
+  for(idx_t vert = 0; vert < num_vertices_; ++vert){
+   const auto partition = partitions_[vert];
+   for(auto edge = xadj_[vert]; edge < xadj_[vert+1]; ++edge){
+    const auto adj_partition = partitions_[adjncy_[edge]];
+    adj[partition][adj_partition] += adjwgt_[edge];
+   }
+  }
+  //Construct the coarse graph:
+  MetisGraph coarse;
+  for(idx_t i = 0; i < num_miniparts; ++i){
+   std::size_t adj_verts[num_miniparts], adj_wghts[num_miniparts];
+   std::size_t num_adj_edges = 0;
+   for(idx_t j = 0; j < num_miniparts; ++j){
+    if(adj[i][j] != 0){
+     adj_verts[num_adj_edges] = j;
+     adj_wghts[num_adj_edges] = adj[i][j];
+     ++num_adj_edges;
+    }
+   }
+   coarse.appendVertex(num_adj_edges,adj_verts,adj_wghts,part_weights_[i]);
+  }
+  //Bipartition the coarse graph:
+  success = coarse.partitionGraph(num_parts,imbalance);
+  if(success){
+   std::size_t edgecut, numcross;
+   const std::vector<idx_t> * part_weights;
+   const auto & parts = coarse.getPartitions(&edgecut,&numcross,&part_weights);
+   edge_cut_ = edgecut;
+   part_weights_ = *part_weights;
+   for(auto & partition: partitions_) partition = parts[partition];
+   //Recompute the number of cross edges:
+   for(idx_t vert = 0; vert < num_vertices_; ++vert){
+    const auto partition = partitions_[vert];
+    for(auto edge = xadj_[vert]; edge < xadj_[vert+1]; ++edge){
+     if(partitions_[adjncy_[edge]] != partition) ++num_cross_edges_;
+    }
+   }
+   assert(num_cross_edges_ % 2 == 0);
+   num_cross_edges_ /= 2;
+   num_parts_ = num_parts;
+  }
  }
  return success;
 }
