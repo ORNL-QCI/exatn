@@ -69,7 +69,7 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
  auto rnd = std::bind(distribution,generator);
 
  double max_flop = 0.0;
- partition_granularity_ = std::min(partition_granularity_,num_tensors/(2*partition_max_size_));
+ partition_granularity_ = std::max(partition_factor_,std::min(partition_granularity_,num_tensors/(2*partition_max_size_)));
  while(partition_granularity_ >= partition_factor_){
   auto num_walkers = num_walkers_;
   while(num_walkers-- > 0){
