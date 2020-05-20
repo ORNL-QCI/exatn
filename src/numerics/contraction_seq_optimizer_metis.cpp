@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/05/19
+REVISION: 2020/05/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -105,6 +105,7 @@ double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNe
       for(const auto & contr_cost: contr_flops) std::cout << " " << contr_cost;
       std::cout << std::endl;
      }
+     num_walkers = num_walkers_;
     }
    }else{
     max_flop = *(std::max_element(contr_flops.cbegin(),contr_flops.cend()));
