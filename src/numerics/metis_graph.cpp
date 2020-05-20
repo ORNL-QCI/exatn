@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/17
+REVISION: 2020/05/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -149,6 +149,44 @@ MetisGraph::MetisGraph(const MetisGraph & parent, //in: partitioned parental gra
  }else{
   std::cout << "#ERROR(exatn::numerics::MetisGraph): Partition does not exist in the parent graph!\n";
   assert(false);
+ }
+}
+
+
+MetisGraph::MetisGraph(const MetisGraph & parent,                    //in: partitioned parental graph
+                       const std::vector<std::size_t> & partitions): //in: partitions of the parental graph
+ MetisGraph()
+{
+ auto is_contained = [&partitions](const std::size_t partn){
+                      return (std::find(partitions.cbegin(),partitions.cend(),partn) != partitions.cend());
+                     };
+ num_vertices_ = 0;
+ //Collect the vertices and edges from the requested partition:
+ std::unordered_map<idx_t,idx_t> vertex_id_map; //parent vertex id --> child vertex id
+ for(idx_t vert = 0; vert < parent.partitions_.size(); ++vert){
+  if(is_contained(parent.partitions_[vert])){ //vertex belongs to the requested partitions
+   auto res = vertex_id_map.emplace(std::make_pair(vert,num_vertices_)); assert(res.second);
+   vwgt_.emplace_back(parent.vwgt_[vert]);
+   idx_t num_edges = 0;
+   for(idx_t edge = parent.xadj_[vert]; edge < parent.xadj_[vert+1]; ++edge){
+    const auto & adj_vertex_id = parent.adjncy_[edge];
+    if(is_contained(parent.partitions_[adj_vertex_id])){ //internal edge: Copy it
+     adjncy_.emplace_back(adj_vertex_id);
+     adjwgt_.emplace_back(parent.adjwgt_[edge]);
+     ++num_edges;
+    }else{ //external edge: Aggregate into the vertex weight
+     vwgt_[num_vertices_] += (parent.adjwgt_[edge] - 1);
+    }
+   }
+   xadj_.emplace_back(xadj_[num_vertices_] + num_edges);
+   ++num_vertices_;
+  }
+ }
+ //Renumber vertex Ids:
+ for(auto & adj_vertex_id: adjncy_) adj_vertex_id = vertex_id_map[adj_vertex_id];
+ //Create updated renumbering:
+ for(idx_t vert = 0; vert < parent.renumber_.size(); ++vert){
+  if(is_contained(parent.partitions_[vert])) renumber_.emplace_back(parent.renumber_[vert]);
  }
 }
 
@@ -333,11 +371,11 @@ bool MetisGraph::mergeVertices(std::size_t vertex1, //in: first vertex id [0..N-
 bool MetisGraph::partitionGraph(std::size_t num_parts, //in: number of parts (>0)
                                 double imbalance)      //in: imbalance tolerance (>= 1.0)
 {
+ assert(num_vertices_ > 0);
  assert(num_parts > 0);
  assert(imbalance >= 1.0);
- assert(num_vertices_ > 0);
  if(num_parts_ > 0) clearPartitions();
- num_parts_ = num_parts;
+ num_parts_ = std::min(static_cast<idx_t>(num_parts),num_vertices_);
  partitions_.resize(num_vertices_);
  idx_t ncon = 1;
  auto errc = METIS_PartGraphKway(&num_vertices_,&ncon,xadj_.data(),adjncy_.data(),
@@ -371,12 +409,16 @@ bool MetisGraph::partitionGraph(std::size_t num_parts,     //in: number of parts
                                 std::size_t num_miniparts, //in: number of minipartitions prior to merging
                                 double imbalance)          //in: imbalance tolerance (>= 1.0)
 {
+ assert(num_miniparts >= num_parts);
  //Partition the graph into minipartitions:
  bool success = partitionGraph(num_miniparts,imbalance);
  //Merge minipartitions into macropartitions:
- if(success){
+ if(success && num_miniparts > num_parts){
   //Compute the coarse adjacency matrix:
-  std::size_t adj[num_miniparts][num_miniparts] = {0};
+  std::size_t adj[num_miniparts][num_miniparts];
+  for(int i = 0; i < num_miniparts; ++i){
+   for(int j = 0; j < num_miniparts; ++j) adj[i][j] = 0;
+  }
   for(idx_t vert = 0; vert < num_vertices_; ++vert){
    const auto partition = partitions_[vert];
    for(auto edge = xadj_[vert]; edge < xadj_[vert+1]; ++edge){
@@ -384,13 +426,22 @@ bool MetisGraph::partitionGraph(std::size_t num_parts,     //in: number of parts
     adj[partition][adj_partition] += adjwgt_[edge];
    }
   }
+  /*//DEBUG BEGIN:
+  std::cout << "#DEBUG(exatn::numerics::MetisGraph::partitionGraph): Coarsened adjacency matrix:\n";
+  for(idx_t i = 0; i < num_miniparts; ++i){
+   for(idx_t j = 0; j < num_miniparts; ++j){
+    std::cout << " " << adj[i][j];
+   }
+   std::cout << std::endl;
+  }
+  //DEBUG END*/
   //Construct the coarse graph:
   MetisGraph coarse;
   for(idx_t i = 0; i < num_miniparts; ++i){
    std::size_t adj_verts[num_miniparts], adj_wghts[num_miniparts];
    std::size_t num_adj_edges = 0;
    for(idx_t j = 0; j < num_miniparts; ++j){
-    if(adj[i][j] != 0){
+    if(j != i && adj[i][j] != 0){
      adj_verts[num_adj_edges] = j;
      adj_wghts[num_adj_edges] = adj[i][j];
      ++num_adj_edges;
@@ -408,6 +459,7 @@ bool MetisGraph::partitionGraph(std::size_t num_parts,     //in: number of parts
    part_weights_ = *part_weights;
    for(auto & partition: partitions_) partition = parts[partition];
    //Recompute the number of cross edges:
+   num_cross_edges_ = 0;
    for(idx_t vert = 0; vert < num_vertices_; ++vert){
     const auto partition = partitions_[vert];
     for(auto edge = xadj_[vert]; edge < xadj_[vert+1]; ++edge){
@@ -446,6 +498,21 @@ std::size_t MetisGraph::getOriginalVertexId(std::size_t vertex_id) const
 {
  if(!renumber_.empty()) return static_cast<std::size_t>(renumber_[vertex_id]);
  return vertex_id;
+}
+
+
+void MetisGraph::printAdjacencyMatrix() const
+{
+ std::cout << "#INFO(exatn::numerics::MetisGraph::printAdjacencyMatrix): Graph adjacency matrix:\n";
+ for(idx_t vert = 0; vert < num_vertices_; ++vert){
+  std::cout << "Vertex " << vert << " [" << vwgt_[vert] << "]:";
+  for(idx_t edge = xadj_[vert]; edge < xadj_[vert+1]; ++edge){
+   std::cout << " " << adjncy_[edge] << " [" << adjwgt_[edge] << "]";
+  }
+  std::cout << std::endl;
+ }
+ std::cout << std::flush;
+ return;
 }
 
 } //namespace numerics

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/17
+REVISION: 2020/05/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -51,6 +51,11 @@ public:
      The open edges are aggregated into the weights of incident vertices. **/
  MetisGraph(const MetisGraph & parent, //in: partitioned parental graph
             std::size_t partition);    //in: partition of the parental graph
+
+ /** Constructs a graph from given partitions of a larger graph.
+     The open edges are aggregated into the weights of incident vertices. **/
+ MetisGraph(const MetisGraph & parent,                    //in: partitioned parental graph
+            const std::vector<std::size_t> & partitions); //in: partitions of the parental graph
 
  MetisGraph(const MetisGraph &) = default;
  MetisGraph & operator=(const MetisGraph &) = default;
@@ -110,6 +115,9 @@ public:
 
  /** Returns the original id for a given graph vertex. **/
  std::size_t getOriginalVertexId(std::size_t vertex_id) const; //in: current vertex id [0..N-1]
+
+ /** Prints adjacency matrix. **/
+ void printAdjacencyMatrix() const;
 
 protected:
 

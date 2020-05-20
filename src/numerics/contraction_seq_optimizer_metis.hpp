@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/05/02
+REVISION: 2020/05/19
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,13 +48,15 @@ protected:
 
  static constexpr const std::size_t PARTITION_FACTOR = 2;
  static constexpr const std::size_t PARTITION_MAX_SIZE = 3;
- static constexpr const std::size_t PARTITION_IMBALANCE_DEPTH = 13;
+ static constexpr const std::size_t PARTITION_IMBALANCE_DEPTH = 8;
+ static constexpr const std::size_t PARTITION_GRANULARITY = PARTITION_IMBALANCE_DEPTH;
  static constexpr const double PARTITION_IMBALANCE = 1.3;
 
  unsigned int num_walkers_;
  double acceptance_tolerance_;
 
  std::size_t partition_factor_;
+ std::size_t partition_granularity_;
  std::size_t partition_max_size_;
  std::vector<double> partition_imbalance_;
 };
