@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/04/22
+REVISION: 2020/05/20
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,6 +15,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
+#include "timers.hpp"
 
 #include <tuple>
 #include <memory>
@@ -128,6 +129,21 @@ public:
  /** Returns a unique integerhash for the tensor operation. **/
  TensorHashType getTensorOpHash() const;
 
+ /** Records the start time stamp for tensor operation execution. **/
+ inline bool recordStartTime(){
+  return timer_.start();
+ }
+
+ /** Records the finish time stamp for tensor operation execution. **/
+ inline bool recordFinishTime(){
+  return timer_.stop();
+ }
+
+ /** Retrieves the tensor operation duration between the finish and start time stamps. **/
+ inline double getTimeDuration() const{
+  return timer_.getDuration();
+ }
+
 private:
 
  /** Sets the next tensor operand with its mutability status. **/
@@ -145,6 +161,7 @@ protected:
  std::size_t mutation_; //default operand mutability bits: Bit X --> Operand #X
  TensorOpCode opcode_; //tensor operation code
  std::size_t id_; //tensor operation id (unique integer identifier)
+ Timer timer_; //internal timer
 };
 
 using createTensorOpFn = std::unique_ptr<TensorOperation> (*)(void);
