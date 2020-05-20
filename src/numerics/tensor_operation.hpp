@@ -144,6 +144,16 @@ public:
   return timer_.getDuration();
  }
 
+ /** Returns the start time of the tensor operation execution. **/
+ inline double getStartTime() const{
+  return timer_.getStartTime();
+ }
+
+ /** Returns the finish time of the tensor operation execution. **/
+ inline double getFinishTime() const{
+  return timer_.getFinishTime();
+ }
+
 private:
 
  /** Sets the next tensor operand with its mutability status. **/

@@ -44,6 +44,14 @@ public:
   return (finish_ - start_);
  }
 
+ inline double getStartTime() const{
+  return start_;
+ }
+
+ inline double getFinishTime() const{
+  return finish_;
+ }
+
  static inline double timeInSec(){
   auto stamp = std::chrono::system_clock::now(); //current time point
   auto durat = std::chrono::duration<double>(stamp.time_since_epoch()); //duration (sec) since the begining of the clock
