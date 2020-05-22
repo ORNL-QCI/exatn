@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2020/04/20
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,6 +29,10 @@ public:
  TensorOpAdd(TensorOpAdd &&) noexcept = default;
  TensorOpAdd & operator=(TensorOpAdd &&) noexcept = default;
  virtual ~TensorOpAdd() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpAdd(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

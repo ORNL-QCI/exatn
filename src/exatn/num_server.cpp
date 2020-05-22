@@ -305,7 +305,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   while(not_done){
    for(auto op = op_list.begin(); op != op_list.end(); ++op){
     const auto num_operands = (*op)->getNumOperands();
-    //auto tens_op = std::make_shared<TensorOperation>(*(*op)); //`Does tens_op need to live longer?
+    std::shared_ptr<TensorOperation> tens_op = (*op)->clone(); //`Does tens_op need to live longer?
     //Substitute sliced tensor operands with their respective slices:
     for(unsigned int op_num = 0; op_num < num_operands; ++op_num){
      const auto & tensor = *((*op)->getTensorOperand(op_num));
@@ -319,7 +319,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
       const auto * tensor_info = network.getSplitTensorInfo(std::make_pair((*op)->getTensorOpHash(),pos));
      }
     }
-    //submitted = submit(tens_op); if(!submitted) return false;
+    submitted = submit(tens_op); if(!submitted) return false;
    }
    not_done = work_range.next();
   }

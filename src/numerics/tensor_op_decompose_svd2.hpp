@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into two tensor factors via SVD
-REVISION: 2020/04/20
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,6 +30,10 @@ public:
  TensorOpDecomposeSVD2(TensorOpDecomposeSVD2 &&) noexcept = default;
  TensorOpDecomposeSVD2 & operator=(TensorOpDecomposeSVD2 &&) noexcept = default;
  virtual ~TensorOpDecomposeSVD2() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpDecomposeSVD2(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

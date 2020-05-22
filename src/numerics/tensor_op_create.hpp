@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2019/12/06
+REVISION: 2020/05/22
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Creates a tensor inside the processing backend.
@@ -28,6 +28,10 @@ public:
  TensorOpCreate(TensorOpCreate &&) noexcept = default;
  TensorOpCreate & operator=(TensorOpCreate &&) noexcept = default;
  virtual ~TensorOpCreate() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpCreate(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Orthogonalizes a tensor via MGS
-REVISION: 2020/04/07
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,6 +28,10 @@ public:
  TensorOpOrthogonalizeMGS(TensorOpOrthogonalizeMGS &&) noexcept = default;
  TensorOpOrthogonalizeMGS & operator=(TensorOpOrthogonalizeMGS &&) noexcept = default;
  virtual ~TensorOpOrthogonalizeMGS() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpOrthogonalizeMGS(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

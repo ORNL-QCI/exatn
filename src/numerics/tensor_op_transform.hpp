@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2019/09/20
+REVISION: 2020/05/22
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Transforms/initializes a tensor inside the processing backend.
@@ -34,6 +34,10 @@ public:
  TensorOpTransform(TensorOpTransform &&) noexcept = default;
  TensorOpTransform & operator=(TensorOpTransform &&) noexcept = default;
  virtual ~TensorOpTransform() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpTransform(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

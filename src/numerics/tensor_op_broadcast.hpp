@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Broadcasts a tensor
-REVISION: 2020/04/16
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,6 +30,10 @@ public:
  TensorOpBroadcast(TensorOpBroadcast &&) noexcept = default;
  TensorOpBroadcast & operator=(TensorOpBroadcast &&) noexcept = default;
  virtual ~TensorOpBroadcast() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpBroadcast(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

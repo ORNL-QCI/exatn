@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/05/20
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -52,6 +52,8 @@ public:
  TensorOperation(TensorOperation &&) noexcept = default;
  TensorOperation & operator=(TensorOperation &&) noexcept = default;
  virtual ~TensorOperation() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const = 0;
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const = 0;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Inserts a slice into a tensor
-REVISION: 2020/04/20
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,6 +29,10 @@ public:
  TensorOpInsert(TensorOpInsert &&) noexcept = default;
  TensorOpInsert & operator=(TensorOpInsert &&) noexcept = default;
  virtual ~TensorOpInsert() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpInsert(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;

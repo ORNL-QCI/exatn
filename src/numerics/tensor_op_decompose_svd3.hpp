@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into three tensor factors via SVD
-REVISION: 2020/04/20
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,6 +31,10 @@ public:
  TensorOpDecomposeSVD3(TensorOpDecomposeSVD3 &&) noexcept = default;
  TensorOpDecomposeSVD3 & operator=(TensorOpDecomposeSVD3 &&) noexcept = default;
  virtual ~TensorOpDecomposeSVD3() = default;
+
+ virtual std::unique_ptr<TensorOperation> clone() const override{
+  return std::unique_ptr<TensorOperation>(new TensorOpDecomposeSVD3(*this));
+ }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
  virtual bool isSet() const override;
