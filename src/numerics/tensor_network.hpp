@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/21
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -354,7 +354,7 @@ public:
  getSplitTensorInfo(const std::pair<TensorHashType,TensorHashType> & key) const;
 
  /** Prints information on index splitting within the tensor operation list. **/
- void printIndexSplitInfo(bool with_affected_tensors = false) const;
+ void printSplitIndexInfo(bool with_affected_tensors = false) const;
 
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
      if available (if getOperationList has already been invoked). **/

@@ -274,7 +274,8 @@ std::shared_ptr<Tensor> Tensor::createSubtensor(const std::string & name,
 std::shared_ptr<Tensor> Tensor::createSubtensor(const std::vector<SubspaceId> & subspaces,
                                                 const std::vector<DimExtent> & dim_extents) const
 {
- assert(subspaces.size() == dim_extents.size() == this->getRank());
+ assert(subspaces.size() == this->getRank());
+ assert(dim_extents.size() == this->getRank());
  auto subtensor = std::make_shared<Tensor>(*this);
  const auto tens_rank = subtensor->getRank();
  for(unsigned int i = 0; i < tens_rank; ++i){

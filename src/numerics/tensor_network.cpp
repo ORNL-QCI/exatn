@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/21
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2009,9 +2009,9 @@ const std::vector<std::pair<unsigned int, unsigned int>> *
 }
 
 
-void TensorNetwork::printIndexSplitInfo(bool with_affected_tensors) const
+void TensorNetwork::printSplitIndexInfo(bool with_affected_tensors) const
 {
- std::cout << "#INFO(TensorNetwork::printIndexSplitInfo):\n";
+ std::cout << "#INFO(TensorNetwork::printSplitIndexInfo):\n";
  for(unsigned int i = 0; i < split_indices_.size(); ++i){
   std::cout << i << ": " << split_indices_[i].first << ": Number of segments = "
             << split_indices_[i].second.size() << std::endl;

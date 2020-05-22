@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/21
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -277,6 +277,11 @@ bool NumServer::submit(const ProcessGroup & process_group,
  std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
            << network.getName() << " for execution by " << num_procs << " processes" << std::endl << std::flush; //debug
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
+ std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
+           << network.getFMAFlops() << "; Max intermediate volume = " << network.getMaxIntermediateVolume()
+           << std::endl << std::flush; //debug
+ network.splitInternalIndices(128*1024*1024);
+ network.printSplitIndexInfo(); //debug
  bool submitted = false;
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
@@ -317,8 +322,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
     for(unsigned int op_num = 0; op_num < num_operands; ++op_num){
      auto tensor = (*op)->getTensorOperand(op_num);
      const auto tensor_rank = tensor->getRank();
-     bool output_tensor;
-     bool tensor_is_intermediate = tensorIsIntermediate(*tensor,&output_tensor);
+     bool output;
+     bool tensor_is_intermediate = tensorIsIntermediate(*tensor,&output);
      std::pair<numerics::TensorHashType,numerics::TensorHashType> key;
      if(tensor_is_intermediate){ //intemediate tensor
       numerics::TensorHashType zero = 0;
@@ -342,11 +347,12 @@ bool NumServer::submit(const ProcessGroup & process_group,
        dim_extents[ind_pos] = index_info.second[segment_selector].second;
       }
       auto tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
+      tensor_slice->rename(); //unique automatic name will be generated
+      //`Problem: Intermediate tensor slice will have different hash in different tensor operations
       if(tensor_is_intermediate){ //intemediate tensor: Use slice
        bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
        submitted = submit(tens_op); if(!submitted) return false;
       }else{ //input tensor: create slice, use slice, destroy slice
-       tensor_slice->rename(); //unique automatic name will be generated
        //Create an empty slice of the input tensor:
        std::shared_ptr<TensorOperation> create_slice = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
        create_slice->setTensorOperand(tensor_slice);
@@ -378,7 +384,14 @@ bool NumServer::submit(const ProcessGroup & process_group,
   }
   ++num_items_executed;
  }
- std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of executed work items = "
+ //Allreduce the tensor network output tensor within the executing process group:
+ if(num_procs > 1){
+  std::shared_ptr<TensorOperation> allreduce = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+  allreduce->setTensorOperand(output_tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(allreduce)->resetMPICommunicator(process_group.getMPICommProxy());
+  submitted = submit(allreduce); if(!submitted) return false;
+ }
+ std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted work items = "
            << num_items_executed << std::endl << std::flush; //debug
  return true;
 }

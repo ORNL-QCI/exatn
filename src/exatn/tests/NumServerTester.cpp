@@ -11,6 +11,8 @@
 #include <utility>
 
 
+#define EXATN_TEST0
+/*
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -25,7 +27,75 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
+*/
 
+#ifdef EXATN_TEST0
+TEST(NumServerTester, MPSBuilderNumServer)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ exatn::resetRuntimeLoggingLevel(2); //debug
+
+ bool success;
+
+ //Declare and then create a tensor:
+ auto z0 = exatn::makeSharedTensor("Z0",TensorShape{16,16,16,16,16}); //declares a tensor Z0[16,16,16,16,16] with no storage
+ success = exatn::createTensor(z0,TensorElementType::REAL32); assert(success); //allocates tensor storage
+
+ //Create tensors in one shot (with storage):
+ success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{64,64}); assert(success);
+ success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+ success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+ success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+ success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+ success = exatn::createTensor("T5",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+
+ //Initialize tensor to a scalar value:
+ success = exatn::initTensor("Z0",0.0); assert(success);
+ success = exatn::initTensor("T0",0.0); assert(success);
+
+ //Initialize tensors to random values:
+ success = exatn::initTensorRnd("T1"); assert(success);
+ success = exatn::initTensorRnd("T2"); assert(success);
+ success = exatn::initTensorRnd("T3"); assert(success);
+ success = exatn::initTensorRnd("T4"); assert(success);
+ success = exatn::initTensorRnd("T5"); assert(success);
+
+ //Scale a tensor by a scalar:
+ success = exatn::scaleTensor("T3",0.42); assert(success);
+
+ //Accumulate a scaled tensor into another tensor:
+ success = exatn::addTensors("T2(i,j,k)+=T4(i,j,k)",0.25); assert(success);
+
+ //Contract two tensors (scaled by a scalar) and accumulate the result into another tensor:
+ success = exatn::contractTensors("T0(i,j)+=T2(i,c,d)*T3(c,j,d)",0.5); assert(success);
+
+ //Evaluate the entire tensor network in one shot:
+ success = exatn::evaluateTensorNetwork("StarNetwork",
+           "Z0(a,b,c,d,e)+=T1(i,j,a)*T2(k,l,b)*T3(j,m,c)*T4(l,i,d)*T5(m,k,e)");
+ //Synchronize on the output tensor Z0:
+ exatn::sync("Z0");
+
+ //Destroy all tensors:
+ success = exatn::destroyTensor("T5"); assert(success);
+ success = exatn::destroyTensor("T4"); assert(success);
+ success = exatn::destroyTensor("T3"); assert(success);
+ success = exatn::destroyTensor("T2"); assert(success);
+ success = exatn::destroyTensor("T1"); assert(success);
+ success = exatn::destroyTensor("T0"); assert(success);
+ success = exatn::destroyTensor("Z0"); assert(success);
+ z0.reset();
+
+ //Synchronize ExaTN server:
+ exatn::sync();
+}
+#endif
 
 #ifdef EXATN_TEST1
 TEST(NumServerTester, checkNumServer)
@@ -790,7 +860,7 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
  circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
  std::cout << "Done\n" << std::flush;
- circuit.printIndexSplitInfo();
+ circuit.printSplitIndexInfo();
 
  std::size_t num_parts = 2;
  double imbalance = 1.001;
@@ -929,7 +999,7 @@ TEST(NumServerTester, Sycamore12NumServer)
  std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
  circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
  std::cout << "Done\n" << std::flush;
- circuit.printIndexSplitInfo();
+ circuit.printSplitIndexInfo();
 }
 #endif
 
@@ -1483,15 +1553,19 @@ TEST(NumServerTester, MPSBuilderNumServer)
 #endif
 
 int main(int argc, char **argv) {
+
+  exatn::ParamConf exatn_parameters;
+  exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
+
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
   MPI_Comm global_comm = MPI_COMM_WORLD;
-  exatn::initialize(exatn::MPICommProxy(&global_comm));
+  exatn::initialize(exatn::MPICommProxy(&global_comm),exatn_parameters);
 #else
-  exatn::initialize();
+  exatn::initialize(exatn_parameters);
 #endif
 
   ::testing::InitGoogleTest(&argc, argv);

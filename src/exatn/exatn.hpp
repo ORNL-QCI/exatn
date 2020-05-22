@@ -6,6 +6,7 @@
 #include "reconstructor.hpp"
 #include "optimizer.hpp"
 #include "eigensolver.hpp"
+#include "param_conf.hpp"
 
 namespace exatn {
 
