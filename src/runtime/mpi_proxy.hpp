@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy
-REVISION: 2020/04/21
+REVISION: 2020/05/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -69,7 +69,7 @@ public:
  const MPICommProxy & getMPICommProxy() const {return intra_comm_;}
 
  bool rankIsIn(const unsigned int global_process_rank,
-               unsigned int * local_process_rank) const
+               unsigned int * local_process_rank = nullptr) const
  {
   for(unsigned int i = 0; i < process_ranks_.size(); ++i){
    if(process_ranks_[i] == global_process_rank){

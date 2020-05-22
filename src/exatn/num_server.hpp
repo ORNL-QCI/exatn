@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/12
+REVISION: 2020/05/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -549,6 +549,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
                              TensorElementType element_type,
                              Args&&... args)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
  op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
@@ -562,6 +563,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
                                  TensorElementType element_type,
                                  Args&&... args)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
  op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);

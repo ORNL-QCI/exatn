@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/16
+REVISION: 2020/05/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -341,6 +341,17 @@ public:
      the given memory limit. The generated information will be available to
      the processing backend when the tensor network is submitted for evaluation. **/
  void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
+
+ /** Returns the total number of splitted indices. **/
+ unsigned int getNumSplitIndices() const;
+
+ /** Returns the splitting information for a chosen global index. **/
+ const std::pair<std::string,IndexSplit> &
+ getSplitIndexInfo(unsigned int global_index_id) const;
+
+ /** Returns the splitting information for a given tensor from the operation list. **/
+ const std::vector<std::pair<unsigned int, unsigned int>> *
+ getSplitTensorInfo(const std::pair<TensorHashType,TensorHashType> & key) const;
 
  /** Prints information on index splitting within the tensor operation list. **/
  void printIndexSplitInfo(bool with_affected_tensors = false) const;

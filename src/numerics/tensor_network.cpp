@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/16
+REVISION: 2020/05/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1983,6 +1983,29 @@ void TensorNetwork::splitInternalIndices(std::size_t max_intermediate_volume)
  }
  assert(split_indices_.size() == num_split_indices);
  return;
+}
+
+
+unsigned int TensorNetwork::getNumSplitIndices() const
+{
+ return static_cast<unsigned int>(split_indices_.size());
+}
+
+
+const std::pair<std::string,IndexSplit> &
+ TensorNetwork::getSplitIndexInfo(unsigned int global_index_id) const
+{
+ assert(global_index_id < split_indices_.size());
+ return split_indices_[global_index_id];
+}
+
+
+const std::vector<std::pair<unsigned int, unsigned int>> *
+ TensorNetwork::getSplitTensorInfo(const std::pair<TensorHashType,TensorHashType> & key) const
+{
+ auto iter = split_tensors_.find(key);
+ if(iter != split_tensors_.end()) return &(iter->second);
+ return nullptr;
 }
 
 

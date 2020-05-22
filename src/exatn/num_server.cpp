@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/12
+REVISION: 2020/05/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
+#include "tensor_range.hpp"
 
 #include <vector>
 #include <list>
@@ -268,11 +269,15 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 bool NumServer::submit(const ProcessGroup & process_group,
                        TensorNetwork & network)
 {
+ unsigned int local_rank;
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  assert(network.isValid()); //debug
- auto & op_list = network.getOperationList(contr_seq_optimizer_);
+ unsigned int num_procs = process_group.getSize();
+ assert(local_rank < num_procs);
+ auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
+ bool submitted = false;
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
- bool submitted = false;
  if(iter == tensors_.end()){ //output tensor does not exist and needs to be created
   implicit_tensors_.emplace_back(output_tensor); //list of implicitly created tensors (for garbage collection)
   //Create output tensor:
@@ -280,7 +285,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   op0->setTensorOperand(output_tensor);
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->
    resetTensorElementType(output_tensor->getElementType());
-  submitted = submit(op0); if(!submitted) return false; //this CREATE operation will also register the output tensor
+  submitted = submit(op0); //this CREATE operation will also register the output tensor
+  if(!submitted) return false;
  }
  //Initialize output tensor to zero:
  std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
@@ -289,8 +295,38 @@ bool NumServer::submit(const ProcessGroup & process_group,
   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
  submitted = submit(op1); if(!submitted) return false;
  //Submit all tensor operations for tensor network evaluation:
- for(auto op = op_list.begin(); op != op_list.end(); ++op){
-  submitted = submit(*op); if(!submitted) return false;
+ const auto num_split_indices = network.getNumSplitIndices();
+ if(num_split_indices > 0){ //multiple tensor networks
+  std::vector<DimExtent> work_extents(num_split_indices);
+  for(int i = 0; i < num_split_indices; ++i) work_extents[i] = network.getSplitIndexInfo(i).second.size(); //number of segments per split index
+  numerics::TensorRange work_range(work_extents);
+  if(num_procs > 1) work_range.reset(num_procs,local_rank); //work subrange for the current process rank
+  bool not_done = true;
+  while(not_done){
+   for(auto op = op_list.begin(); op != op_list.end(); ++op){
+    const auto num_operands = (*op)->getNumOperands();
+    //auto tens_op = std::make_shared<TensorOperation>(*(*op)); //`Does tens_op need to live longer?
+    //Substitute sliced tensor operands with their respective slices:
+    for(unsigned int op_num = 0; op_num < num_operands; ++op_num){
+     const auto & tensor = *((*op)->getTensorOperand(op_num));
+     bool output_tensor;
+     bool tensor_is_intermediate = tensorIsIntermediate(tensor,&output_tensor);
+     if(tensor_is_intermediate){
+      numerics::TensorHashType zero = 0;
+      const auto * tensor_info = network.getSplitTensorInfo(std::make_pair(zero,tensor.getTensorHash()));
+     }else{
+      numerics::TensorHashType pos = op_num;
+      const auto * tensor_info = network.getSplitTensorInfo(std::make_pair((*op)->getTensorOpHash(),pos));
+     }
+    }
+    //submitted = submit(tens_op); if(!submitted) return false;
+   }
+   not_done = work_range.next();
+  }
+ }else{ //single tensor network
+  for(auto op = op_list.begin(); op != op_list.end(); ++op){
+   submitted = submit(*op); if(!submitted) return false;
+  }
  }
  return true;
 }
@@ -318,12 +354,13 @@ bool NumServer::submit(const ProcessGroup & process_group,
                        TensorExpansion & expansion,
                        std::shared_ptr<Tensor> accumulator)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  assert(accumulator);
  std::list<std::shared_ptr<TensorOperation>> accumulations;
  for(auto component = expansion.begin(); component != expansion.end(); ++component){
   //Evaluate the tensor network component (compute its output tensor):
   auto & network = *(component->network_);
-  auto submitted = submit(network); if(!submitted) return false;
+  auto submitted = submit(process_group,network); if(!submitted) return false;
   //Create accumulation operation for the scaled computed output tensor:
   bool conjugated;
   auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
@@ -448,6 +485,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
                              std::shared_ptr<Tensor> tensor,
                              TensorElementType element_type)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  assert(tensor);
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
  op->setTensorOperand(tensor);
@@ -460,6 +498,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
                                  std::shared_ptr<Tensor> tensor,
                                  TensorElementType element_type)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  assert(tensor);
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
  op->setTensorOperand(tensor);
@@ -1306,6 +1345,7 @@ bool NumServer::evaluateTensorNetwork(const ProcessGroup & process_group,
                                       const std::string & name,
                                       const std::string & network)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
  if(parsed){
@@ -1350,6 +1390,7 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
                                           const std::string & name,
                                           const std::string & network)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(network,tensors);
  if(parsed){
