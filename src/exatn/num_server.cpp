@@ -274,6 +274,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  assert(network.isValid()); //debug
  unsigned int num_procs = process_group.getSize();
  assert(local_rank < num_procs);
+ std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
+           << network.getName() << " for execution by " << num_procs << " processes" << std::endl << std::flush; //debug
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
  bool submitted = false;
  auto output_tensor = network.getTensor(0);
@@ -296,38 +298,88 @@ bool NumServer::submit(const ProcessGroup & process_group,
  submitted = submit(op1); if(!submitted) return false;
  //Submit all tensor operations for tensor network evaluation:
  const auto num_split_indices = network.getNumSplitIndices();
+ std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
+           << num_split_indices << std::endl << std::flush; //debug
+ std::size_t num_items_executed = 0;
  if(num_split_indices > 0){ //multiple tensor networks
   std::vector<DimExtent> work_extents(num_split_indices);
   for(int i = 0; i < num_split_indices; ++i) work_extents[i] = network.getSplitIndexInfo(i).second.size(); //number of segments per split index
   numerics::TensorRange work_range(work_extents);
-  if(num_procs > 1) work_range.reset(num_procs,local_rank); //work subrange for the current process rank
   bool not_done = true;
+  if(num_procs > 1) not_done = work_range.reset(num_procs,local_rank); //work subrange for the current process rank
+  std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of work items = "
+            << work_range.localVolume() << std::endl << std::flush; //debug
   while(not_done){
    for(auto op = op_list.begin(); op != op_list.end(); ++op){
     const auto num_operands = (*op)->getNumOperands();
     std::shared_ptr<TensorOperation> tens_op = (*op)->clone(); //`Does tens_op need to live longer?
     //Substitute sliced tensor operands with their respective slices:
     for(unsigned int op_num = 0; op_num < num_operands; ++op_num){
-     const auto & tensor = *((*op)->getTensorOperand(op_num));
+     auto tensor = (*op)->getTensorOperand(op_num);
+     const auto tensor_rank = tensor->getRank();
      bool output_tensor;
-     bool tensor_is_intermediate = tensorIsIntermediate(tensor,&output_tensor);
-     if(tensor_is_intermediate){
+     bool tensor_is_intermediate = tensorIsIntermediate(*tensor,&output_tensor);
+     std::pair<numerics::TensorHashType,numerics::TensorHashType> key;
+     if(tensor_is_intermediate){ //intemediate tensor
       numerics::TensorHashType zero = 0;
-      const auto * tensor_info = network.getSplitTensorInfo(std::make_pair(zero,tensor.getTensorHash()));
-     }else{
+      key = std::make_pair(zero,tensor->getTensorHash());
+     }else{ //input tensor
       numerics::TensorHashType pos = op_num;
-      const auto * tensor_info = network.getSplitTensorInfo(std::make_pair((*op)->getTensorOpHash(),pos));
+      key = std::make_pair((*op)->getTensorOpHash(),pos);
+     }
+     const auto * tensor_info = network.getSplitTensorInfo(key);
+     if(tensor_info != nullptr){ //tensor has splitted indices
+      std::vector<SubspaceId> subspaces(tensor_rank);
+      for(unsigned int i = 0; i < tensor_rank; ++i) subspaces[i] = tensor->getDimSubspaceId(i);
+      std::vector<DimExtent> dim_extents(tensor_rank);
+      for(unsigned int i = 0; i < tensor_rank; ++i) dim_extents[i] = tensor->getDimExtent(i);
+      for(const auto & index_desc: *tensor_info){
+       const auto gl_index_id = index_desc.first;
+       const auto ind_pos = index_desc.second;
+       const auto & index_info = network.getSplitIndexInfo(gl_index_id);
+       const auto segment_selector = work_range.getIndex(gl_index_id);
+       subspaces[ind_pos] = index_info.second[segment_selector].first;
+       dim_extents[ind_pos] = index_info.second[segment_selector].second;
+      }
+      auto tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
+      if(tensor_is_intermediate){ //intemediate tensor: Use slice
+       bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
+       submitted = submit(tens_op); if(!submitted) return false;
+      }else{ //input tensor: create slice, use slice, destroy slice
+       tensor_slice->rename(); //unique automatic name will be generated
+       //Create an empty slice of the input tensor:
+       std::shared_ptr<TensorOperation> create_slice = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+       create_slice->setTensorOperand(tensor_slice);
+       std::dynamic_pointer_cast<numerics::TensorOpCreate>(create_slice)->
+        resetTensorElementType(tensor->getElementType());
+       submitted = submit(create_slice); if(!submitted) return false;
+       //Extract the slice from the input tensor:
+       std::shared_ptr<TensorOperation> extract_slice = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
+       extract_slice->setTensorOperand(tensor_slice);
+       extract_slice->setTensorOperand(tensor);
+       submitted = submit(extract_slice); if(!submitted) return false;
+       //Submit the primary tensor operation with the slice:
+       bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
+       submitted = submit(tens_op); if(!submitted) return false;
+       //Destroy the tensor slice:
+       std::shared_ptr<TensorOperation> destroy_slice = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+       destroy_slice->setTensorOperand(tensor_slice);
+       submitted = submit(destroy_slice); if(!submitted) return false;
+      }
      }
     }
-    submitted = submit(tens_op); if(!submitted) return false;
    }
+   ++num_items_executed;
    not_done = work_range.next();
   }
  }else{ //single tensor network
   for(auto op = op_list.begin(); op != op_list.end(); ++op){
    submitted = submit(*op); if(!submitted) return false;
   }
+  ++num_items_executed;
  }
+ std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of executed work items = "
+           << num_items_executed << std::endl << std::flush; //debug
  return true;
 }
 

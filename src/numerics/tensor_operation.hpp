@@ -101,6 +101,10 @@ public:
  void setTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
                        bool conjugated = false);       //in: complex conjugation status
 
+ /** Resets an already existing tensor operand. **/
+ bool resetTensorOperand(unsigned int op_num,             //in: tensor operand position
+                         std::shared_ptr<Tensor> tensor); //in: tensor
+
  /** Returns the number of scalar arguments required for the tensor operation. **/
  unsigned int getNumScalars() const;
 

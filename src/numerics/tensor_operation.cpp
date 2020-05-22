@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/04/22
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -128,6 +128,15 @@ void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
                                        bool conjugated)
 {
  return this->setTensorOperand(tensor,conjugated,(mutation_>>operands_.size())&(0x1U));
+}
+
+bool TensorOperation::resetTensorOperand(unsigned int op_num,
+                                         std::shared_ptr<Tensor> tensor)
+{
+ assert(tensor);
+ if(op_num >= this->getNumOperandsSet()) return false;
+ std::get<0>(operands_[op_num]) = tensor;
+ return true;
 }
 
 unsigned int TensorOperation::getNumScalars() const

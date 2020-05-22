@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/05/16
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -65,8 +65,9 @@ public:
  inline void reset();
 
  /** Resets the current multi-index for a number of concurrent progress agents,
-     each given an exclusive subrange of this range to iterate within. **/
- inline void reset(unsigned int num_agents,  //number of concurrent agents (iterators)
+     each given an exclusive subrange of this range to iterate within. Returns
+     TRUE on success, FALSE if the subrange is empty for the current progress agent. **/
+ inline bool reset(unsigned int num_agents,  //number of concurrent agents (iterators)
                    unsigned int agent_rank); //current agend id: [0..num_agents-1]
 
  /** Retrieves a specific index from the multi-index. **/
@@ -170,22 +171,22 @@ inline void TensorRange::reset()
 }
 
 
-inline void TensorRange::reset(unsigned int num_agents,
+inline bool TensorRange::reset(unsigned int num_agents,
                                unsigned int agent_rank)
 {
- if(volume_ > 0){
-  auto chunk = volume_ / num_agents;
-  auto remainder = volume_ % num_agents;
-  subrange_begin_ = chunk * agent_rank + std::min(static_cast<decltype(remainder)>(agent_rank),remainder);
-  if(agent_rank < remainder) chunk++;
-  subrange_end_ = subrange_begin_ + chunk;
-  auto offs = subrange_begin_;
-  for(unsigned int i = 0; i < extents_.size(); ++i){
-   mlndx_[i] = offs % extents_[i];
-   offs /= extents_[i];
-  }
+ if(volume_ == 0) return false;
+ auto chunk = volume_ / num_agents;
+ auto remainder = volume_ % num_agents;
+ subrange_begin_ = chunk * agent_rank + std::min(static_cast<decltype(remainder)>(agent_rank),remainder);
+ if(agent_rank < remainder) chunk++;
+ subrange_end_ = subrange_begin_ + chunk;
+ if(chunk == 0) return false;
+ auto offs = subrange_begin_;
+ for(unsigned int i = 0; i < extents_.size(); ++i){
+  mlndx_[i] = offs % extents_[i];
+  offs /= extents_[i];
  }
- return;
+ return true;
 }
 
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/05/16
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -234,8 +234,31 @@ void Tensor::appendDimension(DimExtent dim_extent)
  return;
 }
 
+void Tensor::replaceDimension(unsigned int dim_id,
+                              std::pair<SpaceId,SubspaceId> subspace,
+                              DimExtent dim_extent)
+{
+ this->signature_.resetDimension(dim_id,subspace);
+ this->shape_.resetDimension(dim_id,dim_extent);
+ return;
+}
+
+void Tensor::replaceDimension(unsigned int dim_id,
+                              std::pair<SpaceId,SubspaceId> subspace)
+{
+ this->signature_.resetDimension(dim_id,subspace);
+ return;
+}
+
+void Tensor::replaceDimension(unsigned int dim_id,
+                              DimExtent dim_extent)
+{
+ this->shape_.resetDimension(dim_id,dim_extent);
+ return;
+}
+
 std::shared_ptr<Tensor> Tensor::createSubtensor(const std::string & name,
-                                                const std::vector<int> & mode_mask, int mask_val)
+                                                const std::vector<int> & mode_mask, int mask_val) const
 {
  const auto tensor_rank = this->getRank();
  assert(tensor_rank == mode_mask.size());
@@ -244,6 +267,18 @@ std::shared_ptr<Tensor> Tensor::createSubtensor(const std::string & name,
   if(mode_mask[i] == mask_val){
    subtensor->appendDimension(this->getDimSpaceAttr(i),this->getDimExtent(i));
   }
+ }
+ return subtensor;
+}
+
+std::shared_ptr<Tensor> Tensor::createSubtensor(const std::vector<SubspaceId> & subspaces,
+                                                const std::vector<DimExtent> & dim_extents) const
+{
+ assert(subspaces.size() == dim_extents.size() == this->getRank());
+ auto subtensor = std::make_shared<Tensor>(*this);
+ const auto tens_rank = subtensor->getRank();
+ for(unsigned int i = 0; i < tens_rank; ++i){
+  subtensor->replaceDimension(i,std::make_pair(this->getDimSpaceId(i),subspaces[i]),dim_extents[i]);
  }
  return subtensor;
 }

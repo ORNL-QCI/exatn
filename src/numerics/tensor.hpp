@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/05/16
+REVISION: 2020/05/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -168,12 +168,25 @@ public:
                       DimExtent dim_extent);
  void appendDimension(DimExtent dim_extent);
 
+ /** Replaces a tensor dimension. **/
+ void replaceDimension(unsigned int dim_id,
+                       std::pair<SpaceId,SubspaceId> subspace,
+                       DimExtent dim_extent);
+ void replaceDimension(unsigned int dim_id,
+                       std::pair<SpaceId,SubspaceId> subspace);
+ void replaceDimension(unsigned int dim_id,
+                       DimExtent dim_extent);
+
  /** Creates a new tensor from the current tensor by selecting a subset of its modes.
      Vector mode_mask must have the size equal to the original tensor rank:
      mode_mask[i] == mask_val will select dimension i for appending to the subtensor. **/
  std::shared_ptr<Tensor> createSubtensor(const std::string & name,           //in: subtensor name
                                          const std::vector<int> & mode_mask, //in: mode masks
-                                         int mask_val);                      //in: chosen mask value
+                                         int mask_val) const;                //in: chosen mask value
+
+ /** Creates a related tensor from a given tensor by updating its subspaces and dimension extents. **/
+ std::shared_ptr<Tensor> createSubtensor(const std::vector<SubspaceId> & subspaces,         //in: new defining subspaces
+                                         const std::vector<DimExtent> & dim_extents) const; //in: new dimension extents
 
  /** Sets the tensor element type. **/
  void setElementType(TensorElementType element_type);
