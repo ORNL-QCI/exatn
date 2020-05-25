@@ -315,6 +315,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of work items = "
             << work_range.localVolume() << std::endl << std::flush; //debug
   while(not_done){
+   std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> intermediate_slices;
+   std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices;
    for(auto op = op_list.begin(); op != op_list.end(); ++op){
     const auto num_operands = (*op)->getNumOperands();
     std::shared_ptr<TensorOperation> tens_op = (*op)->clone(); //`Does tens_op need to live longer?
@@ -334,25 +336,39 @@ bool NumServer::submit(const ProcessGroup & process_group,
      }
      const auto * tensor_info = network.getSplitTensorInfo(key);
      if(tensor_info != nullptr){ //tensor has splitted indices
-      std::vector<SubspaceId> subspaces(tensor_rank);
-      for(unsigned int i = 0; i < tensor_rank; ++i) subspaces[i] = tensor->getDimSubspaceId(i);
-      std::vector<DimExtent> dim_extents(tensor_rank);
-      for(unsigned int i = 0; i < tensor_rank; ++i) dim_extents[i] = tensor->getDimExtent(i);
-      for(const auto & index_desc: *tensor_info){
-       const auto gl_index_id = index_desc.first;
-       const auto ind_pos = index_desc.second;
-       const auto & index_info = network.getSplitIndexInfo(gl_index_id);
-       const auto segment_selector = work_range.getIndex(gl_index_id);
-       subspaces[ind_pos] = index_info.second[segment_selector].first;
-       dim_extents[ind_pos] = index_info.second[segment_selector].second;
+      std::shared_ptr<numerics::Tensor> tensor_slice;
+      if(tensor_is_intermediate){ //intemediate tensor
+       auto slice_iter = intermediate_slices.find(tensor->getTensorHash());
+       if(slice_iter != intermediate_slices.end()) tensor_slice = slice_iter->second;
+      }else{ //input tensor
+       auto slice_iter = input_slices.find(tensor->getTensorHash());
+       if(slice_iter != input_slices.end()) tensor_slice = slice_iter->second;
       }
-      auto tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
-      tensor_slice->rename(); //unique automatic name will be generated
-      //`Problem: Intermediate tensor slice will have different hash in different tensor operations
-      if(tensor_is_intermediate){ //intemediate tensor: Use slice
-       bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
-       submitted = submit(tens_op); if(!submitted) return false;
-      }else{ //input tensor: create slice, use slice, destroy slice
+      if(!tensor_slice){
+       std::vector<SubspaceId> subspaces(tensor_rank);
+       for(unsigned int i = 0; i < tensor_rank; ++i) subspaces[i] = tensor->getDimSubspaceId(i);
+       std::vector<DimExtent> dim_extents(tensor_rank);
+       for(unsigned int i = 0; i < tensor_rank; ++i) dim_extents[i] = tensor->getDimExtent(i);
+       for(const auto & index_desc: *tensor_info){
+        const auto gl_index_id = index_desc.first;
+        const auto ind_pos = index_desc.second;
+        const auto & index_info = network.getSplitIndexInfo(gl_index_id);
+        const auto segment_selector = work_range.getIndex(gl_index_id);
+        subspaces[ind_pos] = index_info.second[segment_selector].first;
+        dim_extents[ind_pos] = index_info.second[segment_selector].second;
+       }
+       tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
+       tensor_slice->rename(); //unique automatic name will be generated
+       if(tensor_is_intermediate){ //intemediate tensor
+        auto res = intermediate_slices.emplace(std::make_pair(tensor->getTensorHash(),tensor_slice));
+        assert(res.second);
+       }else{ //input tensor
+        auto res = input_slices.emplace(std::make_pair(tensor->getTensorHash(),tensor_slice));
+        assert(res.second);
+       }
+      }
+      bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
+      if(!tensor_is_intermediate){ //input tensor: create slice, use slice, destroy slice
        //Create an empty slice of the input tensor:
        std::shared_ptr<TensorOperation> create_slice = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
        create_slice->setTensorOperand(tensor_slice);
@@ -364,17 +380,20 @@ bool NumServer::submit(const ProcessGroup & process_group,
        extract_slice->setTensorOperand(tensor_slice);
        extract_slice->setTensorOperand(tensor);
        submitted = submit(extract_slice); if(!submitted) return false;
-       //Submit the primary tensor operation with the slice:
-       bool replaced = tens_op->resetTensorOperand(op_num,tensor_slice); assert(replaced);
-       submitted = submit(tens_op); if(!submitted) return false;
-       //Destroy the tensor slice:
-       std::shared_ptr<TensorOperation> destroy_slice = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-       destroy_slice->setTensorOperand(tensor_slice);
-       submitted = submit(destroy_slice); if(!submitted) return false;
       }
      }
     }
+    //Submit the primary tensor operation with slices:
+    submitted = submit(tens_op); if(!submitted) return false;
+    //Destroy temporary input tensor slices:
+    for(auto & input_slice: input_slices){
+     std::shared_ptr<TensorOperation> destroy_slice = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+     destroy_slice->setTensorOperand(input_slice.second);
+     submitted = submit(destroy_slice); if(!submitted) return false;
+    }
+    input_slices.clear();
    }
+   intermediate_slices.clear();
    ++num_items_executed;
    not_done = work_range.next();
   }
