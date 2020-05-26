@@ -321,6 +321,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
             << work_range.localVolume() << "; Current process has a share = " << not_done << std::endl << std::flush; //debug
   //Each process executes its share of tensor sub-networks:
   while(not_done){
+   std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting sub-network "; work_range.printCurrent(); std::cout << std::endl; //debug
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> intermediate_slices; //temporary slices of intermediates
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
    //Execute all tensor operations for the current tensor sub-network:

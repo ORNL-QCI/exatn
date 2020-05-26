@@ -49,12 +49,12 @@ TEST(NumServerTester, MPSBuilderNumServer)
  success = exatn::createTensor(z0,TensorElementType::REAL32); assert(success); //allocates tensor storage
 
  //Create tensors in one shot (with storage):
- success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{64,64}); assert(success);
- success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
- success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
- success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
- success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
- success = exatn::createTensor("T5",TensorElementType::REAL32,TensorShape{64,64,16}); assert(success);
+ success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{32,32}); assert(success);
+ success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
+ success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
+ success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
+ success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
+ success = exatn::createTensor("T5",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
 
  //Initialize tensor to a scalar value:
  success = exatn::initTensor("Z0",0.0); assert(success);

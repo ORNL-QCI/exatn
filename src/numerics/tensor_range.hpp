@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/05/22
+REVISION: 2020/05/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,6 +32,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 
 #include <vector>
+#include <iostream>
 
 namespace exatn{
 
@@ -86,6 +87,14 @@ public:
  /** Decrements the current multi-index value.
      If the tensor range is over, return false. **/
  inline bool prev(DimOffset increment = 1); //increment value
+
+ /** Prints the current multi-index value. **/
+ void printCurrent() const{
+  std::cout << "{";
+  for(const auto & ind: mlndx_) std::cout << " " << ind;
+  std::cout << " }" << std::flush;
+  return;
+ }
 
 private:
 
