@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy
-REVISION: 2020/05/21
+REVISION: 2020/05/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -41,16 +41,18 @@ private:
 class ProcessGroup {
 public:
 
+ static constexpr const std::size_t MAX_MEM_PER_PROCESS = 1UL * 1024UL * 1024UL * 1024UL; //bytes
+
  ProcessGroup(const MPICommProxy & intra_comm,
               const std::vector<unsigned int> & global_process_ranks):
-  process_ranks_(global_process_ranks), intra_comm_(intra_comm)
+  process_ranks_(global_process_ranks), intra_comm_(intra_comm), mem_per_process_(MAX_MEM_PER_PROCESS)
  {
   assert(!process_ranks_.empty());
  }
 
  ProcessGroup(const MPICommProxy & intra_comm,
               const unsigned int group_size):
-  process_ranks_(group_size), intra_comm_(intra_comm)
+  process_ranks_(group_size), intra_comm_(intra_comm), mem_per_process_(MAX_MEM_PER_PROCESS)
  {
   assert(process_ranks_.size() > 0);
   for(unsigned int i = 0; i < process_ranks_.size(); ++i) process_ranks_[i] = i;
@@ -80,10 +82,18 @@ public:
   return false;
  }
 
+ void resetMemoryLimitPerProcess(std::size_t memory_limit = MAX_MEM_PER_PROCESS){
+  mem_per_process_ = memory_limit;
+  return;
+ }
+
+ std::size_t getMemoryLimitPerProcess() const {return mem_per_process_;}
+
 private:
 
  std::vector<unsigned int> process_ranks_; //global ranks of the MPI processes forming the process group
  MPICommProxy intra_comm_;                 //associated MPI intra-communicator
+ std::size_t mem_per_process_;             //dynamic memory limit per process (bytes)
 };
 
 } //namespace exatn
