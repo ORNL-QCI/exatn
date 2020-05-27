@@ -12,7 +12,6 @@
 
 
 #define EXATN_TEST0
-/*
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -27,10 +26,9 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
-*/
 
 #ifdef EXATN_TEST0
-TEST(NumServerTester, MPSBuilderNumServer)
+TEST(NumServerTester, ExamplarExaTN)
 {
  using exatn::Tensor;
  using exatn::TensorShape;
@@ -45,45 +43,51 @@ TEST(NumServerTester, MPSBuilderNumServer)
  bool success;
 
  //Declare and then create a tensor:
- auto z0 = exatn::makeSharedTensor("Z0",TensorShape{16,16,16,16,16}); //declares a tensor Z0[16,16,16,16,16] with no storage
+ auto z0 = exatn::makeSharedTensor("Z0",TensorShape{16,16,16,16}); //declares a tensor Z0[16,16,16,16] with no storage
  success = exatn::createTensor(z0,TensorElementType::REAL32); assert(success); //allocates tensor storage
 
  //Create tensors in one shot (with storage):
- success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{32,32}); assert(success);
- success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
- success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
- success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
- success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
- success = exatn::createTensor("T5",TensorElementType::REAL32,TensorShape{32,32,16}); assert(success);
+ success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{16,16}); assert(success);
+ success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
+ success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
+ success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
+ success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
+ success = exatn::createTensor("S0",TensorElementType::REAL32); assert(success);
 
- //Initialize tensor to a scalar value:
+ //Initialize tensors to a scalar value:
  success = exatn::initTensor("Z0",0.0); assert(success);
  success = exatn::initTensor("T0",0.0); assert(success);
-
- //Initialize tensors to random values:
- success = exatn::initTensorRnd("T1"); assert(success);
- success = exatn::initTensorRnd("T2"); assert(success);
- success = exatn::initTensorRnd("T3"); assert(success);
- success = exatn::initTensorRnd("T4"); assert(success);
- success = exatn::initTensorRnd("T5"); assert(success);
+ success = exatn::initTensor("S0",0.0); assert(success);
+ success = exatn::initTensor("T1",0.01); assert(success);
+ success = exatn::initTensor("T2",0.001); assert(success);
+ success = exatn::initTensor("T3",0.0001); assert(success);
+ success = exatn::initTensor("T4",0.00001); assert(success);
 
  //Scale a tensor by a scalar:
- success = exatn::scaleTensor("T3",0.42); assert(success);
+ success = exatn::scaleTensor("T3",0.5); assert(success);
 
  //Accumulate a scaled tensor into another tensor:
- success = exatn::addTensors("T2(i,j,k)+=T4(i,j,k)",0.25); assert(success);
+ success = exatn::addTensors("T2(i,j,k,l)+=T4(i,j,k,l)",0.25); assert(success);
 
  //Contract two tensors (scaled by a scalar) and accumulate the result into another tensor:
- success = exatn::contractTensors("T0(i,j)+=T2(i,c,d)*T3(c,j,d)",0.5); assert(success);
+ success = exatn::contractTensors("T0(i,j)+=T2(c,i,d,e)*T3(d,j,e,c)",0.125); assert(success);
 
  //Evaluate the entire tensor network in one shot:
- success = exatn::evaluateTensorNetwork("StarNetwork",
-           "Z0(a,b,c,d,e)+=T1(i,j,a)*T2(k,l,b)*T3(j,m,c)*T4(l,i,d)*T5(m,k,e)");
+ success = exatn::evaluateTensorNetwork("FullyConnected",
+          "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");
  //Synchronize on the output tensor Z0:
  exatn::sync("Z0");
 
+ //Compute Z0 2-norm (synchronously):
+ double norm2 = 0.0;
+ success = exatn::computeNorm2Sync("Z0",norm2);
+ std::cout << "Z0 2-norm = " << norm2 << std::endl << std::flush;
+
+ //Compute Z0 2-norm by a tensor contraction (synchronously):
+ success = exatn::contractTensorsSync("S0()+=Z0(i,j,k,l)*Z0(i,j,k,l)",1.0); assert(success);
+
  //Destroy all tensors:
- success = exatn::destroyTensor("T5"); assert(success);
+ success = exatn::destroyTensor("S0"); assert(success);
  success = exatn::destroyTensor("T4"); assert(success);
  success = exatn::destroyTensor("T3"); assert(success);
  success = exatn::destroyTensor("T2"); assert(success);
@@ -1555,6 +1559,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
 int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
+  //Set the available CPU Host RAM size:
   exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
 
 #ifdef MPI_ENABLED
