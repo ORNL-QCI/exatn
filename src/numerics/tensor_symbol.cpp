@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/04/18
+REVISION: 2020/05/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,8 +32,9 @@ bool parse_tensor(const std::string & tensor,        //in: tensor as a string
   //Check for tensor complex conjugation:
   auto trim_range = trim_spaces_off(tensor,std::pair<int,int>{0,static_cast<int>(left_par_pos-1)});
   if(trim_range.first > trim_range.second) return false;
-  if(tensor[trim_range.second] == '+'){ //complex conjugation
+  if(tensor[trim_range.second] == '+'){ //complex conjugation sign
    if(trim_range.second < trim_range.first + 1) return false;
+   --trim_range.second;
    complex_conjugated = true;
   }else{
    complex_conjugated = false;

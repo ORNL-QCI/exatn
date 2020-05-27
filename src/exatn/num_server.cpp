@@ -269,19 +269,19 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 bool NumServer::submit(const ProcessGroup & process_group,
                        TensorNetwork & network)
 {
+ const bool debugging = true;
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  assert(network.isValid()); //debug
  unsigned int num_procs = process_group.getSize(); //number of executing processes
  assert(local_rank < num_procs);
- std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
-           << network.getName() << " for execution by " << num_procs << " processes" << std::endl << std::flush; //debug
+ if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
+  << network.getName() << " for execution by " << num_procs << " processes" << std::endl << std::flush; //debug
  //Get tensor operation list:
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
- std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
-           << network.getFMAFlops() << "; Max intermediate volume = " << network.getMaxIntermediateVolume()
-           << std::endl << std::flush; //debug
+ if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
+  << network.getFMAFlops() << "; Max intermediate volume = " << network.getMaxIntermediateVolume() << std::endl << std::flush; //debug
  //Split some of the tensor network indices if needed by the requested memory limit:
  const std::size_t max_intermediate_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
  network.splitInternalIndices(max_intermediate_volume);
@@ -307,8 +307,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  submitted = submit(op1); if(!submitted) return false;
  //Submit all tensor operations for tensor network evaluation:
  const auto num_split_indices = network.getNumSplitIndices(); //total number of indices that were split
- std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
-           << num_split_indices << std::endl << std::flush; //debug
+ if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
+  << num_split_indices << std::endl << std::flush; //debug
  std::size_t num_items_executed = 0; //number of tensor sub-networks executed
  if(num_split_indices > 0){ //multiple tensor sub-networks need to be executed
   //Distribute tensor sub-networks among processes:
@@ -317,11 +317,15 @@ bool NumServer::submit(const ProcessGroup & process_group,
   numerics::TensorRange work_range(work_extents); //each range dimension refers to the number of segments per the corresponding split index
   bool not_done = true;
   if(num_procs > 1) not_done = work_range.reset(num_procs,local_rank); //work subrange for the current local process rank (may be empty)
-  std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of sub-networks = "
-            << work_range.localVolume() << "; Current process has a share = " << not_done << std::endl << std::flush; //debug
+  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of sub-networks = "
+   << work_range.localVolume() << "; Current process has a share = " << not_done << std::endl << std::flush; //debug
   //Each process executes its share of tensor sub-networks:
   while(not_done){
-   std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting sub-network "; work_range.printCurrent(); std::cout << std::endl; //debug
+   if(debugging){
+    std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting sub-network "; //debug
+    work_range.printCurrent();
+    std::cout << std::endl;
+   }
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> intermediate_slices; //temporary slices of intermediates
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
    //Execute all tensor operations for the current tensor sub-network:
@@ -444,8 +448,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(allreduce)->resetMPICommunicator(process_group.getMPICommProxy());
   submitted = submit(allreduce); if(!submitted) return false;
  }
- std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted sub-networks = "
-           << num_items_executed << std::endl << std::flush; //debug
+ if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted sub-networks = "
+  << num_items_executed << std::endl << std::flush; //debug
  return true;
 }
 

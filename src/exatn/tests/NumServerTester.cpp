@@ -98,6 +98,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  //Synchronize ExaTN server:
  exatn::sync();
+ exatn::resetRuntimeLoggingLevel(0);
 }
 #endif
 
