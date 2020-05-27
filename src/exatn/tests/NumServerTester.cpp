@@ -12,6 +12,7 @@
 
 
 #define EXATN_TEST0
+/*
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -26,6 +27,7 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
+*/
 
 #ifdef EXATN_TEST0
 TEST(NumServerTester, ExamplarExaTN)
@@ -73,7 +75,10 @@ TEST(NumServerTester, ExamplarExaTN)
  success = exatn::contractTensors("T0(i,j)+=T2(c,i,d,e)*T3(d,j,e,c)",0.125); assert(success);
 
  //Evaluate the entire tensor network in one shot:
- success = exatn::evaluateTensorNetwork("FullyConnected",
+ const std::size_t MB = 1024UL * 1024UL;
+ exatn::ProcessGroup process_group(exatn::getDefaultProcessGroup());
+ process_group.resetMemoryLimitPerProcess(1024UL*MB);
+ success = exatn::evaluateTensorNetwork(process_group,"FullyConnected",
           "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");
  //Synchronize on the output tensor Z0:
  exatn::sync("Z0");

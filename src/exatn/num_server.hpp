@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/21
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -70,6 +70,7 @@ using exatn::Identifiable;
 
 namespace exatn{
 
+//Primary numerics:: types exposed to the user:
 using numerics::VectorSpace;
 using numerics::Subspace;
 using numerics::TensorShape;
@@ -97,6 +98,7 @@ using numerics::FunctorDiagRank;
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
 
+//Numerical Server:
 class NumServer final {
 
 public:
@@ -111,6 +113,7 @@ public:
            const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
+
  NumServer(const NumServer &) = delete;
  NumServer & operator=(const NumServer &) = delete;
  NumServer(NumServer &&) noexcept = delete;
@@ -135,6 +138,12 @@ public:
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
+
+ /** Returns the Host memory buffer size in bytes provided by the runtime. **/
+ std::size_t getMemBufferSize() const;
+
+ /** Returns the default process group comprising all MPI processes and their communicator. **/
+ const ProcessGroup & getDefaultProcessGroup() const;
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(const std::string & tag,
@@ -520,6 +529,7 @@ private:
  int num_processes_; //total number of parallel processes
  int process_rank_; //rank of the current parallel process
  MPICommProxy intra_comm_; //MPI intra-communicator used to initialize the Numerical Server
+ std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 

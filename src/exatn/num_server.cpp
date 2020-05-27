@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/26
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -34,6 +34,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
+ process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -47,6 +48,7 @@ NumServer::NumServer(const ParamConf & parameters,
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(parameters,graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;
+ process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -102,6 +104,17 @@ void NumServer::resetRuntimeLoggingLevel(int level)
 {
  if(tensor_rt_) tensor_rt_->resetLoggingLevel(level);
  return;
+}
+
+std::size_t NumServer::getMemBufferSize() const
+{
+ if(tensor_rt_) tensor_rt_->getMemBufferSize();
+ return 0;
+}
+
+const ProcessGroup & NumServer::getDefaultProcessGroup() const
+{
+ return *process_world_;
 }
 
 void NumServer::registerTensorMethod(const std::string & tag, std::shared_ptr<TensorMethod> method)

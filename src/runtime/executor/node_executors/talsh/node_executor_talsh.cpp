@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/05/15
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -50,14 +50,14 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
 {
  talsh_init_lock.lock();
  if(!talsh_initialized_){
-  std::size_t host_buffer_size = DEFAULT_MEM_BUFFER_SIZE;
+  talsh_host_mem_buffer_size_ = DEFAULT_MEM_BUFFER_SIZE;
   int64_t provided_buf_size = 0;
   if(parameters.getParameter("host_memory_buffer_size",&provided_buf_size))
-   host_buffer_size = provided_buf_size;
-  auto error_code = talsh::initialize(&host_buffer_size);
+   talsh_host_mem_buffer_size_ = provided_buf_size;
+  auto error_code = talsh::initialize(&talsh_host_mem_buffer_size_);
   if(error_code == TALSH_SUCCESS){
-   //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
-    //host_buffer_size << " Bytes" << std::endl << std::flush;
+   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
+    talsh_host_mem_buffer_size_ << " bytes" << std::endl << std::flush; //debug
    talsh_initialized_ = true;
   }else{
    std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to initialize TAL-SH!" << std::endl;
@@ -67,6 +67,12 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
  ++talsh_node_exec_count_;
  talsh_init_lock.unlock();
  return;
+}
+
+
+std::size_t TalshNodeExecutor::getMemBufferSize() const
+{
+ return talsh_host_mem_buffer_size_;
 }
 
 

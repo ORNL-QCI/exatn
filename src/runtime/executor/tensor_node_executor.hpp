@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2020/05/15
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -42,8 +42,11 @@ public:
 
   virtual ~TensorNodeExecutor() = default;
 
-  /** Explicitly initializes the underlying numerical service, if needed **/
+  /** Explicitly initializes the underlying numerical service, if needed. **/
   virtual void initialize(const ParamConf & parameters) = 0;
+
+  /** Returns the Host memory buffer size in bytes provided by the node executor. **/
+  virtual std::size_t getMemBufferSize() const = 0;
 
   /** Executes the tensor operation found in a DAG node asynchronously,
       returning the execution handle in exec_handle that can later be

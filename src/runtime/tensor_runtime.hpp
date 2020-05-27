@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/04/30
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,6 +87,9 @@ public:
 
   /** Resets the logging level (0:none) [MAIN THREAD]. **/
   void resetLoggingLevel(int level = 0);
+
+  /** Returns the Host memory buffer size in bytes provided by the executor. **/
+  std::size_t getMemBufferSize() const;
 
   /** Opens a new scope represented by a new execution graph (DAG). **/
   void openScope(const std::string & scope_name);

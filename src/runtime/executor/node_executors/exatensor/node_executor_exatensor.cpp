@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/05/15
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -13,6 +13,12 @@ namespace runtime {
 void ExatensorNodeExecutor::initialize(const ParamConf & parameters)
 {
  return;
+}
+
+
+std::size_t ExatensorNodeExecutor::getMemBufferSize() const
+{
+ return exatensor_host_mem_buffer_size_;
 }
 
 

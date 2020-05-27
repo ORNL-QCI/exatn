@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/04/27
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -66,6 +66,12 @@ public:
     }
     logging_.store(level);
     return;
+  }
+
+  /** Returns the Host memory buffer size in bytes provided by the node executor. **/
+  std::size_t getMemBufferSize() const {
+    if(node_executor_) return node_executor_->getMemBufferSize();
+    return 0;
   }
 
   /** Traverses the DAG and executes all its nodes (operations).

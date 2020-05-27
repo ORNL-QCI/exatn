@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/05/15
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -26,7 +26,7 @@ class TalshNodeExecutor : public TensorNodeExecutor {
 
 public:
 
-  static constexpr std::size_t DEFAULT_MEM_BUFFER_SIZE = 1024*1024*1024; //bytes
+  static constexpr const std::size_t DEFAULT_MEM_BUFFER_SIZE = 1UL*1024UL*1024UL*1024UL; //bytes
 
   TalshNodeExecutor() = default;
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
@@ -36,6 +36,8 @@ public:
   virtual ~TalshNodeExecutor();
 
   void initialize(const ParamConf & parameters) override;
+
+  std::size_t getMemBufferSize() const override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;
@@ -82,6 +84,8 @@ protected:
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
+  /** TAL-SH Host memory buffer size (bytes) **/
+  std::size_t talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/
   static bool talsh_initialized_;
   /** Number of instances of TAL-SH node executors **/

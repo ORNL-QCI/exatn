@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/05/12
+REVISION: 2020/05/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -575,6 +575,11 @@ inline void resetContrSeqOptimizer(const std::string & optimizer_name)
 /** Resets tensor runtime logging level (0:none). **/
 inline void resetRuntimeLoggingLevel(int level = 0)
  {return numericalServer->resetRuntimeLoggingLevel(level);}
+
+
+/** Returns the default process group comprising all MPI processes and their communicator. **/
+inline const ProcessGroup & getDefaultProcessGroup()
+ {return numericalServer->getDefaultProcessGroup();}
 
 } //namespace exatn
 
