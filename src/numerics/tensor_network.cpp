@@ -2019,7 +2019,10 @@ void TensorNetwork::printSplitIndexInfo(bool with_affected_tensors) const
  std::cout << "#INFO(TensorNetwork::printSplitIndexInfo):\n";
  for(unsigned int i = 0; i < split_indices_.size(); ++i){
   std::cout << i << ": " << split_indices_[i].first << ": Number of segments = "
-            << split_indices_[i].second.size() << std::endl;
+            << split_indices_[i].second.size() << ":";
+  for(const auto & seg: split_indices_[i].second)
+   std::cout << "{" << seg.first << ":" << seg.second << "}";
+  std::cout << std::endl;
  }
  if(with_affected_tensors){
   for(const auto & op: operations_){

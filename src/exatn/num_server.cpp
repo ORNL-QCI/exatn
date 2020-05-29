@@ -283,6 +283,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
                        TensorNetwork & network)
 {
  const bool debugging = true;
+ const bool serialize = true;
 
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
@@ -307,7 +308,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  max_intermediate_volume *= shrink_coef;
  if(debugging) std::cout << max_intermediate_volume << std::endl << std::flush; //debug
  network.splitInternalIndices(static_cast<std::size_t>(max_intermediate_volume));
- network.printSplitIndexInfo(); //debug
+ if(debugging) network.printSplitIndexInfo(true); //debug
 
  //Create the output tensor of the tensor network if needed:
  bool submitted = false;
@@ -354,6 +355,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
    //Execute all tensor operations for the current tensor sub-network:
    for(auto op = op_list.begin(); op != op_list.end(); ++op){
+    if(debugging && serialize) (*op)->printIt(); //debug
     const auto num_operands = (*op)->getNumOperands();
     std::shared_ptr<TensorOperation> tens_op = (*op)->clone();
     //Substitute sliced tensor operands with their respective slices from the current tensor sub-network:
@@ -399,6 +401,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
         const auto segment_selector = work_range.getIndex(gl_index_id);
         subspaces[index_pos] = index_info.second[segment_selector].first;
         dim_extents[index_pos] = index_info.second[segment_selector].second;
+        if(debugging) std::cout << "Index replacement in tensor " << tensor->getName()
+                       << ": " << index_info.first << " in position " << index_pos << std::endl;
        }
        //Construct the tensor slice from the parental tensor:
        tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
@@ -451,6 +455,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
      destroy_slice->setTensorOperand(input_slice.second);
      submitted = submit(destroy_slice); if(!submitted) return false;
     }
+    if(serialize) sync(); //debug
     input_slices.clear();
    } //loop over tensor operations
    //Erase intermediate tensor slices once all tensor operations have been executed:
