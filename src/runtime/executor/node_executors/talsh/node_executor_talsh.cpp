@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/05/27
+REVISION: 2020/05/29
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -376,6 +376,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   assert(false);
  }
 
+ //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor contraction " << op.getIndexPattern() << std::endl; //debug
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                             op.getIndexPattern(),
                                             tens1,tens2,

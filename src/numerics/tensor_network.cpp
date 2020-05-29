@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/22
+REVISION: 2020/05/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -556,7 +556,7 @@ void TensorNetwork::establishUniversalIndexNumeration()
   const auto & old_pattern = op.getIndexPattern();
   if(old_pattern.length() > 0){ //index pattern present
    assert(num_operands > 1 && num_operands_out == 1); //presence of index pattern assumes two or more operands
-   //std::cout << "#DEBUG(TensorNetwork::establishUniversalIndexNumeration): Old pattern: " << old_pattern << std::endl;
+   //std::cout << "#DEBUG(TensorNetwork::establishUniversalIndexNumeration): Old pattern: " << old_pattern << std::endl; //debug
    tens_operands.clear();
    bool success = parse_tensor_network(old_pattern,tens_operands);
    if(success){
@@ -572,6 +572,7 @@ void TensorNetwork::establishUniversalIndexNumeration()
       auto tensor_hash = tens0.getTensorHash();
       //Pre-save the output tensor of the tensor network:
       if(!output_tensor_done){
+       assert(!conjugated); //output tensor cannot be conjugated
        auto res = intermediates.emplace(std::make_pair(tensor_hash,
                    assemble_symbolic_tensor(tens0.getName(),indices,conjugated)));
        assert(res.second);
@@ -618,7 +619,7 @@ void TensorNetwork::establishUniversalIndexNumeration()
         }
         const auto symb_tensor = assemble_symbolic_tensor(tens.getName(),indices,conjugated);
         if(is_intermediate_tensor_name(symb_tensor)){
-         assert(!conjugated); //intermediate tensor do not appear conjugated
+         assert(!conjugated); //intermediate tensors do not appear conjugated
          auto res = intermediates.emplace(std::make_pair(tensor_hash,symb_tensor));
          if(!res.second){
           std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
@@ -650,7 +651,11 @@ void TensorNetwork::establishUniversalIndexNumeration()
      }
     }else{
      std::cout << "#ERROR(exatn::numerics::TensorNetwork::establishUniversalIndexNumeration): "
-               << "Invalid number of tensor operands parsed from: " << old_pattern << std::endl;
+               << "Invalid number of tensor operands (" << tens_operands.size() << " VS " << num_operands
+               << ") parsed from: " << old_pattern << ": ";
+     for(const auto & operand: tens_operands) std::cout << operand << " ";
+     std::cout << std::endl;
+     op.printIt();
      assert(false);
     }
    }else{
@@ -1828,7 +1833,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
    const auto * tensor1_legs = this->getTensorConnections(left_tensor_id);
    assert(tensor1_legs != nullptr);
    std::string contr_pattern;
-   auto generated = generate_contraction_pattern(*tensor1_legs,tensor1_legs->size(),0,contr_pattern,conj1);
+   auto generated = generate_addition_pattern(*tensor1_legs,contr_pattern,conj1);
    assert(generated);
    op->setIndexPattern(contr_pattern);
    assert(op->isSet());
