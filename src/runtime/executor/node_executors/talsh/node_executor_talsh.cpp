@@ -50,12 +50,13 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
 {
  talsh_init_lock.lock();
  if(!talsh_initialized_){
-  talsh_host_mem_buffer_size_ = DEFAULT_MEM_BUFFER_SIZE;
+  std::size_t host_mem_buffer_size = DEFAULT_MEM_BUFFER_SIZE;
   int64_t provided_buf_size = 0;
   if(parameters.getParameter("host_memory_buffer_size",&provided_buf_size))
-   talsh_host_mem_buffer_size_ = provided_buf_size;
-  auto error_code = talsh::initialize(&talsh_host_mem_buffer_size_);
+   host_mem_buffer_size = provided_buf_size;
+  auto error_code = talsh::initialize(&host_mem_buffer_size);
   if(error_code == TALSH_SUCCESS){
+   talsh_host_mem_buffer_size_.store(host_mem_buffer_size);
    std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
     talsh_host_mem_buffer_size_ << " bytes" << std::endl << std::flush; //debug
    talsh_initialized_ = true;
@@ -72,7 +73,9 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
 
 std::size_t TalshNodeExecutor::getMemBufferSize() const
 {
- return talsh_host_mem_buffer_size_;
+ std::size_t buf_size = 0;
+ while(buf_size == 0) buf_size = talsh_host_mem_buffer_size_.load();
+ return buf_size;
 }
 
 
@@ -85,7 +88,7 @@ TalshNodeExecutor::~TalshNodeExecutor()
   tensors_.clear();
   auto error_code = talsh::shutdown();
   if(error_code == TALSH_SUCCESS){
-   //std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;
+   std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;
    talsh_initialized_ = false;
   }else{
    std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/05/27
+REVISION: 2020/05/29
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -14,6 +14,8 @@ Rationale:
 #include "tensor_node_executor.hpp"
 
 #include "talshxx.hpp"
+
+#include <atomic>
 
 namespace exatn {
 namespace runtime {
@@ -76,7 +78,7 @@ public:
 protected:
  //`ExaTENSOR executor state
  /** Size of the distributed Host memory buffer provided by ExaTENSOR in bytes **/
- std::size_t exatensor_host_mem_buffer_size_;
+ std::atomic<std::size_t> exatensor_host_mem_buffer_size_;
 };
 
 } //namespace runtime

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/27
+REVISION: 2020/05/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -108,7 +108,7 @@ void NumServer::resetRuntimeLoggingLevel(int level)
 
 std::size_t NumServer::getMemBufferSize() const
 {
- if(tensor_rt_) tensor_rt_->getMemBufferSize();
+ if(tensor_rt_) return tensor_rt_->getMemBufferSize();
  return 0;
 }
 
@@ -283,6 +283,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
                        TensorNetwork & network)
 {
  const bool debugging = true;
+
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
@@ -290,15 +291,24 @@ bool NumServer::submit(const ProcessGroup & process_group,
  unsigned int num_procs = process_group.getSize(); //number of executing processes
  assert(local_rank < num_procs);
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
-  << network.getName() << " for execution by " << num_procs << " processes" << std::endl << std::flush; //debug
+  << network.getName() << " for execution by " << num_procs << " processes with memory limit "
+  << process_group.getMemoryLimitPerProcess() << std::endl << std::flush; //debug
+
  //Get tensor operation list:
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
+ const double max_intermediate_presence_volume = network.getMaxIntermediatePresenceVolume();
+ double max_intermediate_volume = network.getMaxIntermediateVolume();
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
-  << network.getFMAFlops() << "; Max intermediate volume = " << network.getMaxIntermediateVolume() << std::endl << std::flush; //debug
- //Split some of the tensor network indices if needed by the requested memory limit:
- const std::size_t max_intermediate_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
- network.splitInternalIndices(max_intermediate_volume);
+  << network.getFMAFlops() << "; Max intermediate volume = " << max_intermediate_volume << " -> "; //debug
+
+ //Split some of the tensor network indices based on the requested memory limit:
+ const std::size_t proc_mem_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
+ const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5)); //1.5 accounts for memory fragmentation
+ max_intermediate_volume *= shrink_coef;
+ if(debugging) std::cout << max_intermediate_volume << std::endl << std::flush; //debug
+ network.splitInternalIndices(static_cast<std::size_t>(max_intermediate_volume));
  network.printSplitIndexInfo(); //debug
+
  //Create the output tensor of the tensor network if needed:
  bool submitted = false;
  auto output_tensor = network.getTensor(0);
@@ -312,6 +322,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
    resetTensorElementType(output_tensor->getElementType());
   submitted = submit(op0); if(!submitted) return false; //this CREATE operation will also register the output tensor
  }
+
  //Initialize the output tensor to zero:
  std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op1->setTensorOperand(output_tensor);
@@ -454,6 +465,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   }
   ++num_items_executed;
  }
+
  //Allreduce the tensor network output tensor within the executing process group:
  if(num_procs > 1){
   std::shared_ptr<TensorOperation> allreduce = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);

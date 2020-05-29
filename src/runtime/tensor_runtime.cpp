@@ -127,8 +127,8 @@ void TensorRuntime::resetLoggingLevel(int level)
 
 std::size_t TensorRuntime::getMemBufferSize() const
 {
- if(graph_executor_) graph_executor_->getMemBufferSize();
- return 0;
+ while(!graph_executor_);
+ return graph_executor_->getMemBufferSize();
 }
 
 

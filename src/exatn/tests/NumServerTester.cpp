@@ -75,9 +75,10 @@ TEST(NumServerTester, ExamplarExaTN)
  success = exatn::contractTensors("T0(i,j)+=T2(c,i,d,e)*T3(d,j,e,c)",0.125); assert(success);
 
  //Evaluate the entire tensor network in one shot:
- const std::size_t MB = 1024UL * 1024UL;
  exatn::ProcessGroup process_group(exatn::getDefaultProcessGroup());
- process_group.resetMemoryLimitPerProcess(1024UL*MB);
+ std::cout << "Original memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
+ process_group.resetMemoryLimitPerProcess(exatn::getMemBufferSize()/4);
+ std::cout << "Corrected memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
  success = exatn::evaluateTensorNetwork(process_group,"FullyConnected",
           "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");
  //Synchronize on the output tensor Z0:
