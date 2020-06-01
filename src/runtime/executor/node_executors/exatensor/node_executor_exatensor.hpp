@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/05/29
+REVISION: 2020/06/01
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -33,7 +33,7 @@ public:
 
   void initialize(const ParamConf & parameters) override;
 
-  std::size_t getMemBufferSize() const override;
+  std::size_t getMemoryBufferSize() const override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;

@@ -77,7 +77,7 @@ TEST(NumServerTester, ExamplarExaTN)
  //Evaluate the entire tensor network in one shot:
  exatn::ProcessGroup process_group(exatn::getDefaultProcessGroup());
  std::cout << "Original memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
- process_group.resetMemoryLimitPerProcess(exatn::getMemBufferSize()/4);
+ process_group.resetMemoryLimitPerProcess(exatn::getMemoryBufferSize()/4);
  std::cout << "Corrected memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
  success = exatn::evaluateTensorNetwork(process_group,"FullyConnected",
           "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");

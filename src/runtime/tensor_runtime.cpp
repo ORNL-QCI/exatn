@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/05/27
+REVISION: 2020/06/01
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -125,10 +125,10 @@ void TensorRuntime::resetLoggingLevel(int level)
 }
 
 
-std::size_t TensorRuntime::getMemBufferSize() const
+std::size_t TensorRuntime::getMemoryBufferSize() const
 {
  while(!graph_executor_);
- return graph_executor_->getMemBufferSize();
+ return graph_executor_->getMemoryBufferSize();
 }
 
 

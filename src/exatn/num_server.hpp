@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/27
+REVISION: 2020/06/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -140,7 +140,7 @@ public:
  void resetRuntimeLoggingLevel(int level = 0);
 
  /** Returns the Host memory buffer size in bytes provided by the runtime. **/
- std::size_t getMemBufferSize() const;
+ std::size_t getMemoryBufferSize() const;
 
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;

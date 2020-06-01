@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/05/29
+REVISION: 2020/06/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -106,9 +106,9 @@ void NumServer::resetRuntimeLoggingLevel(int level)
  return;
 }
 
-std::size_t NumServer::getMemBufferSize() const
+std::size_t NumServer::getMemoryBufferSize() const
 {
- if(tensor_rt_) return tensor_rt_->getMemBufferSize();
+ if(tensor_rt_) return tensor_rt_->getMemoryBufferSize();
  return 0;
 }
 
