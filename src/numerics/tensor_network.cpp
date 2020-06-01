@@ -1909,11 +1909,15 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
     success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
     if(success){
      assert(!conjugated); //output tensor operands do not appear conjugated
-     assert(isIntermediateTensorName(tens_name)); //output tensor operands must be intermediate tensors
      const auto & intermediate = *(op.getTensorOperand(0));
      const auto & intermediate_name = intermediate.getName();
      assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
      assert(indices.size() == intermediate.getRank());
+     /*if(!isIntermediateTensorName(tens_name)){ //output tensor operands must be intermediate tensors
+      std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                << "The output tensor operand name does not name an intermediate tensor: " << tens_name << std::endl;
+      assert(false);
+     }*/
      //Compute the volume of the intermediate tensor and find its full dimensions:
      dims.clear();
      std::size_t intermediate_volume = 1;
@@ -2001,15 +2005,19 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
       //Save the inferred dimension splitting info for the tensor operand:
       if(split_dims.size() > 0){
        std::pair<TensorHashType,TensorHashType> key;
-       if(isIntermediateTensorName(tensor_name)){
+       if(op_num == 0){ //output tensor operand: pure intermediate or output tensor
         //Intermediate tensors (including the tensor network output) are identified by the tensor hash:
         key = std::make_pair(static_cast<TensorHashType>(0),tensor_hash);
+        auto saved = split_tensors_.emplace(std::make_pair(key,split_dims));
+        assert(saved.second);
        }else{
-        //Input tensors are identified by the tensor operation hash and their position in it:
-        key = std::make_pair(op_hash,static_cast<TensorHashType>(op_num));
+        if(!isIntermediateTensorName(tensor_name)){ // input tensor operand
+         //Input tensors are identified by the tensor operation hash and their position in it:
+         key = std::make_pair(op_hash,static_cast<TensorHashType>(op_num));
+         auto saved = split_tensors_.emplace(std::make_pair(key,split_dims));
+         assert(saved.second);
+        }
        }
-       auto saved = split_tensors_.emplace(std::make_pair(key,split_dims));
-       assert(saved.second);
       }
      }else{
       std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
