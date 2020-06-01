@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/05/22
+REVISION: 2020/06/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -336,11 +336,11 @@ public:
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "metis",
                                                                 bool universal_indices = false);
 
- /** Splits internal (contracted) indices of the tensor network into smaller segments
-     in order to make sure all intermediates from the operation list will fit within
+ /** Splits some indices of the tensor network into smaller segments in order
+     to make sure all intermediates from the operation list will fit within
      the given memory limit. The generated information will be available to
      the processing backend when the tensor network is submitted for evaluation. **/
- void splitInternalIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
+ void splitIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
 
  /** Returns the total number of splitted indices. **/
  unsigned int getNumSplitIndices() const;

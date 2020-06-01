@@ -307,7 +307,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5)); //1.5 accounts for memory fragmentation
  max_intermediate_volume *= shrink_coef;
  if(debugging) std::cout << max_intermediate_volume << std::endl << std::flush; //debug
- network.splitInternalIndices(static_cast<std::size_t>(max_intermediate_volume));
+ network.splitIndices(static_cast<std::size_t>(max_intermediate_volume));
  if(debugging) network.printSplitIndexInfo(true); //debug
 
  //Create the output tensor of the tensor network if needed:
