@@ -83,7 +83,7 @@ void TensorRuntime::launchExecutionThread()
 void TensorRuntime::executionThreadWorkflow()
 {
   graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name_),
-                                     parameters_);
+                                     parameters_,process_rank_);
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
             //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){ //alive_ is set by the main thread
@@ -98,7 +98,7 @@ void TensorRuntime::executionThreadWorkflow()
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
   }
-  graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr),parameters_);
+  graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr),parameters_,process_rank_);
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
             //<< std::endl << std::flush;
   return; //end of execution thread life

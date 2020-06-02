@@ -38,7 +38,8 @@ class TensorGraphExecutor : public Identifiable, public Cloneable<TensorGraphExe
 public:
 
   TensorGraphExecutor():
-   node_executor_(nullptr), logging_(0), stopping_(false), active_(false) {}
+   process_rank_(0), node_executor_(nullptr), logging_(0), stopping_(false), active_(false)
+  {}
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
   TensorGraphExecutor & operator=(const TensorGraphExecutor &) = delete;
@@ -51,7 +52,9 @@ public:
 
   /** Sets/resets the DAG node executor (tensor operation executor). **/
   void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
-                         const ParamConf & parameters) {
+                         const ParamConf & parameters,
+                         unsigned int process_rank) {
+    process_rank_ = process_rank;
     node_executor_ = node_executor;
     if(node_executor_) node_executor_->initialize(parameters);
     return;
@@ -60,7 +63,7 @@ public:
   /** Resets the logging level (0:none). **/
   void resetLoggingLevel(int level = 0) {
     if(logging_.load() == 0){
-      if(level != 0) logfile_.open("exatn_exec_thread.log", std::ios::out | std::ios::trunc);
+      if(level != 0) logfile_.open("exatn_exec_thread."+std::to_string(process_rank_)+".log", std::ios::out | std::ios::trunc);
     }else{
       if(level == 0) logfile_.close();
     }
@@ -98,6 +101,8 @@ public:
   }
 
 protected:
+
+  int process_rank_;           //current process rank
   std::shared_ptr<TensorNodeExecutor> node_executor_; //tensor operation executor
   std::ofstream logfile_;      //logging file stream (output)
   std::atomic<int> logging_;   //logging level (0:none)

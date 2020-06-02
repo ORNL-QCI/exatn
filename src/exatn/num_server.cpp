@@ -282,8 +282,8 @@ bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 bool NumServer::submit(const ProcessGroup & process_group,
                        TensorNetwork & network)
 {
- const bool debugging = true;
- const bool serialize = true;
+ const bool debugging = false;
+ const bool serialize = false;
 
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group

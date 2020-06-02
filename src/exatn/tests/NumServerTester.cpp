@@ -1566,7 +1566,7 @@ int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
   //Set the available CPU Host RAM size:
-  exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
+  exatn_parameters.setParameter("host_memory_buffer_size",4L*1024L*1024L*1024L);
 
 #ifdef MPI_ENABLED
   int thread_provided;
