@@ -12,7 +12,6 @@
 
 
 #define EXATN_TEST0
-/*
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -27,7 +26,7 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
-*/
+
 
 #ifdef EXATN_TEST0
 TEST(NumServerTester, ExamplarExaTN)
@@ -869,7 +868,7 @@ TEST(NumServerTester, Sycamore8NumServer)
            << ": Max intermdediate rank = " << max_rank << std::endl;
 
  std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
- circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
+ circuit.splitIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
  std::cout << "Done\n" << std::flush;
  circuit.printSplitIndexInfo();
 
@@ -1008,7 +1007,7 @@ TEST(NumServerTester, Sycamore12NumServer)
            << ": Max intermdediate rank = " << max_rank << std::endl;
 
  std::cout << "Splitting some internal indices to reduce the size of intermediates ... " << std::flush;
- circuit.splitInternalIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
+ circuit.splitIndices(static_cast<std::size_t>(circuit.getMaxIntermediateVolume()/16.0));
  std::cout << "Done\n" << std::flush;
  circuit.printSplitIndexInfo();
 }
