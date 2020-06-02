@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/01
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -144,6 +144,12 @@ public:
 
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;
+
+ /** Returns the global rank of the current MPI process in the default process group. **/
+ int getProcessRank() const;
+
+ /** Returns the total number of MPI processes in the default process group. **/
+ int getNumProcesses() const;
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(const std::string & tag,

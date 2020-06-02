@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/06/01
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -24,11 +24,14 @@ Rationale:
 
 #include "param_conf.hpp"
 
+#include "timers.hpp"
+
 #include <memory>
 #include <atomic>
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 namespace exatn {
 namespace runtime {
@@ -38,7 +41,8 @@ class TensorGraphExecutor : public Identifiable, public Cloneable<TensorGraphExe
 public:
 
   TensorGraphExecutor():
-   process_rank_(0), node_executor_(nullptr), logging_(0), stopping_(false), active_(false)
+   process_rank_(-1), node_executor_(nullptr), logging_(0), stopping_(false), active_(false),
+   time_start_(exatn::Timer::timeInSecHR())
   {}
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
@@ -54,16 +58,28 @@ public:
   void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
                          const ParamConf & parameters,
                          unsigned int process_rank) {
-    process_rank_ = process_rank;
+    process_rank_.store(process_rank);
     node_executor_ = node_executor;
-    if(node_executor_) node_executor_->initialize(parameters);
+    if(node_executor_){
+      if(logging_.load() != 0){
+        logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                 << "](TensorGraphExecutor)[EXEC_THREAD]: Initializing the node executor ... "; //debug
+      }
+      node_executor_->initialize(parameters);
+      if(logging_.load() != 0){
+        logfile_ << "Success [" << std::fixed << std::setprecision(6)
+                 << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl; //debug
+        logfile_.flush();
+      }
+    }
     return;
   }
 
   /** Resets the logging level (0:none). **/
   void resetLoggingLevel(int level = 0) {
     if(logging_.load() == 0){
-      if(level != 0) logfile_.open("exatn_exec_thread."+std::to_string(process_rank_)+".log", std::ios::out | std::ios::trunc);
+      while(level != 0 && process_rank_.load() < 0);
+      if(level != 0) logfile_.open("exatn_exec_thread."+std::to_string(process_rank_.load())+".log", std::ios::out | std::ios::trunc);
     }else{
       if(level == 0) logfile_.close();
     }
@@ -100,14 +116,17 @@ public:
     return;
   }
 
+  inline double getTimeStampStart() const {return time_start_;}
+
 protected:
 
-  int process_rank_;           //current process rank
-  std::shared_ptr<TensorNodeExecutor> node_executor_; //tensor operation executor
-  std::ofstream logfile_;      //logging file stream (output)
-  std::atomic<int> logging_;   //logging level (0:none)
-  std::atomic<bool> stopping_; //signal to pause the execution thread
-  std::atomic<bool> active_;   //TRUE while the execution thread is executing DAG operations
+  std::shared_ptr<TensorNodeExecutor> node_executor_; //intr-node tensor operation executor
+  std::ofstream logfile_;         //logging file stream (output)
+  std::atomic<int> process_rank_; //current process rank
+  std::atomic<int> logging_;      //logging level (0:none)
+  std::atomic<bool> stopping_;    //signal to pause the execution thread
+  std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
+  const double time_start_;       //start time stamp
 };
 
 } //namespace runtime

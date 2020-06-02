@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/01
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,6 +79,7 @@ void NumServer::reconfigureTensorRuntime(const MPICommProxy & communicator,
                                          const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
+ while(!tensor_rt_);
  bool synced = tensor_rt_->sync(); assert(synced);
  tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(communicator,parameters,dag_executor_name,node_executor_name));
  return;
@@ -88,6 +89,7 @@ void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
                                          const std::string & dag_executor_name,
                                          const std::string & node_executor_name)
 {
+ while(!tensor_rt_);
  bool synced = tensor_rt_->sync(); assert(synced);
  tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(parameters,dag_executor_name,node_executor_name));
  return;
@@ -102,19 +104,30 @@ void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name)
 
 void NumServer::resetRuntimeLoggingLevel(int level)
 {
- if(tensor_rt_) tensor_rt_->resetLoggingLevel(level);
+ while(!tensor_rt_);
+ tensor_rt_->resetLoggingLevel(level);
  return;
 }
 
 std::size_t NumServer::getMemoryBufferSize() const
 {
- if(tensor_rt_) return tensor_rt_->getMemoryBufferSize();
- return 0;
+ while(!tensor_rt_);
+ return tensor_rt_->getMemoryBufferSize();
 }
 
 const ProcessGroup & NumServer::getDefaultProcessGroup() const
 {
  return *process_world_;
+}
+
+int NumServer::getProcessRank() const
+{
+ return process_rank_;
+}
+
+int NumServer::getNumProcesses() const
+{
+ return num_processes_;
 }
 
 void NumServer::registerTensorMethod(const std::string & tag, std::shared_ptr<TensorMethod> method)
@@ -335,7 +348,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
   << num_split_indices << std::endl << std::flush; //debug
  std::size_t num_items_executed = 0; //number of tensor sub-networks executed
- if(num_split_indices > 0){ //multiple tensor sub-networks need to be executed
+ if(num_split_indices > 0){ //multiple tensor sub-networks need to be executed by all processes ditributively
   //Distribute tensor sub-networks among processes:
   std::vector<DimExtent> work_extents(num_split_indices);
   for(int i = 0; i < num_split_indices; ++i) work_extents[i] = network.getSplitIndexInfo(i).second.size(); //number of segments per split index
@@ -465,19 +478,18 @@ bool NumServer::submit(const ProcessGroup & process_group,
    //Proceed to the next tensor sub-network:
    not_done = work_range.next();
   } //loop over tensor sub-networks
- }else{ //only a single tensor (sub-)network
+  //Allreduce the tensor network output tensor within the executing process group:
+  if(num_procs > 1){
+   std::shared_ptr<TensorOperation> allreduce = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+   allreduce->setTensorOperand(output_tensor);
+   std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(allreduce)->resetMPICommunicator(process_group.getMPICommProxy());
+   submitted = submit(allreduce); if(!submitted) return false;
+  }
+ }else{ //only a single tensor (sub-)network executed redundantly by all processes
   for(auto op = op_list.begin(); op != op_list.end(); ++op){
    submitted = submit(*op); if(!submitted) return false;
   }
   ++num_items_executed;
- }
-
- //Allreduce the tensor network output tensor within the executing process group:
- if(num_procs > 1){
-  std::shared_ptr<TensorOperation> allreduce = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
-  allreduce->setTensorOperand(output_tensor);
-  std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(allreduce)->resetMPICommunicator(process_group.getMPICommProxy());
-  submitted = submit(allreduce); if(!submitted) return false;
  }
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted sub-networks = "
   << num_items_executed << std::endl << std::flush; //debug

@@ -39,7 +39,7 @@ TEST(NumServerTester, ExamplarExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(2); //debug
+ exatn::resetRuntimeLoggingLevel(1); //debug
 
  bool success;
 

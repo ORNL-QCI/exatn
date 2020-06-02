@@ -1,13 +1,11 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2020/05/20
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "graph_executor_eager.hpp"
-
-#include "timers.hpp"
 
 #include "talshxx.hpp"
 
@@ -29,7 +27,7 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
       dag.setNodeExecuting(current);
       auto op = dag_node.getOperation();
       if(logging_.load() != 0){
-        logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR()
+        logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                  << "](EagerGraphExecutor)[EXEC_THREAD]: Submitting tensor operation "
                  << current << ": Opcode = " << static_cast<int>(op->getOpcode()); //debug
         if(logging_.load() > 1){
@@ -52,7 +50,7 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
           dag.setNodeExecuted(current);
           if(logging_.load() != 0){
             logfile_ << "Success [" << std::fixed << std::setprecision(6)
-                     << exatn::Timer::timeInSecHR() << "]" << std::endl; //debug
+                     << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl; //debug
             logfile_.flush();
           }
           dag.progressFrontNode(current);

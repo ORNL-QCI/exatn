@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/06/01
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -585,6 +585,16 @@ inline std::size_t getMemoryBufferSize()
 /** Returns the default process group comprising all MPI processes and their communicator. **/
 inline const ProcessGroup & getDefaultProcessGroup()
  {return numericalServer->getDefaultProcessGroup();}
+
+
+/** Returns the global rank of the current MPI process in the default process group. **/
+inline int getProcessRank()
+ {return numericalServer->getProcessRank();}
+
+
+/** Returns the total number of MPI processes in the default process group. **/
+inline int getNumProcesses()
+ {return numericalServer->getNumProcesses();}
 
 } //namespace exatn
 

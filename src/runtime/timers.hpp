@@ -1,5 +1,5 @@
 /** ExaTN: Timers
-REVISION: 2020/05/20
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -52,17 +52,17 @@ public:
   return finish_;
  }
 
- static inline double timeInSec(){
+ static inline double timeInSec(double since_time = 0.0){
   auto stamp = std::chrono::system_clock::now(); //current time point
   auto durat = std::chrono::duration<double>(stamp.time_since_epoch()); //duration (sec) since the begining of the clock
-  return durat.count(); //number of seconds
+  return (durat.count() - since_time); //number of seconds
  }
 
- static inline double timeInSecHR()
+ static inline double timeInSecHR(double since_time = 0.0)
  {
   auto stamp = std::chrono::high_resolution_clock::now(); //current time point
   auto durat = std::chrono::duration<double>(stamp.time_since_epoch()); //duration (sec) since the begining of the clock
-  return durat.count(); //number of seconds
+  return (durat.count() - since_time); //number of seconds
  }
 
 private:

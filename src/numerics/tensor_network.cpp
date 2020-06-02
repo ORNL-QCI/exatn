@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/06/01
+REVISION: 2020/06/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2074,7 +2074,7 @@ void TensorNetwork::printSplitIndexInfo(bool with_affected_tensors) const
    std::cout << "{" << seg.first << ":" << seg.second << "}";
   std::cout << std::endl;
  }
- if(with_affected_tensors){
+ if(with_affected_tensors && split_indices_.size() > 0){
   std::cout << "Affected tensors in tensor operations:\n";
   for(const auto & op: operations_){
    bool op_affected = false;
