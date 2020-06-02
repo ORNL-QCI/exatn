@@ -364,10 +364,11 @@ bool NumServer::submit(const ProcessGroup & process_group,
      auto tensor = (*op)->getTensorOperand(op_num);
      const auto tensor_rank = tensor->getRank();
      bool tensor_is_output;
-     bool tensor_is_intermediate = tensorIsIntermediate(*tensor,&tensor_is_output);
+     bool tensor_is_intermediate = tensorNameIsIntermediate(*tensor,&tensor_is_output);
+     tensor_is_output = (tensor == output_tensor);
      //Look up the tensor operand in the table of sliced tensor operands:
      std::pair<numerics::TensorHashType,numerics::TensorHashType> key;
-     if(tensor_is_intermediate){ //intermediate tensor
+     if(tensor_is_intermediate || tensor_is_output){ //intermediate tensor (including output tensor)
       numerics::TensorHashType zero = 0;
       key = std::make_pair(zero,tensor->getTensorHash());
      }else{ //input tensor
@@ -379,10 +380,10 @@ bool NumServer::submit(const ProcessGroup & process_group,
      if(tensor_info != nullptr){ //tensor has splitted indices
       std::shared_ptr<numerics::Tensor> tensor_slice;
       //Look up the tensor slice in case it has already been created:
-      if(tensor_is_intermediate){ //intermediate tensor
+      if(tensor_is_intermediate && (!tensor_is_output)){ //pure intermediate tensor
        auto slice_iter = intermediate_slices.find(tensor->getTensorHash()); //look up by the hash of the parental tensor
        if(slice_iter != intermediate_slices.end()) tensor_slice = slice_iter->second;
-      }else{ //input tensor
+      }else{ //input/output tensor
        auto slice_iter = input_slices.find(tensor->getTensorHash()); //look up by the hash of the parental tensor
        if(slice_iter != input_slices.end()) tensor_slice = slice_iter->second;
       }
@@ -408,7 +409,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
        tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
        tensor_slice->rename(); //unique automatic name will be generated
        //Store the tensor in the table for subsequent referencing:
-       if(tensor_is_intermediate){ //intermediate tensor
+       if(tensor_is_intermediate && (!tensor_is_output)){ //pure intermediate tensor
         auto res = intermediate_slices.emplace(std::make_pair(tensor->getTensorHash(),tensor_slice));
         assert(res.second);
        }else{ //input tensor

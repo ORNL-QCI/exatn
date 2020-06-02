@@ -30,8 +30,29 @@ std::map<std::string,std::shared_ptr<ContractionSeqOptimizer>> optimizers;
 
 
 //Helpers:
-bool tensorIsIntermediate(const Tensor & tensor,
-                          bool * network_output)
+inline bool isIntermediateTensorName(const std::string & tensor_name)
+{
+ if(tensor_name.length() >= 2){
+  if((tensor_name[0] == '_' && tensor_name[1] == 'x') ||
+     (tensor_name[0] == '_' && tensor_name[1] == 'y') ||
+     (tensor_name[0] == '_' && tensor_name[1] == 'z')) return true;
+ }
+ return false;
+}
+
+
+inline bool isPureIntermediateTensorName(const std::string & tensor_name)
+{
+ if(tensor_name.length() >= 2){
+  if((tensor_name[0] == '_' && tensor_name[1] == 'x') ||
+     (tensor_name[0] == '_' && tensor_name[1] == 'y')) return true;
+ }
+ return false;
+}
+
+
+bool tensorNameIsIntermediate(const Tensor & tensor,
+                              bool * network_output)
 {
  bool res = false, out = false;
  const auto & tens_name = tensor.getName();
@@ -46,6 +67,7 @@ bool tensorIsIntermediate(const Tensor & tensor,
 }
 
 
+//Main:
 TensorNetwork::TensorNetwork():
  explicit_output_(0), finalized_(1), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
@@ -528,24 +550,6 @@ inline IndexSplit splitDimension(std::pair<SpaceId,SubspaceId> space_attr, //hel
  return split_info;
 }
 
-inline bool isIntermediateTensorName(const std::string & tensor_name) //helper
-{
- if(tensor_name.length() >= 2){
-  if((tensor_name[0] == '_' && tensor_name[1] == 'x') ||
-     (tensor_name[0] == '_' && tensor_name[1] == 'y') ||
-     (tensor_name[0] == '_' && tensor_name[1] == 'z')) return true;
- }
- return false;
-}
-
-inline bool isPureIntermediateTensorName(const std::string & tensor_name) //helper
-{
- if(tensor_name.length() >= 2){
-  if((tensor_name[0] == '_' && tensor_name[1] == 'x') ||
-     (tensor_name[0] == '_' && tensor_name[1] == 'y')) return true;
- }
- return false;
-}
 
 void TensorNetwork::establishUniversalIndexNumeration()
 {
@@ -2004,16 +2008,17 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
       }
       //Save the inferred dimension splitting info for the tensor operand:
       if(split_dims.size() > 0){
-       std::pair<TensorHashType,TensorHashType> key;
-       if(op_num == 0){ //output tensor operand: pure intermediate or output tensor
+       //std::cout << "#DEBUG(exatn::numerics::TensorNetwork::splitIndices): Splitting tensor " << tens_operands[op_num] << " @ "; //debug
+       //for(const auto & ind: split_dims) std::cout << " " << ind.second; std::cout << std::endl; //debug
+       if(op_num == 0){ //output tensor operand: pure intermediate or output tensor `Assumes a single output tensor operand (#0)
         //Intermediate tensors (including the tensor network output) are identified by the tensor hash:
-        key = std::make_pair(static_cast<TensorHashType>(0),tensor_hash);
+        const auto key = std::make_pair(static_cast<TensorHashType>(0),tensor_hash);
         auto saved = split_tensors_.emplace(std::make_pair(key,split_dims));
         assert(saved.second);
        }else{
         if(!isIntermediateTensorName(tensor_name)){ // input tensor operand
          //Input tensors are identified by the tensor operation hash and their position in it:
-         key = std::make_pair(op_hash,static_cast<TensorHashType>(op_num));
+         const auto key = std::make_pair(op_hash,static_cast<TensorHashType>(op_num));
          auto saved = split_tensors_.emplace(std::make_pair(key,split_dims));
          assert(saved.second);
         }
@@ -2077,7 +2082,7 @@ void TensorNetwork::printSplitIndexInfo(bool with_affected_tensors) const
    for(unsigned int i = 0; i < num_operands; ++i){
     const auto & tens = *(op->getTensorOperand(i));
     auto iter = split_tensors_.cend();
-    if(tensorIsIntermediate(tens)){ //intermediate tensor (includes output tensor of the tensor network)
+    if(tensorNameIsIntermediate(tens) || (i == 0)){ //intermediate tensor (includes output tensor of the tensor network)
      const auto key = std::pair<TensorHashType,TensorHashType>{0,tens.getTensorHash()};
      iter = split_tensors_.find(key);
     }else{ //input tensor

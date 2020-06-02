@@ -75,9 +75,9 @@ namespace numerics{
 using IndexSplit = std::vector<std::pair<SubspaceId, DimExtent>>; //Segment = [subspace_base, segment_extent]
 
 
-//Tests whether a given tensor is an intermediate tensor of a tensor network:
-bool tensorIsIntermediate(const Tensor & tensor,            //in: tensor
-                          bool * network_output = nullptr); //out: TRUE if the tensor is the output tensor of the tensor network
+//Tests whether a given tensor has a name referring to an intermediate tensor of a tensor network:
+bool tensorNameIsIntermediate(const Tensor & tensor,            //in: tensor
+                              bool * network_output = nullptr); //out: TRUE if the tensor is an intermediate output tensor of the tensor network
 
 //Free function analogue of TensorNetwork::getContractionCost:
 double getTensorContractionCost(const TensorConn & left_tensor,
