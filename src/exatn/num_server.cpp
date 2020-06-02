@@ -317,9 +317,12 @@ bool NumServer::submit(const ProcessGroup & process_group,
 
  //Split some of the tensor network indices based on the requested memory limit:
  const std::size_t proc_mem_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
- const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5)); //1.5 accounts for memory fragmentation
- max_intermediate_volume *= shrink_coef;
+ if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0){
+  const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5)); //1.5 accounts for memory fragmentation
+  max_intermediate_volume *= shrink_coef;
+ }
  if(debugging) std::cout << max_intermediate_volume << std::endl << std::flush; //debug
+ //if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0)
  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume));
  if(debugging) network.printSplitIndexInfo(true); //debug
 

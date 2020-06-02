@@ -1935,7 +1935,7 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
       }
      }
      //Split the found full dimensions of the intermediate tensor:
-     if(intermediate_volume > max_intermediate_volume){
+     if(max_intermediate_volume > 0 && intermediate_volume > max_intermediate_volume){
       //Reduce the volume of the intermediate tensor by increasing the number of segments per tensor dimensions:
       assert(dims.size() > 0); //at least one full dimension is expected
       int i = dims.size() - 1; //split dimensions from the right (because of column-wise tensor storage)
