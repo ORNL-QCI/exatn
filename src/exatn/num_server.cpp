@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/03
+REVISION: 2020/06/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -52,7 +52,7 @@ NumServer::NumServer(const ParamConf & parameters,
  num_processes_ = 1; process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
  std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
- process_self_ = std::make_shared<ProcessGroup>(intr_comm_,myself); //intra-communicator is empty here
+ process_self_ = std::make_shared<ProcessGroup>(intra_comm_,myself); //intra-communicator is empty here
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
