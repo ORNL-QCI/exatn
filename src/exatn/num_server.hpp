@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/02
+REVISION: 2020/06/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -144,6 +144,9 @@ public:
 
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;
+
+ /** Returns the current process group comprising solely the current MPI process and its own communicator. **/
+ const ProcessGroup & getCurrentProcessGroup() const;
 
  /** Returns the global rank of the current MPI process in the default process group. **/
  int getProcessRank() const;
@@ -536,6 +539,7 @@ private:
  int process_rank_; //rank of the current parallel process
  MPICommProxy intra_comm_; //MPI intra-communicator used to initialize the Numerical Server
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
+ std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
 };
 

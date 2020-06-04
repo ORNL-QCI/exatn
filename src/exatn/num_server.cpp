@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/02
+REVISION: 2020/06/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,6 +35,8 @@ NumServer::NumServer(const MPICommProxy & communicator,
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
+ std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
+ process_self_ = std::make_shared<ProcessGroup>(MPICommProxy(MPI_COMM_SELF),myself);
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -48,7 +50,9 @@ NumServer::NumServer(const ParamConf & parameters,
  tensor_rt_(std::make_shared<runtime::TensorRuntime>(parameters,graph_executor_name,node_executor_name))
 {
  num_processes_ = 1; process_rank_ = 0;
- process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
+ process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
+ std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
+ process_self_ = std::make_shared<ProcessGroup>(intr_comm_,myself); //intra-communicator is empty here
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -118,6 +122,11 @@ std::size_t NumServer::getMemoryBufferSize() const
 const ProcessGroup & NumServer::getDefaultProcessGroup() const
 {
  return *process_world_;
+}
+
+const ProcessGroup & NumServer::getCurrentProcessGroup() const
+{
+ return *process_self_;
 }
 
 int NumServer::getProcessRank() const

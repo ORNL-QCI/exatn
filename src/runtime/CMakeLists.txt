@@ -5,6 +5,7 @@ add_subdirectory(executor)
 set(LIBRARY_NAME exatn-runtime)
 
 file(GLOB SRC
+     mpi_proxy.cpp
      tensor_runtime.cpp
     )
 

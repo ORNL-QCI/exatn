@@ -1573,8 +1573,7 @@ int main(int argc, char **argv) {
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
-  MPI_Comm global_comm = MPI_COMM_WORLD;
-  exatn::initialize(exatn::MPICommProxy(&global_comm),exatn_parameters);
+  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters);
 #else
   exatn::initialize(exatn_parameters);
 #endif
