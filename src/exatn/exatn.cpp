@@ -41,8 +41,7 @@ void initialize(const ParamConf & parameters,
     assert(mpi_error == MPI_SUCCESS);
     assert(thread_provided == MPI_THREAD_MULTIPLE);
     exatnInitializedMPI = true;
-    MPI_Comm global_comm = MPI_COMM_WORLD;
-    numericalServer = std::make_shared<NumServer>(MPICommProxy(&global_comm),parameters,
+    numericalServer = std::make_shared<NumServer>(MPICommProxy(MPI_COMM_WORLD),parameters,
                                                   graph_executor_name,node_executor_name);
     //std::cout << "#DEBUG(exatn): ExaTN numerical server initialized with MPI" << std::endl << std::flush;
 #else

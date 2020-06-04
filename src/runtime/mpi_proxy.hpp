@@ -17,42 +17,35 @@ namespace exatn {
 class MPICommProxy {
 public:
 
- /** Constructs a portable MPI communicator proxy by type-erasing
-     the concrete MPI communicator type MPICommType (e.g., MPI_Comm). **/
- template<typename MPICommType>
- MPICommProxy(MPICommType mpi_comm);
-
- /** Constructs a portable MPI communicator proxy by type-erasing
-     the concrete MPI communicator type MPICommType (e.g., MPI_Comm). **/
- template<typename MPICommType>
- MPICommProxy(MPICommType * mpi_comm_ptr);
-
  /** Default constructor constructs an empty communicator. **/
  MPICommProxy(): mpi_comm_ptr_(nullptr) {}
+
+ /** Constructs a portable MPI communicator proxy by type-erasing
+     the concrete MPI communicator type MPICommType (e.g., MPI_Comm). **/
+ template<typename MPICommType>
+ MPICommProxy(MPICommType mpi_comm): mpi_comm_ptr_(new MPICommType{mpi_comm}) {}
 
  MPICommProxy(const MPICommProxy &) = default;
  MPICommProxy & operator=(const MPICommProxy &) = default;
  MPICommProxy(MPICommProxy &&) noexcept = default;
  MPICommProxy & operator=(MPICommProxy &&) noexcept = default;
 
- ~MPICommProxy();
+ ~MPICommProxy() = default;
 
  /** Returns TRUE if the MPI communicator is empty (non-existing). **/
  bool isEmpty() const {return (mpi_comm_ptr_ == nullptr);}
 
  /** Retrieves back a pointer to the stored MPI communicator with a proper type. **/
  template<typename MPICommType>
- MPICommType * get() const {return static_cast<MPICommType*>(mpi_comm_ptr_);}
+ MPICommType * get() const {return static_cast<MPICommType*>(mpi_comm_ptr_.get());}
 
  /** Retrieves back a reference to the stored MPI communicator with a proper type. **/
  template<typename MPICommType>
- MPICommType & getRef() const {return *(static_cast<MPICommType*>(mpi_comm_ptr_));}
+ MPICommType & getRef() const {return *(std::static_pointer_cast<MPICommType>(mpi_comm_ptr_));}
 
 private:
 
- void allocateMPICommPtr(std::size_t bytes); //allocates mpi_comm_ptr_ member
-
- void * mpi_comm_ptr_; //owning pointer to an MPI communicator (MPI_Comm type)
+ std::shared_ptr<void> mpi_comm_ptr_; //owning pointer to an MPI communicator (MPI_Comm type)
 };
 
 
@@ -136,27 +129,6 @@ protected:
  MPICommProxy intra_comm_;                 //associated MPI intra-communicator
  std::size_t mem_per_process_;             //dynamic memory limit per process (bytes)
 };
-
-
-//DEFINITIONS:
-template <typename MPICommType>
-MPICommProxy::MPICommProxy(MPICommType mpi_comm):
- mpi_comm_ptr_(nullptr)
-{
- allocateMPICommPtr(sizeof(MPICommType)); //allocates mpi_comm_ptr_
- *(static_cast<MPICommType*>(mpi_comm_ptr_)) = mpi_comm;
-}
-
-
-template <typename MPICommType>
-MPICommProxy::MPICommProxy(MPICommType * mpi_comm_ptr):
- mpi_comm_ptr_(static_cast<void*>(mpi_comm_ptr))
-{
- if(mpi_comm_ptr != nullptr){
-  allocateMPICommPtr(sizeof(MPICommType)); //allocates mpi_comm_ptr_
-  *(static_cast<MPICommType*>(mpi_comm_ptr_)) = *mpi_comm_ptr;
- }
-}
 
 } //namespace exatn
 
