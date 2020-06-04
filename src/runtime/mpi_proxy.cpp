@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2020/06/03
+REVISION: 2020/06/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,8 +43,10 @@ std::shared_ptr<ProcessGroup> ProcessGroup::split(int my_subgroup) const
   auto & mpicomm = intra_comm_.getRef<MPI_Comm>();
   int color = MPI_UNDEFINED;
   if(my_subgroup >= 0) color = my_subgroup;
+  int my_orig_rank;
+  auto errc = MPI_Comm_rank(mpicomm,&my_orig_rank); assert(errc == MPI_SUCCESS);
   MPI_Comm subgroup_mpicomm;
-  auto errc = MPI_Comm_split(mpicomm,color,0,&subgroup_mpicomm); assert(errc == MPI_SUCCESS);
+  errc = MPI_Comm_split(mpicomm,color,my_orig_rank,&subgroup_mpicomm); assert(errc == MPI_SUCCESS);
   if(color != MPI_UNDEFINED){
    int subgroup_size;
    errc = MPI_Comm_size(subgroup_mpicomm,&subgroup_size); assert(errc == MPI_SUCCESS);
@@ -54,7 +56,7 @@ std::shared_ptr<ProcessGroup> ProcessGroup::split(int my_subgroup) const
    int sub_ranks[subgroup_size],orig_ranks[subgroup_size];
    for(int i = 0; i < subgroup_size; ++i) sub_ranks[i] = i;
    errc = MPI_Group_translate_ranks(new_group,subgroup_size,sub_ranks,orig_group,orig_ranks);
-   std::vector<unsigned int> subgroup_ranks(subgroup_size);
+   std::vector<unsigned int> subgroup_ranks(subgroup_size); //vector of global MPI ranks
    const auto & ranks = this->getProcessRanks();
    for(int i = 0; i < subgroup_size; ++i) subgroup_ranks[i] = ranks[orig_ranks[i]];
    subgroup = std::make_shared<ProcessGroup>(MPICommProxy(subgroup_mpicomm),subgroup_ranks,this->getMemoryLimitPerProcess());
