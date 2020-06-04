@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2019/10/04
+REVISION: 2020/06/04
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -28,10 +28,6 @@ public:
   const std::string name() const override {return "lazy-dag-executor";}
   const std::string description() const override {return "Lazy tensor graph executor";}
   std::shared_ptr<TensorGraphExecutor> clone() override {return std::make_shared<LazyGraphExecutor>();}
-
-protected:
-
-  VertexIdType nextExecutableNodeId(TensorGraph & dag);
 };
 
 } //namespace runtime

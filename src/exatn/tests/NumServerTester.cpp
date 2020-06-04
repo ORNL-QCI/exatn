@@ -1565,17 +1565,16 @@ TEST(NumServerTester, MPSBuilderNumServer)
 int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
-  //Set the available CPU Host RAM size:
+  //Set the available CPU Host RAM size to be used by ExaTN:
   exatn_parameters.setParameter("host_memory_buffer_size",4L*1024L*1024L*1024L);
-
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
-  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters);
+  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters,"lazy-dag-executor");
 #else
-  exatn::initialize(exatn_parameters);
+  exatn::initialize(exatn_parameters,"lazy-dag-executor");
 #endif
 
   ::testing::InitGoogleTest(&argc, argv);
