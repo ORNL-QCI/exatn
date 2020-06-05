@@ -386,6 +386,15 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                             tens1,tens2,
                                             DEV_DEFAULT,DEV_DEFAULT,
                                             op.getScalar(0));
+ if(error_code == DEVICE_UNABLE){
+  (task_res.first)->second.get()->clean();
+  error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
+                                          op.getIndexPattern(),
+                                          tens1,tens2,
+                                          DEV_NVIDIA_GPU,DEV_DEFAULT, //`Needs DEV_DEFAULT
+                                          op.getScalar(0));
+  if(error_code != TALSH_SUCCESS) error_code = TRY_LATER;
+ }
  return error_code;
 }
 
