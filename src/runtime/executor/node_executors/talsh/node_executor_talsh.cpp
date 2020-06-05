@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/01
+REVISION: 2020/06/05
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -86,6 +86,7 @@ TalshNodeExecutor::~TalshNodeExecutor()
  if(talsh_initialized_ && talsh_node_exec_count_ == 0){
   tasks_.clear();
   tensors_.clear();
+  talsh::printStatistics();
   auto error_code = talsh::shutdown();
   if(error_code == TALSH_SUCCESS){
    std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;
@@ -158,7 +159,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
   assert(false);
  }
  auto & tens = *(tens_pos->second);
- int error_code = op.apply(tens); //synchronous user-defined operation
+ int error_code = op.apply(tens); //synchronous user-defined Host operation
  *exec_handle = op.getId();
  return error_code;
 }
@@ -330,7 +331,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
  auto error_code = tens0.accumulate((task_res.first)->second.get(),
                                     op.getIndexPattern(),
                                     tens1,
-                                    DEV_HOST,0,
+                                    DEV_DEFAULT,DEV_DEFAULT,
                                     op.getScalar(0));
  return error_code;
 }
@@ -383,7 +384,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                             op.getIndexPattern(),
                                             tens1,tens2,
-                                            DEV_HOST,0,
+                                            DEV_DEFAULT,DEV_DEFAULT,
                                             op.getScalar(0));
  return error_code;
 }

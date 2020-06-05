@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/06/02
+REVISION: 2020/06/05
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -41,8 +41,8 @@ class TensorGraphExecutor : public Identifiable, public Cloneable<TensorGraphExe
 public:
 
   TensorGraphExecutor():
-   process_rank_(-1), node_executor_(nullptr), logging_(0), stopping_(false), active_(false),
-   time_start_(exatn::Timer::timeInSecHR())
+   node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1),
+   logging_(0), stopping_(false), active_(false), time_start_(exatn::Timer::timeInSecHR())
   {}
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
@@ -118,15 +118,20 @@ public:
 
   inline double getTimeStampStart() const {return time_start_;}
 
+  inline std::size_t incrementOpCounter() {return ++num_ops_issued_;}
+
+  inline std::size_t getOpCounter() const {return num_ops_issued_.load();}
+
 protected:
 
   std::shared_ptr<TensorNodeExecutor> node_executor_; //intr-node tensor operation executor
-  std::ofstream logfile_;         //logging file stream (output)
+  std::atomic<std::size_t> num_ops_issued_; //total number of issued tensor operations
   std::atomic<int> process_rank_; //current process rank
   std::atomic<int> logging_;      //logging level (0:none)
   std::atomic<bool> stopping_;    //signal to pause the execution thread
   std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
   const double time_start_;       //start time stamp
+  std::ofstream logfile_;         //logging file stream (output)
 };
 
 } //namespace runtime
