@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/05/22
+REVISION: 2020/06/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -64,6 +64,13 @@ public:
      error code (0:Success). **/
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) = 0;
+
+ /** Returns the flop estimate for the tensor operation, or zero if not available. **/
+ virtual double getFlopEstimate() const;
+
+ /** Returns the word estimate for the tensor operation, that is,
+     the combined volume of all tensor operands. **/
+ virtual double getWordEstimate() const;
 
  /** Prints. **/
  virtual void printIt() const;
@@ -132,7 +139,7 @@ public:
  /** Returns the unique integer identifier of the tensor operation. **/
  std::size_t getId() const;
 
- /** Returns a unique integerhash for the tensor operation. **/
+ /** Returns a unique integer hash for the tensor operation. **/
  TensorHashType getTensorOpHash() const;
 
  /** Records the start time stamp for tensor operation execution. **/

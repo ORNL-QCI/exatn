@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/05/22
+REVISION: 2020/06/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,6 +7,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_operation.hpp"
 
 #include <iostream>
+#include <ios>
 
 namespace exatn{
 
@@ -23,6 +24,22 @@ TensorOperation::TensorOperation(TensorOpCode opcode,
  operands_.reserve(num_operands);
 }
 
+double TensorOperation::getFlopEstimate() const
+{
+ return 0.0; //flop estimate is not available by default
+}
+
+double TensorOperation::getWordEstimate() const
+{
+ double total_volume = 0.0;
+ if(this->isSet()){
+  for(unsigned int i = 0; i < this->getNumOperands(); ++i){
+   total_volume += static_cast<double>(this->getTensorOperand(i)->getVolume());
+  }
+ }
+ return total_volume;
+}
+
 void TensorOperation::printIt() const
 {
  std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
@@ -37,7 +54,9 @@ void TensorOperation::printIt() const
   std::cout << " " << scalar;
  }
  if(scalars_.size() > 0) std::cout << std::endl;
- std::cout << "}" << std::endl;
+ std::cout << " GFlop estimate = " << std::scientific << this->getFlopEstimate()/1e9 << std::endl;
+ std::cout << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
+ std::cout << "}" << std::endl << std::flush;
  return;
 }
 
@@ -55,6 +74,8 @@ void TensorOperation::printItFile(std::ofstream & output_file) const
   output_file << " " << scalar;
  }
  if(scalars_.size() > 0) output_file << std::endl;
+ output_file << " GFlop estimate = " << std::scientific << this->getFlopEstimate()/1e9 << std::endl;
+ output_file << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  output_file << "}" << std::endl;
  output_file.flush();
  return;

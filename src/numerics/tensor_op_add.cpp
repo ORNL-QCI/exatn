@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2020/04/07
+REVISION: 2020/06/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,6 +29,12 @@ int TensorOpAdd::accept(runtime::TensorNodeExecutor & node_executor,
                         runtime::TensorOpExecHandle * exec_handle)
 {
  return node_executor.execute(*this,exec_handle);
+}
+
+double TensorOpAdd::getFlopEstimate() const
+{
+ if(this->isSet()) return static_cast<double>(this->getTensorOperand(0)->getVolume());
+ return 0.0;
 }
 
 std::unique_ptr<TensorOperation> TensorOpAdd::createNew()

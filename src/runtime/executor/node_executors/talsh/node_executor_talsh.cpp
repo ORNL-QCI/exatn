@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/05
+REVISION: 2020/06/06
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -386,14 +386,14 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                             tens1,tens2,
                                             DEV_DEFAULT,DEV_DEFAULT,
                                             op.getScalar(0));
- if(error_code == DEVICE_UNABLE){
+ if(error_code == DEVICE_UNABLE){ //use out-of-core version if tensor contraction does not fit in GPU
+  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CONTRACT: Redirected to XL\n"; //debug
   (task_res.first)->second.get()->clean();
   error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
                                           op.getIndexPattern(),
                                           tens1,tens2,
                                           DEV_NVIDIA_GPU,DEV_DEFAULT, //`Needs DEV_DEFAULT
                                           op.getScalar(0));
-  if(error_code != TALSH_SUCCESS) error_code = TRY_LATER;
  }
  return error_code;
 }
