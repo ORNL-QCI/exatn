@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2019/10/29
+REVISION: 2020/06/08
 
-Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) The execution space consists of one or more DAGs in which nodes
@@ -219,6 +219,21 @@ public:
       error_code will return the error code (if executed). **/
   bool nodeExecuted(VertexIdType vertex_id, int * error_code = nullptr) {
     return getNodeProperties(vertex_id).isExecuted(error_code);
+  }
+
+  /** Returns TRUE if all node dependencies have been resolved,
+      that is, successfully executed to completion. **/
+  bool nodeDependenciesResolved(VertexIdType vertex_id) {
+    bool resolved = true;
+    lock();
+    auto dependencies = getNeighborList(vertex_id);
+    for(const auto & dep: dependencies){
+      int error_code;
+      auto executed = nodeExecuted(dep,&error_code);
+      if((!executed) || (error_code != 0)){resolved = false; break;}
+    }
+    unlock();
+    return resolved;
   }
 
   /** Returns the current outstanding update count on the tensor in the DAG. **/

@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/09/03
+REVISION: 2020/06/08
 
-Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph is a directed acyclic graph in which vertices
@@ -73,28 +73,40 @@ public:
   DirectedBoostGraph & operator=(DirectedBoostGraph &&) noexcept = default;
   virtual ~DirectedBoostGraph() = default;
 
+  /** Appends a new DAG node and returns its vertex id. **/
   VertexIdType addOperation(std::shared_ptr<TensorOperation> op) override;
 
+  /** Marks dependency of Vertex dependent on Vertex dependee by establishing
+      a directed DAG edge from Vertex dependent. **/
   void addDependency(VertexIdType dependent,
                      VertexIdType dependee) override;
 
+  /** Returns TRUE if vertex_id1 depends on vertex_id2, FALSE otherwise. **/
   bool dependencyExists(VertexIdType vertex_id1,
                         VertexIdType vertex_id2) override;
 
+  /** Returns the properties of a given DAG node. **/
   TensorOpNode & getNodeProperties(VertexIdType vertex_id) override;
 
+  /** Returns the number of dependencies for a given DAG node. **/
   std::size_t getNodeDegree(VertexIdType vertex_id) override;
 
+  /** Returns the total number of nodes in the DAG. **/
   std::size_t getNumNodes() override;
 
+  /** Returns the total number of dependencies in the DAG,
+      that is, the total number of directed edges in the DAG. **/
   std::size_t getNumDependencies() override;
 
+  /** Returns the list of dependencies of a given DAG node, that is,
+      the list of vertices the given one depends on. **/
   std::vector<VertexIdType> getNeighborList(VertexIdType vertex_id) override;
 
   void computeShortestPath(VertexIdType startIndex,
                            std::vector<double> & distances,
                            std::vector<VertexIdType> & paths) override;
 
+  /** Prints the DAG. **/
   void printIt() override;
 
   const std::string name() const override {
