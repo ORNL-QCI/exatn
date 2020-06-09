@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/06
+REVISION: 2020/06/09
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -159,6 +159,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
   assert(false);
  }
  auto & tens = *(tens_pos->second);
+ auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
  int error_code = op.apply(tens); //synchronous user-defined Host operation
  *exec_handle = op.getId();
  return error_code;

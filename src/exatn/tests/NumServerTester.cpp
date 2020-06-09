@@ -8,6 +8,7 @@
 #endif
 
 #include <iostream>
+#include <ios>
 #include <utility>
 
 
@@ -25,10 +26,113 @@
 #define EXATN_TEST11
 #define EXATN_TEST12
 #define EXATN_TEST13
-#define EXATN_TEST14*/
+#define EXATN_TEST14
+#define EXATN_TEST15*/
 
 
 #ifdef EXATN_TEST0
+TEST(NumServerTester, ExamplarBasicExaTN)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ const exatn::DimExtent OC_RANGE = 30;
+ const exatn::DimExtent VI_RANGE = 60;
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ exatn::resetRuntimeLoggingLevel(2); //debug
+
+ bool success;
+
+ //Declare and then create (allocate) a tensor (in two steps):
+ auto z2 = exatn::makeSharedTensor("Z2",TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); //declares tensor Z2 with no storage
+ success = exatn::createTensor(z2,TENS_ELEM_TYPE); assert(success); //allocates REAL64 storage for tensor Z2
+
+ //Create tensors in one step (with allocated storage):
+ success = exatn::createTensor("Y2",TENS_ELEM_TYPE,TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); assert(success);
+ success = exatn::createTensor("T2",TENS_ELEM_TYPE,TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); assert(success);
+ success = exatn::createTensor("S2",TENS_ELEM_TYPE,TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); assert(success);
+ success = exatn::createTensor("H2",TENS_ELEM_TYPE,TensorShape{VI_RANGE,VI_RANGE,VI_RANGE,VI_RANGE}); assert(success);
+ success = exatn::createTensor("W2",TENS_ELEM_TYPE,TensorShape{VI_RANGE,VI_RANGE,VI_RANGE,VI_RANGE}); assert(success);
+ success = exatn::createTensor("ENERGY",TENS_ELEM_TYPE); assert(success); //just a scalar
+
+ //Initialize tensors to a scalar value:
+ success = exatn::initTensor("Z2",0.0); assert(success);
+ success = exatn::initTensor("Y2",0.0); assert(success);
+ success = exatn::initTensor("T2",1e-4); assert(success);
+ success = exatn::initTensor("S2",2e-4); assert(success);
+ success = exatn::initTensor("H2",1e-3); assert(success);
+ success = exatn::initTensor("W2",2e-3); assert(success);
+ success = exatn::initTensor("ENERGY",0.0); assert(success);
+
+ //Perform binary tensor contractions (scaled by a scalar):
+ success = exatn::contractTensors("Z2(a,b,i,j)+=T2(d,c,j,i)*H2(c,b,d,a)",0.5); assert(success);
+ success = exatn::contractTensors("Y2(a,b,i,j)+=S2(c,d,j,i)*W2(b,d,a,c)",1.0); assert(success);
+ success = exatn::contractTensors("ENERGY()+=Z2(a,b,i,j)*Z2(a,b,i,j)",0.25); assert(success);
+ success = exatn::contractTensors("ENERGY()+=Y2(a,b,i,j)*Y2(a,b,i,j)",0.25); assert(success);
+
+ //Synchronize ExaTN server:
+ exatn::sync();
+
+ //Compute 2-norms (synchronously):
+ double norm2 = 0.0;
+ success = exatn::computeNorm2Sync("Z2",norm2); assert(success);
+ std::cout << "Z2 2-norm = " << std::scientific << norm2 << std::endl << std::flush;
+ norm2 = 0.0;
+ success = exatn::computeNorm2Sync("Y2",norm2); assert(success);
+ std::cout << "Y2 2-norm = " << std::scientific << norm2 << std::endl << std::flush;
+ norm2 = 0.0;
+ success = exatn::computeNorm2Sync("ENERGY",norm2); assert(success);
+ std::cout << "ENERGY 2-norm = " << std::scientific << norm2 << std::endl << std::flush;
+
+ //Retrieve scalar ENERGY:
+ if(TENS_ELEM_TYPE == TensorElementType::REAL32){
+  auto local_copy = exatn::getLocalTensor("ENERGY"); assert(local_copy);
+  const float * body_ptr;
+  auto access_granted = local_copy->getDataAccessHostConst(&body_ptr); assert(access_granted);
+  std::cout << "ENERGY value = " << *body_ptr << " VS correct value of "
+            << std::pow(std::pow(double{VI_RANGE},2)*(1e-4)*(1e-3)*0.5,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+             + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+            << std::endl << std::flush;
+  body_ptr = nullptr;
+  local_copy.reset();
+ }else if(TENS_ELEM_TYPE == TensorElementType::REAL64){
+  auto local_copy = exatn::getLocalTensor("ENERGY"); assert(local_copy);
+  const double * body_ptr;
+  auto access_granted = local_copy->getDataAccessHostConst(&body_ptr); assert(access_granted);
+  std::cout << "ENERGY value = " << *body_ptr << " VS correct value of "
+            << std::pow(std::pow(double{VI_RANGE},2)*(1e-4)*(1e-3)*0.5,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+             + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+            << std::endl << std::flush;
+  body_ptr = nullptr;
+  local_copy.reset();
+ }
+
+ //Synchronize ExaTN server:
+ exatn::sync();
+
+ //Destroy all tensors:
+ success = exatn::destroyTensor("ENERGY"); assert(success);
+ success = exatn::destroyTensor("W2"); assert(success);
+ success = exatn::destroyTensor("H2"); assert(success);
+ success = exatn::destroyTensor("S2"); assert(success);
+ success = exatn::destroyTensor("T2"); assert(success);
+ success = exatn::destroyTensor("Y2"); assert(success);
+ success = exatn::destroyTensor("Z2"); assert(success);
+ z2.reset();
+
+ //Synchronize ExaTN server:
+ exatn::sync();
+ exatn::resetRuntimeLoggingLevel(0);
+}
+#endif
+
+#ifdef EXATN_TEST1
 TEST(NumServerTester, ExamplarExaTN)
 {
  using exatn::Tensor;
@@ -39,7 +143,7 @@ TEST(NumServerTester, ExamplarExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(1); //debug
+ exatn::resetRuntimeLoggingLevel(0); //debug
 
  bool success;
 
@@ -85,7 +189,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  //Compute Z0 2-norm (synchronously):
  double norm2 = 0.0;
- success = exatn::computeNorm2Sync("Z0",norm2);
+ success = exatn::computeNorm2Sync("Z0",norm2); assert(success);
  std::cout << "Z0 2-norm = " << norm2 << std::endl << std::flush;
 
  //Compute Z0 2-norm by a tensor contraction (synchronously):
@@ -107,7 +211,7 @@ TEST(NumServerTester, ExamplarExaTN)
 }
 #endif
 
-#ifdef EXATN_TEST1
+#ifdef EXATN_TEST2
 TEST(NumServerTester, checkNumServer)
 {
  using exatn::VectorSpace;
@@ -147,7 +251,7 @@ TEST(NumServerTester, checkNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST2
+#ifdef EXATN_TEST3
 TEST(NumServerTester, useNumServer)
 {
  using exatn::TensorOpCode;
@@ -314,7 +418,7 @@ TEST(NumServerTester, useNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST3
+#ifdef EXATN_TEST4
 TEST(NumServerTester, easyNumServer)
 {
  using exatn::Tensor;
@@ -373,7 +477,7 @@ TEST(NumServerTester, easyNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST4
+#ifdef EXATN_TEST5
 TEST(NumServerTester, superEasyNumServer)
 {
  using exatn::Tensor;
@@ -442,7 +546,7 @@ TEST(NumServerTester, superEasyNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST5
+#ifdef EXATN_TEST6
 TEST(NumServerTester, circuitNumServer)
 {
  using exatn::Tensor;
@@ -544,7 +648,7 @@ TEST(NumServerTester, circuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST6
+#ifdef EXATN_TEST7
 TEST(NumServerTester, circuitConjugateNumServer)
 {
  using exatn::Tensor;
@@ -625,7 +729,7 @@ TEST(NumServerTester, circuitConjugateNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST7
+#ifdef EXATN_TEST8
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::Tensor;
@@ -770,7 +874,7 @@ TEST(NumServerTester, largeCircuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST8
+#ifdef EXATN_TEST9
 TEST(NumServerTester, Sycamore8NumServer)
 {
  using exatn::Tensor;
@@ -896,7 +1000,7 @@ TEST(NumServerTester, Sycamore8NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST9
+#ifdef EXATN_TEST10
 TEST(NumServerTester, Sycamore12NumServer)
 {
  using exatn::Tensor;
@@ -1013,7 +1117,7 @@ TEST(NumServerTester, Sycamore12NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST10
+#ifdef EXATN_TEST11
 TEST(NumServerTester, rcsNumServer)
 {
  using exatn::Tensor;
@@ -1199,7 +1303,7 @@ TEST(NumServerTester, rcsNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST11
+#ifdef EXATN_TEST12
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -1273,7 +1377,7 @@ TEST(NumServerTester, BigMPSNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST12
+#ifdef EXATN_TEST13
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::Tensor;
@@ -1429,7 +1533,7 @@ TEST(NumServerTester, HamiltonianNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST13
+#ifdef EXATN_TEST14
 TEST(NumServerTester, EigenNumServer)
 {
  using exatn::Tensor;
@@ -1519,7 +1623,7 @@ TEST(NumServerTester, EigenNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST14
+#ifdef EXATN_TEST15
 TEST(NumServerTester, MPSBuilderNumServer)
 {
  using exatn::Tensor;
