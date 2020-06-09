@@ -388,7 +388,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                             DEV_DEFAULT,DEV_DEFAULT,
                                             op.getScalar(0));
  if(error_code == DEVICE_UNABLE){ //use out-of-core version if tensor contraction does not fit in GPU
-  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CONTRACT: Redirected to XL\n"; //debug
+  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CONTRACT: Redirected to XL\n" << std::flush; //debug
   (task_res.first)->second.get()->clean();
   error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
                                           op.getIndexPattern(),
