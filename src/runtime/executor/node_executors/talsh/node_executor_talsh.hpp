@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/01
+REVISION: 2020/06/12
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -69,12 +69,26 @@ public:
 
   bool sync(TensorOpExecHandle op_handle,
             int * error_code,
-            bool wait = false) override;
+            bool wait = true) override;
+
+  bool sync(bool wait = true) override;
 
   bool discard(TensorOpExecHandle op_handle) override;
 
+  bool prefetch(const numerics::TensorOperation & op) override;
+
   std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;
+
+  /** Finishes tensor operand prefetching for a given tensor operation. **/
+  bool finishPrefetching(const numerics::TensorOperation & op);
+
+  /** Caches TAL-SH tensor images moved to accelerators during tensor operation. **/
+  void cacheMovedTensors(const talsh::TensorTask & talsh_task);
+
+  /** Evicts some or all idle cached tensor images from an accelerator, moving them back to Host. **/
+  void evictMovedTensors(int device_id = DEV_DEFAULT,     //in: flat device id (TAL-SH numeration), DEV_DEFAULT covers all accelerators
+                         std::size_t required_space = 0); //in: required space to free in bytes (0 will evict all idle tensor images on the chosen device)
 
   const std::string name() const override {return "talsh-node-executor";}
   const std::string description() const override {return "TALSH tensor graph node executor";}
@@ -85,6 +99,8 @@ protected:
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
+  /** Active tensor operand prefetching tasks **/
+  std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
   /** TAL-SH Host memory buffer size (bytes) **/
   std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/

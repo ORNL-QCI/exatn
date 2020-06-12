@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/09
+REVISION: 2020/06/12
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -744,6 +744,13 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
 }
 
 
+bool TalshNodeExecutor::sync(bool wait)
+{
+ //`Implement
+ return false;
+}
+
+
 bool TalshNodeExecutor::discard(TensorOpExecHandle op_handle)
 {
  auto iter = tasks_.find(op_handle);
@@ -751,6 +758,13 @@ bool TalshNodeExecutor::discard(TensorOpExecHandle op_handle)
   tasks_.erase(iter);
   return true;
  }
+ return false;
+}
+
+
+bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
+{
+ //`Implement
  return false;
 }
 
@@ -794,6 +808,27 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
  auto & talsh_tensor = *(tens_pos->second);
  auto error_code = talsh_tensor.extractSlice(nullptr,*slice,offsets); assert(error_code == TALSH_SUCCESS);
  return slice;
+}
+
+
+bool finishPrefetching(const numerics::TensorOperation & op)
+{
+ //`Implement
+ return false;
+}
+
+
+void TalshNodeExecutor::cacheMovedTensors(const talsh::TensorTask & talsh_task)
+{
+ //`Implement
+ return;
+}
+
+
+void TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_space)
+{
+ //`Implement
+ return;
 }
 
 } //namespace runtime
