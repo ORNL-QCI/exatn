@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2020/06/08
+REVISION: 2020/06/16
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -198,7 +198,7 @@ public:
     TensorOpNode & node_properties = getNodeProperties(vertex_id);
     node_properties.setExecuted(error_code);
     auto & op = node_properties.getOperation();
-    auto & output_tensor = *(op->getTensorOperand(0));
+    auto & output_tensor = *(op->getTensorOperand(0)); //`Assumes a single output tensor
     lock();
     auto update_cnt = exec_state_.registerWriteCompletion(output_tensor);
     unlock();
@@ -261,10 +261,11 @@ public:
     return avail;
   }
 
-  /** Registers a DAG node as being executed. **/
-  inline void registerExecutingNode(VertexIdType node_id) {
+  /** Registers a DAG node as being executed (together with its execution handle). **/
+  inline void registerExecutingNode(VertexIdType node_id,
+                                    TensorOpExecHandle exec_handle) {
     lock();
-    exec_state_.registerExecutingNode(node_id);
+    exec_state_.registerExecutingNode(node_id,exec_handle);
     unlock();
     return;
   }
@@ -276,6 +277,18 @@ public:
     unlock();
     return avail;
   }
+
+  inline ExecutingNodesIterator extractExecutingNode(ExecutingNodesIterator node_iterator,
+                                                     VertexIdType * node_id) {
+    lock();
+    auto new_iter = exec_state_.extractExecutingNode(node_iterator,node_id);
+    unlock();
+    return new_iter;
+  }
+
+  /** Returns a constant iterator to the list of currently executing DAG nodes. **/
+  inline ExecutingNodesIterator executingNodesBegin() const {return exec_state_.executingNodesBegin();}
+  inline ExecutingNodesIterator executingNodesEnd() const {return exec_state_.executingNodesEnd();}
 
   /** Given just executed DAG node, moves forward the DAG front node
       if appropriate. **/

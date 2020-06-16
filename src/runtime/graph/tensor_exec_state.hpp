@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/10/16
+REVISION: 2020/06/16
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph is a directed acyclic graph in which vertices
@@ -58,6 +58,8 @@ using numerics::TensorHashType; //each numerics::Tensor has its unique integer h
 using numerics::Tensor;
 using numerics::TensorOperation;
 
+using ExecutingNodesIterator = typename std::list<std::pair<VertexIdType,TensorOpExecHandle>>::const_iterator;
+
 
 class TensorExecState {
 
@@ -110,10 +112,16 @@ public:
       Returns FALSE if no such node exists. **/
   bool extractDependencyFreeNode(VertexIdType * node_id);
 
-  /** Registers a DAG node as being executed. **/
-  void registerExecutingNode(VertexIdType node_id);
+  /** Registers a DAG node as being executed (together with its execution handle). **/
+  void registerExecutingNode(VertexIdType node_id,
+                             TensorOpExecHandle exec_handle);
   /** Extracts an executed DAG node from the list. **/
   bool extractExecutingNode(VertexIdType * node_id);
+  ExecutingNodesIterator extractExecutingNode(ExecutingNodesIterator node_iterator,
+                                              VertexIdType * node_id);
+  /** Returns a constant iterator to the list of currently executing DAG nodes. **/
+  inline ExecutingNodesIterator executingNodesBegin() const {return nodes_executing_.cbegin();}
+  inline ExecutingNodesIterator executingNodesEnd() const {return nodes_executing_.cend();}
 
   /** Moves the front node forward if the given DAG node is the next node
       after the front node and it has just been executed to completion. **/
@@ -129,7 +137,7 @@ private:
   /** List of dependency-free unexecuted DAG nodes **/
   std::list<VertexIdType> nodes_ready_;
   /** List of the DAG nodes being currently executed **/
-  std::list<VertexIdType> nodes_executing_;
+  std::list<std::pair<VertexIdType,TensorOpExecHandle>> nodes_executing_;
   /** Execution front node (all previous DAG nodes have been executed). **/
   VertexIdType front_node_;
 };

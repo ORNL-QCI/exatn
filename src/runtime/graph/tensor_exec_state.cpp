@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2019/10/16
+REVISION: 2020/06/16
 
-Copyright (C) 2018-2019 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "tensor_exec_state.hpp"
@@ -91,9 +91,9 @@ bool TensorExecState::extractDependencyFreeNode(VertexIdType * node_id)
   return !empty;
 }
 
-void TensorExecState::registerExecutingNode(VertexIdType node_id)
+void TensorExecState::registerExecutingNode(VertexIdType node_id, TensorOpExecHandle exec_handle)
 {
-  nodes_executing_.emplace_back(node_id);
+  nodes_executing_.emplace_back(std::make_pair(node_id,exec_handle));
   return;
 }
 
@@ -101,10 +101,18 @@ bool TensorExecState::extractExecutingNode(VertexIdType * node_id)
 {
   bool empty = nodes_executing_.empty();
   if(!empty){
-    *node_id = nodes_executing_.front();
+    *node_id = nodes_executing_.front().first;
     nodes_executing_.pop_front();
   }
   return !empty;
+}
+
+ExecutingNodesIterator TensorExecState::extractExecutingNode(ExecutingNodesIterator node_iterator,
+                                                             VertexIdType * node_id)
+{
+  assert(node_iterator != nodes_executing_.cend());
+  *node_id = node_iterator->first;
+  return nodes_executing_.erase(node_iterator);
 }
 
 bool TensorExecState::progressFrontNode(VertexIdType node_executed)
