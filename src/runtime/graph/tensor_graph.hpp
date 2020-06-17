@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2020/06/16
+REVISION: 2020/06/17
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -73,6 +73,12 @@ public:
 
   /** Returns the (unqiue) id of the tensor graph node. **/
   inline VertexIdType getId() const {return id_;}
+
+  /** Returns TRUE if the tensor graph node is idle. **/
+  inline bool isIdle() {
+    bool ans = executing_.load();
+    return !(ans || executed_.load());
+  }
 
   /** Returns TRUE if the tensor graph node is currently being executed. **/
   inline bool isExecuting() {return executing_.load();}
