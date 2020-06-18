@@ -839,5 +839,14 @@ void TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_sp
  return;
 }
 
+
+bool TalshNodeExecutor::tensorIsCurrentlyInUse(const talsh_tens_t * talsh_tens) const
+{
+ for(const auto & task: tasks_){
+  //`Finish
+ }
+ return false;
+}
+
 } //namespace runtime
 } //namespace exatn

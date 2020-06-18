@@ -97,11 +97,12 @@ public:
 
 protected:
 
-  struct CacheAttr{
-    std::size_t volume;
-    int priority;
-    int device;
+  struct CachedTensor{
+    talsh_tens_t * talsh_tens = NULL;
+    int priority = 0;
   };
+
+  bool tensorIsCurrentlyInUse(const talsh_tens_t * talsh_tens) const;
 
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
@@ -110,7 +111,7 @@ protected:
   /** Active tensor operand prefetching tasks **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
   /** Register of tensors with body images moved to accelerators. **/
-  std::list<std::pair<numerics::TensorHashType,CacheAttr>> accel_cache_;
+  std::list<CachedTensor> accel_cache_[DEV_MAX]; //for each device
   /** TAL-SH Host memory buffer size (bytes) **/
   std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/
