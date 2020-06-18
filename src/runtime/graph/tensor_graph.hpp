@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2020/06/17
+REVISION: 2020/06/18
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -74,12 +74,6 @@ public:
   /** Returns the (unqiue) id of the tensor graph node. **/
   inline VertexIdType getId() const {return id_;}
 
-  /** Returns TRUE if the tensor graph node is idle. **/
-  inline bool isIdle() {
-    bool ans = executing_.load();
-    return !(ans || executed_.load());
-  }
-
   /** Returns TRUE if the tensor graph node is currently being executed. **/
   inline bool isExecuting() {return executing_.load();}
 
@@ -88,6 +82,12 @@ public:
     bool ans = executed_.load();
     if(error_code != nullptr && ans) *error_code = error_.load();
     return ans;
+  }
+
+  /** Returns TRUE if the tensor graph node is neither executed nor currently executing. **/
+  inline bool isIdle() {
+    bool ans = executing_.load();
+    return !(ans || executed_.load());
   }
 
   /** Sets the (unique) id of the tensor graph node. **/
@@ -225,6 +225,11 @@ public:
       error_code will return the error code (if executed). **/
   bool nodeExecuted(VertexIdType vertex_id, int * error_code = nullptr) {
     return getNodeProperties(vertex_id).isExecuted(error_code);
+  }
+
+  /** Returns TRUE if the DAG node is neither executed nor currently executing. **/
+  bool nodeIdle(VertexIdType vertex_id) {
+    return getNodeProperties(vertex_id).isIdle();
   }
 
   /** Returns TRUE if all node dependencies have been resolved,

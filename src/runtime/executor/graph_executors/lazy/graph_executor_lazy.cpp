@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/17
+REVISION: 2020/06/18
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -20,39 +20,58 @@ namespace runtime {
 void LazyGraphExecutor::execute(TensorGraph & dag) {
 
   struct Progress {
-    VertexIdType num_nodes;
-    VertexIdType front;
-    VertexIdType current;
+    VertexIdType num_nodes; //total number of nodes in the DAG (may grow)
+    VertexIdType front;     //the first unexecuted node in the DAG
+    VertexIdType current;   //the current node in the DAG
   };
 
   Progress progress{dag.getNumNodes(),dag.getFrontNode(),0};
   progress.current = progress.front;
 
-  auto move_to_next_node = [this,&dag,&progress] () {
-    bool moved = false;
+  auto find_next_idle_node = [this,&dag,&progress] () {
+    const auto prev_node = progress.current;
+    progress.front = dag.getFrontNode();
     progress.num_nodes = dag.getNumNodes();
-    if(++(progress.current) < progress.num_nodes){
-      progress.front = dag.getFrontNode();
-      if(progress.current < (progress.front + this->getPipelineDepth())){
-        moved = true;
-      }else{ //the current node must stay within the max pipeline depth from the front node
+    if(progress.front < progress.num_nodes){
+      ++progress.current;
+      if(progress.current >= progress.num_nodes){
         progress.current = progress.front;
-        moved = true;
+        if(progress.current == prev_node) ++progress.current;
+      }else{
+        if(progress.current >= (progress.front + this->getPipelineDepth())){
+          progress.current = progress.front;
+          if(progress.current == prev_node) ++progress.current;
+        }
       }
+      while(progress.current < progress.num_nodes){
+        if(dag.nodeIdle(progress.current)) break;
+        ++progress.current;
+      }
+    }else{ //all DAG nodes have been executed
+      progress.current = progress.front; //end-of-DAG
     }
-    return moved;
+    progress.num_nodes = dag.getNumNodes(); //update DAG size again
+    return (progress.current < progress.num_nodes && progress.current != prev_node);
   };
 
   auto inspect_node_dependencies = [this,&dag,&progress] () {
-    auto & dag_node = dag.getNodeProperties(progress.current);
-    bool ready_for_execution = dag_node.isIdle();
-    if(ready_for_execution){ //node is idle
-      ready_for_execution = ready_for_execution && dag.nodeDependenciesResolved(progress.current);
-      if(ready_for_execution){ //all node dependencies resolved (or none)
-        dag.registerDependencyFreeNode(progress.current);
-      }else{ //node still has unresolved dependencies, try prefetching
-        if(progress.current < (progress.front + this->getPrefetchDepth())){
-          auto prefetching = this->node_executor_->prefetch(*(dag_node.getOperation()));
+    bool ready_for_execution = false;
+    if(progress.current < progress.num_nodes){
+      auto & dag_node = dag.getNodeProperties(progress.current);
+      ready_for_execution = dag_node.isIdle();
+      if(ready_for_execution){ //node is idle
+        ready_for_execution = ready_for_execution && dag.nodeDependenciesResolved(progress.current);
+        if(ready_for_execution){ //all node dependencies resolved (or none)
+          dag.registerDependencyFreeNode(progress.current);
+        }else{ //node still has unresolved dependencies, try prefetching
+          if(progress.current < (progress.front + this->getPrefetchDepth())){
+            auto prefetching = this->node_executor_->prefetch(*(dag_node.getOperation()));
+            if(logging_.load() != 0 && prefetching){
+              logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                       << "](LazyGraphExecutor)[EXEC_THREAD]: Initiated prefetch for tensor operation "
+                       << progress.current << std::endl;
+            }
+          }
         }
       }
     }
@@ -66,24 +85,47 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
       dag.setNodeExecuting(node);
       auto & dag_node = dag.getNodeProperties(node);
       auto op = dag_node.getOperation();
+      if(logging_.load() != 0){
+        logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                 << "](LazyGraphExecutor)[EXEC_THREAD]: Submitting tensor operation "
+                 << node << ": Opcode = " << static_cast<int>(op->getOpcode());
+        if(logging_.load() > 1){
+          logfile_ << ": Details:" << std::endl;
+          op->printItFile(logfile_);
+        }
+      }
       op->recordStartTime();
       TensorOpExecHandle exec_handle;
       auto error_code = op->accept(*(this->node_executor_),&exec_handle);
+      if(logging_.load() != 0) logfile_ << ": Status = " << error_code;
       if(error_code == 0){ //tensor operation submitted for execution successfully
+        if(logging_.load() != 0) logfile_ << ": Syncing ... ";
         auto synced = this->node_executor_->sync(exec_handle,&error_code,false);
         if(synced){ //tensor operation has completed immediately
           op->recordFinishTime();
           dag.setNodeExecuted(node,error_code);
           if(error_code == 0){
+            if(logging_.load() != 0){
+              logfile_ << "Success [" << std::fixed << std::setprecision(6)
+                       << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
+              logfile_.flush();
+            }
+            progress.num_nodes = dag.getNumNodes();
             dag.progressFrontNode(node);
             progress.front = dag.getFrontNode();
           }else{
+            if(logging_.load() != 0){
+              logfile_ << "Failed: Error " << error_code << " [" << std::fixed << std::setprecision(6)
+                       << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
+              logfile_.flush();
+            }
             std::cout << "#ERROR(exatn::TensorRuntime::GraphExecutorLazy): Immediate completion error for tensor operation "
              << node << " with execution handle " << exec_handle << ": Error " << error_code << std::endl << std::flush;
             assert(false); //`Do I need to handle this case gracefully?
           }
         }else{ //tensor operation is still executing asynchronously
           dag.registerExecutingNode(node,exec_handle);
+          if(logging_.load() != 0) logfile_ << "Deferred" << std::endl;
         }
       }else{ //tensor operation not submitted due to either temporary resource shortage or fatal error
         auto discarded = this->node_executor_->discard(exec_handle);
@@ -113,9 +155,22 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
         op->recordFinishTime();
         dag.setNodeExecuted(node,error_code);
         if(error_code == 0){
+          if(logging_.load() != 0){
+            logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Synced tensor operation "
+                     << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
+            logfile_.flush();
+          }
+          progress.num_nodes = dag.getNumNodes();
           dag.progressFrontNode(node);
           progress.front = dag.getFrontNode();
         }else{
+          if(logging_.load() != 0){
+            logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Failed to sync tensor operation "
+                     << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
+            logfile_.flush();
+          }
           std::cout << "#ERROR(exatn::TensorRuntime::GraphExecutorLazy): Deferred completion error for tensor operation "
            << node << " with execution handle " << exec_handle << ": Error " << error_code << std::endl << std::flush;
           assert(false); //`Do I need to handle this case gracefully?
@@ -127,46 +182,19 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
     return;
   };
 
-  //`Finish
-
+  bool not_done = (progress.front < progress.num_nodes);
+  while(not_done){
+    //Try to issue all idle DAG nodes that are ready for execution:
+    while(issue_ready_node());
+    //Inspect whether the current node can be issued:
+    auto node_ready = inspect_node_dependencies();
+    //Test the currently executing DAG nodes for completion:
+    test_nodes_for_completion();
+    //Find the next idle DAG node:
+    not_done = find_next_idle_node() || (progress.front < progress.num_nodes);
+  }
   return;
 }
-
-#if 0
-if(logging_.load() != 0){
-        logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-                 << "](LazyGraphExecutor)[EXEC_THREAD]: Submitting tensor operation "
-                 << current << ": Opcode = " << static_cast<int>(op->getOpcode()); //debug
-        if(logging_.load() > 1){
-          logfile_ << ": Details:" << std::endl;
-          op->printItFile(logfile_);
-        }
-      }
-
-if(logging_.load() != 0){
-        logfile_ << ": Status = " << error_code << ": "; //debug
-      }
-
-if(logging_.load() != 0){
-          logfile_ << "Syncing ... "; //debug
-        }
-
-if(logging_.load() != 0){
-            logfile_ << "Success [" << std::fixed << std::setprecision(6)
-                     << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl; //debug
-            logfile_.flush();
-          }
-
-if(logging_.load() != 0){
-            logfile_ << "Failed to synchronize tensor operation: Error " << error_code << std::endl;
-            logfile_.flush();
-          }
-
-if(logging_.load() != 0){
-          logfile_ << "Will retry again" << std::endl; //debug
-          logfile_.flush();
-        }
-#endif
 
 } //namespace runtime
 } //namespace exatn
