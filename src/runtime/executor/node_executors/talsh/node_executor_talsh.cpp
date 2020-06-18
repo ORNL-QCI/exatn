@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/12
+REVISION: 2020/06/18
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -746,8 +746,10 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
 
 bool TalshNodeExecutor::sync(bool wait)
 {
- //`Implement
- return false;
+ bool synced = true;
+ for(auto & task: tasks_) synced = synced && task.second->wait();
+ for(auto & task: prefetches_) synced = synced && task.second->wait();
+ return synced;
 }
 
 
@@ -811,10 +813,16 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
 }
 
 
-bool finishPrefetching(const numerics::TensorOperation & op)
+bool TalshNodeExecutor::finishPrefetching(const numerics::TensorOperation & op)
 {
- //`Implement
- return false;
+ bool synced = true;
+ const auto num_operands = op.getNumOperands();
+ for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
+  const auto tens_hash = op.getTensorOperand(oprnd)->getTensorHash();
+  auto iter = prefetches_.find(tens_hash);
+  if(iter != prefetches_.end()) synced = synced && iter->second->wait();
+ }
+ return synced;
 }
 
 

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/12
+REVISION: 2020/06/18
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -17,6 +17,7 @@ Rationale:
 
 #include <unordered_map>
 #include <vector>
+#include <list>
 #include <memory>
 #include <atomic>
 
@@ -95,12 +96,21 @@ public:
   std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
 protected:
+
+  struct CacheAttr{
+    std::size_t volume;
+    int priority;
+    int device;
+  };
+
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
   /** Active tensor operand prefetching tasks **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
+  /** Register of tensors with body images moved to accelerators. **/
+  std::list<std::pair<numerics::TensorHashType,CacheAttr>> accel_cache_;
   /** TAL-SH Host memory buffer size (bytes) **/
   std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/
