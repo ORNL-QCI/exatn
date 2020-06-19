@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/18
+REVISION: 2020/06/19
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -98,11 +98,13 @@ public:
 protected:
 
   struct CachedTensor{
-    talsh_tens_t * talsh_tens = NULL;
+    talsh::Tensor * talsh_tens = nullptr;
     int priority = 0;
   };
 
-  bool tensorIsCurrentlyInUse(const talsh_tens_t * talsh_tens) const;
+  /** Determines whether a given TAL-SH tensor is currently participating
+      in an active tensor operation or tensor prefetch. **/
+  bool tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const;
 
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
@@ -110,7 +112,7 @@ protected:
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
   /** Active tensor operand prefetching tasks **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
-  /** Register of tensors with body images moved to accelerators. **/
+  /** Register (cache) of tensors with body images moved/copied to accelerators. **/
   std::list<CachedTensor> accel_cache_[DEV_MAX]; //for each device
   /** TAL-SH Host memory buffer size (bytes) **/
   std::atomic<std::size_t> talsh_host_mem_buffer_size_;

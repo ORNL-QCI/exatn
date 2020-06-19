@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/18
+REVISION: 2020/06/19
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -840,10 +840,19 @@ void TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_sp
 }
 
 
-bool TalshNodeExecutor::tensorIsCurrentlyInUse(const talsh_tens_t * talsh_tens) const
+bool TalshNodeExecutor::tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const
 {
  for(const auto & task: tasks_){
-  //`Finish
+  const auto num_task_args = task.second->getNumTensorArguments();
+  for(unsigned int i = 0; i < num_task_args; ++i){
+   if(task.second->getTensorArgument(i) == talsh_tens) return true;
+  }
+ }
+ for(const auto & task: prefetches_){
+  const auto num_task_args = task.second->getNumTensorArguments();
+  for(unsigned int i = 0; i < num_task_args; ++i){
+   if(task.second->getTensorArgument(i) == talsh_tens) return true;
+  }
  }
  return false;
 }
