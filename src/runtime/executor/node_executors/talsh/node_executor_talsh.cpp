@@ -766,8 +766,41 @@ bool TalshNodeExecutor::discard(TensorOpExecHandle op_handle)
 
 bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
 {
- //`Implement
- return false;
+ bool prefetching = false;
+ const auto opcode = op.getOpcode();
+ if(opcode == TensorOpCode::CONTRACT){
+  const auto num_operands = op.getNumOperands(); assert(num_operands == 3);
+  talsh::Tensor * talsh_tens[3];
+  for(unsigned int i = 0; i < num_operands; ++i){
+   auto iter = tensors_.find(op.getTensorOperand(i)->getTensorHash());
+   if(iter != tensors_.end()){
+    talsh_tens[i] = iter->second.get(); assert(talsh_tens[i] != nullptr);
+   }else{
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Tensor operand "
+              << i << " not found in tensor contraction:" << std::endl;
+    op.printIt();
+    assert(false);
+   }
+  }
+  int dev_kind;
+  int opt_exec_device = talsh::determineOptimalDevice(*(talsh_tens[0]),*(talsh_tens[1]),*(talsh_tens[2]));
+  int dev_id = talshKindDevId(opt_exec_device,&dev_kind);
+  if(dev_kind != DEV_HOST){
+   for(unsigned int i = 0; i < num_operands; ++i){
+    bool in_use = tensorIsCurrentlyInUse(talsh_tens[i]);
+    if(!in_use){
+     auto task_res = prefetches_.emplace(std::make_pair(op.getTensorOperand(i)->getTensorHash(),
+                                         std::make_shared<talsh::TensorTask>()));
+     if(task_res.second){
+      bool prefetch_started = talsh_tens[i]->sync(task_res.first->second.get(),dev_kind,dev_id);
+      if(!prefetch_started) prefetches_.erase(task_res.first);
+      prefetching = prefetching || prefetch_started;
+     }
+    }
+   }
+  }
+ }
+ return prefetching;
 }
 
 
@@ -826,9 +859,26 @@ bool TalshNodeExecutor::finishPrefetching(const numerics::TensorOperation & op)
 }
 
 
-void TalshNodeExecutor::cacheMovedTensors(const talsh::TensorTask & talsh_task)
+void TalshNodeExecutor::cacheMovedTensors(talsh::TensorTask & talsh_task,
+                                          std::initializer_list<unsigned int> operands)
 {
- //`Implement
+ if(!(talsh_task.isEmpty())){
+  int dev_kind;
+  int dev_id = talsh_task.getExecutionDevice(&dev_kind);
+  if(dev_kind != DEV_HOST){
+   const int device = talshFlatDevId(dev_kind,dev_id);
+   const auto num_operands = talsh_task.getNumTensorArguments();
+   const auto coherence = talsh_task.getTensorArgumentCoherence();
+   if(coherence >= 0){
+    for(const auto oprnd: operands){
+     unsigned int arg_coherence = argument_coherence_get_value(coherence,num_operands,oprnd);
+     if(arg_coherence == COPY_M || arg_coherence == COPY_K){
+      accel_cache_[device].emplace_back(CachedTensor{talsh_task.getTensorArgument(oprnd),0});
+     }
+    }
+   }
+  }
+ }
  return;
 }
 

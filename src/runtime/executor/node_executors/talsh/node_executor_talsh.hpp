@@ -15,6 +15,7 @@ Rationale:
 
 #include "talshxx.hpp"
 
+#include <initializer_list>
 #include <unordered_map>
 #include <vector>
 #include <list>
@@ -85,7 +86,8 @@ public:
   bool finishPrefetching(const numerics::TensorOperation & op);
 
   /** Caches TAL-SH tensor images moved to accelerators during tensor operation. **/
-  void cacheMovedTensors(const talsh::TensorTask & talsh_task);
+  void cacheMovedTensors(talsh::TensorTask & talsh_task,
+                         std::initializer_list<unsigned int> operands);
 
   /** Evicts some or all idle cached tensor images from an accelerator, moving them back to Host. **/
   void evictMovedTensors(int device_id = DEV_DEFAULT,     //in: flat device id (TAL-SH numeration), DEV_DEFAULT covers all accelerators
@@ -98,7 +100,7 @@ public:
 protected:
 
   struct CachedTensor{
-    talsh::Tensor * talsh_tens = nullptr;
+    const talsh::Tensor * talsh_tens = nullptr;
     int priority = 0;
   };
 
