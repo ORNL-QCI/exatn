@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/19
+REVISION: 2020/06/20
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -15,10 +15,8 @@ Rationale:
 
 #include "talshxx.hpp"
 
-#include <initializer_list>
 #include <unordered_map>
 #include <vector>
-#include <list>
 #include <memory>
 #include <atomic>
 
@@ -83,15 +81,15 @@ public:
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;
 
   /** Finishes tensor operand prefetching for a given tensor operation. **/
-  bool finishPrefetching(const numerics::TensorOperation & op);
+  bool finishPrefetching(const numerics::TensorOperation & op); //in: tensor operation
 
-  /** Caches TAL-SH tensor images moved to accelerators during tensor operation. **/
-  void cacheMovedTensors(talsh::TensorTask & talsh_task,
-                         std::initializer_list<unsigned int> operands);
+  /** Caches TAL-SH tensor body images moved/copied to accelerators.  **/
+  void cacheMovedTensors(talsh::TensorTask & talsh_task); //in: TAL-SH task associated with the tensor operation
 
-  /** Evicts some or all idle cached tensor images from an accelerator, moving them back to Host. **/
-  void evictMovedTensors(int device_id = DEV_DEFAULT,     //in: flat device id (TAL-SH numeration), DEV_DEFAULT covers all accelerators
-                         std::size_t required_space = 0); //in: required space to free in bytes (0 will evict all idle tensor images on the chosen device)
+  /** Evicts some or all idle cached TAL-SH tensor body images
+      from accelerator(s), moving them back to Host. **/
+  bool evictMovedTensors(int device_id = DEV_DEFAULT,     //in: flat device id (TAL-SH numeration), DEV_DEFAULT covers all accelerators, DEV_HOST has no effect
+                         std::size_t required_space = 0); //in: required space to free in bytes, 0 will evict all idle tensor images on the chosen device(s)
 
   const std::string name() const override {return "talsh-node-executor";}
   const std::string description() const override {return "TALSH tensor graph node executor";}
@@ -99,8 +97,7 @@ public:
 
 protected:
 
-  struct CachedTensor{
-    const talsh::Tensor * talsh_tens = nullptr;
+  struct CachedAttr{
     int priority = 0;
   };
 
@@ -115,7 +112,7 @@ protected:
   /** Active tensor operand prefetching tasks **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
   /** Register (cache) of tensors with body images moved/copied to accelerators. **/
-  std::list<CachedTensor> accel_cache_[DEV_MAX]; //for each device
+  std::unordered_map<talsh::Tensor*,CachedAttr> accel_cache_[DEV_MAX]; //cache for each device
   /** TAL-SH Host memory buffer size (bytes) **/
   std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/
