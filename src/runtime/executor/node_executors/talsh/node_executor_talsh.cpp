@@ -81,6 +81,7 @@ std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 
 TalshNodeExecutor::~TalshNodeExecutor()
 {
+ auto synced = sync(true); assert(synced);
  talsh_init_lock.lock();
  --talsh_node_exec_count_;
  if(talsh_initialized_ && talsh_node_exec_count_ == 0){
@@ -926,6 +927,11 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
 bool TalshNodeExecutor::finishPrefetching(const numerics::TensorOperation & op)
 {
  bool synced = true;
+ //Find older idle cached TAL-SH tensors and schedule their transfers back to Host:
+ //`Finish
+ //Test the completion of all outstanding prefetches and back tansfers:
+ //`Finish
+ //Finish tensor operand prefetching for the given tensor operation:
  const auto num_operands = op.getNumOperands();
  for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
   const auto tens_hash = op.getTensorOperand(oprnd)->getTensorHash();
