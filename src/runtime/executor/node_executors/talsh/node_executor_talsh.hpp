@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/20
+REVISION: 2020/06/21
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,7 +87,8 @@ public:
   void cacheMovedTensors(talsh::TensorTask & talsh_task); //in: TAL-SH task associated with the tensor operation
 
   /** Evicts some or all idle cached TAL-SH tensor body images
-      from accelerator(s), moving them back to Host. **/
+      from accelerator(s), moving them back to Host. On return,
+      returns whether at least one such tensor image has been found. **/
   bool evictMovedTensors(int device_id = DEV_DEFAULT,     //in: flat device id (TAL-SH numeration), DEV_DEFAULT covers all accelerators, DEV_HOST has no effect
                          std::size_t required_space = 0); //in: required space to free in bytes, 0 will evict all idle tensor images on the chosen device(s)
 
@@ -98,7 +99,7 @@ public:
 protected:
 
   struct CachedAttr{
-    int priority = 0;
+    double last_used; //time stamp of last usage
   };
 
   /** Determines whether a given TAL-SH tensor is currently participating
@@ -109,8 +110,10 @@ protected:
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
-  /** Active tensor operand prefetching tasks **/
+  /** Active tensor operand prefetching to accelerators tasks **/
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
+  /** Active tensor image eviction from accelerators tasks **/
+  std::unordered_map<talsh::Tensor*,std::shared_ptr<talsh::TensorTask>> evictions_;
   /** Register (cache) of tensors with body images moved/copied to accelerators. **/
   std::unordered_map<talsh::Tensor*,CachedAttr> accel_cache_[DEV_MAX]; //cache for each device
   /** TAL-SH Host memory buffer size (bytes) **/

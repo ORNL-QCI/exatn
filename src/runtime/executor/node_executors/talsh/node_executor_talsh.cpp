@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/20
+REVISION: 2020/06/21
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -105,7 +105,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_rank = tensor.getRank();
@@ -133,12 +133,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
  auto iter = tensors_.find(tensor_hash);
  if(iter != tensors_.end()){
+  //Complete an active tensor image eviction, if any:
+  auto eviction = evictions_.find(iter->second.get());
+  if(eviction != evictions_.end()){
+   auto snc = eviction->second->wait();
+   evictions_.erase(eviction);
+  }
+  //Tensor destruction procedure:
   bool in_use = tensorIsCurrentlyInUse(iter->second.get());
   if(!in_use){
    //Evict the tensor from device caches:
@@ -146,8 +153,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
     auto cached = accel_cache_[dev].find(iter->second.get());
     if(cached != accel_cache_[dev].end()) accel_cache_[dev].erase(cached);
    }
-   //Destroy the tensor:
+   //Move tensor image to Host:
    auto synced = iter->second->sync(DEV_HOST,0,nullptr,true); assert(synced);
+   //Destroy the tensor:
    tensors_.erase(iter);
    //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor " << tensor.getName()
    //          << " erased with hash " << tensor_hash << std::endl;
@@ -170,7 +178,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
@@ -192,7 +200,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -259,7 +267,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -326,7 +334,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -362,13 +370,16 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
                                     tens1,
                                     DEV_DEFAULT,DEV_DEFAULT,
                                     op.getScalar(0));
- if(error_code == DEVICE_UNABLE){
+ if(error_code == DEVICE_UNABLE || error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
   (task_res.first)->second->clean();
   error_code = tens0.accumulate((task_res.first)->second.get(),
                                 op.getIndexPattern(),
                                 tens1,
                                 DEV_HOST,0,
                                 op.getScalar(0));
+ }else if(error_code == TRY_LATER){
+  std::size_t total_tensor_size = tensor0.getSize() + tensor1.getSize();
+  auto evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1),total_tensor_size);
  }
  return error_code;
 }
@@ -378,7 +389,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -428,9 +439,10 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  if(error_code == DEVICE_UNABLE){ //use out-of-core version if tensor contraction does not fit in GPU
   //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CONTRACT: Redirected to XL\n" << std::flush; //debug
   (task_res.first)->second->clean();
-  bool synced = sync(true);
+  bool synced = sync(true); //completes all active tasks, prefetches and evictions
+  bool evicting = evictMovedTensors(DEV_DEFAULT,0); //evict all cached tensors from all accelerators
+  if(evicting) synced = synced && sync(true); //completes all evictions
   if(synced){
-   bool evicted = evictMovedTensors(DEV_DEFAULT,0);
    error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
                                            op.getIndexPattern(),
                                            tens1,tens2,
@@ -443,6 +455,15 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                          DEV_HOST,0,
                                          op.getScalar(0));
   }
+ }else if(error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
+  error_code = tens0.contractAccumulate((task_res.first)->second.get(),
+                                         op.getIndexPattern(),
+                                         tens1,tens2,
+                                         DEV_HOST,0,
+                                         op.getScalar(0));
+ }else if(error_code == TRY_LATER){
+  std::size_t total_tensor_size = tensor0.getSize() + tensor1.getSize() + tensor2.getSize();
+  bool evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1,tens2),total_tensor_size);
  }
  return error_code;
 }
@@ -452,7 +473,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -515,7 +536,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD2 & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -568,7 +589,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeSVD & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -600,7 +621,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeMGS & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor0 = *(op.getTensorOperand(0));
  const auto tensor0_hash = tensor0.getTensorHash();
@@ -635,7 +656,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
@@ -651,7 +672,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
 
  int error_code = 0;
 #ifdef MPI_ENABLED
- auto synced = tens.sync(DEV_HOST,0); assert(synced);
+ auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
  float * tens_body_r4 = nullptr;
  double * tens_body_r8 = nullptr;
  std::complex<float> * tens_body_c4 = nullptr;
@@ -711,7 +732,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- finishPrefetching(op);
+ if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_hash = tensor.getTensorHash();
@@ -727,7 +748,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
 
  int error_code = 0;
 #ifdef MPI_ENABLED
- auto synced = tens.sync(DEV_HOST,0); assert(synced);
+ auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
  float * tens_body_r4 = nullptr;
  double * tens_body_r8 = nullptr;
  std::complex<float> * tens_body_c4 = nullptr;
@@ -810,18 +831,27 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
 bool TalshNodeExecutor::sync(bool wait)
 {
  bool synced = true;
+
+ for(auto & task: evictions_){
+  bool snc = task.second->wait();
+  synced = synced && snc;
+ }
+ evictions_.clear();
+
  for(auto & task: tasks_){
   bool snc = task.second->wait();
   if(snc) cacheMovedTensors(*(task.second));
   synced = synced && snc;
  }
  tasks_.clear();
+
  for(auto & task: prefetches_){
   bool snc = task.second->wait();
   if(snc) cacheMovedTensors(*(task.second));
   synced = synced && snc;
  }
  prefetches_.clear();
+
  return synced;
 }
 
@@ -869,7 +899,7 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
       if(!prefetch_started) prefetches_.erase(task_res.first);
       prefetching = prefetching || prefetch_started;
      }else{
-      std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Double prefetch corruption for tensor operand "
+      std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Repeated prefetch corruption for tensor operand "
                 << i << " in tensor operation:" << std::endl; //broken association between exatn::TensorHash and talsh::Tensor
       op.printIt();
       assert(false);
@@ -927,10 +957,23 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
 bool TalshNodeExecutor::finishPrefetching(const numerics::TensorOperation & op)
 {
  bool synced = true;
- //Find older idle cached TAL-SH tensors and schedule their transfers back to Host:
- //`Finish
- //Test the completion of all outstanding prefetches and back tansfers:
- //`Finish
+ //Test completion of active evictions:
+ auto eviction = evictions_.begin();
+ while(eviction != evictions_.end()){
+  int sts;
+  bool snc = eviction->second->test(&sts);
+  if(snc) eviction = evictions_.erase(eviction);
+ }
+ //Test completion of active prefetches:
+ auto prefetch = prefetches_.begin();
+ while(prefetch != prefetches_.end()){
+  int sts;
+  bool snc = prefetch->second->test(&sts);
+  if(snc){
+   cacheMovedTensors(*(prefetch->second));
+   prefetch = prefetches_.erase(prefetch);
+  }
+ }
  //Finish tensor operand prefetching for the given tensor operation:
  const auto num_operands = op.getNumOperands();
  for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
@@ -961,9 +1004,9 @@ void TalshNodeExecutor::cacheMovedTensors(talsh::TensorTask & talsh_task)
    if(coherence >= 0){
     for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
      unsigned int arg_coherence = argument_coherence_get_value(coherence,num_operands,oprnd);
-     if(arg_coherence == COPY_M || arg_coherence == COPY_K){
+     if(arg_coherence == COPY_M || arg_coherence == COPY_K){ //move or copy of tensor body image
       auto res = accel_cache_[device].emplace(std::make_pair(const_cast<talsh::Tensor*>(talsh_task.getTensorArgument(oprnd)),
-                                                             CachedAttr{0}));
+                                                             CachedAttr{exatn::Timer::timeInSecHR()}));
      }
     }
    }
@@ -975,11 +1018,12 @@ void TalshNodeExecutor::cacheMovedTensors(talsh::TensorTask & talsh_task)
 
 bool TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_space)
 {
- bool evicted = false;
+ bool evicting = false, single_device = false;
  int dev_begin = 0, dev_end = (DEV_MAX - 1);
  if(device_id != DEV_DEFAULT){
   assert(device_id >= 0 && device_id < DEV_MAX);
   dev_begin = device_id; dev_end = device_id;
+  single_device = true;
  }
  std::size_t freed_bytes = 0;
  bool still_freeing = true;
@@ -994,27 +1038,35 @@ bool TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_sp
      auto valid = talshValidDataKind(iter->first->getElementType(),&data_kind_size);
      assert(valid == YEP);
      std::size_t talsh_tens_size = iter->first->getVolume() * data_kind_size;
-     bool synced = iter->first->sync(DEV_HOST,0); //move tensor body image to Host
-     if(synced){
-      evicted = true;
+     auto task_res = evictions_.emplace(std::make_pair(iter->first,
+                                                       std::make_shared<talsh::TensorTask>()));
+     if(task_res.second){
+      bool synced = iter->first->sync(task_res.first->second.get(),DEV_HOST,0,nullptr,!single_device); //initiate a move of the tensor body image back to Host
       iter = accel_cache_[dev].erase(iter);
       freed_bytes += talsh_tens_size;
       iter = accel_cache_[dev].end();
+      evicting = true;
      }
     }else{
      ++iter;
     }
    }
-   still_freeing = (!cache_empty) && ((required_space == 0) || (freed_bytes < required_space));
+   still_freeing = ((!cache_empty) || (dev < dev_end)) && ((required_space == 0) || (freed_bytes < required_space));
    if(!still_freeing) break;
   }
  }
- return evicted;
+ return evicting;
 }
 
 
 bool TalshNodeExecutor::tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const
 {
+ for(const auto & task: evictions_){
+  const auto num_task_args = task.second->getNumTensorArguments();
+  for(unsigned int i = 0; i < num_task_args; ++i){
+   if(task.second->getTensorArgument(i) == talsh_tens) return true;
+  }
+ }
  for(const auto & task: tasks_){
   const auto num_task_args = task.second->getNumTensorArguments();
   for(unsigned int i = 0; i < num_task_args; ++i){

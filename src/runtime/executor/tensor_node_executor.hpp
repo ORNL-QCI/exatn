@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2020/06/12
+REVISION: 2020/06/21
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -25,6 +25,8 @@ Rationale:
 #include "space_register.hpp"
 
 #include "param_conf.hpp"
+
+#include "timers.hpp"
 
 #include <vector>
 #include <memory>
