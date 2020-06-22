@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/16
+REVISION: 2020/06/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,13 +29,16 @@ public:
   virtual ~LazyGraphExecutor() = default;
 
   /** Traverses the DAG and executes all its nodes. **/
-  void execute(TensorGraph & dag) override;
+  virtual void execute(TensorGraph & dag) override;
 
-  /** Returns the current pipeline depth. **/
-  inline unsigned int getPipelineDepth() const {return pipeline_depth_;}
+  /** Regulates the tensor prefetch depth (0 turns prefetch off). **/
+  virtual void setPrefetchDepth(unsigned int depth) override {prefetch_depth_ = depth;}
 
   /** Returns the current prefetch depth. **/
   inline unsigned int getPrefetchDepth() const {return prefetch_depth_;}
+
+  /** Returns the current pipeline depth. **/
+  inline unsigned int getPipelineDepth() const {return pipeline_depth_;}
 
   const std::string name() const override {return "lazy-dag-executor";}
   const std::string description() const override {return "Lazy tensor graph executor";}

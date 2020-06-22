@@ -97,6 +97,9 @@ public:
       [THREAD: This function is executed by the execution thread] **/
   virtual void execute(TensorGraph & dag) = 0;
 
+  /** Regulates the tensor prefetch depth (0 turns prefetch off). **/
+  virtual void setPrefetchDepth(unsigned int depth) = 0;
+
   /** Factory method **/
   virtual std::shared_ptr<TensorGraphExecutor> clone() = 0;
 

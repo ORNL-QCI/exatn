@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/21
+REVISION: 2020/06/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -888,6 +888,8 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
   int dev_kind;
   int opt_exec_device = talsh::determineOptimalDevice(*(talsh_tens[0]),*(talsh_tens[1]),*(talsh_tens[2]));
   int dev_id = talshKindDevId(opt_exec_device,&dev_kind);
+//  std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): PREFETCH: TAL-SH tensors: "
+//            << talsh_tens[0] << " " << talsh_tens[1] << " " << talsh_tens[2] << std::endl << std::flush; //debug
   if(dev_kind != DEV_HOST){
    for(unsigned int i = 0; i < num_operands; ++i){
     bool in_use = tensorIsCurrentlyInUse(talsh_tens[i]);
@@ -896,7 +898,10 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
                                          std::make_shared<talsh::TensorTask>()));
      if(task_res.second){
       bool prefetch_started = talsh_tens[i]->sync(task_res.first->second.get(),dev_kind,dev_id);
-      if(!prefetch_started) prefetches_.erase(task_res.first);
+      if(!prefetch_started){
+       task_res.first->second->clean();
+       prefetches_.erase(task_res.first);
+      }
       prefetching = prefetching || prefetch_started;
      }else{
       std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Repeated prefetch corruption for tensor operand "

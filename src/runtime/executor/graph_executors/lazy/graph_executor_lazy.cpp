@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/18
+REVISION: 2020/06/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -70,6 +70,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
               logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                        << "](LazyGraphExecutor)[EXEC_THREAD]: Initiated prefetch for tensor operation "
                        << progress.current << std::endl;
+#ifndef NDEBUG
+              logfile_.flush();
+#endif
             }
           }
         }
@@ -93,6 +96,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
           logfile_ << ": Details:" << std::endl;
           op->printItFile(logfile_);
         }
+#ifndef NDEBUG
+        logfile_.flush();
+#endif
       }
       op->recordStartTime();
       TensorOpExecHandle exec_handle;
@@ -108,7 +114,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             if(logging_.load() != 0){
               logfile_ << "Success [" << std::fixed << std::setprecision(6)
                        << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
+#ifndef NDEBUG
               logfile_.flush();
+#endif
             }
             progress.num_nodes = dag.getNumNodes();
             dag.progressFrontNode(node);
@@ -132,6 +140,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
         dag.setNodeIdle(node);
         issued = false;
         if(error_code != TRY_LATER){ //fatal error
+          if(logging_.load() != 0) logfile_.flush();
           std::cout << "#ERROR(exatn::TensorRuntime::GraphExecutorLazy): Failed to submit tensor operation "
            << node << " with execution handle " << exec_handle << ": Error " << error_code << std::endl << std::flush;
           assert(false); //`Do I need to handle this case gracefully?
@@ -159,7 +168,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Synced tensor operation "
                      << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
+#ifndef NDEBUG
             logfile_.flush();
+#endif
           }
           progress.num_nodes = dag.getNumNodes();
           dag.progressFrontNode(node);
