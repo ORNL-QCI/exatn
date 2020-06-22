@@ -13,7 +13,7 @@
 
 
 #define EXATN_TEST0
-/*#define EXATN_TEST1
+#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -27,7 +27,7 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
-#define EXATN_TEST15*/
+#define EXATN_TEST15
 
 
 #ifdef EXATN_TEST0
@@ -91,27 +91,15 @@ TEST(NumServerTester, ExamplarBasicExaTN)
  std::cout << "ENERGY 2-norm = " << std::scientific << norm2 << std::endl << std::flush;
 
  //Retrieve scalar ENERGY:
- if(TENS_ELEM_TYPE == TensorElementType::REAL32){
-  auto local_copy = exatn::getLocalTensor("ENERGY"); assert(local_copy);
-  const float * body_ptr;
-  auto access_granted = local_copy->getDataAccessHostConst(&body_ptr); assert(access_granted);
-  std::cout << "ENERGY value = " << *body_ptr << " VS correct value of "
-            << std::pow(std::pow(double{VI_RANGE},2)*(1e-4)*(1e-3)*0.5,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
-             + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
-            << std::endl << std::flush;
-  body_ptr = nullptr;
-  local_copy.reset();
- }else if(TENS_ELEM_TYPE == TensorElementType::REAL64){
-  auto local_copy = exatn::getLocalTensor("ENERGY"); assert(local_copy);
-  const double * body_ptr;
-  auto access_granted = local_copy->getDataAccessHostConst(&body_ptr); assert(access_granted);
-  std::cout << "ENERGY value = " << *body_ptr << " VS correct value of "
-            << std::pow(std::pow(double{VI_RANGE},2)*(1e-4)*(1e-3)*0.5,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
-             + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
-            << std::endl << std::flush;
-  body_ptr = nullptr;
-  local_copy.reset();
- }
+ auto local_copy = exatn::getLocalTensor("ENERGY"); assert(local_copy);
+ const exatn::TensorDataType<TENS_ELEM_TYPE>::value * body_ptr;
+ auto access_granted = local_copy->getDataAccessHostConst(&body_ptr); assert(access_granted);
+ std::cout << "ENERGY value = " << *body_ptr << " VS correct value of "
+           << std::pow(std::pow(double{VI_RANGE},2)*(1e-4)*(1e-3)*0.5,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+            + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
+           << std::endl << std::flush;
+ body_ptr = nullptr;
+ local_copy.reset();
 
  //Synchronize ExaTN server:
  exatn::sync();
@@ -1676,9 +1664,9 @@ int main(int argc, char **argv) {
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
-  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters,"lazy-dag-executor");
+  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters,"eager-dag-executor");
 #else
-  exatn::initialize(exatn_parameters,"lazy-dag-executor");
+  exatn::initialize(exatn_parameters,"eager-dag-executor");
 #endif
 
   ::testing::InitGoogleTest(&argc, argv);
