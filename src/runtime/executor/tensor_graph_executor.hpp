@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/06/05
+REVISION: 2020/06/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -67,7 +67,7 @@ public:
       }
       node_executor_->initialize(parameters);
       if(logging_.load() != 0){
-        logfile_ << "Success [" << std::fixed << std::setprecision(6)
+        logfile_ << "Successfully initialized [" << std::fixed << std::setprecision(6)
                  << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl; //debug
         logfile_.flush();
       }

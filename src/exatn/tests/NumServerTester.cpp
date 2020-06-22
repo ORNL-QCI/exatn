@@ -13,7 +13,7 @@
 
 
 #define EXATN_TEST0
-#define EXATN_TEST1
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -27,7 +27,7 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
-#define EXATN_TEST15
+#define EXATN_TEST15*/
 
 
 #ifdef EXATN_TEST0
@@ -48,6 +48,20 @@ TEST(NumServerTester, ExamplarBasicExaTN)
  exatn::resetRuntimeLoggingLevel(2); //debug
 
  bool success;
+
+ //Create different process groups:
+ const auto global_rank = exatn::getProcessRank();
+ const auto total_processes = exatn::getNumProcesses();
+ const auto & all_processes = exatn::getDefaultProcessGroup();
+ const auto & current_process = exatn::getCurrentProcessGroup();
+ std::shared_ptr<exatn::ProcessGroup> me_plus_next, me_plus_prev;
+ if(total_processes > 1){
+  int color = global_rank / 2; if(global_rank == (total_processes - 1)) color = -1;
+  auto me_plus_next = all_processes.split(color);
+  color = (global_rank + 1) / 2; if(global_rank == 0) color = -1;
+  auto me_plus_prev = all_processes.split(color);
+ }
+ exatn::sync();
 
  //Declare and then create (allocate) a tensor (in two steps):
  auto z2 = exatn::makeSharedTensor("Z2",TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); //declares tensor Z2 with no storage
@@ -1664,9 +1678,9 @@ int main(int argc, char **argv) {
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
   assert(mpi_error == MPI_SUCCESS);
   assert(thread_provided == MPI_THREAD_MULTIPLE);
-  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters,"eager-dag-executor");
+  exatn::initialize(exatn::MPICommProxy(MPI_COMM_WORLD),exatn_parameters,"lazy-dag-executor");
 #else
-  exatn::initialize(exatn_parameters,"eager-dag-executor");
+  exatn::initialize(exatn_parameters,"lazy-dag-executor");
 #endif
 
   ::testing::InitGoogleTest(&argc, argv);
