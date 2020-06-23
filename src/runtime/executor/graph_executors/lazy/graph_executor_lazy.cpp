@@ -62,8 +62,8 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
       if(ready_for_execution){ //node is idle
         ready_for_execution = ready_for_execution && dag.nodeDependenciesResolved(progress.current);
         if(ready_for_execution){ //all node dependencies resolved (or none)
-          dag.registerDependencyFreeNode(progress.current);
-          if(logging_.load() > 1) logfile_ << "DAG node detected with all dependencies resolved: " << progress.current << std::endl;
+          auto registered = dag.registerDependencyFreeNode(progress.current);
+          if(registered && logging_.load() > 1) logfile_ << "DAG node detected with all dependencies resolved: " << progress.current << std::endl;
         }else{ //node still has unresolved dependencies, try prefetching
           if(progress.current < (progress.front + this->getPrefetchDepth())){
             auto prefetching = this->node_executor_->prefetch(*(dag_node.getOperation()));
@@ -146,7 +146,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
       }else{ //tensor operation not submitted due to either temporary resource shortage or fatal error
         auto discarded = this->node_executor_->discard(exec_handle);
         dag.setNodeIdle(node);
-        dag.registerDependencyFreeNode(node);
+        auto registered = dag.registerDependencyFreeNode(node); assert(registered);
         issued = false;
         if(error_code == TRY_LATER){ //temporary shortage of resources
           if(logging_.load() != 0) logfile_ << ": Postponed" << std::endl;

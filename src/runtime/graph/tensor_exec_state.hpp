@@ -107,7 +107,7 @@ public:
   std::size_t getTensorUpdateCount(const Tensor & tensor);
 
   /** Registers a DAG node without dependencies. **/
-  void registerDependencyFreeNode(VertexIdType node_id);
+  bool registerDependencyFreeNode(VertexIdType node_id);
   /** Extracts a dependency-free node from the list.
       Returns FALSE if no such node exists. **/
   bool extractDependencyFreeNode(VertexIdType * node_id);

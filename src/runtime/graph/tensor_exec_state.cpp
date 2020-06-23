@@ -75,10 +75,14 @@ std::size_t TensorExecState::getTensorUpdateCount(const Tensor & tensor)
   return iter->second->update_count.load();
 }
 
-void TensorExecState::registerDependencyFreeNode(VertexIdType node_id)
+bool TensorExecState::registerDependencyFreeNode(VertexIdType node_id)
 {
-  nodes_ready_.emplace_back(node_id);
-  return;
+  bool inserted = true;
+  for(auto iter = nodes_ready_.begin(); iter != nodes_ready_.end(); ++iter){
+    if(*iter == node_id){inserted = false; break;}
+  }
+  if(inserted) nodes_ready_.emplace_back(node_id);
+  return inserted;
 }
 
 bool TensorExecState::extractDependencyFreeNode(VertexIdType * node_id)

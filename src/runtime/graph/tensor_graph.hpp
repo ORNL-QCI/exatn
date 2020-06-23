@@ -274,11 +274,11 @@ public:
   }
 
   /** Registers a DAG node without dependencies. **/
-  inline void registerDependencyFreeNode(VertexIdType node_id) {
+  inline bool registerDependencyFreeNode(VertexIdType node_id) {
     lock();
-    exec_state_.registerDependencyFreeNode(node_id);
+    auto registered = exec_state_.registerDependencyFreeNode(node_id);
     unlock();
-    return;
+    return registered;
   }
 
   /** Extracts a dependency-free node from the list.
