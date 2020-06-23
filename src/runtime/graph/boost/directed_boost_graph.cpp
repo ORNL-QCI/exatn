@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2019/09/03
+REVISION: 2020/06/23
 
-Copyright (C) 2018-2019 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "directed_boost_graph.hpp"
@@ -43,7 +43,7 @@ VertexIdType DirectedBoostGraph::addOperation(std::shared_ptr<TensorOperation> o
     }
     exec_state_.registerTensorRead(*tensor,vid);
   }
-  if(!dependent) exec_state_.registerDependencyFreeNode(vid);
+  //if(!dependent) exec_state_.registerDependencyFreeNode(vid);
   unlock();
   return vid; //new node id in the DAG
 }

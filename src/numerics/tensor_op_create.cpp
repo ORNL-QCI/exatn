@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2020/04/07
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -44,7 +44,7 @@ void TensorOpCreate::resetTensorElementType(TensorElementType element_type)
 
 void TensorOpCreate::printIt() const
 {
- std::cout << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
+ std::cout << "TensorOperation(opcode=" << static_cast<int>(opcode_) << ")[id=" << id_ << "]{" << std::endl;
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);
@@ -63,7 +63,7 @@ void TensorOpCreate::printIt() const
 
 void TensorOpCreate::printItFile(std::ofstream & output_file) const
 {
- output_file << "TensorOperation(" << static_cast<int>(opcode_) << "){" << std::endl;
+ output_file << "TensorOperation(opcode=" << static_cast<int>(opcode_) << ")[id=" << id_ << "]{" << std::endl;
  if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);

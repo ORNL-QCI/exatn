@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2020/06/16
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -89,6 +89,11 @@ bool TensorExecState::extractDependencyFreeNode(VertexIdType * node_id)
     nodes_ready_.pop_front();
   }
   return !empty;
+}
+
+std::list<VertexIdType> TensorExecState::getDependencyFreeNodes() const
+{
+  return nodes_ready_;
 }
 
 void TensorExecState::registerExecutingNode(VertexIdType node_id, TensorOpExecHandle exec_handle)

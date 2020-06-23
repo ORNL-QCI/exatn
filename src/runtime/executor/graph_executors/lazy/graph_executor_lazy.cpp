@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/22
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -63,6 +63,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
         ready_for_execution = ready_for_execution && dag.nodeDependenciesResolved(progress.current);
         if(ready_for_execution){ //all node dependencies resolved (or none)
           dag.registerDependencyFreeNode(progress.current);
+          if(logging_.load() > 1) logfile_ << "DAG node detected with all dependencies resolved: " << progress.current << std::endl;
         }else{ //node still has unresolved dependencies, try prefetching
           if(progress.current < (progress.front + this->getPrefetchDepth())){
             auto prefetching = this->node_executor_->prefetch(*(dag_node.getOperation()));
@@ -82,10 +83,15 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
   };
 
   auto issue_ready_node = [this,&dag,&progress] () {
+    if(logging_.load() > 1){
+      logfile_ << "DAG current list of dependency free nodes:";
+      auto free_nodes = dag.getDependencyFreeNodes();
+      for(const auto & node: free_nodes) logfile_ << " " << node;
+      logfile_ << std::endl;
+    }
     VertexIdType node;
     bool issued = dag.extractDependencyFreeNode(&node);
     if(issued){
-      dag.setNodeExecuting(node);
       auto & dag_node = dag.getNodeProperties(node);
       auto op = dag_node.getOperation();
       if(logging_.load() != 0){
@@ -100,6 +106,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
         logfile_.flush();
 #endif
       }
+      dag.setNodeExecuting(node);
       op->recordStartTime();
       TensorOpExecHandle exec_handle;
       auto error_code = op->accept(*(this->node_executor_),&exec_handle);
@@ -119,8 +126,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
 #endif
             }
             progress.num_nodes = dag.getNumNodes();
-            dag.progressFrontNode(node);
+            auto progressed = dag.progressFrontNode(node);
             progress.front = dag.getFrontNode();
+            if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to " << progress.front << std::endl;
           }else{
             if(logging_.load() != 0){
               logfile_ << "Failed: Error " << error_code << " [" << std::fixed << std::setprecision(6)
@@ -138,8 +146,11 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
       }else{ //tensor operation not submitted due to either temporary resource shortage or fatal error
         auto discarded = this->node_executor_->discard(exec_handle);
         dag.setNodeIdle(node);
+        dag.registerDependencyFreeNode(node);
         issued = false;
-        if(error_code != TRY_LATER){ //fatal error
+        if(error_code == TRY_LATER){ //temporary shortage of resources
+          if(logging_.load() != 0) logfile_ << ": Postponed" << std::endl;
+        }else{ //fatal error
           if(logging_.load() != 0) logfile_.flush();
           std::cout << "#ERROR(exatn::TensorRuntime::GraphExecutorLazy): Failed to submit tensor operation "
            << node << " with execution handle " << exec_handle << ": Error " << error_code << std::endl << std::flush;
@@ -173,8 +184,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
 #endif
           }
           progress.num_nodes = dag.getNumNodes();
-          dag.progressFrontNode(node);
+          auto progressed = dag.progressFrontNode(node);
           progress.front = dag.getFrontNode();
+          if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to " << progress.front << std::endl;
         }else{
           if(logging_.load() != 0){
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
@@ -193,6 +205,12 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
     return;
   };
 
+  if(logging_.load() != 0){
+    logfile_ << "DAG entry list of dependency free nodes:";
+    auto free_nodes = dag.getDependencyFreeNodes();
+    for(const auto & node: free_nodes) logfile_ << " " << node;
+    logfile_ << std::endl << std::flush;
+  }
   bool not_done = (progress.front < progress.num_nodes);
   while(not_done){
     //Try to issue all idle DAG nodes that are ready for execution:

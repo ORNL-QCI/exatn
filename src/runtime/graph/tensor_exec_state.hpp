@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2020/06/16
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -111,6 +111,8 @@ public:
   /** Extracts a dependency-free node from the list.
       Returns FALSE if no such node exists. **/
   bool extractDependencyFreeNode(VertexIdType * node_id);
+  /** Returns the current list of dependency free nodes. **/
+  std::list<VertexIdType> getDependencyFreeNodes() const;
 
   /** Registers a DAG node as being executed (together with its execution handle). **/
   void registerExecutingNode(VertexIdType node_id,

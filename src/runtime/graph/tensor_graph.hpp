@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2020/06/18
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -100,7 +100,13 @@ public:
   inline void setExecuting() {
     auto executing = executing_.load();
     auto executed = executed_.load();
-    assert(!executing && !executed);
+    if(executing || executed){
+      std::cout << "#ERROR(exatn::runtime::TensorOpNode::setExecuting): DAG node not idle: "
+                << executing << " " << executed << std::endl;
+      if(op_) op_->printIt();
+      std::cout << std::flush;
+      assert(false);
+    }
     executing_.store(true);
     return;
   }
@@ -109,7 +115,13 @@ public:
   inline void setExecuted(int error_code = 0) {
     auto executing = executing_.load();
     auto executed = executed_.load();
-    assert(executing && !executed);
+    if(!executing || executed){
+      std::cout << "#ERROR(exatn::runtime::TensorOpNode::setExecuted): DAG node is not executing or already executed: "
+                << executing << " " << executed << std::endl;
+      if(op_) op_->printIt();
+      std::cout << std::flush;
+      assert(false);
+    }
     error_.store(error_code);
     executed_.store(true);
     executing_.store(false);
@@ -119,7 +131,13 @@ public:
   /** Marks the tensor graph node as idle. **/
   inline void setIdle() {
     auto executed = executed_.load();
-    assert(!executed);
+    if(executed){
+      std::cout << "#ERROR(exatn::runtime::TensorOpNode::setIdle): DAG node has been executed to completion: "
+                << executing_.load() << " " << executed << std::endl;
+      if(op_) op_->printIt();
+      std::cout << std::flush;
+      assert(false);
+    }
     error_.store(0);
     executing_.store(false);
     return;
@@ -270,6 +288,14 @@ public:
     auto avail = exec_state_.extractDependencyFreeNode(node_id);
     unlock();
     return avail;
+  }
+
+  /** Returns the current list of dependency free nodes. **/
+  inline std::list<VertexIdType> getDependencyFreeNodes() {
+    lock();
+    auto nodes = exec_state_.getDependencyFreeNodes();
+    unlock();
+    return std::move(nodes);
   }
 
   /** Registers a DAG node as being executed (together with its execution handle). **/

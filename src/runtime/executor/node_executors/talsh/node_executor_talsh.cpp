@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/22
+REVISION: 2020/06/23
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -105,7 +105,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
                                TensorOpExecHandle * exec_handle)
 {
  assert(op.isSet());
- if(!finishPrefetching(op)) return TRY_LATER;
 
  const auto & tensor = *(op.getTensorOperand(0));
  const auto tensor_rank = tensor.getRank();
@@ -116,13 +115,17 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
  auto data_kind = get_talsh_tensor_element_kind(op.getTensorElementType());
  auto res = tensors_.emplace(std::make_pair(tensor_hash,
                              std::make_shared<talsh::Tensor>(extents,data_kind,talsh_tens_no_init)));
- if(!res.second){
+ if(res.second){
+  if(res.first->second->isEmpty()){ //tensor has not been allocated memory due to its temporary shortage
+   tensors_.erase(res.first);
+   return TRY_LATER;
+  }
+  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): New tensor " << tensor.getName()
+  //          << " emplaced with hash " << tensor_hash << std::endl;
+ }else{
   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): CREATE: Attempt to create the same tensor twice: " << std::endl;
   tensor.printIt();
   assert(false);
- }else{
-  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): New tensor " << tensor.getName()
-  //          << " emplaced with hash " << tensor_hash << std::endl;
  }
  *exec_handle = op.getId();
  return 0;
