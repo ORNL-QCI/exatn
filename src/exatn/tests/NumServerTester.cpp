@@ -14,20 +14,20 @@
 
 #define EXATN_TEST0
 #define EXATN_TEST1
-//#define EXATN_TEST2
-//#define EXATN_TEST3
-//#define EXATN_TEST4
-//#define EXATN_TEST5
-//#define EXATN_TEST6
-//#define EXATN_TEST7
-//#define EXATN_TEST8
-//#define EXATN_TEST9
-//#define EXATN_TEST10
-//#define EXATN_TEST11
-//#define EXATN_TEST12
-//#define EXATN_TEST13
-//#define EXATN_TEST14
-//#define EXATN_TEST15
+#define EXATN_TEST2
+#define EXATN_TEST3
+#define EXATN_TEST4
+#define EXATN_TEST5
+#define EXATN_TEST6
+#define EXATN_TEST7
+#define EXATN_TEST8
+#define EXATN_TEST9
+#define EXATN_TEST10
+#define EXATN_TEST11
+#define EXATN_TEST12
+#define EXATN_TEST13
+#define EXATN_TEST14
+#define EXATN_TEST15
 
 
 #ifdef EXATN_TEST0
