@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/11/12
+REVISION: 2020/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Tensor signature is an ordered set of tensor dimension specifiers,
@@ -19,6 +19,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_NUMERICS_TENSOR_SIGNATURE_HPP_
 
 #include "tensor_basic.hpp"
+#include "packable.hpp"
 #include "spaces.hpp"
 
 #include <utility>
@@ -32,7 +33,7 @@ namespace exatn{
 
 namespace numerics{
 
-class TensorSignature{
+class TensorSignature: public Packable {
 public:
 
  /** Create an empty tensor signature. **/
@@ -56,6 +57,9 @@ public:
  TensorSignature(TensorSignature &&) noexcept = default;
  TensorSignature & operator=(TensorSignature &&) noexcept = default;
  virtual ~TensorSignature() = default;
+
+ virtual void pack(BytePacket & byte_packet) const override;
+ virtual void unpack(BytePacket & byte_packet) override;
 
  /** Print. **/
  void printIt() const;

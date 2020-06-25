@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor shape
-REVISION: 2019/12/08
+REVISION: 2020/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_shape.hpp"
 
@@ -25,6 +25,23 @@ TensorShape::TensorShape(const TensorShape & another,
  assert(order.size() == rank);
  const auto & orig = another.getDimExtents();
  for(unsigned int new_pos = 0; new_pos < rank; ++new_pos) extents_[new_pos] = orig[order[new_pos]];
+}
+
+void TensorShape::pack(BytePacket & byte_packet) const
+{
+ const std::size_t tensor_rank = extents_.size();
+ appendToBytePacket(&byte_packet,tensor_rank);
+ for(const auto & extent: extents_) appendToBytePacket(&byte_packet,extent);
+ return;
+}
+
+void TensorShape::unpack(BytePacket & byte_packet)
+{
+ std::size_t tensor_rank = 0;
+ extractFromBytePacket(&byte_packet,tensor_rank);
+ extents_.resize(tensor_rank);
+ for(auto & extent: extents_) extractFromBytePacket(&byte_packet,extent);
+ return;
 }
 
 void TensorShape::printIt() const

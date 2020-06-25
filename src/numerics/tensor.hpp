@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/05/22
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,6 +40,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_NUMERICS_TENSOR_HPP_
 
 #include "tensor_basic.hpp"
+#include "packable.hpp"
 #include "tensor_shape.hpp"
 #include "tensor_signature.hpp"
 #include "tensor_leg.hpp"
@@ -61,7 +62,7 @@ namespace numerics{
 
 using TensorHashType = std::size_t;
 
-class Tensor{
+class Tensor: public Packable {
 public:
 
  /** Create a tensor by providing its name, shape and signature. **/
@@ -113,6 +114,9 @@ public:
  Tensor(Tensor && tensor) noexcept = default;
  Tensor & operator=(Tensor && tensor) noexcept = default;
  virtual ~Tensor() = default;
+
+ virtual void pack(BytePacket & byte_packet) const override;
+ virtual void unpack(BytePacket & byte_packet) override;
 
  /** Print. **/
  void printIt(bool with_hash = false) const;

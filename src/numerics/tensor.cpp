@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/05/22
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -110,6 +110,46 @@ Tensor::Tensor(const Tensor & another,
    for(auto & old_dim: iso_group) old_dim = o2n[old_dim];
   }
  }
+}
+
+void Tensor::pack(BytePacket & byte_packet) const
+{
+ const std::size_t name_len = name_.length();
+ appendToBytePacket(&byte_packet,name_len);
+ for(std::size_t i = 0; i < name_len; ++i) appendToBytePacket(&byte_packet,name_[i]);
+ shape_.pack(byte_packet);
+ signature_.pack(byte_packet);
+ appendToBytePacket(&byte_packet,element_type_);
+ const std::size_t num_isometries = isometries_.size();
+ appendToBytePacket(&byte_packet,num_isometries);
+ for(const auto & isometry: isometries_){
+  const std::size_t num_vertices = isometry.size();
+  appendToBytePacket(&byte_packet,num_vertices);
+  for(const auto & vertex_id: isometry) appendToBytePacket(&byte_packet,vertex_id);
+ }
+ return;
+}
+
+void Tensor::unpack(BytePacket & byte_packet)
+{
+ std::size_t name_len = 0;
+ extractFromBytePacket(&byte_packet,name_len);
+ name_.resize(name_len);
+ for(std::size_t i = 0; i < name_len; ++i) extractFromBytePacket(&byte_packet,name_[i]);
+ shape_.unpack(byte_packet);
+ signature_.unpack(byte_packet);
+ extractFromBytePacket(&byte_packet,element_type_);
+ isometries_.clear();
+ std::size_t num_isometries = 0;
+ extractFromBytePacket(&byte_packet,num_isometries);
+ isometries_.resize(num_isometries);
+ for(auto & isometry: isometries_){
+  std::size_t num_vertices = 0;
+  extractFromBytePacket(&byte_packet,num_vertices);
+  isometry.resize(num_vertices);
+  for(auto & vertex_id: isometry) extractFromBytePacket(&byte_packet,vertex_id);
+ }
+ return;
 }
 
 void Tensor::printIt(bool with_hash) const

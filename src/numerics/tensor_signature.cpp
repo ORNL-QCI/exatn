@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2019/11/12
+REVISION: 2020/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_signature.hpp"
 
@@ -40,6 +40,23 @@ TensorSignature::TensorSignature(const TensorSignature & another,
  assert(order.size() == rank);
  const auto & orig = another.getDimSpaceAttrs();
  for(unsigned int new_pos = 0; new_pos < rank; ++new_pos) subspaces_[new_pos] = orig[order[new_pos]];
+}
+
+void TensorSignature::pack(BytePacket & byte_packet) const
+{
+ const std::size_t tensor_rank = subspaces_.size();
+ appendToBytePacket(&byte_packet,tensor_rank);
+ for(const auto & subspace: subspaces_) appendToBytePacket(&byte_packet,subspace);
+ return;
+}
+
+void TensorSignature::unpack(BytePacket & byte_packet)
+{
+ std::size_t tensor_rank = 0;
+ extractFromBytePacket(&byte_packet,tensor_rank);
+ subspaces_.resize(tensor_rank);
+ for(auto & subspace: subspaces_) extractFromBytePacket(&byte_packet,subspace);
+ return;
 }
 
 void TensorSignature::printIt() const
