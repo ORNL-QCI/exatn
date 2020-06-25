@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/06/06
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -127,6 +127,10 @@ public:
 
  /** Returns the symbolic tensor operation specification (index pattern). **/
  const std::string & getIndexPattern() const;
+
+ /** Returns a reduced symbolic tensor operation specification (index pattern)
+     in which indices associated with tensor dimensions of extent 1 are removed. **/
+ std::string getIndexPatternReduced() const;
 
  /** Sets the symbolic tensor operation specification (index pattern).
      The tensor operation must have all its tensor/scalar operands set at this point.

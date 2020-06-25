@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/06/23
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operation.hpp"
+#include "tensor_symbol.hpp"
 
 #include <iostream>
 #include <ios>
@@ -186,6 +187,50 @@ void TensorOperation::setScalar(unsigned int scalar_num, const std::complex<doub
 const std::string & TensorOperation::getIndexPattern() const
 {
  return pattern_;
+}
+
+std::string TensorOperation::getIndexPatternReduced() const
+{
+ std::string reduced;
+ if(pattern_.length() > 0){
+  const auto num_operands = this->getNumOperands();
+  std::vector<std::string> tensors;
+  auto parsed = parse_tensor_network(pattern_,tensors);
+  if(parsed){
+   const auto num_tensors = tensors.size();
+   assert(num_tensors == num_operands);
+   for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
+    std::string tensor_name;
+    std::vector<IndexLabel> indices;
+    bool conj;
+    parsed = parse_tensor(tensors[oprnd],tensor_name,indices,conj);
+    if(parsed){
+     const auto & tensor = *(this->getTensorOperand(oprnd));
+     unsigned int i = 0;
+     auto iter = indices.begin();
+     while(iter != indices.end()){
+      if(tensor.getDimExtent(i++) > 1){
+       ++iter;
+      }else{
+       iter = indices.erase(iter);
+      }
+     }
+     //`Finish
+    }else{
+     std::cout << "#ERROR(exatn::numerics::TensorOperation::getIndexPatternReduced): "
+               << "Unable to parse tensor operand " << oprnd << " in symbolic tensor operation specification: "
+               << pattern_ << std::endl;
+     assert(false);
+    }
+   }
+  }else{
+   std::cout << "#ERROR(exatn::numerics::TensorOperation::getIndexPatternReduced): "
+             << "Unable to parse the symbolic tensor operation specification: "
+             << pattern_ << std::endl;
+   assert(false);
+  }
+ }
+ return std::move(reduced);
 }
 
 void TensorOperation::setIndexPattern(const std::string & pattern)
