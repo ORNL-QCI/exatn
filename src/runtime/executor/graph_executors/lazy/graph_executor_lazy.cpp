@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/23
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -83,7 +83,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
   };
 
   auto issue_ready_node = [this,&dag,&progress] () {
-    if(logging_.load() > 1){
+    if(logging_.load() > 2){
       logfile_ << "DAG current list of dependency free nodes:";
       auto free_nodes = dag.getDependencyFreeNodes();
       for(const auto & node: free_nodes) logfile_ << " " << node;
@@ -127,8 +127,16 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             }
             progress.num_nodes = dag.getNumNodes();
             auto progressed = dag.progressFrontNode(node);
-            progress.front = dag.getFrontNode();
-            if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to " << progress.front << std::endl;
+            if(progressed){
+              progress.front = dag.getFrontNode();
+              while(progress.front < progress.num_nodes){
+                if(!(dag.nodeExecuted(progress.front))) break;
+                dag.progressFrontNode(progress.front);
+                progress.front = dag.getFrontNode();
+              }
+            }
+            if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to "
+              << progress.front << " out of total of " << progress.num_nodes << std::endl;
           }else{
             if(logging_.load() != 0){
               logfile_ << "Failed: Error " << error_code << " [" << std::fixed << std::setprecision(6)
@@ -185,8 +193,16 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
           }
           progress.num_nodes = dag.getNumNodes();
           auto progressed = dag.progressFrontNode(node);
-          progress.front = dag.getFrontNode();
-          if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to " << progress.front << std::endl;
+          if(progressed){
+            progress.front = dag.getFrontNode();
+            while(progress.front < progress.num_nodes){
+              if(!(dag.nodeExecuted(progress.front))) break;
+              dag.progressFrontNode(progress.front);
+              progress.front = dag.getFrontNode();
+            }
+          }
+          if(progressed && logging_.load() > 1) logfile_ << "DAG front node progressed to "
+            << progress.front << " out of total of " << progress.num_nodes << std::endl;
         }else{
           if(logging_.load() != 0){
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
