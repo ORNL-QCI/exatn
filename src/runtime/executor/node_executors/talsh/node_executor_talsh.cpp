@@ -124,10 +124,9 @@ TalshNodeExecutor::TensorImpl::TensorImpl(const std::vector<DimExtent> & full_ex
 
 TalshNodeExecutor::TensorImpl::~TensorImpl()
 {
- if(stored_shape != nullptr){
-  auto errc = tensShape_destroy(stored_shape); assert(errc == TALSH_SUCCESS);
-  stored_shape = nullptr;
- }
+ resetTensorShapeToReduced();
+ auto errc = tensShape_destroy(stored_shape); assert(errc == TALSH_SUCCESS);
+ stored_shape = nullptr;
 }
 
 
@@ -180,10 +179,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
  }
  tensor_rank = extents.size();
  auto data_kind = get_talsh_tensor_element_kind(op.getTensorElementType());
- auto res = tensors_.emplace(std::make_pair(tensor_hash,
-                             std::make_shared<talsh::Tensor>(extents,data_kind,talsh_tens_no_init)));
+ auto res = tensors_.emplace(std::make_pair(tensor_hash,TensorImpl(dim_extents,extents,data_kind)));
  if(res.second){
-  if(res.first->second->isEmpty()){ //tensor has not been allocated memory due to its temporary shortage
+  if(res.first->second.talsh_tensor->isEmpty()){ //tensor has not been allocated memory due to its temporary shortage
    tensors_.erase(res.first);
    return TRY_LATER;
   }
@@ -210,22 +208,23 @@ int TalshNodeExecutor::execute(numerics::TensorOpDestroy & op,
  auto iter = tensors_.find(tensor_hash);
  if(iter != tensors_.end()){
   //Complete an active tensor image eviction, if any:
-  auto eviction = evictions_.find(iter->second.get());
+  auto eviction = evictions_.find(iter->second.talsh_tensor.get());
   if(eviction != evictions_.end()){
    auto snc = eviction->second->wait();
    evictions_.erase(eviction);
   }
   //Tensor destruction procedure:
-  bool in_use = tensorIsCurrentlyInUse(iter->second.get());
+  bool in_use = tensorIsCurrentlyInUse(iter->second.talsh_tensor.get());
   if(!in_use){
    //Evict the tensor from device caches:
    for(int dev = 0; dev < DEV_MAX; ++dev){
-    auto cached = accel_cache_[dev].find(iter->second.get());
+    auto cached = accel_cache_[dev].find(iter->second.talsh_tensor.get());
     if(cached != accel_cache_[dev].end()) accel_cache_[dev].erase(cached);
    }
    //Move tensor image to Host:
-   auto synced = iter->second->sync(DEV_HOST,0,nullptr,true); assert(synced);
+   auto synced = iter->second.talsh_tensor->sync(DEV_HOST,0,nullptr,true); assert(synced);
    //Destroy the tensor:
+   iter->second.resetTensorShapeToReduced();
    tensors_.erase(iter);
    //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor " << tensor.getName()
    //          << " erased with hash " << tensor_hash << std::endl;
@@ -258,7 +257,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpTransform & op,
   op.printIt();
   assert(false);
  }
- auto & tens = *(tens_pos->second);
+ tens_pos->second.resetTensorShapeToFull();
+ auto & tens = *(tens_pos->second.talsh_tensor);
  auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
  int error_code = op.apply(tens); //synchronous user-defined Host operation
  *exec_handle = op.getId();
@@ -280,7 +280,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToFull();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -290,7 +291,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToFull();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -347,7 +349,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToFull();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -357,7 +360,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToFull();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -414,7 +418,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -424,7 +429,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToReduced();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -436,14 +442,14 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
  }
 
  auto error_code = tens0.accumulate((task_res.first)->second.get(),
-                                    op.getIndexPattern(),
+                                    op.getIndexPatternReduced(),
                                     tens1,
                                     DEV_DEFAULT,DEV_DEFAULT,
                                     op.getScalar(0));
  if(error_code == DEVICE_UNABLE || error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
   (task_res.first)->second->clean();
   error_code = tens0.accumulate((task_res.first)->second.get(),
-                                op.getIndexPattern(),
+                                op.getIndexPatternReduced(),
                                 tens1,
                                 DEV_HOST,0,
                                 op.getScalar(0));
@@ -469,7 +475,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -479,7 +486,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToReduced();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  const auto & tensor2 = *(op.getTensorOperand(2));
  const auto tensor2_hash = tensor2.getTensorHash();
@@ -489,7 +497,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   op.printIt();
   assert(false);
  }
- auto & tens2 = *(tens2_pos->second);
+ tens2_pos->second.resetTensorShapeToReduced();
+ auto & tens2 = *(tens2_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -502,7 +511,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
 
  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor contraction " << op.getIndexPattern() << std::endl; //debug
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
-                                            op.getIndexPattern(),
+                                            op.getIndexPatternReduced(),
                                             tens1,tens2,
                                             DEV_DEFAULT,DEV_DEFAULT,
                                             op.getScalar(0));
@@ -514,20 +523,20 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   if(evicting) synced = synced && sync(true); //completes all evictions
   if(synced){
    error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
-                                           op.getIndexPattern(),
+                                           op.getIndexPatternReduced(),
                                            tens1,tens2,
                                            DEV_DEFAULT,DEV_DEFAULT,
                                            op.getScalar(0));
   }else{
    error_code = tens0.contractAccumulate((task_res.first)->second.get(),
-                                         op.getIndexPattern(),
+                                         op.getIndexPatternReduced(),
                                          tens1,tens2,
                                          DEV_HOST,0,
                                          op.getScalar(0));
   }
  }else if(error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
   error_code = tens0.contractAccumulate((task_res.first)->second.get(),
-                                         op.getIndexPattern(),
+                                         op.getIndexPatternReduced(),
                                          tens1,tens2,
                                          DEV_HOST,0,
                                          op.getScalar(0));
@@ -553,7 +562,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -563,7 +573,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToReduced();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  const auto & tensor2 = *(op.getTensorOperand(2));
  const auto tensor2_hash = tensor2.getTensorHash();
@@ -573,7 +584,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
   op.printIt();
   assert(false);
  }
- auto & tens2 = *(tens2_pos->second);
+ tens2_pos->second.resetTensorShapeToReduced();
+ auto & tens2 = *(tens2_pos->second.talsh_tensor);
 
  const auto & tensor3 = *(op.getTensorOperand(3));
  const auto tensor3_hash = tensor3.getTensorHash();
@@ -583,7 +595,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
   op.printIt();
   assert(false);
  }
- auto & tens3 = *(tens3_pos->second);
+ tens3_pos->second.resetTensorShapeToReduced();
+ auto & tens3 = *(tens3_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -595,7 +608,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD3 & op,
  }
 
  auto error_code = tens3.decomposeSVD((task_res.first)->second.get(),
-                                      op.getIndexPattern(),
+                                      op.getIndexPatternReduced(),
                                       tens0,tens1,tens2,
                                       DEV_HOST,0);
  return error_code;
@@ -616,7 +629,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD2 & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  const auto & tensor1 = *(op.getTensorOperand(1));
  const auto tensor1_hash = tensor1.getTensorHash();
@@ -626,7 +640,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD2 & op,
   op.printIt();
   assert(false);
  }
- auto & tens1 = *(tens1_pos->second);
+ tens1_pos->second.resetTensorShapeToReduced();
+ auto & tens1 = *(tens1_pos->second.talsh_tensor);
 
  const auto & tensor2 = *(op.getTensorOperand(2));
  const auto tensor2_hash = tensor2.getTensorHash();
@@ -636,7 +651,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD2 & op,
   op.printIt();
   assert(false);
  }
- auto & tens2 = *(tens2_pos->second);
+ tens2_pos->second.resetTensorShapeToReduced();
+ auto & tens2 = *(tens2_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -648,7 +664,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpDecomposeSVD2 & op,
  }
 
  auto error_code = tens2.decomposeSVDLR((task_res.first)->second.get(),
-                                        op.getIndexPattern(),
+                                        op.getIndexPatternReduced(),
                                         tens0,tens1,
                                         DEV_HOST,0);
  return error_code;
@@ -669,7 +685,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeSVD & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -681,7 +698,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeSVD & op,
  }
 
  auto error_code = tens0.orthogonalizeSVD((task_res.first)->second.get(),
-                                          op.getIndexPattern(),
+                                          op.getIndexPatternReduced(),
                                           DEV_HOST,0);
  return error_code;
 }
@@ -701,7 +718,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeMGS & op,
   op.printIt();
   assert(false);
  }
- auto & tens0 = *(tens0_pos->second);
+ tens0_pos->second.resetTensorShapeToReduced();
+ auto & tens0 = *(tens0_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
  auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
@@ -715,7 +733,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeMGS & op,
  auto error_code = 0;
  /*
  auto error_code = tens0.orthogonalizeMGS((task_res.first)->second.get(),
-                                          op.getIndexPattern(),
+                                          op.getIndexPatternReduced(),
                                           DEV_HOST,0);
  */
  return error_code;
@@ -736,7 +754,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
   op.printIt();
   assert(false);
  }
- auto & tens = *(tens_pos->second);
+ tens_pos->second.resetTensorShapeToReduced();
+ auto & tens = *(tens_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
 
@@ -812,7 +831,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
   op.printIt();
   assert(false);
  }
- auto & tens = *(tens_pos->second);
+ tens_pos->second.resetTensorShapeToReduced();
+ auto & tens = *(tens_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
 
@@ -947,7 +967,8 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
   for(unsigned int i = 0; i < num_operands; ++i){
    auto iter = tensors_.find(op.getTensorOperand(i)->getTensorHash());
    if(iter != tensors_.end()){
-    talsh_tens[i] = iter->second.get(); assert(talsh_tens[i] != nullptr);
+    iter->second.resetTensorShapeToReduced();
+    talsh_tens[i] = iter->second.talsh_tensor.get(); assert(talsh_tens[i] != nullptr);
    }else{
     std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Tensor operand "
               << i << " not found in tensor operation:" << std::endl;
@@ -1023,7 +1044,8 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
   tensor.printIt();
   std::abort();
  }
- auto & talsh_tensor = *(tens_pos->second);
+ tens_pos->second.resetTensorShapeToFull();
+ auto & talsh_tensor = *(tens_pos->second.talsh_tensor);
  auto error_code = talsh_tensor.extractSlice(nullptr,*slice,offsets); assert(error_code == TALSH_SUCCESS);
  return slice;
 }

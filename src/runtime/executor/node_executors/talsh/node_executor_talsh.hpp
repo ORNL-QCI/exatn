@@ -127,8 +127,8 @@ protected:
       in an active tensor operation, tensor prefetch or tensor eviction. **/
   bool tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const;
 
-  /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/
-  std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::Tensor>> tensors_;
+  /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation **/
+  std::unordered_map<numerics::TensorHashType,TensorImpl> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
   std::unordered_map<TensorOpExecHandle,std::shared_ptr<talsh::TensorTask>> tasks_;
   /** Active tensor operand prefetching to accelerators tasks **/

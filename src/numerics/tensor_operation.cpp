@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/06/25
+REVISION: 2020/06/26
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -214,7 +214,7 @@ std::string TensorOperation::getIndexPatternReduced() const
        if(tensor.getDimExtent(i++) > 1){
         ++iter;
        }else{
-        iter = indices.erase(iter);
+        iter = indices.erase(iter); //remove indices associated with extent-1 dimensions
        }
       }
       tensors[symb_pos_[oprnd]] = assemble_symbolic_tensor(tensor_name,indices,conj);
