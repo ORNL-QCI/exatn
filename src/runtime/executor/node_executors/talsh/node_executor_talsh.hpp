@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/22
+REVISION: 2020/06/26
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -98,12 +98,33 @@ public:
 
 protected:
 
+  struct TensorImpl{
+    //TAL-SH tensor with reduced shape (all extent-1 tensor dimensions removed):
+    std::shared_ptr<talsh::Tensor> talsh_tensor;
+    //The original full tensor shape:
+    talsh_tens_shape_t * stored_shape;
+    //Flag which tensor shape is currently in use by the TAL-SH tensor:
+    bool full_shape_is_on;
+    //Lifecycle:
+    TensorImpl(const std::vector<DimExtent> & full_extents, //full tensor shape
+               const std::vector<int> & reduced_extents,    //reduced tensor shape
+               int data_kind);                              //TAL-SH tensor data kind
+    TensorImpl(const TensorImpl &) = delete;
+    TensorImpl & operator=(const TensorImpl &) = delete;
+    TensorImpl(TensorImpl &&) noexcept = default;
+    TensorImpl & operator=(TensorImpl &&) noexcept = default;
+    ~TensorImpl();
+    //Resets TAL-SH tensor shape between full and reduced, depending on the operation needs:
+    void resetTensorShapeToFull();
+    void resetTensorShapeToReduced();
+  };
+
   struct CachedAttr{
-    double last_used; //time stamp of last usage
+    double last_used; //time stamp of last usage of the cached tensor image
   };
 
   /** Determines whether a given TAL-SH tensor is currently participating
-      in an active tensor operation or tensor prefetch. **/
+      in an active tensor operation, tensor prefetch or tensor eviction. **/
   bool tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const;
 
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation talsh::Tensor **/

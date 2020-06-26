@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/25
+REVISION: 2020/06/26
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -101,6 +101,64 @@ TalshNodeExecutor::~TalshNodeExecutor()
 }
 
 
+TalshNodeExecutor::TensorImpl::TensorImpl(const std::vector<DimExtent> & full_extents,
+                                          const std::vector<int> & reduced_extents,
+                                          int data_kind):
+ talsh_tensor(std::make_shared<talsh::Tensor>(reduced_extents,data_kind,talsh_tens_no_init)),
+ stored_shape(nullptr), full_shape_is_on(false)
+{
+ auto errc = tensShape_create(&stored_shape); assert(errc == TALSH_SUCCESS);
+ int full_rank = full_extents.size();
+ int dims[full_rank];
+ for(int i = 0; i < full_rank; ++i){
+  if(full_extents[i] > static_cast<DimExtent>(std::numeric_limits<int>::max())){
+   std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): CREATE: Tensor dimension extent exceeds max int: "
+             << full_extents[i] << std::endl << std::flush;
+   assert(false);
+  }
+  dims[i] = full_extents[i];
+ }
+ errc = tensShape_construct(stored_shape,NOPE,full_rank,dims); assert(errc == TALSH_SUCCESS);
+}
+
+
+TalshNodeExecutor::TensorImpl::~TensorImpl()
+{
+ if(stored_shape != nullptr){
+  auto errc = tensShape_destroy(stored_shape); assert(errc == TALSH_SUCCESS);
+  stored_shape = nullptr;
+ }
+}
+
+
+void TalshNodeExecutor::TensorImpl::resetTensorShapeToFull()
+{
+ if(!full_shape_is_on){
+  auto * talsh_tens = talsh_tensor->getTalshTensorPtr();
+  talsh_tens_shape_t * current_shape = talsh_tens->shape_p;
+  assert(current_shape != nullptr && stored_shape != nullptr);
+  talsh_tens->shape_p = stored_shape;
+  stored_shape = current_shape;
+  full_shape_is_on = true;
+ }
+ return;
+}
+
+
+void TalshNodeExecutor::TensorImpl::resetTensorShapeToReduced()
+{
+ if(full_shape_is_on){
+  auto * talsh_tens = talsh_tensor->getTalshTensorPtr();
+  talsh_tens_shape_t * current_shape = talsh_tens->shape_p;
+  assert(current_shape != nullptr && stored_shape != nullptr);
+  talsh_tens->shape_p = stored_shape;
+  stored_shape = current_shape;
+  full_shape_is_on = false;
+ }
+ return;
+}
+
+
 int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
                                TensorOpExecHandle * exec_handle)
 {
@@ -112,17 +170,15 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
  const auto & dim_extents = tensor.getDimExtents();
  std::vector<int> extents(tensor_rank);
  for(int i = 0; i < tensor_rank; ++i) extents[i] = static_cast<int>(dim_extents[i]);
-#if 0
  auto iter = extents.begin();
  while(iter != extents.end()){
   if(*iter > 1){
    ++iter;
   }else{
-   iter = extents.erase(iter);
+   iter = extents.erase(iter); //removing extent-1 dimensions
   }
  }
  tensor_rank = extents.size();
-#endif
  auto data_kind = get_talsh_tensor_element_kind(op.getTensorElementType());
  auto res = tensors_.emplace(std::make_pair(tensor_hash,
                              std::make_shared<talsh::Tensor>(extents,data_kind,talsh_tens_no_init)));
