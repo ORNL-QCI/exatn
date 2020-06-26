@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2020/06/06
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -17,7 +17,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpContract::TensorOpContract():
- TensorOperation(TensorOpCode::CONTRACT,3,2,1+0*2+0*4)
+ TensorOperation(TensorOpCode::CONTRACT,3,2,1+0*2+0*4,{0,1,2})
 {
  this->setScalar(0,std::complex<double>{1.0,0.0}); //default alpha prefactor
  this->setScalar(1,std::complex<double>{1.0,0.0}); //default beta prefactor (accumulative)

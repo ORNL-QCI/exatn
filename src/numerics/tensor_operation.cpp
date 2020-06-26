@@ -17,8 +17,9 @@ namespace numerics{
 TensorOperation::TensorOperation(TensorOpCode opcode,
                                  unsigned int num_operands,
                                  unsigned int num_scalars,
-                                 std::size_t mutability):
- num_operands_(num_operands), num_scalars_(num_scalars),
+                                 std::size_t mutability,
+                                 std::initializer_list<int> symbolic_positions):
+ symb_pos_(symbolic_positions), num_operands_(num_operands), num_scalars_(num_scalars),
  mutation_(mutability), opcode_(opcode), id_(0),
  scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
@@ -200,29 +201,32 @@ std::string TensorOperation::getIndexPatternReduced() const
    const auto num_tensors = tensors.size();
    assert(num_tensors == num_operands);
    for(unsigned int oprnd = 0; oprnd < num_operands; ++oprnd){
-    std::string tensor_name;
-    std::vector<IndexLabel> indices;
-    bool conj;
-    parsed = parse_tensor(tensors[oprnd],tensor_name,indices,conj);
-    if(parsed){
-     const auto & tensor = *(this->getTensorOperand(oprnd));
-     unsigned int i = 0;
-     auto iter = indices.begin();
-     while(iter != indices.end()){
-      if(tensor.getDimExtent(i++) > 1){
-       ++iter;
-      }else{
-       iter = indices.erase(iter);
+    const auto & tensor = *(this->getTensorOperand(oprnd));
+    if(symb_pos_[oprnd] >= 0){ //tensor operand is present in the symbolic index pattern
+     std::string tensor_name;
+     std::vector<IndexLabel> indices;
+     bool conj;
+     parsed = parse_tensor(tensors[symb_pos_[oprnd]],tensor_name,indices,conj);
+     if(parsed){
+      unsigned int i = 0;
+      auto iter = indices.begin();
+      while(iter != indices.end()){
+       if(tensor.getDimExtent(i++) > 1){
+        ++iter;
+       }else{
+        iter = indices.erase(iter);
+       }
       }
+      tensors[symb_pos_[oprnd]] = assemble_symbolic_tensor(tensor_name,indices,conj);
+     }else{
+      std::cout << "#ERROR(exatn::numerics::TensorOperation::getIndexPatternReduced): "
+                << "Unable to parse tensor operand " << symb_pos_[oprnd]
+                << " in symbolic tensor operation specification: " << pattern_ << std::endl;
+      assert(false);
      }
-     //`Finish
-    }else{
-     std::cout << "#ERROR(exatn::numerics::TensorOperation::getIndexPatternReduced): "
-               << "Unable to parse tensor operand " << oprnd << " in symbolic tensor operation specification: "
-               << pattern_ << std::endl;
-     assert(false);
     }
    }
+   reduced = assemble_symbolic_tensor_network(tensors);
   }else{
    std::cout << "#ERROR(exatn::numerics::TensorOperation::getIndexPatternReduced): "
              << "Unable to parse the symbolic tensor operation specification: "

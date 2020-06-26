@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into three tensor factors via SVD
-REVISION: 2020/04/13
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpDecomposeSVD3::TensorOpDecomposeSVD3():
- TensorOperation(TensorOpCode::DECOMPOSE_SVD3,4,0,1+1*2+1*4+0*8),
+ TensorOperation(TensorOpCode::DECOMPOSE_SVD3,4,0,1+1*2+1*4+0*8,{1,2,-1,0}),
  absorb_singular_values_('N')
 {
 }

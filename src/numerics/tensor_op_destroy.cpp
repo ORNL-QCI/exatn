@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Destroys a tensor
-REVISION: 2020/04/07
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpDestroy::TensorOpDestroy():
- TensorOperation(TensorOpCode::DESTROY,1,0,1)
+ TensorOperation(TensorOpCode::DESTROY,1,0,1,{0})
 {
 }
 

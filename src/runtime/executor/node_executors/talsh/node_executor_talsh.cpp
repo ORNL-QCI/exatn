@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/23
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -107,11 +107,22 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
  assert(op.isSet());
 
  const auto & tensor = *(op.getTensorOperand(0));
- const auto tensor_rank = tensor.getRank();
+ auto tensor_rank = tensor.getRank();
  const auto tensor_hash = tensor.getTensorHash();
  const auto & dim_extents = tensor.getDimExtents();
  std::vector<int> extents(tensor_rank);
  for(int i = 0; i < tensor_rank; ++i) extents[i] = static_cast<int>(dim_extents[i]);
+#if 0
+ auto iter = extents.begin();
+ while(iter != extents.end()){
+  if(*iter > 1){
+   ++iter;
+  }else{
+   iter = extents.erase(iter);
+  }
+ }
+ tensor_rank = extents.size();
+#endif
  auto data_kind = get_talsh_tensor_element_kind(op.getTensorElementType());
  auto res = tensors_.emplace(std::make_pair(tensor_hash,
                              std::make_shared<talsh::Tensor>(extents,data_kind,talsh_tens_no_init)));

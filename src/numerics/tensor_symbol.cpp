@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/05/26
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -152,6 +152,17 @@ std::string assemble_symbolic_tensor(const std::string & tensor_name,         //
   tensor += ")";
  }
  return tensor;
+}
+
+
+std::string assemble_symbolic_tensor_network(const std::vector<std::string> & tensors)
+{
+ std::string tensor_network;
+ const unsigned int num_tensors = tensors.size();
+ assert(num_tensors >= 2);
+ tensor_network = (tensors[0] + "+=" + tensors[1]);
+ for(unsigned int i = 2; i < num_tensors; ++i) tensor_network += ("*" + tensors[i]);
+ return std::move(tensor_network);
 }
 
 

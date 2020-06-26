@@ -17,6 +17,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor.hpp"
 #include "timers.hpp"
 
+#include <initializer_list>
 #include <tuple>
 #include <memory>
 #include <string>
@@ -45,7 +46,8 @@ public:
  TensorOperation(TensorOpCode opcode,       //in: tensor operation code
                  unsigned int num_operands, //in: required number of tensor operands
                  unsigned int num_scalars,  //in: required number of scalar operands
-                 std::size_t mutability);   //in: bit-mask for operand mutability
+                 std::size_t mutability,    //in: bit-mask for operand mutability (bit X --> operand X)
+                 std::initializer_list<int> symbolic_positions); //positions of the tensor operands in the symbolic index pattern
 
  TensorOperation(const TensorOperation &) = default;
  TensorOperation & operator=(const TensorOperation &) = default;
@@ -181,6 +183,7 @@ private:
 protected:
 
  std::string pattern_; //symbolic index pattern
+ const std::vector<int> symb_pos_; //symb_pos_[operand_position] --> operand position in the symbolic index pattern;
  std::vector<std::tuple<std::shared_ptr<Tensor>,bool,bool>> operands_; //tensor operands <operand,conjugation,mutation>
  std::vector<std::complex<double>> scalars_; //additional scalars (prefactors)
  unsigned int num_operands_; //number of required tensor operands

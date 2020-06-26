@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Orthogonalizes a tensor via SVD
-REVISION: 2020/04/07
+REVISION: 2020/06/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,7 @@ namespace exatn{
 namespace numerics{
 
 TensorOpOrthogonalizeSVD::TensorOpOrthogonalizeSVD():
- TensorOperation(TensorOpCode::ORTHOGONALIZE_SVD,1,0,1)
+ TensorOperation(TensorOpCode::ORTHOGONALIZE_SVD,1,0,1,{0})
 {
 }
 
