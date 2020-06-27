@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/26
+REVISION: 2020/06/27
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -100,19 +100,25 @@ protected:
 
   struct TensorImpl{
     //TAL-SH tensor with reduced shape (all extent-1 tensor dimensions removed):
-    std::shared_ptr<talsh::Tensor> talsh_tensor;
+    std::unique_ptr<talsh::Tensor> talsh_tensor;
+    //The original full tensor signature (dimension base offsets):
+    std::vector<std::size_t> full_base_offsets;
+    //The reduced tensor signature (dimension base offsets):
+    std::vector<std::size_t> reduced_base_offsets;
     //The original full tensor shape:
     talsh_tens_shape_t * stored_shape;
     //Flag which tensor shape is currently in use by the TAL-SH tensor:
     bool full_shape_is_on;
     //Lifecycle:
-    TensorImpl(const std::vector<DimExtent> & full_extents, //full tensor shape
-               const std::vector<int> & reduced_extents,    //reduced tensor shape
-               int data_kind);                              //TAL-SH tensor data kind
+    TensorImpl(const std::vector<std::size_t> & full_offsets,    //full tensor signature
+               const std::vector<DimExtent> & full_extents,      //full tensor shape
+               const std::vector<std::size_t> & reduced_offsets, //reduced tensor signature
+               const std::vector<int> & reduced_extents,         //reduced tensor shape
+               int data_kind);                                   //TAL-SH tensor data kind
     TensorImpl(const TensorImpl &) = delete;
     TensorImpl & operator=(const TensorImpl &) = delete;
-    TensorImpl(TensorImpl &&) noexcept = default;
-    TensorImpl & operator=(TensorImpl &&) noexcept = default;
+    TensorImpl(TensorImpl &&) noexcept;
+    TensorImpl & operator=(TensorImpl &&) noexcept;
     ~TensorImpl();
     //Resets TAL-SH tensor shape between full and reduced, depending on the operation needs:
     void resetTensorShapeToFull();

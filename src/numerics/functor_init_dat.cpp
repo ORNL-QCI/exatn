@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a given external data
-REVISION: 2019/12/08
+REVISION: 2020/06/27
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "functor_init_dat.hpp"
 
@@ -52,7 +52,9 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor) //tensor slice (in gener
  for(unsigned int i = 0; i < rank; ++i){
   if(offsets[i] + extents[i] > shape_.getDimExtent(i)){
    std::cout << "#ERROR(exatn::numerics::FunctorInitDat): Tensor dimension mismatch for dimension "
-             << i << std::endl;
+             << i << ": " << offsets[i] << " " << extents[i] << " " << shape_.getDimExtent(i) << std::endl;
+   local_tensor.print();
+   assert(false);
    return 2;
   }
  }
