@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/03
+REVISION: 2020/06/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -106,11 +106,11 @@ public:
 #ifdef MPI_ENABLED
  NumServer(const MPICommProxy & communicator,                               //MPI communicator proxy
            const ParamConf & parameters,                                    //runtime configuration parameters
-           const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+           const std::string & graph_executor_name = "lazy-dag-executor",   //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
  NumServer(const ParamConf & parameters,                                    //runtime configuration parameters
-           const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+           const std::string & graph_executor_name = "lazy-dag-executor",   //DAG executor kind
            const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
 
