@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/06/25
+REVISION: 2020/06/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -104,6 +104,8 @@ public:
         const Tensor & left_tensor,                  //left tensor
         const Tensor & right_tensor,                 //right tensor
         const std::vector<TensorLeg> & contraction); //tensor contraction pattern
+ /** Create a tensor from a byte packet. **/
+ Tensor(BytePacket & byte_packet);
 
  /** Create a tensor by permuting another tensor. **/
  Tensor(const Tensor & another,                   //in: another tensor

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/28
+REVISION: 2020/06/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -359,27 +359,70 @@ public:
                               unsigned int tensor_dimension,        //in: chosen tensor dimension
                               std::vector<double> & partial_norms); //out: partial 2-norms over the chosen tensor dimension
 
- /** Broadcast a tensor among all MPI processes within an intra-communicator.
-     This function is needed when a tensor is updated in an operation
-     submitted to a subset of MPI processes such that the excluded
-     MPI processes can receive an updated version of the tensor. **/
- bool broadcastTensor(const std::string & name, //in: tensor name
-                      int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
-                      MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+ /** Replicates a tensor within the given process group, which defaults to all MPI processes.
+     Only the root_process_rank within the given process group is required to have the tensor,
+     that is, the tensor will automatically be created in those MPI processes which do not have it.  **/
+ bool replicateTensor(const std::string & name,           //in: tensor name
+                      int root_process_rank);             //in: local rank of the root process within the given process group
 
- bool broadcastTensorSync(const std::string & name, //in: tensor name
-                          int root_process_rank,    //in: rank of the root process within the MPI intra-communicator
-                          MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+ bool replicateTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                      const std::string & name,           //in: tensor name
+                      int root_process_rank);             //in: local rank of the root process within the given process group
 
- /** Performs a global sum reduction on a tensor among all MPI processes within
-     an intra-communicator. This function is needed when multiple MPI processes
-     compute their local updates to the tensor, thus requiring a global sum
-     reduction such that each MPI process will get the final (same) tensor value. **/
- bool allreduceTensor(const std::string & name, //in: tensor name
-                      MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+ bool replicateTensorSync(const std::string & name,           //in: tensor name
+                          int root_process_rank);             //in: local rank of the root process within the given process group
 
- bool allreduceTensorSync(const std::string & name, //in: tensor name
-                          MPICommProxy intra_comm = MPICommProxy()); //in: MPI intra-communicator, defaults to all processes
+ bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                          const std::string & name,           //in: tensor name
+                          int root_process_rank);             //in: local rank of the root process within the given process group
+
+ /** Broadcast a tensor among all MPI processes within a given process group,
+     which defaults to all MPI processes. This function is needed when
+     a tensor is updated in an operation submitted to a subset of MPI processes
+     such that the excluded MPI processes can receive an updated version of the tensor.
+     Note that the tensor must exist in all participating MPI processes. **/
+ bool broadcastTensor(const std::string & name,           //in: tensor name
+                      int root_process_rank);             //in: local rank of the root process within the given process group
+
+ bool broadcastTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                      const std::string & name,           //in: tensor name
+                      int root_process_rank);             //in: local rank of the root process within the given process group
+
+ bool broadcastTensorSync(const std::string & name,           //in: tensor name
+                          int root_process_rank);             //in: local rank of the root process within the given process group
+
+ bool broadcastTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                          const std::string & name,           //in: tensor name
+                          int root_process_rank);             //in: local rank of the root process within the given process group
+
+ bool broadcastTensor(MPICommProxy intra_comm,      //in: explicit MPI intra-communicator
+                      const std::string & name,     //in: tensor name
+                      int root_process_rank);       //in: rank of the root process within the MPI intra-communicator
+
+ bool broadcastTensorSync(MPICommProxy intra_comm,  //in: explicit MPI intra-communicator
+                          const std::string & name, //in: tensor name
+                          int root_process_rank);   //in: rank of the root process within the MPI intra-communicator
+
+ /** Performs a global sum reduction on a tensor among all MPI processes within a given
+     process group, which defaults to all MPI processes. This function is needed when
+     multiple MPI processes compute their local updates to the tensor, thus requiring
+     a global sum reduction such that each MPI process will get the final (same) tensor
+     value. Note that the tensor must exist in all participating MPI processes. **/
+ bool allreduceTensor(const std::string & name);          //in: tensor name
+
+ bool allreduceTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                      const std::string & name);          //in: tensor name
+
+ bool allreduceTensorSync(const std::string & name);          //in: tensor name
+
+ bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                          const std::string & name);          //in: tensor name
+
+ bool allreduceTensor(MPICommProxy intra_comm,       //in: explicit MPI intra-communicator
+                      const std::string & name);     //in: tensor name
+
+ bool allreduceTensorSync(MPICommProxy intra_comm,   //in: explicit MPI intra-communicator
+                          const std::string & name); //in: tensor name
 
  /** Scales a tensor by a scalar value. **/
  template<typename NumericType>
@@ -541,6 +584,7 @@ private:
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
+ BytePacket byte_packet_; //byte packet for exchanging tensor meta-data
 };
 
 /** Numerical service singleton (numerical server) **/
