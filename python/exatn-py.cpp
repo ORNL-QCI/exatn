@@ -155,8 +155,18 @@ py::class_<exatn::numerics::TensorExpansion,
       .def("reorderOutputModes",
            &exatn::numerics::TensorNetwork::reorderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
-      .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "");
-
+      .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "")
+      // Returns the merge pattern if valid. Otherwise, returns an empty string.
+      .def(
+          "mergeTensors",
+          [](TensorNetwork &network, unsigned int left_id, unsigned int right_id, unsigned int result_id) {
+            std::string pattern;
+            if (network.mergeTensors(left_id, right_id, result_id, &pattern)) {
+              return pattern;
+            }
+            return std::string();
+          },
+          "");
   py::enum_<exatn::TensorElementType>(m, "DataType", py::arithmetic(), "")
       .value("float32", exatn::TensorElementType::REAL32, "")
       .value("float64", exatn::TensorElementType::REAL64, "")
@@ -263,6 +273,11 @@ py::class_<exatn::numerics::TensorExpansion,
       },
       "");
   m.def("createTensor", &createTensorWithDataNoNumServer, "");
+  // Create an existing declared tensor
+  m.def("createTensor", [](std::shared_ptr<Tensor> tensor) {
+    auto success = exatn::createTensor(tensor, tensor->getElementType());
+    return success;
+  });
   m.def(
       "registerTensorIsometry",
       [](const std::string &name, const std::vector<unsigned int> &iso_dims) {
