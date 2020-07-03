@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/30
+REVISION: 2020/07/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,7 +74,7 @@ NumServer::~NumServer()
   if(submitted) submitted = sync(*destroy_op);
   iter = tensors_.begin();
  }
- tensor_rt_->closeScope();
+ tensor_rt_->closeScope(); //contains sync() inside
  scopes_.pop();
  destroyBytePacket(&byte_packet_);
 }
@@ -296,12 +296,12 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 
 bool NumServer::submit(TensorNetwork & network)
 {
- return submit(ProcessGroup(intra_comm_,num_processes_),network);
+ return submit(getDefaultProcessGroup(),network);
 }
 
 bool NumServer::submit(std::shared_ptr<TensorNetwork> network)
 {
- return submit(ProcessGroup(intra_comm_,num_processes_),network);
+ return submit(getDefaultProcessGroup(),network);
 }
 
 bool NumServer::submit(const ProcessGroup & process_group,
@@ -484,7 +484,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
      destroy_slice->setTensorOperand(input_slice.second);
      submitted = submit(destroy_slice); if(!submitted) return false;
     }
-    if(serialize) sync(); //debug
+    if(serialize) sync(getCurrentProcessGroup()); //debug
     input_slices.clear();
    } //loop over tensor operations
    //Erase intermediate tensor slices once all tensor operations have been executed:
@@ -521,13 +521,13 @@ bool NumServer::submit(const ProcessGroup & process_group,
 bool NumServer::submit(TensorExpansion & expansion,
                        std::shared_ptr<Tensor> accumulator)
 {
- return submit(ProcessGroup(intra_comm_,num_processes_),expansion,accumulator);
+ return submit(getDefaultProcessGroup(),expansion,accumulator);
 }
 
 bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
                        std::shared_ptr<Tensor> accumulator)
 {
- return submit(ProcessGroup(intra_comm_,num_processes_),expansion,accumulator);
+ return submit(getDefaultProcessGroup(),expansion,accumulator);
 }
 
 bool NumServer::submit(const ProcessGroup & process_group,
@@ -570,32 +570,69 @@ bool NumServer::submit(const ProcessGroup & process_group,
 
 bool NumServer::sync(const Tensor & tensor, bool wait)
 {
- return tensor_rt_->sync(tensor,wait);
+ return sync(getDefaultProcessGroup(),tensor,wait);
 }
 
-bool NumServer::sync(TensorOperation & operation, bool wait)
+bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, bool wait)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ auto success = tensor_rt_->sync(tensor,wait);
+#ifdef MPI_ENABLED
+ if(success){
+  auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+  success = success && (errc == MPI_SUCCESS);
+ }
+#endif
+ return success;
+}
+
+bool NumServer::sync(TensorOperation & operation, bool wait) //`Local synchronization semantics
 {
  return tensor_rt_->sync(operation,wait);
 }
 
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
- return sync(*(network.getTensor(0)),wait);
+ return sync(getDefaultProcessGroup(),network,wait);
+}
+
+bool NumServer::sync(const ProcessGroup & process_group, TensorNetwork & network, bool wait)
+{
+ return sync(process_group,*(network.getTensor(0)),wait); //synchronization on the output tensor of the tensor network
 }
 
 bool NumServer::sync(bool wait)
 {
- return tensor_rt_->sync(wait);
+ return sync(getDefaultProcessGroup(),wait);
+}
+
+bool NumServer::sync(const ProcessGroup & process_group, bool wait)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ auto success = tensor_rt_->sync(wait);
+#ifdef MPI_ENABLED
+ if(success){
+  auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+  success = success && (errc == MPI_SUCCESS);
+ }
+#endif
+ return success;
 }
 
 bool NumServer::sync(const std::string & name, bool wait)
 {
+ return sync(getDefaultProcessGroup(),name,wait);
+}
+
+bool NumServer::sync(const ProcessGroup & process_group, const std::string & name, bool wait)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::sync): Tensor " << name << " not found!" << std::endl;
-  return false;
+  std::cout << "#ERROR(exatn::NumServer::sync): Tensor " << name << " not found!" << std::endl << std::flush;
+  assert(false);
  }
- return sync(*(iter->second),wait);
+ return sync(process_group,*(iter->second),wait);
 }
 
 std::shared_ptr<Tensor> NumServer::getTensor(const std::string & name)
@@ -652,13 +689,13 @@ bool NumServer::registerTensorIsometry(const std::string & name,
 bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,
                              TensorElementType element_type)
 {
- return createTensor(ProcessGroup(intra_comm_,num_processes_),tensor,element_type);
+ return createTensor(getDefaultProcessGroup(),tensor,element_type);
 }
 
 bool NumServer::createTensorSync(std::shared_ptr<Tensor> tensor,
                                  TensorElementType element_type)
 {
- return createTensorSync(ProcessGroup(intra_comm_,num_processes_),tensor,element_type);
+ return createTensorSync(getDefaultProcessGroup(),tensor,element_type);
 }
 
 bool NumServer::createTensor(const ProcessGroup & process_group,
@@ -693,7 +730,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
+  std::cout << "#WARNING(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
   return false;
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -708,7 +745,7 @@ bool NumServer::destroyTensorSync(const std::string & name)
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
+  std::cout << "#WARNING(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
   return false;
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -803,6 +840,11 @@ bool NumServer::replicateTensor(const std::string & name, int root_process_rank)
  return replicateTensor(getDefaultProcessGroup(),name,root_process_rank);
 }
 
+bool NumServer::replicateTensorSync(const std::string & name, int root_process_rank)
+{
+ return replicateTensorSync(getDefaultProcessGroup(),name,root_process_rank);
+}
+
 bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
 {
  unsigned int local_rank; //local process rank within the process group
@@ -823,29 +865,28 @@ bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::s
  auto errc = MPI_Bcast(&byte_packet_len,1,MPI_INT,root_process_rank,
                        process_group.getMPICommProxy().getRef<MPI_Comm>());
  assert(errc == MPI_SUCCESS);
+ if(local_rank != root_process_rank) byte_packet_.size_bytes = byte_packet_len;
  errc = MPI_Bcast(byte_packet_.base_addr,byte_packet_len,MPI_UNSIGNED_CHAR,root_process_rank,
                   process_group.getMPICommProxy().getRef<MPI_Comm>());
  assert(errc == MPI_SUCCESS);
 #endif
  //Create the tensor locally if it did not exist:
- if(iter == tensors_.end()){
-  auto res = tensors_.emplace(std::make_pair(name,std::make_shared<Tensor>(byte_packet_))); assert(res.second);
-  iter = res.first;
+ resetBytePacket(&byte_packet_);
+ if(iter == tensors_.end()){ //only other MPI processes than root_process_rank
+  auto tensor = std::make_shared<Tensor>(byte_packet_);
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand(iter->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(iter->second->getElementType());
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(tensor->getElementType());
   auto submitted = submit(op);
   if(submitted) submitted = sync(*op);
   assert(submitted);
  }
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
+#ifdef MPI_ENABLED
+// errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
+#endif
  return broadcastTensor(process_group,name,root_process_rank);
-}
-
-bool NumServer::replicateTensorSync(const std::string & name, int root_process_rank)
-{
- return replicateTensorSync(getDefaultProcessGroup(),name,root_process_rank);
 }
 
 bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
@@ -868,23 +909,27 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
  auto errc = MPI_Bcast(&byte_packet_len,1,MPI_INT,root_process_rank,
                        process_group.getMPICommProxy().getRef<MPI_Comm>());
  assert(errc == MPI_SUCCESS);
+ if(local_rank != root_process_rank) byte_packet_.size_bytes = byte_packet_len;
  errc = MPI_Bcast(byte_packet_.base_addr,byte_packet_len,MPI_UNSIGNED_CHAR,root_process_rank,
                   process_group.getMPICommProxy().getRef<MPI_Comm>());
  assert(errc == MPI_SUCCESS);
 #endif
  //Create the tensor locally if it did not exist:
- if(iter == tensors_.end()){
-  auto res = tensors_.emplace(std::make_pair(name,std::make_shared<Tensor>(byte_packet_))); assert(res.second);
-  iter = res.first;
+ resetBytePacket(&byte_packet_);
+ if(iter == tensors_.end()){ //only other MPI processes than root_process_rank
+  auto tensor = std::make_shared<Tensor>(byte_packet_);
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand(iter->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(iter->second->getElementType());
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(tensor->getElementType());
   auto submitted = submit(op);
   if(submitted) submitted = sync(*op);
   assert(submitted);
  }
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
+#ifdef MPI_ENABLED
+// errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
+#endif
  return broadcastTensorSync(process_group,name,root_process_rank);
 }
 
@@ -893,25 +938,14 @@ bool NumServer::broadcastTensor(const std::string & name, int root_process_rank)
  return broadcastTensor(getDefaultProcessGroup(),name,root_process_rank);
 }
 
-bool NumServer::broadcastTensor(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
-{
- if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- return broadcastTensor(process_group.getMPICommProxy(),name,root_process_rank);
-}
-
 bool NumServer::broadcastTensorSync(const std::string & name, int root_process_rank)
 {
  return broadcastTensorSync(getDefaultProcessGroup(),name,root_process_rank);
 }
 
-bool NumServer::broadcastTensorSync(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
+bool NumServer::broadcastTensor(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- return broadcastTensorSync(process_group.getMPICommProxy(),name,root_process_rank);
-}
-
-bool NumServer::broadcastTensor(MPICommProxy intra_comm, const std::string & name, int root_process_rank)
-{
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::broadcastTensor): Tensor " << name << " not found!" << std::endl;
@@ -919,15 +953,15 @@ bool NumServer::broadcastTensor(MPICommProxy intra_comm, const std::string & nam
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
  op->setTensorOperand(iter->second);
- if(intra_comm.isEmpty()) intra_comm = intra_comm_;
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
  auto submitted = submit(op);
  return submitted;
 }
 
-bool NumServer::broadcastTensorSync(MPICommProxy intra_comm, const std::string & name, int root_process_rank)
+bool NumServer::broadcastTensorSync(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::broadcastTensorSync): Tensor " << name << " not found!" << std::endl;
@@ -935,8 +969,7 @@ bool NumServer::broadcastTensorSync(MPICommProxy intra_comm, const std::string &
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
  op->setTensorOperand(iter->second);
- if(intra_comm.isEmpty()) intra_comm = intra_comm_;
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
@@ -948,25 +981,14 @@ bool NumServer::allreduceTensor(const std::string & name)
  return allreduceTensor(getDefaultProcessGroup(),name);
 }
 
-bool NumServer::allreduceTensor(const ProcessGroup & process_group, const std::string & name)
-{
- if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- return allreduceTensor(process_group.getMPICommProxy(),name);
-}
-
 bool NumServer::allreduceTensorSync(const std::string & name)
 {
  return allreduceTensorSync(getDefaultProcessGroup(),name);
 }
 
-bool NumServer::allreduceTensorSync(const ProcessGroup & process_group, const std::string & name)
+bool NumServer::allreduceTensor(const ProcessGroup & process_group, const std::string & name)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- return allreduceTensorSync(process_group.getMPICommProxy(),name);
-}
-
-bool NumServer::allreduceTensor(MPICommProxy intra_comm, const std::string & name)
-{
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::allreduceTensor): Tensor " << name << " not found!" << std::endl;
@@ -974,14 +996,14 @@ bool NumServer::allreduceTensor(MPICommProxy intra_comm, const std::string & nam
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
  op->setTensorOperand(iter->second);
- if(intra_comm.isEmpty()) intra_comm = intra_comm_;
- std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  auto submitted = submit(op);
  return submitted;
 }
 
-bool NumServer::allreduceTensorSync(MPICommProxy intra_comm, const std::string & name)
+bool NumServer::allreduceTensorSync(const ProcessGroup & process_group, const std::string & name)
 {
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::allreduceTensorSync): Tensor " << name << " not found!" << std::endl;
@@ -989,8 +1011,7 @@ bool NumServer::allreduceTensorSync(MPICommProxy intra_comm, const std::string &
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
  op->setTensorOperand(iter->second);
- if(intra_comm.isEmpty()) intra_comm = intra_comm_;
- std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(intra_comm);
+ std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
  return submitted;
@@ -1648,7 +1669,7 @@ bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
 bool NumServer::evaluateTensorNetwork(const std::string & name,
                                       const std::string & network)
 {
- return evaluateTensorNetwork(ProcessGroup(intra_comm_,num_processes_),name,network);
+ return evaluateTensorNetwork(getDefaultProcessGroup(),name,network);
 }
 
 bool NumServer::evaluateTensorNetwork(const ProcessGroup & process_group,
@@ -1693,7 +1714,7 @@ bool NumServer::evaluateTensorNetwork(const ProcessGroup & process_group,
 bool NumServer::evaluateTensorNetworkSync(const std::string & name,
                                           const std::string & network)
 {
- return evaluateTensorNetworkSync(ProcessGroup(intra_comm_,num_processes_),name,network);
+ return evaluateTensorNetworkSync(getDefaultProcessGroup(),name,network);
 }
 
 bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
@@ -1728,7 +1749,7 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
    parsed = submit(process_group,tensnet);
-   if(parsed) parsed = sync(tensnet);
+   if(parsed) parsed = sync(process_group,tensnet);
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetworkSync): Invalid tensor network: " << network << std::endl;

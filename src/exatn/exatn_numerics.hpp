@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/06/30
+REVISION: 2020/07/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -295,14 +295,14 @@ inline bool replicateTensor(const std::string & name,           //in: tensor nam
                             int root_process_rank)              //in: local rank of the root process within the given process group
  {return numericalServer->replicateTensor(name,root_process_rank);}
 
+inline bool replicateTensorSync(const std::string & name,       //in: tensor name
+                                int root_process_rank)          //in: local rank of the root process within the given process group
+ {return numericalServer->replicateTensorSync(name,root_process_rank);}
+
 inline bool replicateTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                             const std::string & name,           //in: tensor name
                             int root_process_rank)              //in: local rank of the root process within the given process group
  {return numericalServer->replicateTensor(process_group,name,root_process_rank);}
-
-inline bool replicateTensorSync(const std::string & name,           //in: tensor name
-                                int root_process_rank)              //in: local rank of the root process within the given process group
- {return numericalServer->replicateTensorSync(name,root_process_rank);}
 
 inline bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                 const std::string & name,           //in: tensor name
@@ -315,33 +315,23 @@ inline bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen
     a tensor is updated in an operation submitted to a subset of MPI processes
     such that the excluded MPI processes can receive an updated version of the tensor.
     Note that the tensor must exist in all participating MPI processes. **/
-inline  bool broadcastTensor(const std::string & name,           //in: tensor name
-                             int root_process_rank)              //in: local rank of the root process within the given process group
+inline  bool broadcastTensor(const std::string & name,          //in: tensor name
+                             int root_process_rank)             //in: local rank of the root process within the given process group
  {return numericalServer->broadcastTensor(name,root_process_rank);}
+
+inline bool broadcastTensorSync(const std::string & name,       //in: tensor name
+                                int root_process_rank)          //in: local rank of the root process within the given process group
+ {return numericalServer->broadcastTensorSync(name,root_process_rank);}
 
 inline bool broadcastTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                             const std::string & name,           //in: tensor name
                             int root_process_rank)              //in: local rank of the root process within the given process group
  {return numericalServer->broadcastTensor(process_group,name,root_process_rank);}
 
-inline bool broadcastTensorSync(const std::string & name,           //in: tensor name
-                                int root_process_rank)             //in: local rank of the root process within the given process group
- {return numericalServer->broadcastTensorSync(name,root_process_rank);}
-
 inline bool broadcastTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                 const std::string & name,           //in: tensor name
                                 int root_process_rank)              //in: local rank of the root process within the given process group
  {return numericalServer->broadcastTensorSync(process_group,name,root_process_rank);}
-
-inline bool broadcastTensor(MPICommProxy intra_comm,      //in: explicit MPI intra-communicator
-                            const std::string & name,     //in: tensor name
-                            int root_process_rank)        //in: rank of the root process within the MPI intra-communicator
- {return numericalServer->broadcastTensor(intra_comm,name,root_process_rank);}
-
-inline bool broadcastTensorSync(MPICommProxy intra_comm,  //in: explicit MPI intra-communicator
-                                const std::string & name, //in: tensor name
-                                int root_process_rank)    //in: rank of the root process within the MPI intra-communicator
- {return numericalServer->broadcastTensorSync(intra_comm,name,root_process_rank);}
 
 
 /** Performs a global sum reduction on a tensor among all MPI processes within a given
@@ -352,24 +342,16 @@ inline bool broadcastTensorSync(MPICommProxy intra_comm,  //in: explicit MPI int
 inline bool allreduceTensor(const std::string & name)           //in: tensor name
  {return numericalServer->allreduceTensor(name);}
 
+inline bool allreduceTensorSync(const std::string & name)       //in: tensor name
+ {return numericalServer->allreduceTensorSync(name);}
+
 inline bool allreduceTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                             const std::string & name)           //in: tensor name
  {return numericalServer->allreduceTensor(process_group,name);}
 
-inline bool allreduceTensorSync(const std::string & name)           //in: tensor name
- {return numericalServer->allreduceTensorSync(name);}
-
 inline bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                 const std::string & name)           //in: tensor name
  {return numericalServer->allreduceTensorSync(process_group,name);}
-
-inline bool allreduceTensor(MPICommProxy intra_comm,         //in: explicit MPI intra-communicator
-                            const std::string & name)        //in: tensor name
- {return numericalServer->allreduceTensor(intra_comm,name);}
-
-inline bool allreduceTensorSync(MPICommProxy intra_comm,     //in: explicit MPI intra-communicator
-                                const std::string & name)    //in: tensor name
- {return numericalServer->allreduceTensorSync(intra_comm,name);}
 
 
 /** Scales a tensor by a scalar value. **/
@@ -543,6 +525,11 @@ inline bool sync(const std::string & name, //in: tensor name
                  bool wait = true)         //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
 
+inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                 const std::string & name,           //in: tensor name
+                 bool wait = true)                   //in: wait versus test for completion
+ {return numericalServer->sync(process_group,name,wait);}
+
 
 /** Evaluates a tensor network object (computes the output tensor). **/
 inline bool evaluate(TensorNetwork & network) //in: finalized tensor network
@@ -560,7 +547,7 @@ inline bool evaluate(const ProcessGroup & process_group, //in: chosen group of M
 inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                          TensorNetwork & network)            //in: finalized tensor network
  {bool success = numericalServer->submit(process_group,network);
-  if(success) success = numericalServer->sync(network);
+  if(success) success = numericalServer->sync(process_group,network);
   return success;}
 
 
@@ -568,6 +555,11 @@ inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group 
 inline bool sync(TensorNetwork & network, //in: finalized tensor network
                  bool wait = true)        //in: wait versus test for completion
  {return numericalServer->sync(network,wait);}
+
+inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                 TensorNetwork & network,            //in: finalized tensor network
+                 bool wait = true)                   //in: wait versus test for completion
+ {return numericalServer->sync(process_group,network,wait);}
 
 
 /** Evaluates a tensor network expansion into the explicitly provided tensor accumulator. **/
@@ -592,7 +584,7 @@ inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group
                          std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
  {if(!accumulator) return false;
   bool success = numericalServer->submit(process_group,expansion,accumulator);
-  if(success) success = numericalServer->sync(*accumulator);
+  if(success) success = numericalServer->sync(process_group,*accumulator);
   return success;}
 
 
@@ -601,10 +593,19 @@ inline bool sync(const Tensor & tensor, //in: tensor
                  bool wait = true)      //in: wait versus test for completion
  {return numericalServer->sync(tensor,wait);}
 
+inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI processes
+                 const Tensor & tensor,               //in: tensor
+                 bool wait = true)                    //in: wait versus test for completion
+ {return numericalServer->sync(process_group,tensor,wait);}
+
 
 /** Synchronizes all outstanding tensor operations in the current scope (barrier). **/
-inline bool sync(bool wait = true)
+inline bool sync(bool wait = true)                    //in: wait versus test for completion
  {return numericalServer->sync(wait);}
+
+inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI processes
+                 bool wait = true)                    //in: wait versus test for completion
+ {return numericalServer->sync(process_group,wait);}
 
 
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.

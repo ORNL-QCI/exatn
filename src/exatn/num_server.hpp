@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/06/30
+REVISION: 2020/07/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -242,22 +242,34 @@ public:
      Changing wait to FALSE, only tests for completion. **/
  bool sync(const Tensor & tensor,
            bool wait = true);
+ bool sync(const ProcessGroup & process_group,
+           const Tensor & tensor,
+           bool wait = true);
  /** Synchronizes execution of a specific tensor operation.
-     Changing wait to FALSE, only tests for completion. **/
+     Changing wait to FALSE, only tests for completion.
+    `This method has local synchronization semantics! **/
  bool sync(TensorOperation & operation,
            bool wait = true);
  /** Synchronizes execution of a specific tensor network.
      Changing wait to FALSE, only tests for completion. **/
  bool sync(TensorNetwork & network,
            bool wait = true);
+ bool sync(const ProcessGroup & process_group,
+           TensorNetwork & network,
+           bool wait = true);
  /** Synchronizes execution of all outstanding tensor operations.
      Changing wait to FALSE, only tests for completion. **/
  bool sync(bool wait = true);
+ bool sync(const ProcessGroup & process_group,
+           bool wait = true);
 
  /** HIGHER-LEVEL WRAPPERS **/
 
  /** Synchronizes all outstanding update operations on a given tensor. **/
  bool sync(const std::string & name, //in: tensor name
+           bool wait = true);        //in: wait versus test for completion
+ bool sync(const ProcessGroup & process_group,
+           const std::string & name, //in: tensor name
            bool wait = true);        //in: wait versus test for completion
 
  /** Returns a shared pointer to the requested tensor object. **/
@@ -365,12 +377,12 @@ public:
  bool replicateTensor(const std::string & name,           //in: tensor name
                       int root_process_rank);             //in: local rank of the root process within the given process group
 
+ bool replicateTensorSync(const std::string & name,       //in: tensor name
+                          int root_process_rank);         //in: local rank of the root process within the given process group
+
  bool replicateTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                       const std::string & name,           //in: tensor name
                       int root_process_rank);             //in: local rank of the root process within the given process group
-
- bool replicateTensorSync(const std::string & name,           //in: tensor name
-                          int root_process_rank);             //in: local rank of the root process within the given process group
 
  bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                           const std::string & name,           //in: tensor name
@@ -384,24 +396,16 @@ public:
  bool broadcastTensor(const std::string & name,           //in: tensor name
                       int root_process_rank);             //in: local rank of the root process within the given process group
 
+ bool broadcastTensorSync(const std::string & name,       //in: tensor name
+                          int root_process_rank);         //in: local rank of the root process within the given process group
+
  bool broadcastTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                       const std::string & name,           //in: tensor name
                       int root_process_rank);             //in: local rank of the root process within the given process group
 
- bool broadcastTensorSync(const std::string & name,           //in: tensor name
-                          int root_process_rank);             //in: local rank of the root process within the given process group
-
  bool broadcastTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                           const std::string & name,           //in: tensor name
                           int root_process_rank);             //in: local rank of the root process within the given process group
-
- bool broadcastTensor(MPICommProxy intra_comm,      //in: explicit MPI intra-communicator
-                      const std::string & name,     //in: tensor name
-                      int root_process_rank);       //in: rank of the root process within the MPI intra-communicator
-
- bool broadcastTensorSync(MPICommProxy intra_comm,  //in: explicit MPI intra-communicator
-                          const std::string & name, //in: tensor name
-                          int root_process_rank);   //in: rank of the root process within the MPI intra-communicator
 
  /** Performs a global sum reduction on a tensor among all MPI processes within a given
      process group, which defaults to all MPI processes. This function is needed when
@@ -410,19 +414,13 @@ public:
      value. Note that the tensor must exist in all participating MPI processes. **/
  bool allreduceTensor(const std::string & name);          //in: tensor name
 
+ bool allreduceTensorSync(const std::string & name);      //in: tensor name
+
  bool allreduceTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
                       const std::string & name);          //in: tensor name
 
- bool allreduceTensorSync(const std::string & name);          //in: tensor name
-
  bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                           const std::string & name);          //in: tensor name
-
- bool allreduceTensor(MPICommProxy intra_comm,       //in: explicit MPI intra-communicator
-                      const std::string & name);     //in: tensor name
-
- bool allreduceTensorSync(MPICommProxy intra_comm,   //in: explicit MPI intra-communicator
-                          const std::string & name); //in: tensor name
 
  /** Scales a tensor by a scalar value. **/
  template<typename NumericType>
@@ -579,8 +577,8 @@ private:
  TensorOpFactory * tensor_op_factory_; //tensor operation factory (non-owning pointer)
 
  int num_processes_; //total number of parallel processes
- int process_rank_; //rank of the current parallel process
- MPICommProxy intra_comm_; //MPI intra-communicator used to initialize the Numerical Server
+ int process_rank_; //global rank of the current parallel process
+ MPICommProxy intra_comm_; //global MPI intra-communicator used to initialize the Numerical Server
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
@@ -596,7 +594,7 @@ bool NumServer::createTensor(const std::string & name,
                              TensorElementType element_type,
                              Args&&... args)
 {
- return createTensor(ProcessGroup(intra_comm_,num_processes_),name,element_type,std::forward<Args>(args)...);
+ return createTensor(getDefaultProcessGroup(),name,element_type,std::forward<Args>(args)...);
 }
 
 template <typename... Args>
@@ -604,7 +602,7 @@ bool NumServer::createTensorSync(const std::string & name,
                                  TensorElementType element_type,
                                  Args&&... args)
 {
- return createTensorSync(ProcessGroup(intra_comm_,num_processes_),name,element_type,std::forward<Args>(args)...);
+ return createTensorSync(getDefaultProcessGroup(),name,element_type,std::forward<Args>(args)...);
 }
 
 template <typename... Args>
