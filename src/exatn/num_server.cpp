@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/01
+REVISION: 2020/07/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -730,7 +730,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
+  std::cout << "#WARNING(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
   return false;
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -745,7 +745,7 @@ bool NumServer::destroyTensorSync(const std::string & name)
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
+  std::cout << "#WARNING(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
   return false;
  }
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -873,11 +873,10 @@ bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::s
  //Create the tensor locally if it did not exist:
  resetBytePacket(&byte_packet_);
  if(iter == tensors_.end()){ //only other MPI processes than root_process_rank
-  auto res = tensors_.emplace(std::make_pair(name,std::make_shared<Tensor>(byte_packet_))); assert(res.second);
-  iter = res.first;
+  auto tensor = std::make_shared<Tensor>(byte_packet_);
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand(iter->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(iter->second->getElementType());
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(tensor->getElementType());
   auto submitted = submit(op);
   if(submitted) submitted = sync(*op);
   assert(submitted);
@@ -885,7 +884,7 @@ bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::s
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
 #ifdef MPI_ENABLED
- errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
+// errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
 #endif
  return broadcastTensor(process_group,name,root_process_rank);
 }
@@ -918,11 +917,10 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
  //Create the tensor locally if it did not exist:
  resetBytePacket(&byte_packet_);
  if(iter == tensors_.end()){ //only other MPI processes than root_process_rank
-  auto res = tensors_.emplace(std::make_pair(name,std::make_shared<Tensor>(byte_packet_))); assert(res.second);
-  iter = res.first;
+  auto tensor = std::make_shared<Tensor>(byte_packet_);
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand(iter->second);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(iter->second->getElementType());
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(tensor->getElementType());
   auto submitted = submit(op);
   if(submitted) submitted = sync(*op);
   assert(submitted);
@@ -930,7 +928,7 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
 #ifdef MPI_ENABLED
- errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
+// errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
 #endif
  return broadcastTensorSync(process_group,name,root_process_rank);
 }

@@ -31,7 +31,7 @@
 
 
 #ifdef EXATN_TEST0
-TEST(NumServerTester, ExamplarBasicExaTN)
+TEST(NumServerTester, ExamplarExaTN)
 {
  using exatn::Tensor;
  using exatn::TensorShape;
@@ -135,7 +135,7 @@ TEST(NumServerTester, ExamplarBasicExaTN)
 #endif
 
 #ifdef EXATN_TEST1
-TEST(NumServerTester, ExamplarExaTN)
+TEST(NumServerTester, ParallelExaTN)
 {
  using exatn::Tensor;
  using exatn::TensorShape;
@@ -147,57 +147,68 @@ TEST(NumServerTester, ExamplarExaTN)
 
  exatn::resetRuntimeLoggingLevel(0); //debug
 
- bool success;
+ bool success = true;
 
- //Declare and then create a tensor:
+ //For multi-process execution:
+ auto process_rank = exatn::getProcessRank(); //global rank of the current process
+ exatn::ProcessGroup myself(exatn::getCurrentProcessGroup()); //process group containing only the current process
+ exatn::ProcessGroup all_processes(exatn::getDefaultProcessGroup()); //group of all processes
+
+ //All processes: Declare and then separately create a tensor:
  auto z0 = exatn::makeSharedTensor("Z0",TensorShape{16,16,16,16}); //declares a tensor Z0[16,16,16,16] with no storage
- success = exatn::createTensor(z0,TensorElementType::REAL32); assert(success); //allocates tensor storage
+ success = exatn::createTensor(z0,TensorElementType::REAL32); assert(success); //allocates storage for tensor Z0
 
- //Create tensors in one shot (with storage):
+ //All processes: Create tensors in one shot (with storage):
  success = exatn::createTensor("T0",TensorElementType::REAL32,TensorShape{16,16}); assert(success);
  success = exatn::createTensor("T1",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
  success = exatn::createTensor("T2",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
  success = exatn::createTensor("T3",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
  success = exatn::createTensor("T4",TensorElementType::REAL32,TensorShape{32,16,32,32}); assert(success);
- success = exatn::createTensor("S0",TensorElementType::REAL32); assert(success);
 
- //Initialize tensors to a scalar value:
+ //All processes: Initialize tensors to a scalar value:
  success = exatn::initTensor("Z0",0.0); assert(success);
  success = exatn::initTensor("T0",0.0); assert(success);
- success = exatn::initTensor("S0",0.0); assert(success);
  success = exatn::initTensor("T1",0.01); assert(success);
  success = exatn::initTensor("T2",0.001); assert(success);
  success = exatn::initTensor("T3",0.0001); assert(success);
  success = exatn::initTensor("T4",0.00001); assert(success);
 
- //Scale a tensor by a scalar:
+ //All processes: Scale a tensor by a scalar:
  success = exatn::scaleTensor("T3",0.5); assert(success);
 
- //Accumulate a scaled tensor into another tensor:
+ //All processes: Accumulate a scaled tensor into another tensor:
  success = exatn::addTensors("T2(i,j,k,l)+=T4(i,j,k,l)",0.25); assert(success);
 
- //Contract two tensors (scaled by a scalar) and accumulate the result into another tensor:
+ //All processes: Contract two tensors (scaled by a scalar) and accumulate the result into another tensor:
  success = exatn::contractTensors("T0(i,j)+=T2(c,i,d,e)*T3(d,j,e,c)",0.125); assert(success);
 
- //Evaluate the entire tensor network in one shot:
- exatn::ProcessGroup process_group(exatn::getDefaultProcessGroup());
- std::cout << "Original memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
- process_group.resetMemoryLimitPerProcess(exatn::getMemoryBufferSize()/8);
- std::cout << "Corrected memory limit per process = " << process_group.getMemoryLimitPerProcess() << std::endl;
- success = exatn::evaluateTensorNetwork(process_group,"FullyConnected",
-          "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");
- //Synchronize on the output tensor Z0:
- exatn::sync("Z0");
+ //All processes: Evaluate the entire tensor network in one shot with a given memory limit per process:
+ std::cout << "Original memory limit per process = " << all_processes.getMemoryLimitPerProcess() << std::endl;
+ all_processes.resetMemoryLimitPerProcess(exatn::getMemoryBufferSize()/8);
+ std::cout << "Corrected memory limit per process = " << all_processes.getMemoryLimitPerProcess() << std::endl;
+ success = exatn::evaluateTensorNetwork(all_processes,"FullyConnectedStar",
+           "Z0(i,j,k,l)+=T1(d,i,a,e)*T2(a,j,b,f)*T3(b,k,c,e)*T4(c,l,d,f)");
+ assert(success);
+ //All processes: Synchronize on the computed output tensor Z0:
+ success = exatn::sync(all_processes,"Z0"); assert(success);
 
- //Compute Z0 2-norm (synchronously):
+ //All processes: Compute 2-norm of Z0 (synchronously):
  double norm2 = 0.0;
  success = exatn::computeNorm2Sync("Z0",norm2); assert(success);
  std::cout << "Z0 2-norm = " << norm2 << std::endl << std::flush;
 
- //Compute Z0 2-norm by a tensor contraction (synchronously):
- success = exatn::contractTensorsSync("S0()+=Z0(i,j,k,l)*Z0(i,j,k,l)",1.0); assert(success);
+ //Process 0: Compute 2-norm of Z0 by a tensor contraction (synchronously):
+ if(process_rank == 0){
+  success = exatn::createTensor("S0",TensorElementType::REAL32); assert(success);
+  success = exatn::initTensor("S0",0.0); assert(success);
+  success = exatn::contractTensorsSync("S0()+=Z0+(i,j,k,l)*Z0(i,j,k,l)",1.0); assert(success);
+ }
+ //All processes: Replicate tensor S0 to all processes (synchronously):
+ success = exatn::replicateTensorSync(all_processes,"S0",0); assert(success);
+ //Retrive a copy of tensor S0 locally:
+ auto talsh_tensor = exatn::getLocalTensor("S0");
 
- //Destroy all tensors:
+ //All processes: Destroy all tensors:
  success = exatn::destroyTensor("S0"); assert(success);
  success = exatn::destroyTensor("T4"); assert(success);
  success = exatn::destroyTensor("T3"); assert(success);
@@ -207,8 +218,8 @@ TEST(NumServerTester, ExamplarExaTN)
  success = exatn::destroyTensor("Z0"); assert(success);
  z0.reset();
 
- //Synchronize ExaTN server:
- exatn::sync();
+ //All processes: Synchronize ExaTN server:
+ success = exatn::sync(all_processes); assert(success);
  exatn::resetRuntimeLoggingLevel(0);
 }
 #endif
