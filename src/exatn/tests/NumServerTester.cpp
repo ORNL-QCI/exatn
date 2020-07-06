@@ -205,7 +205,7 @@ TEST(NumServerTester, ParallelExaTN)
  }
  //All processes: Replicate tensor S0 to all processes (synchronously):
  success = exatn::replicateTensorSync(all_processes,"S0",0); assert(success);
- //Retrive a copy of tensor S0 locally:
+ //All processes: Retrive a copy of tensor S0 locally:
  auto talsh_tensor = exatn::getLocalTensor("S0");
 
  //All processes: Destroy all tensors:
