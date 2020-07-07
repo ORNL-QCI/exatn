@@ -31,6 +31,7 @@ add_library(${LIBRARY_NAME}
             network_builder_mps.cpp
             network_builder_tree.cpp
             network_build_factory.cpp
+            contraction_seq_optimizer.cpp
             contraction_seq_optimizer_dummy.cpp
             contraction_seq_optimizer_heuro.cpp
             contraction_seq_optimizer_greed.cpp
