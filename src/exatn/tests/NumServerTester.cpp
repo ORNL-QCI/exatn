@@ -28,6 +28,7 @@
 #define EXATN_TEST13
 #define EXATN_TEST14
 #define EXATN_TEST15
+#define EXATN_TEST16
 
 
 #ifdef EXATN_TEST0
@@ -1676,6 +1677,42 @@ TEST(NumServerTester, MPSBuilderNumServer)
  assert(success);
  exatn::sync();
 
+}
+#endif
+
+#ifdef EXATN_TEST16
+TEST(NumServerTester, TestSVD)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ bool success = true;
+
+ success = exatn::createTensor("D",TensorElementType::REAL64,TensorShape{2,2,2,2,2}); assert(success);
+ success = exatn::createTensor("L",TensorElementType::REAL64,TensorShape{2,2,2,2}); assert(success);
+ success = exatn::createTensor("R",TensorElementType::REAL64,TensorShape{2,2,2,2,2}); assert(success);
+ success = exatn::createTensor("S",TensorElementType::REAL64,TensorShape{2,2}); assert(success);
+
+ success = exatn::initTensorRndSync("D"); assert(success);
+ success = exatn::initTensorSync("L",0.0); assert(success);
+ success = exatn::initTensorSync("R",0.0); assert(success);
+ success = exatn::initTensorSync("S",0.0); assert(success);
+
+ exatn::sync();
+
+ success = exatn::decomposeTensorSVDSync("D(a,b,c,d,e)=L(c,i,e,j)*S(i,j)*R(b,j,a,i,d)"); assert(success);
+
+ success = exatn::destroyTensor("S"); assert(success);
+ success = exatn::destroyTensor("R"); assert(success);
+ success = exatn::destroyTensor("L"); assert(success);
+ success = exatn::destroyTensor("D"); assert(success);
+
+ exatn::sync();
 }
 #endif
 
