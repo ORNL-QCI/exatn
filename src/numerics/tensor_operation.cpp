@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/06/26
+REVISION: 2020/07/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -225,6 +225,9 @@ std::string TensorOperation::getIndexPatternReduced() const
       assert(false);
      }
     }
+   }
+   if(opcode_ == TensorOpCode::DECOMPOSE_SVD3){ //delete the middle tensor from the symbolic specification
+    tensors.erase(tensors.begin()+2);
    }
    reduced = assemble_symbolic_tensor_network(tensors);
   }else{

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/06/25
+REVISION: 2020/07/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -131,7 +131,9 @@ public:
  const std::string & getIndexPattern() const;
 
  /** Returns a reduced symbolic tensor operation specification (index pattern)
-     in which indices associated with tensor dimensions of extent 1 are removed. **/
+     in which indices associated with tensor dimensions of extent 1 are removed.
+     Also, specifically for tensor operation DECOMPOSE_SVD3, the middle SVD
+     tensor will be removed completely per requirements of the TAL-SH backend. **/
  std::string getIndexPatternReduced() const;
 
  /** Sets the symbolic tensor operation specification (index pattern).
