@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/19
+REVISION: 2020/07/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <iostream>
 #include <unordered_map>
 #include <algorithm>
+#include <tuple>
 
 #include <cmath>
 #include <cassert>
@@ -188,6 +189,19 @@ MetisGraph::MetisGraph(const MetisGraph & parent,                    //in: parti
  for(idx_t vert = 0; vert < parent.renumber_.size(); ++vert){
   if(is_contained(parent.partitions_[vert])) renumber_.emplace_back(parent.renumber_[vert]);
  }
+}
+
+
+bool operator==(const MetisGraph & lhs, const MetisGraph & rhs)
+{
+ return std::tie(lhs.num_vertices_,lhs.xadj_,lhs.adjncy_,lhs.vwgt_,lhs.adjwgt_,lhs.renumber_)
+     == std::tie(rhs.num_vertices_,rhs.xadj_,rhs.adjncy_,rhs.vwgt_,rhs.adjwgt_,rhs.renumber_);
+}
+
+
+bool operator!=(const MetisGraph & lhs, const MetisGraph & rhs)
+{
+ return !(lhs == rhs);
 }
 
 

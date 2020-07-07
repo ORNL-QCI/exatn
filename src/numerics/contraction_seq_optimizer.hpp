@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2019/11/08
+REVISION: 2020/07/06
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
 **/
@@ -14,6 +14,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <list>
 #include <memory>
+#include <unordered_map>
 #include <functional>
 
 namespace exatn{
@@ -28,6 +29,7 @@ struct ContrTriple{
 };
 
 class TensorNetwork;
+class MetisGraph;
 
 
 class ContractionSeqOptimizer{
@@ -46,6 +48,27 @@ public:
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) = 0;
+
+ /** Caches the determined pseudo-optimal tensor contraction sequence for a given
+     tensor network for a later retrieval for the same tensor networks. Returns TRUE
+     on success, FALSE in case this tensor network has already been cached before. **/
+ static bool cacheContractionSequence(const TensorNetwork & network); //in: tensor network with a determined tensor contraction sequence
+
+ /** Erases the previously cached tensor contraction sequence for a given tensor
+     network and returns TRUE, or returns FALSE in case it has not been cached before. **/
+ static bool eraseContractionSequence(const TensorNetwork & network); //in: tensor network
+
+ /** Retrieves a previously cached tensor contraction sequence for a given tensor
+     network. Returns nullptr in case it has not been cached before. **/
+ static const std::list<ContrTriple> * findContractionSequence(const TensorNetwork & network); //in: tensor network
+
+private:
+
+ /** Cached tensor contraction sequences. **/
+ static std::unordered_map<std::string,                     //tensor network name
+                           std::pair<MetisGraph,            //METIS graph of the tensor network
+                                     std::list<ContrTriple> //tensor contraction sequence
+                                    >> cached_contr_seqs_;
 };
 
 using createContractionSeqOptimizerFn = std::unique_ptr<ContractionSeqOptimizer> (*)(void);

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/05/19
+REVISION: 2020/07/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,6 +62,10 @@ public:
  MetisGraph(MetisGraph &&) noexcept = default;
  MetisGraph & operator=(MetisGraph &&) noexcept = default;
  ~MetisGraph() = default;
+
+ /** Compares two METIS graphs for equality/inequality. **/
+ friend bool operator==(const MetisGraph & lhs, const MetisGraph & rhs);
+ friend bool operator!=(const MetisGraph & lhs, const MetisGraph & rhs);
 
  /** Clears the current partitioning. **/
  void clearPartitions();
@@ -141,6 +145,9 @@ private:
  idx_t edge_cut_;                  //achieved edge cut
  idx_t num_cross_edges_;           //number of cross edges in the edge cut
 };
+
+bool operator==(const MetisGraph & lhs, const MetisGraph & rhs);
+bool operator!=(const MetisGraph & lhs, const MetisGraph & rhs);
 
 } //namespace numerics
 
