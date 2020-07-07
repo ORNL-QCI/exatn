@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/01
+REVISION: 2020/07/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -239,7 +239,8 @@ public:
              std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
 
  /** Synchronizes all update operations on a given tensor.
-     Changing wait to FALSE, only tests for completion. **/
+     Changing wait to FALSE, only tests for completion.
+     If ProcessGroup is not provided, defaults to the local process. **/
  bool sync(const Tensor & tensor,
            bool wait = true);
  bool sync(const ProcessGroup & process_group,
@@ -251,21 +252,24 @@ public:
  bool sync(TensorOperation & operation,
            bool wait = true);
  /** Synchronizes execution of a specific tensor network.
-     Changing wait to FALSE, only tests for completion. **/
+     Changing wait to FALSE, only tests for completion.
+     If ProcessGroup is not provided, defaults to the local process. **/
  bool sync(TensorNetwork & network,
            bool wait = true);
  bool sync(const ProcessGroup & process_group,
            TensorNetwork & network,
            bool wait = true);
  /** Synchronizes execution of all outstanding tensor operations.
-     Changing wait to FALSE, only tests for completion. **/
+     Changing wait to FALSE, only tests for completion.
+     If ProcessGroup is not provided, defaults to the local process. **/
  bool sync(bool wait = true);
  bool sync(const ProcessGroup & process_group,
            bool wait = true);
 
  /** HIGHER-LEVEL WRAPPERS **/
 
- /** Synchronizes all outstanding update operations on a given tensor. **/
+ /** Synchronizes all outstanding update operations on a given tensor.
+     If ProcessGroup is not provided, defaults to the local process. **/
  bool sync(const std::string & name, //in: tensor name
            bool wait = true);        //in: wait versus test for completion
  bool sync(const ProcessGroup & process_group,

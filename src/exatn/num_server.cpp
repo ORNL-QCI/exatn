@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/02
+REVISION: 2020/07/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -484,7 +484,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
      destroy_slice->setTensorOperand(input_slice.second);
      submitted = submit(destroy_slice); if(!submitted) return false;
     }
-    if(serialize) sync(getCurrentProcessGroup()); //debug
+    if(serialize) sync(); //debug
     input_slices.clear();
    } //loop over tensor operations
    //Erase intermediate tensor slices once all tensor operations have been executed:
@@ -570,7 +570,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
 
 bool NumServer::sync(const Tensor & tensor, bool wait)
 {
- return sync(getDefaultProcessGroup(),tensor,wait);
+ return sync(getCurrentProcessGroup(),tensor,wait);
 }
 
 bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, bool wait)
@@ -593,7 +593,7 @@ bool NumServer::sync(TensorOperation & operation, bool wait) //`Local synchroniz
 
 bool NumServer::sync(TensorNetwork & network, bool wait)
 {
- return sync(getDefaultProcessGroup(),network,wait);
+ return sync(getCurrentProcessGroup(),network,wait);
 }
 
 bool NumServer::sync(const ProcessGroup & process_group, TensorNetwork & network, bool wait)
@@ -603,7 +603,7 @@ bool NumServer::sync(const ProcessGroup & process_group, TensorNetwork & network
 
 bool NumServer::sync(bool wait)
 {
- return sync(getDefaultProcessGroup(),wait);
+ return sync(getCurrentProcessGroup(),wait);
 }
 
 bool NumServer::sync(const ProcessGroup & process_group, bool wait)
@@ -621,7 +621,7 @@ bool NumServer::sync(const ProcessGroup & process_group, bool wait)
 
 bool NumServer::sync(const std::string & name, bool wait)
 {
- return sync(getDefaultProcessGroup(),name,wait);
+ return sync(getCurrentProcessGroup(),name,wait);
 }
 
 bool NumServer::sync(const ProcessGroup & process_group, const std::string & name, bool wait)

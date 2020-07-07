@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/07/01
+REVISION: 2020/07/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -519,8 +519,8 @@ inline bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: 
  {return numericalServer->evaluateTensorNetworkSync(process_group,name,network);}
 
 
-/** Synchronizes all outstanding update operations on a given tensor
-    specified by its symbolic name. **/
+/** Synchronizes all outstanding update operations on a given tensor specified by
+    its symbolic name. If ProcessGroup is not provided, defaults to the local process.**/
 inline bool sync(const std::string & name, //in: tensor name
                  bool wait = true)         //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
@@ -551,7 +551,8 @@ inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group 
   return success;}
 
 
-/** Synchronizes all outstanding operations on a given tensor network object. **/
+/** Synchronizes all outstanding operations on a given tensor network object.
+    If ProcessGroup is not provided, defaults to the local process. **/
 inline bool sync(TensorNetwork & network, //in: finalized tensor network
                  bool wait = true)        //in: wait versus test for completion
  {return numericalServer->sync(network,wait);}
@@ -588,7 +589,8 @@ inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group
   return success;}
 
 
-/** Synchronizes all outstanding operations on a given tensor. **/
+/** Synchronizes all outstanding operations on a given tensor.
+    If ProcessGroup is not provided, defaults to the local process. **/
 inline bool sync(const Tensor & tensor, //in: tensor
                  bool wait = true)      //in: wait versus test for completion
  {return numericalServer->sync(tensor,wait);}
@@ -599,7 +601,8 @@ inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI 
  {return numericalServer->sync(process_group,tensor,wait);}
 
 
-/** Synchronizes all outstanding tensor operations in the current scope (barrier). **/
+/** Synchronizes all outstanding tensor operations in the current scope (barrier).
+    If ProcessGroup is not provided, defaults to the local process. **/
 inline bool sync(bool wait = true)                    //in: wait versus test for completion
  {return numericalServer->sync(wait);}
 

@@ -129,7 +129,7 @@ TEST(NumServerTester, ExamplarExaTN)
  z2.reset();
 
  //Synchronize ExaTN server:
- exatn::sync();
+ exatn::sync(all_processes);
  exatn::resetRuntimeLoggingLevel(0);
 }
 #endif
