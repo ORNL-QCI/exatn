@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/06
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -134,7 +134,14 @@ public:
 
  /** Resets the tensor contraction sequence optimizer that is
      invoked when evaluating tensor networks. **/
- void resetContrSeqOptimizer(const std::string & optimizer_name);
+ void resetContrSeqOptimizer(const std::string & optimizer_name, //in: tensor contraction sequence optimizer name
+                             bool caching = false);              //whether or not optimized tensor contraction sequence will be cached for later reuse
+
+ /** Activates optimized tensor contraction sequence caching for later reuse. **/
+ void activateContrSeqCaching();
+
+ /** Deactivates optimized tensor contraction sequence caching. **/
+ void deactivateContrSeqCaching();
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
@@ -572,6 +579,7 @@ private:
  std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
 
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
+ bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse
 
  std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data

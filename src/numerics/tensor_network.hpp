@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/06/01
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -324,10 +324,11 @@ public:
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 
  /** Imports and caches an externally provided tensor contraction sequence. **/
- void importContractionSequence(const std::list<ContrTriple> & contr_sequence);
+ void importContractionSequence(const std::list<ContrTriple> & contr_sequence, //in: imported tensor contraction sequence
+                                double fma_flops = 0.0);                       //in: FMA flop count for the imported tensor contraction sequence
 
  /** Returns the currently stored tensor contraction sequence, if any. **/
- const std::list<ContrTriple> & exportContractionSequence() const;
+ const std::list<ContrTriple> & exportContractionSequence(double * fma_flops = nullptr) const; //out: FMA flop count for the imported tensor contraction sequence
 
  /** Returns the list of tensor operations required for evaluating the tensor network.
      Parameter universal_indices set to TRUE will activate the universal index numeration

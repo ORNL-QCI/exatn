@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Base
-REVISION: 2020/07/06
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -12,14 +12,17 @@ namespace exatn{
 
 namespace numerics{
 
-std::unordered_map<std::string,std::pair<MetisGraph,std::list<ContrTriple>>> ContractionSeqOptimizer::cached_contr_seqs_;
+std::unordered_map<std::string,ContractionSeqOptimizer::CachedContrSeq> ContractionSeqOptimizer::cached_contr_seqs_;
 
 
 bool ContractionSeqOptimizer::cacheContractionSequence(const TensorNetwork & network)
 {
- auto res = cached_contr_seqs_.emplace(network.getName(),
-            std::make_pair(MetisGraph(network),network.exportContractionSequence()));
- return res.second;
+ if(!(network.exportContractionSequence().empty())){
+  auto res = cached_contr_seqs_.emplace(network.getName(),
+   std::move(CachedContrSeq{std::make_shared<MetisGraph>(network),network.exportContractionSequence(),network.getFMAFlops()}));
+  return res.second;
+ }
+ return false;
 }
 
 
@@ -30,14 +33,14 @@ bool ContractionSeqOptimizer::eraseContractionSequence(const TensorNetwork & net
 }
 
 
-const std::list<ContrTriple> * ContractionSeqOptimizer::findContractionSequence(const TensorNetwork & network)
+std::pair<const std::list<ContrTriple> *, double> ContractionSeqOptimizer::findContractionSequence(const TensorNetwork & network)
 {
  auto iter = cached_contr_seqs_.find(network.getName());
  if(iter != cached_contr_seqs_.end()){
   MetisGraph network_graph(network);
-  if(network_graph == iter->second.first) return &(iter->second.second);
+  if(network_graph == *(iter->second.graph)) return std::make_pair(&(iter->second.contr_seq),iter->second.fma_flops);
  };
- return nullptr;
+ return std::pair<const std::list<ContrTriple> *, double> {nullptr,0.0};
 }
 
 } //namespace numerics
