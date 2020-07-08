@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2020/07/06
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,16 +59,21 @@ public:
  static bool eraseContractionSequence(const TensorNetwork & network); //in: tensor network
 
  /** Retrieves a previously cached tensor contraction sequence for a given tensor
-     network. Returns nullptr in case it has not been cached before. **/
- static const std::list<ContrTriple> * findContractionSequence(const TensorNetwork & network); //in: tensor network
+     network and its corresponding FMA flop count. Returns {nullptr,0.0} in case
+     no previously cached tensor contraction sequence has been found. **/
+ static std::pair<const std::list<ContrTriple> *, double> findContractionSequence(const TensorNetwork & network); //in: tensor network
 
 private:
 
+ //Cached optimized tensor contraction sequence:
+ struct CachedContrSeq{
+  std::shared_ptr<MetisGraph> graph; //METIS graph of the tensor network
+  std::list<ContrTriple> contr_seq;  //optimized tensor contraction sequence for the tensor network
+  double fma_flops;                  //FMA flop count for the stored tensor contraction sequence
+ };
+
  /** Cached tensor contraction sequences. **/
- static std::unordered_map<std::string,                     //tensor network name
-                           std::pair<MetisGraph,            //METIS graph of the tensor network
-                                     std::list<ContrTriple> //tensor contraction sequence
-                                    >> cached_contr_seqs_;
+ static std::unordered_map<std::string,CachedContrSeq> cached_contr_seqs_; //tensor network name --> optimized tensor contraction sequence
 };
 
 using createContractionSeqOptimizerFn = std::unique_ptr<ContractionSeqOptimizer> (*)(void);

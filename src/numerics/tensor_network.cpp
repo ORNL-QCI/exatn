@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/06/02
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -509,12 +509,12 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 }
 
 
-void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & contr_sequence)
+void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & contr_sequence, double fma_flops)
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
- contraction_seq_flops_ = 0.0; //flop count is unknown yet
+ contraction_seq_flops_ = fma_flops; //flop count may be unknown yet (defaults to zero)
  max_intermediate_presence_volume_ = 0.0; //max cumulative volume of intermediates present at a time
  max_intermediate_volume_ = 0.0; //max intermediate tensor volume is unknown yet
  max_intermediate_rank_ = 0; //max intermediate tensor rank
@@ -522,8 +522,9 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
 }
 
 
-const std::list<ContrTriple> & TensorNetwork::exportContractionSequence() const
+const std::list<ContrTriple> & TensorNetwork::exportContractionSequence(double * fma_flops) const
 {
+ if(fma_flops != nullptr) *fma_flops = contraction_seq_flops_;
  return contraction_seq_;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/07/06
+REVISION: 2020/07/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -630,6 +630,16 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) /
     is invoked when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name)
  {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
+
+
+/** Activates optimized tensor contraction sequence caching for later reuse. **/
+inline void activateContrSeqCaching()
+ {return numericalServer->activateContrSeqCaching();}
+
+
+/** Deactivates optimized tensor contraction sequence caching. **/
+inline void deactivateContrSeqCaching()
+ {return numericalServer->deactivateContrSeqCaching();}
 
 
 /** Resets tensor runtime logging level (0:none). **/
