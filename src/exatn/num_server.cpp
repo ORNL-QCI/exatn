@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/08
+REVISION: 2020/07/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -334,11 +334,16 @@ bool NumServer::submit(const ProcessGroup & process_group,
   << process_group.getMemoryLimitPerProcess() << std::endl << std::flush; //debug
 
  //Get tensor operation list:
- if(contr_seq_caching_ && network.exportContractionSequence().empty()){ //check whether the optimal tensor contraction sequence is already available from the past
+ bool new_contr_seq = network.exportContractionSequence().empty();
+ if(contr_seq_caching_ && new_contr_seq){ //check whether the optimal tensor contraction sequence is already available from the past
   auto cached_seq = ContractionSeqOptimizer::findContractionSequence(network);
-  if(cached_seq.first != nullptr) network.importContractionSequence(*(cached_seq.first),cached_seq.second);
+  if(cached_seq.first != nullptr){
+   network.importContractionSequence(*(cached_seq.first),cached_seq.second);
+   new_contr_seq = false;
+  }
  }
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
+ if(contr_seq_caching_ && new_contr_seq) ContractionSeqOptimizer::cacheContractionSequence(network);
  const double max_intermediate_presence_volume = network.getMaxIntermediatePresenceVolume();
  double max_intermediate_volume = network.getMaxIntermediateVolume();
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
