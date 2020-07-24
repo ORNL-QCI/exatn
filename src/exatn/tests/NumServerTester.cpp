@@ -13,7 +13,7 @@
 
 
 #define EXATN_TEST0
-#define EXATN_TEST1
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -29,9 +29,54 @@
 #define EXATN_TEST14
 #define EXATN_TEST15
 #define EXATN_TEST16
+#define EXATN_TEST17*/
 
 
 #ifdef EXATN_TEST0
+TEST(NumServerTester, PerformanceExaTN)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ const exatn::DimExtent DIM = 4096;
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ exatn::resetRuntimeLoggingLevel(2); //debug
+
+ bool success = true;
+ //Create and initialize tensors:
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+
+ success = exatn::initTensor("C",0.0); assert(success);
+ success = exatn::initTensor("A",1e-4); assert(success);
+ success = exatn::initTensor("B",1e-3); assert(success);
+
+ //Contract tensors (repeat multiple times):
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(i,k)*B(k,j)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(j,k)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(i,k)*B(j,k)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+
+ exatn::sync();
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+ success = exatn::destroyTensor("C"); assert(success);
+
+ //Synchronize ExaTN server:
+ exatn::sync();
+ exatn::resetRuntimeLoggingLevel(0);
+}
+#endif
+
+#ifdef EXATN_TEST1
 TEST(NumServerTester, ExamplarExaTN)
 {
  using exatn::Tensor;
@@ -48,7 +93,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  exatn::resetRuntimeLoggingLevel(0); //debug
 
- bool success;
+ bool success = true;
 
  //Create different process groups:
  const auto global_rank = exatn::getProcessRank();
@@ -135,7 +180,7 @@ TEST(NumServerTester, ExamplarExaTN)
 }
 #endif
 
-#ifdef EXATN_TEST1
+#ifdef EXATN_TEST2
 TEST(NumServerTester, ParallelExaTN)
 {
  using exatn::Tensor;
@@ -225,7 +270,7 @@ TEST(NumServerTester, ParallelExaTN)
 }
 #endif
 
-#ifdef EXATN_TEST2
+#ifdef EXATN_TEST3
 TEST(NumServerTester, checkNumServer)
 {
  using exatn::VectorSpace;
@@ -265,7 +310,7 @@ TEST(NumServerTester, checkNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST3
+#ifdef EXATN_TEST4
 TEST(NumServerTester, useNumServer)
 {
  using exatn::TensorOpCode;
@@ -432,7 +477,7 @@ TEST(NumServerTester, useNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST4
+#ifdef EXATN_TEST5
 TEST(NumServerTester, easyNumServer)
 {
  using exatn::Tensor;
@@ -491,7 +536,7 @@ TEST(NumServerTester, easyNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST5
+#ifdef EXATN_TEST6
 TEST(NumServerTester, superEasyNumServer)
 {
  using exatn::Tensor;
@@ -560,7 +605,7 @@ TEST(NumServerTester, superEasyNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST6
+#ifdef EXATN_TEST7
 TEST(NumServerTester, circuitNumServer)
 {
  using exatn::Tensor;
@@ -662,7 +707,7 @@ TEST(NumServerTester, circuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST7
+#ifdef EXATN_TEST8
 TEST(NumServerTester, circuitConjugateNumServer)
 {
  using exatn::Tensor;
@@ -743,7 +788,7 @@ TEST(NumServerTester, circuitConjugateNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST8
+#ifdef EXATN_TEST9
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::Tensor;
@@ -888,7 +933,7 @@ TEST(NumServerTester, largeCircuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST9
+#ifdef EXATN_TEST10
 TEST(NumServerTester, Sycamore8NumServer)
 {
  using exatn::Tensor;
@@ -1014,7 +1059,7 @@ TEST(NumServerTester, Sycamore8NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST10
+#ifdef EXATN_TEST11
 TEST(NumServerTester, Sycamore12NumServer)
 {
  using exatn::Tensor;
@@ -1131,7 +1176,7 @@ TEST(NumServerTester, Sycamore12NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST11
+#ifdef EXATN_TEST12
 TEST(NumServerTester, rcsNumServer)
 {
  using exatn::Tensor;
@@ -1317,7 +1362,7 @@ TEST(NumServerTester, rcsNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST12
+#ifdef EXATN_TEST13
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -1391,7 +1436,7 @@ TEST(NumServerTester, BigMPSNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST13
+#ifdef EXATN_TEST14
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::Tensor;
@@ -1547,7 +1592,7 @@ TEST(NumServerTester, HamiltonianNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST14
+#ifdef EXATN_TEST15
 TEST(NumServerTester, EigenNumServer)
 {
  using exatn::Tensor;
@@ -1637,7 +1682,7 @@ TEST(NumServerTester, EigenNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST15
+#ifdef EXATN_TEST16
 TEST(NumServerTester, MPSBuilderNumServer)
 {
  using exatn::Tensor;
@@ -1680,7 +1725,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST16
+#ifdef EXATN_TEST17
 TEST(NumServerTester, TestSVD)
 {
  using exatn::Tensor;
