@@ -44,7 +44,7 @@ TEST(NumServerTester, PerformanceExaTN)
  using exatn::TensorElementType;
 
  const exatn::DimExtent DIM = 4096;
- const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
 
  exatn::resetRuntimeLoggingLevel(2); //debug
 
