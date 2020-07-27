@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a given external data
-REVISION: 2020/06/27
+REVISION: 2020/07/27
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,6 +75,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor) //tensor slice (in gener
     body[rng.localOffset()] = static_cast<float>(data_[rng.globalOffset()].real());
     more = rng.next();
    }
+   return 0;
   }
  }
 
@@ -87,6 +88,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor) //tensor slice (in gener
     body[rng.localOffset()] = data_[rng.globalOffset()].real();
     more = rng.next();
    }
+   return 0;
   }
  }
 
@@ -99,6 +101,7 @@ int FunctorInitDat::apply(talsh::Tensor & local_tensor) //tensor slice (in gener
     body[rng.localOffset()] = std::complex<float>(data_[rng.globalOffset()]);
     more = rng.next();
    }
+   return 0;
   }
  }
 
