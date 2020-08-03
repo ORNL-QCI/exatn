@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2020/06/03
+REVISION: 2020/08/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,19 +18,20 @@ class MPICommProxy {
 public:
 
  /** Default constructor constructs an empty communicator. **/
- MPICommProxy(): mpi_comm_ptr_(nullptr) {}
+ MPICommProxy(): mpi_comm_ptr_(nullptr), destroy_on_free_(false) {}
 
  /** Constructs a portable MPI communicator proxy by type-erasing
      the concrete MPI communicator type MPICommType (e.g., MPI_Comm). **/
  template<typename MPICommType>
- MPICommProxy(MPICommType mpi_comm): mpi_comm_ptr_(new MPICommType{mpi_comm}) {}
+ MPICommProxy(MPICommType mpi_comm,          //in: MPI intra-communicator
+              bool destroy_on_free = false): //in: if TRUE, the stored MPI communicator will be explicitly destroyed when freed
+  mpi_comm_ptr_(new MPICommType{mpi_comm}), destroy_on_free_(destroy_on_free) {}
 
  MPICommProxy(const MPICommProxy &) = default;
  MPICommProxy & operator=(const MPICommProxy &) = default;
  MPICommProxy(MPICommProxy &&) noexcept = default;
  MPICommProxy & operator=(MPICommProxy &&) noexcept = default;
-
- ~MPICommProxy() = default;
+ ~MPICommProxy();
 
  /** Returns TRUE if the MPI communicator is empty (non-existing). **/
  bool isEmpty() const {return (mpi_comm_ptr_ == nullptr);}
@@ -46,6 +47,7 @@ public:
 private:
 
  std::shared_ptr<void> mpi_comm_ptr_; //owning pointer to an MPI communicator (MPI_Comm type)
+ bool destroy_on_free_; //whether or not to call MPI_Comm_free in destructor
 };
 
 
@@ -79,8 +81,7 @@ public:
  ProcessGroup & operator=(const ProcessGroup &) = default;
  ProcessGroup(ProcessGroup &&) noexcept = default;
  ProcessGroup & operator=(ProcessGroup &&) noexcept = default;
-
- virtual ~ProcessGroup();
+ ~ProcessGroup() = default;
 
  /** Returns the size of the process group (number of MPI processes). **/
  unsigned int getSize() const {return process_ranks_.size();}
