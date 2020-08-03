@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/07/08
+REVISION: 2020/08/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1589,7 +1589,7 @@ bool TensorNetwork::collapseIsometries()
      }
     }
    }
-   ++iter;
+   if(!another_collapse) ++iter;
   }
  }
  if(simplified) invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
