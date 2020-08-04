@@ -31,11 +31,16 @@ TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), executing_(false), scope_set_(false), alive_(false)
 {
+#ifndef NDEBUG
+  const bool debugging = true;
+#else  
+  const bool debugging = false;
+#endif
   global_mpi_comm = *(communicator.get<MPI_Comm>());
   int mpi_error = MPI_Comm_size(global_mpi_comm,&num_processes_); assert(mpi_error == MPI_SUCCESS);
   mpi_error = MPI_Comm_rank(global_mpi_comm,&process_rank_); assert(mpi_error == MPI_SUCCESS);
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
-  std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
+  if (debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
             << "]: DAG executor set to " << graph_executor_name_ << " + "
             << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
@@ -48,9 +53,14 @@ TensorRuntime::TensorRuntime(const ParamConf & parameters,
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), executing_(false), scope_set_(false), alive_(false)
 {
+#ifndef NDEBUG
+  const bool debugging = true;
+#else  
+  const bool debugging = false;
+#endif
   num_processes_ = 1; process_rank_ = 0;
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
-  std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
+  if (debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
             << graph_executor_name_ << " + " << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
 }
