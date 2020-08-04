@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2020/08/03
+REVISION: 2020/08/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,10 +28,7 @@ MPICommProxy::~MPICommProxy()
     if(res != MPI_IDENT){
      errc = MPI_Comm_compare(*mpicomm,MPI_COMM_SELF,&res); assert(errc == MPI_SUCCESS);
      if(res != MPI_IDENT){
-      errc = MPI_Comm_compare(*mpicomm,MPI_COMM_NULL,&res); assert(errc == MPI_SUCCESS);
-      if(res != MPI_IDENT){
-       errc = MPI_Comm_free(mpicomm); assert(errc == MPI_SUCCESS);
-      }
+      errc = MPI_Comm_free(mpicomm); assert(errc == MPI_SUCCESS);
      }
     }
    }
