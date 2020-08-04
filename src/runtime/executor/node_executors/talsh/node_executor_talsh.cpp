@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/06/27
+REVISION: 2020/08/03
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -1032,10 +1032,7 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
     iter->second.resetTensorShapeToReduced();
     talsh_tens[i] = iter->second.talsh_tensor.get(); assert(talsh_tens[i] != nullptr);
    }else{
-    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): PREFETCH: Tensor operand "
-              << i << " not found in tensor operation:" << std::endl;
-    op.printIt();
-    assert(false);
+    return prefetching;
    }
   }
   int dev_kind;
