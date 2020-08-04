@@ -5,7 +5,6 @@ add_subdirectory(executor)
 set(LIBRARY_NAME exatn-runtime)
 
 file(GLOB SRC
-     mpi_proxy.cpp
      tensor_runtime.cpp
     )
 
@@ -20,7 +19,7 @@ target_include_directories(${LIBRARY_NAME}
   PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn)
 
 target_link_libraries(${LIBRARY_NAME}
-                      PUBLIC CppMicroServices exatn-numerics exatn-runtime-graph
+                      PUBLIC CppMicroServices exatn-utils exatn-numerics exatn-runtime-graph
                       PRIVATE Boost::graph)
 
 exatn_configure_library_rpath(${LIBRARY_NAME})

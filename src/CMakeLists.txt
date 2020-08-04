@@ -162,7 +162,7 @@ endif()
 #  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
 #endif()
 
-
+add_subdirectory(utils)
 add_subdirectory(exatn)
 add_subdirectory(numerics)
 add_subdirectory(driver-rpc)
