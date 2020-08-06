@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2020/07/08
+REVISION: 2020/08/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,6 +13,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 
 #include <list>
+#include <vector>
 #include <memory>
 #include <unordered_map>
 #include <functional>
@@ -30,6 +31,12 @@ struct ContrTriple{
 
 class TensorNetwork;
 class MetisGraph;
+
+//Free functions:
+void packContractionSequenceIntoVector(const std::list<ContrTriple> & contr_sequence,
+                                       std::vector<unsigned int> & contr_sequence_content);
+void unpackContractionSequenceFromVector(std::list<ContrTriple> & contr_sequence,
+                                         const std::vector<unsigned int> & contr_sequence_content);
 
 
 class ContractionSeqOptimizer{

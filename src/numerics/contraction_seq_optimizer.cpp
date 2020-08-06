@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Base
-REVISION: 2020/07/08
+REVISION: 2020/08/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -12,7 +12,39 @@ namespace exatn{
 
 namespace numerics{
 
+//Cache of already determined tensor network contraction sequences:
 std::unordered_map<std::string,ContractionSeqOptimizer::CachedContrSeq> ContractionSeqOptimizer::cached_contr_seqs_;
+
+
+void packContractionSequenceIntoVector(const std::list<ContrTriple> & contr_sequence,
+                                       std::vector<unsigned int> & contr_sequence_content)
+{
+ const auto num_contractions = contr_sequence.size();
+ contr_sequence_content.resize(num_contractions*3);
+ std::size_t i = 0;
+ for(const auto & contr: contr_sequence){
+  contr_sequence_content[i++] = contr.result_id;
+  contr_sequence_content[i++] = contr.left_id;
+  contr_sequence_content[i++] = contr.right_id;
+ }
+ return;
+}
+
+
+void unpackContractionSequenceFromVector(std::list<ContrTriple> & contr_sequence,
+                                         const std::vector<unsigned int> & contr_sequence_content)
+{
+ assert(contr_sequence_content.size() % 3 == 0);
+ const auto num_contractions = contr_sequence_content.size() / 3;
+ contr_sequence.resize(num_contractions);
+ std::size_t i = 0;
+ for(auto iter = contr_sequence.begin(); iter != contr_sequence.end(); ++iter){
+  iter->result_id = contr_sequence_content[i++];
+  iter->left_id = contr_sequence_content[i++];
+  iter->right_id = contr_sequence_content[i++];
+ }
+ return;
+}
 
 
 bool ContractionSeqOptimizer::cacheContractionSequence(const TensorNetwork & network)

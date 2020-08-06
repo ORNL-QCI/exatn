@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/07/08
+REVISION: 2020/08/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -323,9 +323,19 @@ public:
                            double * arithm_intensity = nullptr, //out: arithmetic intensity of the tensor contraction
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 
+ /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
+     Returns an estimate of the total flop count required by the returned contraction sequence.
+     The tensor network must contain at least two input tensors in order to generate a single contraction.
+     No contraction sequence is generated for tensor networks consisting of a single input tensor.
+     If the tensor network already has its contraction sequence determined, does nothing. **/
+ double determineContractionSequence(const std::string & contr_seq_opt_name = "metis");
+
  /** Imports and caches an externally provided tensor contraction sequence. **/
  void importContractionSequence(const std::list<ContrTriple> & contr_sequence, //in: imported tensor contraction sequence
-                                double fma_flops = 0.0);                       //in: FMA flop count for the imported tensor contraction sequence
+                                double fma_flops = 0.0); //in: FMA flop count for the imported tensor contraction sequence
+ /** Imports and caches an externally provided tensor contraction sequence given as a plain vector. **/
+ void importContractionSequence(const std::vector<unsigned int> & contr_sequence_content, //in: imported tensor contraction sequence
+                                double fma_flops = 0.0); //in: FMA flop count for the imported tensor contraction sequence
 
  /** Returns the currently stored tensor contraction sequence, if any. **/
  const std::list<ContrTriple> & exportContractionSequence(double * fma_flops = nullptr) const; //out: FMA flop count for the imported tensor contraction sequence
@@ -361,11 +371,12 @@ public:
      if available (if getOperationList has already been invoked). **/
  double getFMAFlops() const;
 
- /** Returns the maximal cumulative volume of intermediate tensors present at a time. **/
+ /** Returns the maximal cumulative volume of intermediate tensors present
+     at a time (if getOperationList has already been invoked). **/
  double getMaxIntermediatePresenceVolume() const;
 
  /** Returns the volume of the largest intermediate tensor required for evaluating
-     the tensor network, if available (if getOperationList has already been invoked). **/
+     the tensor network (if getOperationList has already been invoked). **/
  double getMaxIntermediateVolume(unsigned int * intermediate_rank = nullptr) const;
 
  /** Returns the entire tensor network printed in a symbolic form.
@@ -425,7 +436,8 @@ protected:
  /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
      Returns an estimate of the total flop count required by the returned contraction sequence.
      The tensor network must contain at least two input tensors in order to generate a single contraction.
-     No contraction sequence is generated for tensor networks consisting of a single input tensor. **/
+     No contraction sequence is generated for tensor networks consisting of a single input tensor.
+     If the tensor network already has its contraction sequence determined, does nothing. **/
  double determineContractionSequence(ContractionSeqOptimizer & contr_seq_optimizer);
 
  /** Establishes a universal index numeration in the already generated tensor operation list
@@ -457,7 +469,7 @@ private:
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
  /** Data members: Tensor id management: **/
- unsigned int max_tensor_id_;   //cached max tensor id used so far (0:undefined)
+ unsigned int max_tensor_id_; //cached max tensor id used so far (0:undefined)
 
  /** Data members: Contraction sequence: **/
  double contraction_seq_flops_; //flop estimate for the determined tensor contraction sequence

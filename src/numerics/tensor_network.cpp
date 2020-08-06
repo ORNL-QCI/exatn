@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/08/03
+REVISION: 2020/08/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -504,16 +504,55 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
   auto intermediate_num_begin = this->getMaxTensorId() + 1;
   auto intermediate_num_generator = [intermediate_num_begin]() mutable {return intermediate_num_begin++;};
   contraction_seq_flops_ = contr_seq_optimizer.determineContractionSequence(*this,contraction_seq_,intermediate_num_generator);
+  max_intermediate_presence_volume_ = 0.0;
+  max_intermediate_volume_ = 0.0;
+  max_intermediate_rank_ = 0;
  }
  return contraction_seq_flops_;
 }
 
 
-void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & contr_sequence, double fma_flops)
+double TensorNetwork::determineContractionSequence(const std::string & contr_seq_opt_name)
+{
+ auto iter = optimizers.find(contr_seq_opt_name);
+ if(iter == optimizers.end()){ //not cached
+  auto & optimizer_factory = *(ContractionSeqOptimizerFactory::get());
+  auto optimizer = optimizer_factory.createContractionSeqOptimizer(contr_seq_opt_name);
+  if(optimizer){
+   auto res = optimizers.emplace(std::make_pair(contr_seq_opt_name,
+                                 std::shared_ptr<ContractionSeqOptimizer>(std::move(optimizer))));
+   assert(res.second);
+   iter = res.first;
+  }else{
+   std::cout << "#ERROR(TensorNetwork::determineContractionSequence): Invalid request: " <<
+    "Tensor contraction sequence optimizer " << contr_seq_opt_name << " has not been registered before!" << std::endl;
+   assert(false);
+  }
+ }
+ return determineContractionSequence(*(iter->second));
+}
+
+
+void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & contr_sequence,
+                                              double fma_flops)
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
+ contraction_seq_flops_ = fma_flops; //flop count may be unknown yet (defaults to zero)
+ max_intermediate_presence_volume_ = 0.0; //max cumulative volume of intermediates present at a time
+ max_intermediate_volume_ = 0.0; //max intermediate tensor volume is unknown yet
+ max_intermediate_rank_ = 0; //max intermediate tensor rank
+ return;
+}
+
+
+void TensorNetwork::importContractionSequence(const std::vector<unsigned int> & contr_sequence_content,
+                                              double fma_flops)
+{
+ assert(finalized_ != 0); //tensor network must be in finalized state
+ contraction_seq_.clear();
+ unpackContractionSequenceFromVector(contraction_seq_,contr_sequence_content);
  contraction_seq_flops_ = fma_flops; //flop count may be unknown yet (defaults to zero)
  max_intermediate_presence_volume_ = 0.0; //max cumulative volume of intermediates present at a time
  max_intermediate_volume_ = 0.0; //max intermediate tensor volume is unknown yet
@@ -1733,28 +1772,12 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
                                                                               bool universal_indices)
 {
  if(operations_.empty()){
-  //Get the tensor contraction sequence optimizer:
-  auto iter = optimizers.find(contr_seq_opt_name);
-  if(iter == optimizers.end()){ //not cached
-   auto & optimizer_factory = *(ContractionSeqOptimizerFactory::get());
-   auto optimizer = optimizer_factory.createContractionSeqOptimizer(contr_seq_opt_name);
-   if(optimizer){
-    auto res = optimizers.emplace(std::make_pair(contr_seq_opt_name,
-                                  std::shared_ptr<ContractionSeqOptimizer>(std::move(optimizer))));
-    assert(res.second);
-    iter = res.first;
-   }else{
-    std::cout << "#ERROR(TensorNetwork::getOperationList): Invalid request: " <<
-     "Tensor contraction sequence optimizer " << contr_seq_opt_name << " has not been registered before!" << std::endl;
-    assert(false);
-   }
-  }
   //Determine the pseudo-optimal sequence of tensor contractions:
   max_intermediate_presence_volume_ = 0.0;
   max_intermediate_volume_ = 0.0;
   max_intermediate_rank_ = 0;
-  double flops = determineContractionSequence(*(iter->second));
-  //Generate the list of operations:
+  double flops = determineContractionSequence();
+  //Generate the list of operations (tensor contractions):
   std::size_t intermediates_vol = 0;
   auto & tensor_op_factory = *(TensorOpFactory::get());
   if(this->getNumTensors() > 1){ //two or more input tensors: One or more contractions

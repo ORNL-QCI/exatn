@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/13
+REVISION: 2020/08/06
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <list>
 #include <map>
 #include <future>
+#include <algorithm>
 
 #ifdef MPI_ENABLED
 #include "mpi.h"
@@ -333,7 +334,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   << network.getName() << " for execution by " << num_procs << " processes with memory limit "
   << process_group.getMemoryLimitPerProcess() << std::endl << std::flush; //debug
 
- //Get tensor operation list:
+ //Determine the pseudo-optimal tensor contraction sequence:
+ const auto num_input_tensors = network.getNumTensors();
  bool new_contr_seq = network.exportContractionSequence().empty();
  if(contr_seq_caching_ && new_contr_seq){ //check whether the optimal tensor contraction sequence is already available from the past
   auto cached_seq = ContractionSeqOptimizer::findContractionSequence(network);
@@ -342,10 +344,39 @@ bool NumServer::submit(const ProcessGroup & process_group,
    new_contr_seq = false;
   }
  }
+ if(new_contr_seq){
+  double flops = network.determineContractionSequence(contr_seq_optimizer_);
+ }
+
+#ifdef MPI_ENABLED
+ //Synchronize on the best tensor contraction sequence across processes:
+ if(num_procs > 1 && num_input_tensors > 2){
+  double flops = 0.0;
+  std::vector<double> proc_flops(num_procs,0.0);
+  std::vector<unsigned int> contr_seq_content;
+  packContractionSequenceIntoVector(network.exportContractionSequence(&flops),contr_seq_content);
+  auto errc = MPI_Gather(&flops,1,MPI_DOUBLE,proc_flops.data(),1,MPI_DOUBLE,
+                         0,process_group.getMPICommProxy().getRef<MPI_Comm>());
+  assert(errc == MPI_SUCCESS);
+  auto min_flops = std::min_element(proc_flops.cbegin(),proc_flops.cend());
+  int root_id = static_cast<int>(std::distance(proc_flops.cbegin(),min_flops));
+  errc = MPI_Bcast(&root_id,1,MPI_INT,0,process_group.getMPICommProxy().getRef<MPI_Comm>());
+  assert(errc == MPI_SUCCESS);
+  errc = MPI_Bcast(&flops,1,MPI_DOUBLE,root_id,process_group.getMPICommProxy().getRef<MPI_Comm>());
+  assert(errc == MPI_SUCCESS);
+  errc = MPI_Bcast(contr_seq_content.data(),contr_seq_content.size(),MPI_UNSIGNED,
+                   root_id,process_group.getMPICommProxy().getRef<MPI_Comm>());
+  assert(errc == MPI_SUCCESS);
+  network.importContractionSequence(contr_seq_content,flops);
+ }
+#endif
+
+ //Generate the primitive tensor operation list:
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));
  if(contr_seq_caching_ && new_contr_seq) ContractionSeqOptimizer::cacheContractionSequence(network);
  const double max_intermediate_presence_volume = network.getMaxIntermediatePresenceVolume();
- double max_intermediate_volume = network.getMaxIntermediateVolume();
+ unsigned int max_intermediate_rank = 0;
+ double max_intermediate_volume = network.getMaxIntermediateVolume(&max_intermediate_rank);
  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
   << network.getFMAFlops() << "; Max intermediate volume = " << max_intermediate_volume << " -> "; //debug
 
