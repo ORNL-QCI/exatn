@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/07/08
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -640,6 +640,11 @@ inline void activateContrSeqCaching()
 /** Deactivates optimized tensor contraction sequence caching. **/
 inline void deactivateContrSeqCaching()
  {return numericalServer->deactivateContrSeqCaching();}
+
+
+/** Resets client logging level (0:none). **/
+inline void resetClientLoggingLevel(int level = 0)
+ {return numericalServer->resetClientLoggingLevel(level);}
 
 
 /** Resets tensor runtime logging level (0:none). **/
