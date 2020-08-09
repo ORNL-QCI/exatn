@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/06/22
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)

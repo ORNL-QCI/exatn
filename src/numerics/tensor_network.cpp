@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/08/06
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2128,6 +2128,50 @@ void TensorNetwork::printSplitIndexInfo(bool with_affected_tensors) const
   }
  }
  std::cout << "#END INFO\n";
+ return;
+}
+
+
+void TensorNetwork::printSplitIndexInfo(std::ofstream & output_file, bool with_affected_tensors) const
+{
+ output_file << "#INFO(TensorNetwork::printSplitIndexInfo):\n";
+ for(unsigned int i = 0; i < split_indices_.size(); ++i){
+  output_file << i << ": " << split_indices_[i].first << ": Number of segments = "
+              << split_indices_[i].second.size() << ":";
+  for(const auto & seg: split_indices_[i].second)
+   output_file << "{" << seg.first << ":" << seg.second << "}";
+  output_file << std::endl;
+ }
+ if(with_affected_tensors && split_indices_.size() > 0){
+  output_file << "Affected tensors in tensor operations:\n";
+  for(const auto & op: operations_){
+   bool op_affected = false;
+   const auto num_operands = op->getNumOperands();
+   for(unsigned int i = 0; i < num_operands; ++i){
+    const auto & tens = *(op->getTensorOperand(i));
+    auto iter = split_tensors_.cend();
+    if(tensorNameIsIntermediate(tens) || (i == 0)){ //intermediate tensor (includes output tensor of the tensor network)
+     const auto key = std::pair<TensorHashType,TensorHashType>{0,tens.getTensorHash()};
+     iter = split_tensors_.find(key);
+    }else{ //input tensor
+     const auto key = std::pair<TensorHashType,TensorHashType>{op->getTensorOpHash(),i};
+     iter = split_tensors_.find(key);
+    }
+    if(iter != split_tensors_.cend()){
+     output_file << "Tensor "; tens.printItFile(output_file); output_file << ":";
+     for(const auto & ind: iter->second)
+      output_file << " " << split_indices_[ind.first].first << "@" << ind.second;
+     output_file << std::endl;
+     op_affected = true;
+    }
+   }
+   if(op_affected){
+    output_file << "in tensor operation:\n";
+    op->printItFile(output_file);
+   }
+  }
+ }
+ output_file << "#END INFO\n";
  return;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/06
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,7 +30,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), intra_comm_(communicator)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), intra_comm_(communicator)
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
@@ -48,7 +48,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 NumServer::NumServer(const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0)
 {
  num_processes_ = 1; process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
@@ -78,6 +78,7 @@ NumServer::~NumServer()
  tensor_rt_->closeScope(); //contains sync() inside
  scopes_.pop();
  destroyBytePacket(&byte_packet_);
+ resetClientLoggingLevel();
 }
 
 
@@ -120,6 +121,16 @@ void NumServer::activateContrSeqCaching()
 void NumServer::deactivateContrSeqCaching()
 {
  contr_seq_caching_ = false;
+ return;
+}
+
+void NumServer::resetClientLoggingLevel(int level){
+ if(logging_ == 0){
+  if(level != 0) logfile_.open("exatn_main_thread."+std::to_string(process_rank_)+".log", std::ios::out | std::ios::trunc);
+ }else{
+  if(level == 0) logfile_.close();
+ }
+ logging_ = level;
  return;
 }
 
@@ -330,9 +341,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
  assert(network.isValid()); //debug
  unsigned int num_procs = process_group.getSize(); //number of executing processes
  assert(local_rank < num_procs);
- if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
+ if(logging_ > 0) logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting tensor network "
   << network.getName() << " for execution by " << num_procs << " processes with memory limit "
-  << process_group.getMemoryLimitPerProcess() << std::endl << std::flush; //debug
+  << process_group.getMemoryLimitPerProcess() << std::endl << std::flush;
 
  //Determine the pseudo-optimal tensor contraction sequence:
  const auto num_input_tensors = network.getNumTensors();
@@ -377,8 +388,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const double max_intermediate_presence_volume = network.getMaxIntermediatePresenceVolume();
  unsigned int max_intermediate_rank = 0;
  double max_intermediate_volume = network.getMaxIntermediateVolume(&max_intermediate_rank);
- if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
-  << network.getFMAFlops() << "; Max intermediate volume = " << max_intermediate_volume << " -> "; //debug
+ if(logging_ > 0) logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: FMA flop count = "
+  << network.getFMAFlops() << "; Max intermediate rank/volume = " << max_intermediate_rank << "/" << max_intermediate_volume << " -> ";
 
  //Split some of the tensor network indices based on the requested memory limit:
  const std::size_t proc_mem_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
@@ -386,10 +397,10 @@ bool NumServer::submit(const ProcessGroup & process_group,
   const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5)); //1.5 accounts for memory fragmentation
   max_intermediate_volume *= shrink_coef;
  }
- if(debugging) std::cout << max_intermediate_volume << std::endl << std::flush; //debug
+ if(logging_ > 0) logfile_ << max_intermediate_volume << " (after slicing)" << std::endl << std::flush;
  //if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0)
  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume));
- if(debugging) network.printSplitIndexInfo(true); //debug
+ if(logging_ > 0) network.printSplitIndexInfo(logfile_,logging_ > 1);
 
  //Create the output tensor of the tensor network if needed:
  bool submitted = false;
@@ -413,8 +424,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  submitted = submit(op1); if(!submitted) return false;
  //Submit all tensor operations for tensor network evaluation:
  const auto num_split_indices = network.getNumSplitIndices(); //total number of indices that were split
- if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
-  << num_split_indices << std::endl << std::flush; //debug
+ if(logging_ > 0) logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of split indices = "
+  << num_split_indices << std::endl << std::flush;
  std::size_t num_items_executed = 0; //number of tensor sub-networks executed
  if(num_split_indices > 0){ //multiple tensor sub-networks need to be executed by all processes ditributively
   //Distribute tensor sub-networks among processes:
@@ -423,14 +434,14 @@ bool NumServer::submit(const ProcessGroup & process_group,
   numerics::TensorRange work_range(work_extents); //each range dimension refers to the number of segments per the corresponding split index
   bool not_done = true;
   if(num_procs > 1) not_done = work_range.reset(num_procs,local_rank); //work subrange for the current local process rank (may be empty)
-  if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of sub-networks = "
-   << work_range.localVolume() << "; Current process has a share = " << not_done << std::endl << std::flush; //debug
+  if(logging_ > 0) logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Total number of sub-networks = "
+   << work_range.localVolume() << "; Current process has a share = " << not_done << std::endl << std::flush;
   //Each process executes its share of tensor sub-networks:
   while(not_done){
-   if(debugging){
-    std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting sub-network "; //debug
-    work_range.printCurrent();
-    std::cout << std::endl;
+   if(logging_ > 1){
+    logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Submitting sub-network ";
+    work_range.printCurrent(logfile_);
+    logfile_ << std::endl;
    }
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> intermediate_slices; //temporary slices of intermediates
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
@@ -483,8 +494,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
         const auto segment_selector = work_range.getIndex(gl_index_id);
         subspaces[index_pos] = index_info.second[segment_selector].first;
         dim_extents[index_pos] = index_info.second[segment_selector].second;
-        if(debugging) std::cout << "Index replacement in tensor " << tensor->getName()
-                       << ": " << index_info.first << " in position " << index_pos << std::endl;
+        if(logging_ > 1) logfile_ << "Index replacement in tensor " << tensor->getName()
+         << ": " << index_info.first << " in position " << index_pos << std::endl;
        }
        //Construct the tensor slice from the parental tensor:
        tensor_slice = tensor->createSubtensor(subspaces,dim_extents);
@@ -559,8 +570,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   }
   ++num_items_executed;
  }
- if(debugging) std::cout << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted sub-networks = "
-  << num_items_executed << std::endl << std::flush; //debug
+ if(logging_ > 0) logfile_ << "#DEBUG(exatn::NumServer::submit)[" << process_rank_ << "]: Number of submitted sub-networks = "
+  << num_items_executed << std::endl << std::flush;
  return true;
 }
 

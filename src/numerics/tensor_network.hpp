@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/08/06
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,6 +58,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "network_build_factory.hpp"
 #include "contraction_seq_optimizer.hpp"
 
+#include <iostream>
+#include <fstream>
 #include <functional>
 #include <unordered_map>
 #include <map>
@@ -366,6 +368,8 @@ public:
 
  /** Prints information on index splitting within the tensor operation list. **/
  void printSplitIndexInfo(bool with_affected_tensors = false) const;
+ void printSplitIndexInfo(std::ofstream & output_file,
+                          bool with_affected_tensors = false) const;
 
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
      if available (if getOperationList has already been invoked). **/

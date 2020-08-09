@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/07/08
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,6 +59,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_norm2.hpp"
 #include "functor_diag_rank.hpp"
 
+#include <iostream>
+#include <fstream>
 #include <memory>
 #include <vector>
 #include <string>
@@ -142,6 +144,9 @@ public:
 
  /** Deactivates optimized tensor contraction sequence caching. **/
  void deactivateContrSeqCaching();
+
+ /** Resets the client logging level (0:none). **/
+ void resetClientLoggingLevel(int level = 0);
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
@@ -588,6 +593,8 @@ private:
 
  TensorOpFactory * tensor_op_factory_; //tensor operation factory (non-owning pointer)
 
+ int logging_; //logging level
+ std::ofstream logfile_; //log file
  int num_processes_; //total number of parallel processes
  int process_rank_; //global rank of the current parallel process
  MPICommProxy intra_comm_; //global MPI intra-communicator used to initialize the Numerical Server

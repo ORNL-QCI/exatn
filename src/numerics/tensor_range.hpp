@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/05/26
+REVISION: 2020/08/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,6 +33,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 namespace exatn{
 
@@ -93,6 +94,14 @@ public:
   std::cout << "{";
   for(const auto & ind: mlndx_) std::cout << " " << ind;
   std::cout << " }" << std::flush;
+  return;
+ }
+
+ /** Prints the current multi-index value to file. **/
+ void printCurrent(std::ofstream & output_file) const{
+  output_file << "{";
+  for(const auto & ind: mlndx_) output_file << " " << ind;
+  output_file << " }" << std::flush;
   return;
  }
 
