@@ -593,6 +593,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   bool synced = sync(true); //completes all active tasks, prefetches and evictions
   bool evicting = evictMovedTensors(DEV_DEFAULT,0); //evict all cached tensors from all accelerators
   if(evicting) synced = synced && sync(true); //completes all evictions
+  task_res = tasks_.emplace(std::make_pair(*exec_handle,
+                            std::make_shared<talsh::TensorTask>()));
   if(synced){
    error_code = tens0.contractAccumulateXL((task_res.first)->second.get(),
                                            op.getIndexPatternReduced(),
@@ -607,12 +609,14 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                          op.getScalar(0));
   }
  }else if(error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
+  (task_res.first)->second->clean();
   error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                          op.getIndexPatternReduced(),
                                          tens1,tens2,
                                          DEV_HOST,0,
                                          op.getScalar(0));
  }else if(error_code == TRY_LATER){
+  //(task_res.first)->second->clean();
   std::size_t total_tensor_size = tensor0.getSize() + tensor1.getSize() + tensor2.getSize();
   bool evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1,tens2),total_tensor_size);
  }
