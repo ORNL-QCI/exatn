@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/03
+REVISION: 2020/08/10
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -50,7 +50,7 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
 {
 #ifndef NDEBUG
   const bool debugging = true;
-#else  
+#else
   const bool debugging = false;
 #endif
  talsh_init_lock.lock();
@@ -88,7 +88,7 @@ TalshNodeExecutor::~TalshNodeExecutor()
 {
 #ifndef NDEBUG
   const bool debugging = true;
-#else  
+#else
   const bool debugging = false;
 #endif
  auto synced = sync(true); assert(synced);

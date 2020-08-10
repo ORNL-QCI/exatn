@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/08/09
+REVISION: 2020/08/10
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -40,9 +40,9 @@ TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
   int mpi_error = MPI_Comm_size(global_mpi_comm,&num_processes_); assert(mpi_error == MPI_SUCCESS);
   mpi_error = MPI_Comm_rank(global_mpi_comm,&process_rank_); assert(mpi_error == MPI_SUCCESS);
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
-  if (debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
-            << "]: DAG executor set to " << graph_executor_name_ << " + "
-            << node_executor_name_ << std::endl << std::flush;
+  if(debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD:Process " << process_rank_
+                          << "]: DAG executor set to " << graph_executor_name_ << " + "
+                          << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
 }
 #else
@@ -60,8 +60,8 @@ TensorRuntime::TensorRuntime(const ParamConf & parameters,
 #endif
   num_processes_ = 1; process_rank_ = 0;
   graph_executor_ = exatn::getService<TensorGraphExecutor>(graph_executor_name_);
-  if (debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
-            << graph_executor_name_ << " + " << node_executor_name_ << std::endl << std::flush;
+  if(debugging) std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: DAG executor set to "
+                          << graph_executor_name_ << " + " << node_executor_name_ << std::endl << std::flush;
   launchExecutionThread();
 }
 #endif
@@ -71,9 +71,9 @@ TensorRuntime::~TensorRuntime()
 {
   if(alive_.load()){
     alive_.store(false); //signal for the execution thread to finish
-//    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Waiting Execution Thread ... " << std::flush;
+    //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Waiting Execution Thread ... " << std::flush;
     exec_thread_.join(); //wait until the execution thread has finished
-//    std::cout << "Joined" << std::endl << std::flush;
+    //std::cout << "Joined" << std::endl << std::flush;
   }
 }
 
@@ -82,9 +82,9 @@ void TensorRuntime::launchExecutionThread()
 {
   if(!(alive_.load())){
     alive_.store(true);
-//    std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Launching Execution Thread ... " << std::flush;
+    //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[MAIN_THREAD]: Launching Execution Thread ... " << std::flush;
     exec_thread_ = std::thread(&TensorRuntime::executionThreadWorkflow,this);
-//    std::cout << "Done" << std::endl << std::flush;
+    //std::cout << "Done" << std::endl << std::flush;
   }
   return; //only the main thread returns to the client
 }

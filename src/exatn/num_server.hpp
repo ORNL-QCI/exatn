@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/09
+REVISION: 2020/08/10
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -573,6 +573,8 @@ public:
  /** This overload returns a copy of the full tensor while referencing it by its registered name. **/
  std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name); //in: exatn tensor name
 
+ inline double getTimeStampStart() const {return time_start_;}
+
 private:
 
  void destroyOrphanedTensors();
@@ -602,6 +604,7 @@ private:
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
  BytePacket byte_packet_; //byte packet for exchanging tensor meta-data
+ double time_start_; //time stamp of the Numerical Server start
 };
 
 /** Numerical service singleton (numerical server) **/
