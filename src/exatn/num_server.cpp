@@ -356,8 +356,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
  unsigned int num_procs = process_group.getSize(); //number of executing processes
  assert(local_rank < num_procs);
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-                           << "]: Submitting tensor network <" << network.getName() << "> for execution by " << num_procs
-                           << " processes with memory limit " << process_group.getMemoryLimitPerProcess() << std::endl << std::flush;
+                           << "]: Submitting tensor network <" << network.getName() << "> (" << network.getTensor(0)->getName()
+                           << ") for execution by " << num_procs << " processes with memory limit "
+                           << process_group.getMemoryLimitPerProcess() << " bytes" << std::endl << std::flush;
 
  //Determine the pseudo-optimal tensor contraction sequence:
  const auto num_input_tensors = network.getNumTensors();
@@ -402,7 +403,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const double max_intermediate_presence_volume = network.getMaxIntermediatePresenceVolume();
  unsigned int max_intermediate_rank = 0;
  double max_intermediate_volume = network.getMaxIntermediateVolume(&max_intermediate_rank);
- if(logging_ > 0) logfile_ << "FMA flop count = " << network.getFMAFlops()
+ if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                           << "]: Contraction info: FMA flop count = " << std::scientific << network.getFMAFlops()
                            << "; Max intermediate rank = " << max_intermediate_rank
                            << " with volume " << max_intermediate_volume << " -> ";
 
@@ -654,12 +656,14 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  auto success = tensor_rt_->sync(tensor,wait);
-#ifdef MPI_ENABLED
  if(success){
+  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                            << "]: Synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+#ifdef MPI_ENABLED
   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
   success = success && (errc == MPI_SUCCESS);
- }
 #endif
+ }
  return success;
 }
 
