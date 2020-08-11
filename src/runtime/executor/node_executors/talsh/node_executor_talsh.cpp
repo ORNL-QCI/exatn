@@ -616,7 +616,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                          DEV_HOST,0,
                                          op.getScalar(0));
  }else if(error_code == TRY_LATER){
-  //(task_res.first)->second->clean();
   std::size_t total_tensor_size = tensor0.getSize() + tensor1.getSize() + tensor2.getSize();
   bool evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1,tens2),total_tensor_size);
  }
@@ -1188,6 +1187,7 @@ void TalshNodeExecutor::cacheMovedTensors(talsh::TensorTask & talsh_task)
 
 bool TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_space)
 {
+ //Initiate new tensor evictions:
  bool evicting = false, single_device = false;
  int dev_begin = 0, dev_end = (DEV_MAX - 1);
  if(device_id != DEV_DEFAULT){
@@ -1224,6 +1224,13 @@ bool TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_sp
    still_freeing = ((!cache_empty) || (dev < dev_end)) && ((required_space == 0) || (freed_bytes < required_space));
    if(!still_freeing) break;
   }
+ }
+ //Check the completion of previously initiated tensor evictions:
+ auto eviction = evictions_.begin();
+ while(eviction != evictions_.end()){
+  int sts;
+  bool snc = eviction->second->test(&sts);
+  if(snc) eviction = evictions_.erase(eviction);
  }
  return evicting;
 }
