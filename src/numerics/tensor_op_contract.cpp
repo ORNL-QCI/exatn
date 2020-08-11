@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2020/06/25
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,7 +40,7 @@ double TensorOpContract::getFlopEstimate() const
   double vol0 = static_cast<double>(this->getTensorOperand(0)->getVolume());
   double vol1 = static_cast<double>(this->getTensorOperand(1)->getVolume());
   double vol2 = static_cast<double>(this->getTensorOperand(2)->getVolume());
-  return std::sqrt(vol0*vol1*vol2)*2.0;
+  return std::sqrt(vol0*vol1*vol2); //FMA flops (without FMA factor)
  }
  return 0.0;
 }

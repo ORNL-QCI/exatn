@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/06/22
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -66,7 +66,7 @@ public:
             int * error_code,
             bool wait = true) override;
 
-  bool sync(bool wait = true) override;
+  bool sync() override;
 
   bool discard(TensorOpExecHandle op_handle) override;
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/08/09
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -318,7 +318,8 @@ public:
      in the tensor network. Optionally returns the volume difference. Optionally also returns
      the arithmetic intensity of the tensor contraction. Additionally, it also allows rescaling
      of the tensor contraction cost with the adjustment by the arithmetic intensity (lower
-     arithmetic intensity will effectively increase the flop cost). **/
+     arithmetic intensity will effectively increase the flop cost). Note that the FMA flop count
+     neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
  double getContractionCost(unsigned int left_id,  //in: left tensor id (present in the tensor network)
                            unsigned int right_id, //in: right tensor id (present in the tensor network)
                            double * diff_volume = nullptr, //out: vol(result) - vol(left) - vol(right)
@@ -326,10 +327,11 @@ public:
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity
 
  /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
-     Returns an estimate of the total flop count required by the returned contraction sequence.
+     Returns an estimate of the total FMA flop count required by the returned contraction sequence.
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor.
-     If the tensor network already has its contraction sequence determined, does nothing. **/
+     If the tensor network already has its contraction sequence determined, does nothing. Note that
+     the FMA flop count neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers.**/
  double determineContractionSequence(const std::string & contr_seq_opt_name = "metis");
 
  /** Imports and caches an externally provided tensor contraction sequence. **/
@@ -372,7 +374,8 @@ public:
                           bool with_affected_tensors = false) const;
 
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
-     if available (if getOperationList has already been invoked). **/
+     if available (if getOperationList has already been invoked). The FMA flop count estimate
+     neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
  double getFMAFlops() const;
 
  /** Returns the maximal cumulative volume of intermediate tensors present

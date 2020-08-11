@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2020/08/06
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -49,9 +49,10 @@ public:
      evaluating a given tensor network. The unique intermediate tensor id's are generated
      by the provided intermediate number generator (each invocation returns a new tensor id).
      The latter can be conveniently passed as a lambda closure. The returned double value
-     is an estimate of the total flop count associated with the determined contraction sequence.
+     is an estimate of the total FMA flop count associated with the determined contraction sequence.
      The tensor network must have at least two input tensors in order to get a single contraction.
-     No contraction sequence is generated for tensor networks with a single input tensor. **/
+     No contraction sequence is generated for tensor networks with a single input tensor. Note that
+     the FMA flop count neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) = 0;

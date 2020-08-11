@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/10
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,11 +29,13 @@ public:
 
   static constexpr const std::size_t DEFAULT_MEM_BUFFER_SIZE = 2UL * 1024UL * 1024UL * 1024UL; //bytes
 
-  TalshNodeExecutor() = default;
+  TalshNodeExecutor(): prefetch_enabled_(true) {}
+
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor(TalshNodeExecutor &&) noexcept = delete;
   TalshNodeExecutor & operator=(TalshNodeExecutor &&) noexcept = delete;
+
   virtual ~TalshNodeExecutor();
 
   void initialize(const ParamConf & parameters) override;
@@ -71,7 +73,7 @@ public:
             int * error_code,
             bool wait = true) override;
 
-  bool sync(bool wait = true) override;
+  bool sync() override;
 
   bool discard(TensorOpExecHandle op_handle) override;
 
@@ -97,6 +99,10 @@ public:
   std::shared_ptr<TensorNodeExecutor> clone() override {return std::make_shared<TalshNodeExecutor>();}
 
 protected:
+
+  /** Determines whether a given TAL-SH tensor is currently participating
+      in an active tensor operation, tensor prefetch or tensor eviction. **/
+  bool tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const;
 
   struct TensorImpl{
     //TAL-SH tensor with reduced shape (all extent-1 tensor dimensions removed):
@@ -129,10 +135,6 @@ protected:
     double last_used; //time stamp of last usage of the cached tensor image
   };
 
-  /** Determines whether a given TAL-SH tensor is currently participating
-      in an active tensor operation, tensor prefetch or tensor eviction. **/
-  bool tensorIsCurrentlyInUse(const talsh::Tensor * talsh_tens) const;
-
   /** Maps generic exatn::numerics::Tensor to its TAL-SH implementation **/
   std::unordered_map<numerics::TensorHashType,TensorImpl> tensors_;
   /** Active execution handles associated with tensor operations currently executed by TAL-SH **/
@@ -141,10 +143,12 @@ protected:
   std::unordered_map<numerics::TensorHashType,std::shared_ptr<talsh::TensorTask>> prefetches_;
   /** Active tensor image eviction from accelerators tasks **/
   std::unordered_map<talsh::Tensor*,std::shared_ptr<talsh::TensorTask>> evictions_;
-  /** Register (cache) of tensors with body images moved/copied to accelerators. **/
+  /** Register (cache) of tensors with body images moved/copied to accelerators **/
   std::unordered_map<talsh::Tensor*,CachedAttr> accel_cache_[DEV_MAX]; //cache for each device
+  /** Prefetching enabled flag **/
+  bool prefetch_enabled_;
   /** TAL-SH Host memory buffer size (bytes) **/
-  std::atomic<std::size_t> talsh_host_mem_buffer_size_;
+  static std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH initialization status **/
   static bool talsh_initialized_;
   /** Number of instances of TAL-SH node executors **/

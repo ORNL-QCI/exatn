@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2020/06/22
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,7 +87,7 @@ public:
                     bool wait = true) = 0;
 
   /** Synchronizes the execution of all currently progressing tensor operations. **/
-  virtual bool sync(bool wait = true) = 0;
+  virtual bool sync() = 0;
 
   /** Discards a previously submitted tensor operation. **/
   virtual bool discard(TensorOpExecHandle op_handle) = 0;

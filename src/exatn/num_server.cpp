@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/10
+REVISION: 2020/08/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -411,7 +411,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
  //Split some of the tensor network indices based on the requested memory limit:
  const std::size_t proc_mem_volume = process_group.getMemoryLimitPerProcess() / sizeof(std::complex<double>);
  if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0){
-  const double shrink_coef = std::min(1.0, static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5 * 2.0)); //1.5 accounts for memory fragmentation
+  const double shrink_coef = std::min(1.0,
+   static_cast<double>(proc_mem_volume) / (max_intermediate_presence_volume * 1.5 * 2.0)); //{1.5:memory fragmentation}; {2.0:tensor transpose}
   max_intermediate_volume *= shrink_coef;
  }
  if(logging_ > 0) logfile_ << max_intermediate_volume << " (after slicing)" << std::endl << std::flush;
