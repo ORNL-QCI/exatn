@@ -49,11 +49,13 @@ TEST(NumServerTester, PerformanceExaTN)
  exatn::resetRuntimeLoggingLevel(2); //debug
 
  bool success = true;
- //Create and initialize tensors:
+
+ //Create tensors:
  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
 
+ //Initialize tensors:
  success = exatn::initTensor("C",0.0); assert(success);
  success = exatn::initTensor("A",1e-4); assert(success);
  success = exatn::initTensor("B",1e-3); assert(success);
@@ -65,10 +67,40 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::contractTensors("C(i,j)+=A(i,k)*B(j,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
 
- exatn::sync();
+ //Destroy tensors:
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
  success = exatn::destroyTensor("C"); assert(success);
+
+ exatn::sync();
+
+ //Create tensors:
+ success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{32,32,32,1}); assert(success);
+ success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{32,32,32}); assert(success);
+ success = exatn::createTensor("R",TENS_ELEM_TYPE,TensorShape{32,32,1}); assert(success);
+
+ //Initialize tensors:
+ success = exatn::initTensorRnd("D"); assert(success);
+ success = exatn::initTensor("L",0.0); assert(success);
+ success = exatn::initTensor("R",0.0); assert(success);
+
+ //Normalize tensor D:
+ double norm1 = 0.0;
+ success = exatn::computeNorm1Sync("D",norm1); assert(success);
+ success = exatn::scaleTensor("D",1.0/norm1); assert(success);
+
+ //Decompose tensor D:
+ success = exatn::decomposeTensorSVDLRSync("D(u0,u1,u2,u3)=L(u0,c0,u1)*R(u2,c0,u3)"); assert(success);
+
+ //Contract tensor factors back with an opposite sign:
+ success = exatn::contractTensors("D(u0,u1,u2,u3)+=L(u0,c0,u1)*R(u2,c0,u3)",-1.0); assert(success);
+ success = exatn::computeNorm1Sync("D",norm1); assert(success);
+ std::cout << "Final 1-norm of tensor D (must be zero) = " << norm1 << std::endl;
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("R"); assert(success);
+ success = exatn::destroyTensor("L"); assert(success);
+ success = exatn::destroyTensor("D"); assert(success);
 
  //Synchronize ExaTN server:
  exatn::sync();
