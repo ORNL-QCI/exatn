@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/11
+REVISION: 2020/08/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -659,10 +659,12 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
  auto success = tensor_rt_->sync(tensor,wait);
  if(success){
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-                            << "]: Synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+   << "]: Locally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
 #ifdef MPI_ENABLED
   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
   success = success && (errc == MPI_SUCCESS);
+  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+   << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
 #endif
  }
  return success;
