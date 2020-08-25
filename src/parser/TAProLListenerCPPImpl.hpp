@@ -4,6 +4,7 @@
 #include "TAProLParser.h"
 #include "TAProLBaseListener.h"
 
+#include <iostream>
 #include <sstream>
 
 using namespace taprol;
@@ -51,6 +52,11 @@ public:
   virtual void enterCompositeproduct(TAProLParser::CompositeproductContext * ctx) override;
 
   virtual void enterTensornetwork(TAProLParser::TensornetworkContext * ctx) override;
+
+  virtual ~TAProLListenerCPPImpl() {
+    std::cout << "#DEBUG(exatn::parser::cpp): C++ source generated from TAProL source:" << std::endl;
+    std::cout << cpp_source.str();
+  }
 
 protected:
 

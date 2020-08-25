@@ -59,7 +59,7 @@ void TAProLListenerImpl::enterAssignment(TAProLParser::AssignmentContext *ctx) {
   std::cout << "ASSIGNMENT(=): " << ctx->getText() << std::endl;
  }else if(ctx->methodname() != nullptr){
   // This is an external method based assigment
-  std::cout << "ASSIGNMENT(methof): " << ctx->getText() << std::endl;
+  std::cout << "ASSIGNMENT(method): " << ctx->getText() << std::endl;
  }
 }
 
