@@ -6,19 +6,27 @@ taprolsrc
    ;
 
 entry
-   : 'entry' ':' entryname=id
+   : 'entry' ':' scopename
    ;
 
 scope
-   : 'scope' scopename=id 'group' '(' groupnamelist? ')' code 'end scope' endscopename=id 
+   : 'scope' scopename 'group' '(' groupnamelist? ')' code 'end scope' scopename
+   ;
+
+scopename
+   : id
    ;
 
 groupnamelist
-   : groupname=id (',' groupname=id)*
+   : groupname (',' groupname)*
+   ;
+
+groupname
+   : id
    ;
 
 code
-   : (line)+
+   : (line)*
    ;
 
 line
@@ -27,11 +35,23 @@ line
    ;
 
 statement
-   : space 
-   | subspace 
-   | index 
-   | simpleop 
-   | compositeop 
+   : space
+   | subspace
+   | index
+   | simpleop
+   | compositeop
+   ;
+
+simpleop
+   : assign
+   | load
+   | save
+   | destroy
+   | norm
+   | scale
+   | copy
+   | unaryop
+   | binaryop
    ;
 
 compositeop
@@ -39,44 +59,17 @@ compositeop
    | tensornetwork
    ;
 
-simpleop
-   : assignment
-   | load
-   | save
-   | destroy
-   | copy
-   | scale
-   | unaryop
-   | binaryop
-   ;
-
-index
-   : 'index' '(' spacename ')' ':' indexlist
-   ;
-
-indexlist
-   : indexname (',' indexname)*
-   ;
-
-indexname
-   : id
-   ;
-
-subspace
-   : 'subspace' '(' (spacename)? ')' ':' spacedeflist
-   ;
-
 space
    : 'space' '(' numfield ')' ':' spacedeflist
-   ;
-
-spacename
-   : id
    ;
 
 numfield
    : 'real'
    | 'complex'
+   ;
+
+subspace
+   : 'subspace' '(' (spacename)? ')' ':' spacedeflist
    ;
 
 spacedeflist
@@ -85,6 +78,10 @@ spacedeflist
 
 spacedef
    : spacename '=' range
+   ;
+
+spacename
+   : id
    ;
 
 range
@@ -101,7 +98,19 @@ upperbound
    | id
    ;
 
-assignment
+index
+   : 'index' '(' spacename ')' ':' indexlist
+   ;
+
+indexlist
+   : indexname (',' indexname)*
+   ;
+
+indexname
+   : id
+   ;
+
+assign
    : tensor '=' '?'
    | tensor '=' (real | complex)
    | tensor '=' 'method' '(' methodname ')'
@@ -134,12 +143,28 @@ tensorlist
    : (tensorname | tensor) (',' (tensorname | tensor) )*
    ;
 
-copy
-   : tensor '=' tensor
+norm
+   : scalar '=' 'norm1' '(' (tensorname | tensor) ')'
+   | scalar '=' 'norm2' '(' (tensorname | tensor) ')'
+   | scalar '=' 'maxabs' '(' (tensorname | tensor) ')'
+   ;
+
+scalar
+   : id
    ;
 
 scale
    : tensor '*=' prefactor
+   ;
+
+prefactor
+   : real
+   | complex
+   | id
+   ;
+
+copy
+   : tensor '=' tensor
    ;
 
 unaryop
@@ -150,12 +175,6 @@ binaryop
    : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' prefactor )?
    ;
 
-prefactor
-   : real
-   | complex
-   | id
-   ;
-
 compositeproduct
    : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+ ( '*' prefactor )?
    ;
@@ -164,12 +183,12 @@ tensornetwork
    : tensor '=>' (tensor | conjtensor) ( '*' (tensor | conjtensor) )+
    ;
 
-conjtensor
-   : tensorname '+' '(' (indexlist)? ')'
-   ;
-
 tensor
    : tensorname ('(' (indexlist)? ')')?
+   ;
+
+conjtensor
+   : tensorname '+' '(' (indexlist)? ')'
    ;
 
 tensorname
@@ -186,6 +205,7 @@ complex
 
 real
    : REAL
+   | FLOAT
    ;
 
 string
@@ -200,7 +220,7 @@ comment
 
 /* Comment */
 COMMENT
-   : '#' ~ [\r\n]* 
+   : '#' ~ [\r\n]*
    ;
 
 /* Alphanumeric_ identifier */
@@ -208,13 +228,25 @@ ID
    : [A-Za-z][A-Za-z0-9_]*
    ;
 
-/* Real number */
+/* Fixed point real number */
 REAL
-   : ('-')? INT '.' INT
+   : ('-')? INT '.' ZINT
+   ;
+
+/* Floating point real number */
+FLOAT
+   : ('-')? INT 'e' ('+' | '-')? INT
+   | REAL 'e' ('+' | '-')? INT
    ;
 
 /* Non-negative integer */
 INT
+   : '0'
+   | ('1'..'9') ('0'..'9')*
+   ;
+
+/* Non-negative integer with posible leading zeros */
+ZINT
    : ('0'..'9')+
    ;
 
@@ -230,5 +262,5 @@ WS
 
 /* This is the end of the line, boys */
 EOL
-: '\r'? '\n'
-;
+   : '\r'? '\n'
+   ;

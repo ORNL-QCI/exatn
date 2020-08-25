@@ -1,8 +1,7 @@
-#ifndef EXATN_TAPROLLISTENERIMPL_H
-#define EXATN_TAPROLLISTENERIMPL_H
+#ifndef EXATN_TAPROLLISTENERIMPL_HPP_
+#define EXATN_TAPROLLISTENERIMPL_HPP_
 
 #include "TAProLParser.h"
-
 #include "TAProLBaseListener.h"
 
 using namespace taprol;
@@ -52,4 +51,4 @@ public:
 
 } // namespace exatn
 
-#endif //EXATN_TAPROLLISTENERIMPL_H
+#endif //EXATN_TAPROLLISTENERIMPL_HPP_

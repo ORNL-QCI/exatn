@@ -6,9 +6,9 @@ file (GLOB SRC *.cpp generated/*.cpp)
 
 add_library(${LIBRARY_NAME} SHARED ${SRC})
 target_include_directories(${LIBRARY_NAME}
-                            PUBLIC . generated
-                            ${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src
-                            )
+                           PUBLIC . generated
+                           ${CMAKE_SOURCE_DIR}/tpls/antlr/runtime/src
+                          )
 
 
 set(ANTLR_LIB ${CMAKE_SOURCE_DIR}/dist/libantlr4-runtime.so)

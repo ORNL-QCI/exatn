@@ -1,6 +1,7 @@
 #include "TAProLInterpreter.hpp"
+
 #include "TAProLLexer.h"
-#include "TAProLListenerImpl.hpp"
+#include "TAProLListenerCPPImpl.hpp"
 
 using namespace antlr4;
 using namespace taprol;
@@ -21,12 +22,13 @@ void TAProLInterpreter::interpret(const std::string &src) {
   parser.removeErrorListeners();
   parser.addErrorListener(new TAProLErrorListener());
 
-  // Walk the Abstract Syntax Tree
+  // Walk the Parse Tree
   tree::ParseTree *tree = parser.taprolsrc();
 
-  TAProLListenerImpl listener;
+  TAProLListenerCPPImpl listener;
   tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
 }
 
 } // namespace parser
+
 } // namespace exatn
