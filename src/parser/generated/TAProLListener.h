@@ -88,8 +88,14 @@ public:
   virtual void enterAssign(TAProLParser::AssignContext *ctx) = 0;
   virtual void exitAssign(TAProLParser::AssignContext *ctx) = 0;
 
+  virtual void enterDatacontainer(TAProLParser::DatacontainerContext *ctx) = 0;
+  virtual void exitDatacontainer(TAProLParser::DatacontainerContext *ctx) = 0;
+
   virtual void enterMethodname(TAProLParser::MethodnameContext *ctx) = 0;
   virtual void exitMethodname(TAProLParser::MethodnameContext *ctx) = 0;
+
+  virtual void enterRetrieve(TAProLParser::RetrieveContext *ctx) = 0;
+  virtual void exitRetrieve(TAProLParser::RetrieveContext *ctx) = 0;
 
   virtual void enterLoad(TAProLParser::LoadContext *ctx) = 0;
   virtual void exitLoad(TAProLParser::LoadContext *ctx) = 0;
@@ -121,11 +127,11 @@ public:
   virtual void enterCopy(TAProLParser::CopyContext *ctx) = 0;
   virtual void exitCopy(TAProLParser::CopyContext *ctx) = 0;
 
-  virtual void enterUnaryop(TAProLParser::UnaryopContext *ctx) = 0;
-  virtual void exitUnaryop(TAProLParser::UnaryopContext *ctx) = 0;
+  virtual void enterAddition(TAProLParser::AdditionContext *ctx) = 0;
+  virtual void exitAddition(TAProLParser::AdditionContext *ctx) = 0;
 
-  virtual void enterBinaryop(TAProLParser::BinaryopContext *ctx) = 0;
-  virtual void exitBinaryop(TAProLParser::BinaryopContext *ctx) = 0;
+  virtual void enterContraction(TAProLParser::ContractionContext *ctx) = 0;
+  virtual void exitContraction(TAProLParser::ContractionContext *ctx) = 0;
 
   virtual void enterCompositeproduct(TAProLParser::CompositeproductContext *ctx) = 0;
   virtual void exitCompositeproduct(TAProLParser::CompositeproductContext *ctx) = 0;

@@ -90,8 +90,14 @@ public:
   virtual void enterAssign(TAProLParser::AssignContext * /*ctx*/) override { }
   virtual void exitAssign(TAProLParser::AssignContext * /*ctx*/) override { }
 
+  virtual void enterDatacontainer(TAProLParser::DatacontainerContext * /*ctx*/) override { }
+  virtual void exitDatacontainer(TAProLParser::DatacontainerContext * /*ctx*/) override { }
+
   virtual void enterMethodname(TAProLParser::MethodnameContext * /*ctx*/) override { }
   virtual void exitMethodname(TAProLParser::MethodnameContext * /*ctx*/) override { }
+
+  virtual void enterRetrieve(TAProLParser::RetrieveContext * /*ctx*/) override { }
+  virtual void exitRetrieve(TAProLParser::RetrieveContext * /*ctx*/) override { }
 
   virtual void enterLoad(TAProLParser::LoadContext * /*ctx*/) override { }
   virtual void exitLoad(TAProLParser::LoadContext * /*ctx*/) override { }
@@ -123,11 +129,11 @@ public:
   virtual void enterCopy(TAProLParser::CopyContext * /*ctx*/) override { }
   virtual void exitCopy(TAProLParser::CopyContext * /*ctx*/) override { }
 
-  virtual void enterUnaryop(TAProLParser::UnaryopContext * /*ctx*/) override { }
-  virtual void exitUnaryop(TAProLParser::UnaryopContext * /*ctx*/) override { }
+  virtual void enterAddition(TAProLParser::AdditionContext * /*ctx*/) override { }
+  virtual void exitAddition(TAProLParser::AdditionContext * /*ctx*/) override { }
 
-  virtual void enterBinaryop(TAProLParser::BinaryopContext * /*ctx*/) override { }
-  virtual void exitBinaryop(TAProLParser::BinaryopContext * /*ctx*/) override { }
+  virtual void enterContraction(TAProLParser::ContractionContext * /*ctx*/) override { }
+  virtual void exitContraction(TAProLParser::ContractionContext * /*ctx*/) override { }
 
   virtual void enterCompositeproduct(TAProLParser::CompositeproductContext * /*ctx*/) override { }
   virtual void exitCompositeproduct(TAProLParser::CompositeproductContext * /*ctx*/) override { }

@@ -44,14 +44,15 @@ statement
 
 simpleop
    : assign
+   | retrieve
    | load
    | save
    | destroy
    | norm
    | scale
    | copy
-   | unaryop
-   | binaryop
+   | addition
+   | contraction
    ;
 
 compositeop
@@ -113,20 +114,30 @@ indexname
 assign
    : tensor '=' '?'
    | tensor '=' (real | complex)
+   | tensor '=' datacontainer
    | tensor '=' 'method' '(' methodname ')'
    | tensor '=>' 'method' '(' methodname ')'
+   ;
+
+datacontainer
+   : id
    ;
 
 methodname
    : string
    ;
 
+retrieve
+   : datacontainer '=' tensorname
+   | datacontainer '=' tensor
+   ;
+
 load
-   : 'load' tensor ':' 'tag' '(' tagname ')'
+   : 'load' (tensor | tensorname) ':' 'tag' '(' tagname ')'
    ;
 
 save
-   : 'save' tensor ':' 'tag' '(' tagname ')'
+   : 'save' (tensor | tensorname) ':' 'tag' '(' tagname ')'
    ;
 
 tagname
@@ -167,11 +178,11 @@ copy
    : tensor '=' tensor
    ;
 
-unaryop
+addition
    : tensor '+=' (tensor | conjtensor) ( '*' prefactor )?
    ;
 
-binaryop
+contraction
    : tensor '+=' (tensor | conjtensor) '*' (tensor | conjtensor) ( '*' prefactor )?
    ;
 
@@ -184,7 +195,7 @@ tensornetwork
    ;
 
 tensor
-   : tensorname ('(' (indexlist)? ')')?
+   : tensorname '(' (indexlist)? ')'
    ;
 
 conjtensor

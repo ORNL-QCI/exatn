@@ -29,12 +29,12 @@ public:
     RuleNumfield = 12, RuleSubspace = 13, RuleSpacedeflist = 14, RuleSpacedef = 15, 
     RuleSpacename = 16, RuleRange = 17, RuleLowerbound = 18, RuleUpperbound = 19, 
     RuleIndex = 20, RuleIndexlist = 21, RuleIndexname = 22, RuleAssign = 23, 
-    RuleMethodname = 24, RuleLoad = 25, RuleSave = 26, RuleTagname = 27, 
-    RuleDestroy = 28, RuleTensorlist = 29, RuleNorm = 30, RuleScalar = 31, 
-    RuleScale = 32, RulePrefactor = 33, RuleCopy = 34, RuleUnaryop = 35, 
-    RuleBinaryop = 36, RuleCompositeproduct = 37, RuleTensornetwork = 38, 
-    RuleTensor = 39, RuleConjtensor = 40, RuleTensorname = 41, RuleId = 42, 
-    RuleComplex = 43, RuleReal = 44, RuleString = 45, RuleComment = 46
+    RuleDatacontainer = 24, RuleMethodname = 25, RuleRetrieve = 26, RuleLoad = 27, 
+    RuleSave = 28, RuleTagname = 29, RuleDestroy = 30, RuleTensorlist = 31, 
+    RuleNorm = 32, RuleScalar = 33, RuleScale = 34, RulePrefactor = 35, 
+    RuleCopy = 36, RuleAddition = 37, RuleContraction = 38, RuleCompositeproduct = 39, 
+    RuleTensornetwork = 40, RuleTensor = 41, RuleConjtensor = 42, RuleTensorname = 43, 
+    RuleId = 44, RuleComplex = 45, RuleReal = 46, RuleString = 47, RuleComment = 48
   };
 
   TAProLParser(antlr4::TokenStream *input);
@@ -71,7 +71,9 @@ public:
   class IndexlistContext;
   class IndexnameContext;
   class AssignContext;
+  class DatacontainerContext;
   class MethodnameContext;
+  class RetrieveContext;
   class LoadContext;
   class SaveContext;
   class TagnameContext;
@@ -82,8 +84,8 @@ public:
   class ScaleContext;
   class PrefactorContext;
   class CopyContext;
-  class UnaryopContext;
-  class BinaryopContext;
+  class AdditionContext;
+  class ContractionContext;
   class CompositeproductContext;
   class TensornetworkContext;
   class TensorContext;
@@ -230,14 +232,15 @@ public:
     SimpleopContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     AssignContext *assign();
+    RetrieveContext *retrieve();
     LoadContext *load();
     SaveContext *save();
     DestroyContext *destroy();
     NormContext *norm();
     ScaleContext *scale();
     CopyContext *copy();
-    UnaryopContext *unaryop();
-    BinaryopContext *binaryop();
+    AdditionContext *addition();
+    ContractionContext *contraction();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -431,6 +434,7 @@ public:
     TensorContext *tensor();
     RealContext *real();
     ComplexContext *complex();
+    DatacontainerContext *datacontainer();
     MethodnameContext *methodname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -439,6 +443,19 @@ public:
   };
 
   AssignContext* assign();
+
+  class  DatacontainerContext : public antlr4::ParserRuleContext {
+  public:
+    DatacontainerContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdContext *id();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  DatacontainerContext* datacontainer();
 
   class  MethodnameContext : public antlr4::ParserRuleContext {
   public:
@@ -453,12 +470,28 @@ public:
 
   MethodnameContext* methodname();
 
+  class  RetrieveContext : public antlr4::ParserRuleContext {
+  public:
+    RetrieveContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    DatacontainerContext *datacontainer();
+    TensornameContext *tensorname();
+    TensorContext *tensor();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  RetrieveContext* retrieve();
+
   class  LoadContext : public antlr4::ParserRuleContext {
   public:
     LoadContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    TensorContext *tensor();
     TagnameContext *tagname();
+    TensorContext *tensor();
+    TensornameContext *tensorname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -471,8 +504,9 @@ public:
   public:
     SaveContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    TensorContext *tensor();
     TagnameContext *tagname();
+    TensorContext *tensor();
+    TensornameContext *tensorname();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -596,9 +630,9 @@ public:
 
   CopyContext* copy();
 
-  class  UnaryopContext : public antlr4::ParserRuleContext {
+  class  AdditionContext : public antlr4::ParserRuleContext {
   public:
-    UnaryopContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    AdditionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     std::vector<TensorContext *> tensor();
     TensorContext* tensor(size_t i);
@@ -610,11 +644,11 @@ public:
    
   };
 
-  UnaryopContext* unaryop();
+  AdditionContext* addition();
 
-  class  BinaryopContext : public antlr4::ParserRuleContext {
+  class  ContractionContext : public antlr4::ParserRuleContext {
   public:
-    BinaryopContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    ContractionContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     std::vector<TensorContext *> tensor();
     TensorContext* tensor(size_t i);
@@ -627,7 +661,7 @@ public:
    
   };
 
-  BinaryopContext* binaryop();
+  ContractionContext* contraction();
 
   class  CompositeproductContext : public antlr4::ParserRuleContext {
   public:

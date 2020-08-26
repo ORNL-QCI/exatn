@@ -10,11 +10,13 @@ void TAProLListenerCPPImpl::enterEntry(TAProLParser::EntryContext * ctx)
 {
 }
 
+
 void TAProLListenerCPPImpl::enterScope(TAProLParser::ScopeContext * ctx)
 {
  cpp_source << "exatn::openScope(\"" << ctx->scopename(0)->getText() << "\");" << std::endl;
  return;
 }
+
 
 void TAProLListenerCPPImpl::exitScope(TAProLParser::ScopeContext * ctx)
 {
@@ -22,13 +24,16 @@ void TAProLListenerCPPImpl::exitScope(TAProLParser::ScopeContext * ctx)
  return;
 }
 
+
 void TAProLListenerCPPImpl::enterCode(TAProLParser::CodeContext * ctx)
 {
 }
 
+
 void TAProLListenerCPPImpl::exitCode(TAProLParser::CodeContext * ctx)
 {
 }
+
 
 void TAProLListenerCPPImpl::enterSpace(TAProLParser::SpaceContext * ctx)
 {
@@ -40,6 +45,7 @@ void TAProLListenerCPPImpl::enterSpace(TAProLParser::SpaceContext * ctx)
  }
  return;
 }
+
 
 void TAProLListenerCPPImpl::enterSubspace(TAProLParser::SubspaceContext * ctx)
 {
@@ -56,6 +62,7 @@ void TAProLListenerCPPImpl::enterSubspace(TAProLParser::SubspaceContext * ctx)
  return;
 }
 
+
 void TAProLListenerCPPImpl::enterIndex(TAProLParser::IndexContext * ctx)
 {
  for(auto indx: ctx->indexlist()->indexname()){
@@ -66,6 +73,7 @@ void TAProLListenerCPPImpl::enterIndex(TAProLParser::IndexContext * ctx)
  }
  return;
 }
+
 
 void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext * ctx)
 {
@@ -85,26 +93,47 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext * ctx)
    }
   }
   cpp_source << "});" << std::endl;
-  if(ctx->complex() != nullptr){
-   cpp_source << "exatn::initTensor(\"" << ctx->tensor()->tensorname()->getText()
-              << "\",std::complex<double>(" << ctx->complex()->getText() << "));" << std::endl;
+  if(ctx->datacontainer() != nullptr){
+   cpp_source << "exatn::initTensorData(\"" << ctx->tensor()->tensorname()->getText()
+              << "\"," << ctx->datacontainer()->getText() << ");" << std::endl;
   }else{
-   if(ctx->real() != nullptr){
+   if(ctx->complex() != nullptr){
     cpp_source << "exatn::initTensor(\"" << ctx->tensor()->tensorname()->getText()
-               << "\"," << ctx->real()->getText() << ");" << std::endl;
+               << "\",std::complex<double>(" << ctx->complex()->getText() << "));" << std::endl;
+   }else{
+    if(ctx->real() != nullptr){
+     cpp_source << "exatn::initTensor(\"" << ctx->tensor()->tensorname()->getText()
+                << "\"," << ctx->real()->getText() << ");" << std::endl;
+    }
    }
   }
  }
  return;
 }
 
+
+void TAProLListenerCPPImpl::enterRetrieve(TAProLParser::RetrieveContext * ctx)
+{
+ if(ctx->tensor() != nullptr){
+  cpp_source << "auto " << ctx->datacontainer()->getText() << " = "
+             << "exatn::getLocalTensor(\"" << ctx->tensor()->tensorname()->getText() << "\");" << std::endl;
+ }else if(ctx->tensorname() != nullptr){
+  cpp_source << "auto " << ctx->datacontainer()->getText() << " = "
+             << "exatn::getLocalTensor(\"" << ctx->tensorname()->getText() << "\");" << std::endl;
+ }
+ return;
+}
+
+
 void TAProLListenerCPPImpl::enterLoad(TAProLParser::LoadContext * ctx)
 {
 }
 
+
 void TAProLListenerCPPImpl::enterSave(TAProLParser::SaveContext * ctx)
 {
 }
+
 
 void TAProLListenerCPPImpl::enterDestroy(TAProLParser::DestroyContext * ctx)
 {
@@ -127,29 +156,50 @@ void TAProLListenerCPPImpl::enterDestroy(TAProLParser::DestroyContext * ctx)
  return;
 }
 
+
 void TAProLListenerCPPImpl::enterNorm(TAProLParser::NormContext * ctx)
 {
 }
+
 
 void TAProLListenerCPPImpl::enterScale(TAProLParser::ScaleContext * ctx)
 {
 }
 
+
 void TAProLListenerCPPImpl::enterCopy(TAProLParser::CopyContext * ctx)
 {
 }
 
-void TAProLListenerCPPImpl::enterUnaryop(TAProLParser::UnaryopContext * ctx)
+
+void TAProLListenerCPPImpl::enterAddition(TAProLParser::AdditionContext * ctx)
 {
+ if(ctx->prefactor() != nullptr){
+  cpp_source << "exatn::addTensors(\"" << ctx->getText() << "\","
+             << ctx->prefactor()->getText() << ");" << std::endl;
+ }else{
+  cpp_source << "exatn::addTensors(\"" << ctx->getText() << "\");" << std::endl;
+ }
+ return;
 }
 
-void TAProLListenerCPPImpl::enterBinaryop(TAProLParser::BinaryopContext * ctx)
+
+void TAProLListenerCPPImpl::enterContraction(TAProLParser::ContractionContext * ctx)
 {
+ if(ctx->prefactor() != nullptr){
+  cpp_source << "exatn::contractTensors(\"" << ctx->getText() << "\","
+             << ctx->prefactor()->getText() << ");" << std::endl;
+ }else{
+  cpp_source << "exatn::contractTensors(\"" << ctx->getText() << "\");" << std::endl;
+ }
+ return;
 }
+
 
 void TAProLListenerCPPImpl::enterCompositeproduct(TAProLParser::CompositeproductContext * ctx)
 {
 }
+
 
 void TAProLListenerCPPImpl::enterTensornetwork(TAProLParser::TensornetworkContext * ctx)
 {

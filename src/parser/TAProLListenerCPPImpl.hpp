@@ -33,6 +33,8 @@ public:
 
   virtual void enterAssign(TAProLParser::AssignContext * ctx) override;
 
+  virtual void enterRetrieve(TAProLParser::RetrieveContext * ctx) override;
+
   virtual void enterLoad(TAProLParser::LoadContext * ctx) override;
 
   virtual void enterSave(TAProLParser::SaveContext * ctx) override;
@@ -45,9 +47,9 @@ public:
 
   virtual void enterCopy(TAProLParser::CopyContext * ctx) override;
 
-  virtual void enterUnaryop(TAProLParser::UnaryopContext * ctx) override;
+  virtual void enterAddition(TAProLParser::AdditionContext * ctx) override;
 
-  virtual void enterBinaryop(TAProLParser::BinaryopContext * ctx) override;
+  virtual void enterContraction(TAProLParser::ContractionContext * ctx) override;
 
   virtual void enterCompositeproduct(TAProLParser::CompositeproductContext * ctx) override;
 
