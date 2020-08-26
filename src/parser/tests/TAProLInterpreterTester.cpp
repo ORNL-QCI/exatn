@@ -21,6 +21,7 @@ TEST(TAProLInterpreterTester, checkSimple) {
    T2(a,b,i,j) = std_vector
    Z2(a,b,i,j) = {0.0,0.0}
    Z2(a,b,i,j) += H2(a,k,c,i) * T2(b,c,k,j)
+   Z2(a,b,i,j) += H2(c,k,d,l) * T2(c,d,i,j) * T2(a,b,k,l)
    Z2(a,b,i,j) *= 0.25
    T2(a,b,i,j) += Z2(a,b,i,j)
    talsh_t2 = T2

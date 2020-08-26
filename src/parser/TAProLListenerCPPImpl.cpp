@@ -198,7 +198,6 @@ void TAProLListenerCPPImpl::enterMaxabs(TAProLParser::MaxabsContext * ctx)
 
 void TAProLListenerCPPImpl::enterScale(TAProLParser::ScaleContext * ctx)
 {
-
  cpp_source << "exatn::scaleTensor(\"" << ctx->tensor()->tensorname()->getText()
             << "\"," << ctx->prefactor()->getText() << ");" << std::endl;
  return;
@@ -236,6 +235,8 @@ void TAProLListenerCPPImpl::enterContraction(TAProLParser::ContractionContext * 
 
 void TAProLListenerCPPImpl::enterCompositeproduct(TAProLParser::CompositeproductContext * ctx)
 {
+ cpp_source << "exatn::evaluateTensorNetwork(\"" << "_SmokyTN" << "\",\"" << ctx->getText() << "\");" << std::endl;
+ return;
 }
 
 
