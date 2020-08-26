@@ -30,3 +30,8 @@ file (GLOB HEADERS *.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+
+find_package(Clang 10.0.0 REQUIRED)
+if (CLANG_FOUND) 
+add_subdirectory(syntax_handler)
+endif()
