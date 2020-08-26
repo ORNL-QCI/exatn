@@ -31,10 +31,11 @@ public:
     RuleIndex = 20, RuleIndexlist = 21, RuleIndexname = 22, RuleAssign = 23, 
     RuleDatacontainer = 24, RuleMethodname = 25, RuleRetrieve = 26, RuleLoad = 27, 
     RuleSave = 28, RuleTagname = 29, RuleDestroy = 30, RuleTensorlist = 31, 
-    RuleNorm = 32, RuleScalar = 33, RuleScale = 34, RulePrefactor = 35, 
-    RuleCopy = 36, RuleAddition = 37, RuleContraction = 38, RuleCompositeproduct = 39, 
-    RuleTensornetwork = 40, RuleTensor = 41, RuleConjtensor = 42, RuleTensorname = 43, 
-    RuleId = 44, RuleComplex = 45, RuleReal = 46, RuleString = 47, RuleComment = 48
+    RuleNorm1 = 32, RuleNorm2 = 33, RuleMaxabs = 34, RuleScalar = 35, RuleScale = 36, 
+    RulePrefactor = 37, RuleCopy = 38, RuleAddition = 39, RuleContraction = 40, 
+    RuleCompositeproduct = 41, RuleTensornetwork = 42, RuleTensor = 43, 
+    RuleConjtensor = 44, RuleTensorname = 45, RuleId = 46, RuleComplex = 47, 
+    RuleReal = 48, RuleString = 49, RuleComment = 50
   };
 
   TAProLParser(antlr4::TokenStream *input);
@@ -79,7 +80,9 @@ public:
   class TagnameContext;
   class DestroyContext;
   class TensorlistContext;
-  class NormContext;
+  class Norm1Context;
+  class Norm2Context;
+  class MaxabsContext;
   class ScalarContext;
   class ScaleContext;
   class PrefactorContext;
@@ -236,7 +239,9 @@ public:
     LoadContext *load();
     SaveContext *save();
     DestroyContext *destroy();
-    NormContext *norm();
+    Norm1Context *norm1();
+    Norm2Context *norm2();
+    MaxabsContext *maxabs();
     ScaleContext *scale();
     CopyContext *copy();
     AdditionContext *addition();
@@ -559,9 +564,9 @@ public:
 
   TensorlistContext* tensorlist();
 
-  class  NormContext : public antlr4::ParserRuleContext {
+  class  Norm1Context : public antlr4::ParserRuleContext {
   public:
-    NormContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    Norm1Context(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     ScalarContext *scalar();
     TensornameContext *tensorname();
@@ -572,7 +577,37 @@ public:
    
   };
 
-  NormContext* norm();
+  Norm1Context* norm1();
+
+  class  Norm2Context : public antlr4::ParserRuleContext {
+  public:
+    Norm2Context(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    ScalarContext *scalar();
+    TensornameContext *tensorname();
+    TensorContext *tensor();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  Norm2Context* norm2();
+
+  class  MaxabsContext : public antlr4::ParserRuleContext {
+  public:
+    MaxabsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    ScalarContext *scalar();
+    TensornameContext *tensorname();
+    TensorContext *tensor();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  MaxabsContext* maxabs();
 
   class  ScalarContext : public antlr4::ParserRuleContext {
   public:

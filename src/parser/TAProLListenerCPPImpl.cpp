@@ -157,13 +157,51 @@ void TAProLListenerCPPImpl::enterDestroy(TAProLParser::DestroyContext * ctx)
 }
 
 
-void TAProLListenerCPPImpl::enterNorm(TAProLParser::NormContext * ctx)
+void TAProLListenerCPPImpl::enterNorm1(TAProLParser::Norm1Context * ctx)
 {
+ if(ctx->tensor() != nullptr){
+  cpp_source << "exatn::computeNorm1(\"" << ctx->tensor()->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }else if(ctx->tensorname() != nullptr){
+  cpp_source << "exatn::computeNorm1(\"" << ctx->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }
+ return;
+}
+
+
+void TAProLListenerCPPImpl::enterNorm2(TAProLParser::Norm2Context * ctx)
+{
+ if(ctx->tensor() != nullptr){
+  cpp_source << "exatn::computeNorm2(\"" << ctx->tensor()->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }else if(ctx->tensorname() != nullptr){
+  cpp_source << "exatn::computeNorm2(\"" << ctx->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }
+ return;
+}
+
+
+void TAProLListenerCPPImpl::enterMaxabs(TAProLParser::MaxabsContext * ctx)
+{
+ if(ctx->tensor() != nullptr){
+  cpp_source << "exatn::computeMaxabs(\"" << ctx->tensor()->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }else if(ctx->tensorname() != nullptr){
+  cpp_source << "exatn::computeMaxabs(\"" << ctx->tensorname()->getText()
+             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+ }
+ return;
 }
 
 
 void TAProLListenerCPPImpl::enterScale(TAProLParser::ScaleContext * ctx)
 {
+
+ cpp_source << "exatn::scaleTensor(\"" << ctx->tensor()->tensorname()->getText()
+            << "\"," << ctx->prefactor()->getText() << ");" << std::endl;
+ return;
 }
 
 

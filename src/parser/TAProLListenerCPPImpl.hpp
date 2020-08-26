@@ -41,7 +41,11 @@ public:
 
   virtual void enterDestroy(TAProLParser::DestroyContext * ctx) override;
 
-  virtual void enterNorm(TAProLParser::NormContext * ctx) override;
+  virtual void enterNorm1(TAProLParser::Norm1Context * ctx) override;
+
+  virtual void enterNorm2(TAProLParser::Norm2Context * ctx) override;
+
+  virtual void enterMaxabs(TAProLParser::MaxabsContext * ctx) override;
 
   virtual void enterScale(TAProLParser::ScaleContext * ctx) override;
 

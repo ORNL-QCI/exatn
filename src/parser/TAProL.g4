@@ -48,7 +48,9 @@ simpleop
    | load
    | save
    | destroy
-   | norm
+   | norm1
+   | norm2
+   | maxabs
    | scale
    | copy
    | addition
@@ -154,10 +156,16 @@ tensorlist
    : (tensorname | tensor) (',' (tensorname | tensor) )*
    ;
 
-norm
+norm1
    : scalar '=' 'norm1' '(' (tensorname | tensor) ')'
-   | scalar '=' 'norm2' '(' (tensorname | tensor) ')'
-   | scalar '=' 'maxabs' '(' (tensorname | tensor) ')'
+   ;
+
+norm2
+   : scalar '=' 'norm2' '(' (tensorname | tensor) ')'
+   ;
+
+maxabs
+   : scalar '=' 'maxabs' '(' (tensorname | tensor) ')'
    ;
 
 scalar
