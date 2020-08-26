@@ -112,8 +112,14 @@ public:
   virtual void enterTensorlist(TAProLParser::TensorlistContext *ctx) = 0;
   virtual void exitTensorlist(TAProLParser::TensorlistContext *ctx) = 0;
 
-  virtual void enterNorm(TAProLParser::NormContext *ctx) = 0;
-  virtual void exitNorm(TAProLParser::NormContext *ctx) = 0;
+  virtual void enterNorm1(TAProLParser::Norm1Context *ctx) = 0;
+  virtual void exitNorm1(TAProLParser::Norm1Context *ctx) = 0;
+
+  virtual void enterNorm2(TAProLParser::Norm2Context *ctx) = 0;
+  virtual void exitNorm2(TAProLParser::Norm2Context *ctx) = 0;
+
+  virtual void enterMaxabs(TAProLParser::MaxabsContext *ctx) = 0;
+  virtual void exitMaxabs(TAProLParser::MaxabsContext *ctx) = 0;
 
   virtual void enterScalar(TAProLParser::ScalarContext *ctx) = 0;
   virtual void exitScalar(TAProLParser::ScalarContext *ctx) = 0;
