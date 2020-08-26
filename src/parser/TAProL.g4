@@ -6,11 +6,11 @@ taprolsrc
    ;
 
 entry
-   : 'entry' ':' scopename
+   : 'entry' ':' scopename (';')?
    ;
 
 scope
-   : 'scope' scopename 'group' '(' groupnamelist? ')' code 'end scope' scopename
+   : 'scope' scopename 'group' '(' groupnamelist? ')' (';')? code 'end' 'scope' scopename (';')?
    ;
 
 scopename
@@ -30,7 +30,7 @@ code
    ;
 
 line
-   : statement
+   : statement (';')?
    | comment
    ;
 

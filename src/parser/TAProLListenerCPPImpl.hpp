@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <map>
 
 using namespace taprol;
 
@@ -66,7 +68,8 @@ public:
 
 protected:
 
-  std::ostringstream cpp_source;
+  std::ostringstream cpp_source;          //output C++ code buffer
+  std::map<std::string,std::string> args; //function arg name --> function arg type
 
 };
 
