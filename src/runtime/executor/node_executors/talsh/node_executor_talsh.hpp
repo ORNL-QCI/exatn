@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/11
+REVISION: 2020/08/31
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,7 +29,7 @@ public:
 
   static constexpr const std::size_t DEFAULT_MEM_BUFFER_SIZE = 2UL * 1024UL * 1024UL * 1024UL; //bytes
 
-  TalshNodeExecutor(): prefetch_enabled_(true) {}
+  TalshNodeExecutor(): max_tensor_rank_(-1), prefetch_enabled_(true) {}
 
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
@@ -145,6 +145,8 @@ protected:
   std::unordered_map<talsh::Tensor*,std::shared_ptr<talsh::TensorTask>> evictions_;
   /** Register (cache) of tensors with body images moved/copied to accelerators **/
   std::unordered_map<talsh::Tensor*,CachedAttr> accel_cache_[DEV_MAX]; //cache for each device
+  /** Max encountered actual tensor rank **/
+  int max_tensor_rank_;
   /** Prefetching enabled flag **/
   bool prefetch_enabled_;
   /** TAL-SH Host memory buffer size (bytes) **/
