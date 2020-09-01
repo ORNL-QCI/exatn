@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/08/31
+REVISION: 2020/09/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -356,24 +356,32 @@ inline bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen
 
 /** Scales a tensor by a scalar value. **/
 template<typename NumericType>
-inline bool scaleTensor(const std::string & name, //in: tensor name
-                        NumericType value)        //in: scalar value
+inline bool scaleTensor(const std::string & name,       //in: tensor name
+                        NumericType value)              //in: scalar value
  {return numericalServer->scaleTensor(name,value);}
 
 template<typename NumericType>
-inline bool scaleTensorSync(const std::string & name, //in: tensor name
-                            NumericType value)        //in: scalar value
+inline bool scaleTensorSync(const std::string & name,   //in: tensor name
+                            NumericType value)          //in: scalar value
  {return numericalServer->scaleTensorSync(name,value);}
 
 
 /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
-inline bool transformTensor(const std::string & name,              //in: tensor name
-                            std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
+inline bool transformTensor(const std::string & name,                  //in: tensor name
+                            std::shared_ptr<TensorMethod> functor)     //in: functor defining the tensor transformation
  {return numericalServer->transformTensor(name,functor);}
 
 inline bool transformTensorSync(const std::string & name,              //in: tensor name
-                                std::shared_ptr<TensorMethod> functor) //in: functor defining tensor transformation
+                                std::shared_ptr<TensorMethod> functor) //in: functor defining the tensor transformation
  {return numericalServer->transformTensorSync(name,functor);}
+
+inline bool transformTensor(const std::string & name,                  //in: tensor name
+                            const std::string & functor_name)          //in: name of the functor defining the tensor transformation
+ {return numericalServer->transformTensor(name,functor_name);}
+
+inline bool transformTensorSync(const std::string & name,              //in: tensor name
+                                const std::string & functor_name)      //in: name of the functor defining the tensor transformation
+ {return numericalServer->transformTensorSync(name,functor_name);}
 
 
 /** Extracts a slice from a tensor and stores it in another tensor
