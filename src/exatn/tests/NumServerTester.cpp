@@ -46,7 +46,7 @@ TEST(NumServerTester, PerformanceExaTN)
  const exatn::DimExtent DIM = 3072;
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -122,8 +122,8 @@ TEST(NumServerTester, PerformanceExaTN)
  exatn::sync();
 
  //Create tensors:
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM,DIM}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM,DIM}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM,32ULL}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM,32ULL}); assert(success);
  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
 
  //Initialize tensors:
@@ -135,10 +135,10 @@ TEST(NumServerTester, PerformanceExaTN)
  std::cout << " Case 4: C=A*B out-of-core: ";
  exatn::sync();
  time_start = exatn::Timer::timeInSecHR();
- success = exatn::contractTensors("C(i,j)+=A(l,j,k)*B(k,i,l)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(j,k,l)*B(i,k,l)",1.0); assert(success);
  exatn::sync();
  duration = exatn::Timer::timeInSecHR(time_start);
- std::cout << "Average performance (GFlop/s) = " << 2.0*double{DIM}*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
+ std::cout << "Average performance (GFlop/s) = " << 2.0*double{DIM}*double{DIM}*double{DIM}*double{32}/duration/1e9 << std::endl;
 
  //Destroy tensors:
  success = exatn::destroyTensor("C"); assert(success);
@@ -169,7 +169,7 @@ TEST(NumServerTester, PerformanceExaTN)
  //Contract tensor factors back with an opposite sign:
  success = exatn::contractTensors("D(u0,u1,u2,u3)+=L(u0,c0,u1)*R(u2,c0,u3)",-1.0); assert(success);
  success = exatn::computeNorm1Sync("D",norm1); assert(success);
- std::cout << "Final 1-norm of tensor D (should be close to zero) = " << norm1 << std::endl;
+ std::cout << " Final 1-norm of tensor D (should be close to zero) = " << norm1 << std::endl;
 
  //Destroy tensors:
  success = exatn::destroyTensor("R"); assert(success);
@@ -1871,7 +1871,7 @@ int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
   //Set the available CPU Host RAM size to be used by ExaTN:
-  exatn_parameters.setParameter("host_memory_buffer_size",4L*1024L*1024L*1024L);
+  exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
