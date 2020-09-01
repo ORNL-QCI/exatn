@@ -43,34 +43,81 @@ TEST(NumServerTester, PerformanceExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- const exatn::DimExtent DIM = 4096;
- const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
+ const exatn::DimExtent DIM = 3072;
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- exatn::resetRuntimeLoggingLevel(2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
+ std::cout << "Contractions of rank-2 tensors:" << std::endl;
  //Create tensors:
- success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
 
  //Initialize tensors:
- success = exatn::initTensor("C",0.0); assert(success);
  success = exatn::initTensor("A",1e-4); assert(success);
  success = exatn::initTensor("B",1e-3); assert(success);
+ success = exatn::initTensor("C",0.0); assert(success);
+ success = exatn::initTensor("D",1e-4); assert(success);
+ success = exatn::initTensor("E",1e-3); assert(success);
+ success = exatn::initTensor("F",0.0); assert(success);
+ success = exatn::initTensor("G",1e-4); assert(success);
+ success = exatn::initTensor("H",1e-3); assert(success);
+ success = exatn::initTensor("I",0.0); assert(success);
 
- //Contract tensors (repeat multiple times):
+ //Contract tensors (case 1):
+ std::cout << " Case 1: C=A*B five times: ";
+ exatn::sync();
+ auto time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(i,k)*B(k,j)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(j,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(i,k)*B(j,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+ exatn::sync();
+ auto duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 5.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
+
+ //Contract tensors (case 2):
+ std::cout << " Case 2: C=A*B | F=D*E | I=G*H pipeline: ";
+ exatn::sync();
+ time_start = exatn::Timer::timeInSecHR();
+ success = exatn::contractTensors("I(i,j)+=G(j,k)*H(i,k)",1.0); assert(success);
+ success = exatn::contractTensors("F(i,j)+=D(j,k)*E(i,k)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(j,k)*B(i,k)",1.0); assert(success);
+ exatn::sync();
+ duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 3.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
+
+ //Contract tensors (case 3):
+ std::cout << " Case 3: I=A*B | I=D*E | I=G*H prefetch: ";
+ exatn::sync();
+ time_start = exatn::Timer::timeInSecHR();
+ success = exatn::contractTensors("I(i,j)+=G(j,k)*H(i,k)",1.0); assert(success);
+ success = exatn::contractTensors("I(i,j)+=D(j,k)*E(i,k)",1.0); assert(success);
+ success = exatn::contractTensors("I(i,j)+=A(j,k)*B(i,k)",1.0); assert(success);
+ exatn::sync();
+ duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 3.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
 
  //Destroy tensors:
+ success = exatn::destroyTensor("I"); assert(success);
+ success = exatn::destroyTensor("H"); assert(success);
+ success = exatn::destroyTensor("G"); assert(success);
+ success = exatn::destroyTensor("F"); assert(success);
+ success = exatn::destroyTensor("E"); assert(success);
+ success = exatn::destroyTensor("D"); assert(success);
+ success = exatn::destroyTensor("C"); assert(success);
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
- success = exatn::destroyTensor("C"); assert(success);
 
  exatn::sync();
 
@@ -95,7 +142,7 @@ TEST(NumServerTester, PerformanceExaTN)
  //Contract tensor factors back with an opposite sign:
  success = exatn::contractTensors("D(u0,u1,u2,u3)+=L(u0,c0,u1)*R(u2,c0,u3)",-1.0); assert(success);
  success = exatn::computeNorm1Sync("D",norm1); assert(success);
- std::cout << "Final 1-norm of tensor D (must be zero) = " << norm1 << std::endl;
+ std::cout << "Final 1-norm of tensor D (should be close to zero) = " << norm1 << std::endl;
 
  //Destroy tensors:
  success = exatn::destroyTensor("R"); assert(success);
@@ -104,7 +151,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Synchronize ExaTN server:
  exatn::sync();
- exatn::resetRuntimeLoggingLevel(0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 

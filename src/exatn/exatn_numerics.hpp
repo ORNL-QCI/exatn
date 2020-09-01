@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/08/09
+REVISION: 2020/08/31
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -650,6 +650,14 @@ inline void resetClientLoggingLevel(int level = 0)
 /** Resets tensor runtime logging level (0:none). **/
 inline void resetRuntimeLoggingLevel(int level = 0)
  {return numericalServer->resetRuntimeLoggingLevel(level);}
+
+
+/** Resets both client and runtime logging level (0:none). **/
+inline void resetLoggingLevel(int client_level = 0,
+                              int runtime_level = 0)
+ {resetClientLoggingLevel(client_level);
+  resetRuntimeLoggingLevel(runtime_level);
+  return;}
 
 
 /** Returns the Host memory buffer size in bytes provided by the runtime. **/
