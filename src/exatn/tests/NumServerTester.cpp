@@ -122,6 +122,33 @@ TEST(NumServerTester, PerformanceExaTN)
  exatn::sync();
 
  //Create tensors:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM,DIM}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM,DIM}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+
+ //Initialize tensors:
+ success = exatn::initTensor("A",1e-4); assert(success);
+ success = exatn::initTensor("B",1e-3); assert(success);
+ success = exatn::initTensor("C",0.0); assert(success);
+
+ //Contract tensors:
+ std::cout << " Case 4: C=A*B out-of-core: ";
+ exatn::sync();
+ time_start = exatn::Timer::timeInSecHR();
+ success = exatn::contractTensors("C(i,j)+=A(l,j,k)*B(k,i,l)",1.0); assert(success);
+ exatn::sync();
+ duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 2.0*double{DIM}*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("C"); assert(success);
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+
+ exatn::sync();
+
+ std::cout << "Tensor decomposition:" << std::endl;
+ //Create tensors:
  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{32,32,32,1}); assert(success);
  success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{32,32,32}); assert(success);
  success = exatn::createTensor("R",TENS_ELEM_TYPE,TensorShape{32,32,1}); assert(success);
