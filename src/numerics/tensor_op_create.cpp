@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2020/06/25
+REVISION: 2020/09/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -77,7 +77,7 @@ void TensorOpCreate::printItFile(std::ofstream & output_file) const
  if(scalars_.size() > 0) output_file << std::endl;
  output_file << " TensorElementType = " << static_cast<int>(element_type_) << std::endl;
  output_file << "}" << std::endl;
- output_file.flush();
+ //output_file.flush();
  return;
 }
 

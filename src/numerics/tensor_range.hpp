@@ -101,7 +101,8 @@ public:
  void printCurrent(std::ofstream & output_file) const{
   output_file << "{";
   for(const auto & ind: mlndx_) output_file << " " << ind;
-  output_file << " }" << std::flush;
+  output_file << " }";
+  //output_file.flush();
   return;
  }
 
