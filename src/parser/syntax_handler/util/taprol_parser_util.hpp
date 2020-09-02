@@ -6,7 +6,7 @@
 
 namespace exatn {
 std::string run_token_collector(clang::Preprocessor &PP,
-                                clang::CachedTokens &Toks);
+                                clang::CachedTokens &Toks,
+                                std::map<std::string, std::string> &args);
 
 } // namespace exatn
-

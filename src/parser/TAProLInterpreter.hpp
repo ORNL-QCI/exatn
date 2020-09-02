@@ -12,10 +12,8 @@ namespace parser {
 class TAProLErrorListener : public antlr4::BaseErrorListener {
 public:
   void syntaxError(antlr4::Recognizer *recognizer,
-                   antlr4::Token *offendingSymbol,
-                   size_t line,
-                   size_t charPositionInLine,
-                   const std::string &msg,
+                   antlr4::Token *offendingSymbol, size_t line,
+                   size_t charPositionInLine, const std::string &msg,
                    std::exception_ptr e) override {
     std::ostringstream output;
     output << "Invalid TAProL source: ";
@@ -29,11 +27,12 @@ class TAProLInterpreter {
 public:
   virtual ~TAProLInterpreter() {}
   void interpret(const std::string &src);
-  void interpret(const std::string& src, std::ostream& output);
+  void interpret(const std::string &src, std::ostream &output,
+                 std::map<std::string, std::string> &args);
 };
 
 } // namespace parser
 
 } // namespace exatn
 
-#endif //PARSER_TAPROLINTERPRETER_HPP_
+#endif // PARSER_TAPROLINTERPRETER_HPP_

@@ -12,15 +12,16 @@ namespace parser {
 
 void TAProLInterpreter::interpret(const std::string &src) {
   std::ostringstream cpp_source;
-  interpret(src, cpp_source);
+  std::map<std::string, std::string> null;
+  interpret(src, cpp_source, null);
   std::cout
       << "#DEBUG(exatn::parser::cpp): C++ source generated from TAProL source:"
       << std::endl;
   std::cout << cpp_source.str();
 }
 
-void TAProLInterpreter::interpret(const std::string &src,
-                                  std::ostream &output) {
+void TAProLInterpreter::interpret(const std::string &src, std::ostream &output,
+                                  std::map<std::string, std::string> &args) {
 
   // Setup the Antlr Parser
   ANTLRInputStream input(src);
@@ -36,7 +37,7 @@ void TAProLInterpreter::interpret(const std::string &src,
   // Walk the Parse Tree
   tree::ParseTree *tree = parser.taprolsrc();
 
-  TAProLListenerCPPImpl listener(output);
+  TAProLListenerCPPImpl listener(output, args);
   tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
 }
 
