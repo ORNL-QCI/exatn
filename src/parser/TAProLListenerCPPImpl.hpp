@@ -17,6 +17,7 @@ class TAProLListenerCPPImpl : public TAProLBaseListener {
 
 public:
 
+  TAProLListenerCPPImpl(std::ostream& os) : cpp_source(os) {}
   virtual void enterEntry(TAProLParser::EntryContext * ctx) override;
 
   virtual void enterScope(TAProLParser::ScopeContext * ctx) override;
@@ -60,13 +61,11 @@ public:
   virtual void enterTensornetwork(TAProLParser::TensornetworkContext * ctx) override;
 
   virtual ~TAProLListenerCPPImpl() {
-    std::cout << "#DEBUG(exatn::parser::cpp): C++ source generated from TAProL source:" << std::endl;
-    std::cout << cpp_source.str();
   }
 
 protected:
 
-  std::ostringstream cpp_source;
+  std::ostream& cpp_source;
 
 };
 

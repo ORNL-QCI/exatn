@@ -29,6 +29,7 @@ class TAProLInterpreter {
 public:
   virtual ~TAProLInterpreter() {}
   void interpret(const std::string &src);
+  void interpret(const std::string& src, std::ostream& output);
 };
 
 } // namespace parser
