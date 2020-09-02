@@ -43,7 +43,7 @@ TEST(NumServerTester, PerformanceExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- const exatn::DimExtent DIM = 3072;
+ const exatn::DimExtent DIM = 1024; //1024 for low-end CPU, 3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
