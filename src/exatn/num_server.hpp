@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/10
+REVISION: 2020/09/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -449,10 +449,16 @@ public:
 
  /** Transforms (updates) a tensor according to a user-defined tensor functor. **/
  bool transformTensor(const std::string & name,               //in: tensor name
-                      std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+                      std::shared_ptr<TensorMethod> functor); //in: functor defining the tensor transformation
 
  bool transformTensorSync(const std::string & name,               //in: tensor name
-                          std::shared_ptr<TensorMethod> functor); //in: functor defining tensor transformation
+                          std::shared_ptr<TensorMethod> functor); //in: functor defining the tensor transformation
+
+ bool transformTensor(const std::string & name,              //in: tensor name
+                      const std::string & functor_name);     //in: name of the functor defining the tensor transformation
+
+ bool transformTensorSync(const std::string & name,          //in: tensor name
+                          const std::string & functor_name); //in: name of the functor defining the tensor transformation
 
  /** Extracts a slice from a tensor and stores it in another tensor
      the signature and shape of which determines which slice to extract. **/

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/11
+REVISION: 2020/08/31
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -101,7 +101,11 @@ TalshNodeExecutor::~TalshNodeExecutor()
   talsh::printStatistics();
   auto error_code = talsh::shutdown();
   if(error_code == TALSH_SUCCESS){
-   if (debugging) std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl << std::flush;
+   if(debugging){
+    std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH shut down" << std::endl;
+    std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): Max encountered actual (reduced) tensor rank = "
+              << max_tensor_rank_ << std::endl << std::flush;
+   }
    talsh_initialized_ = false;
   }else{
    std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;
@@ -240,6 +244,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
    }
   }
  }
+ if(tensor_rank > max_tensor_rank_) max_tensor_rank_ = tensor_rank;
  std::vector<int> extents(tensor_rank);
  std::vector<std::size_t> bases(tensor_rank);
  tensor_rank = 0;

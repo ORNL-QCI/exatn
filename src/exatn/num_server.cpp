@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/08/21
+REVISION: 2020/09/01
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1128,6 +1128,16 @@ bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<Te
  auto submitted = submit(op);
  if(submitted) submitted = sync(*op);
  return submitted;
+}
+
+bool NumServer::transformTensor(const std::string & name, const std::string & functor_name)
+{
+ return transformTensor(name,getTensorMethod(functor_name));
+}
+
+bool NumServer::transformTensorSync(const std::string & name, const std::string & functor_name)
+{
+ return transformTensorSync(name,getTensorMethod(functor_name));
 }
 
 bool NumServer::extractTensorSlice(const std::string & tensor_name,

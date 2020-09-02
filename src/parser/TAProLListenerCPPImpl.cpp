@@ -1,7 +1,5 @@
 #include "TAProLListenerCPPImpl.hpp"
 
-#include <string>
-
 namespace exatn {
 
 namespace parser {
@@ -114,12 +112,25 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext * ctx)
 
 void TAProLListenerCPPImpl::enterRetrieve(TAProLParser::RetrieveContext * ctx)
 {
- if(ctx->tensor() != nullptr){
-  cpp_source << "auto " << ctx->datacontainer()->getText() << " = "
-             << "exatn::getLocalTensor(\"" << ctx->tensor()->tensorname()->getText() << "\");" << std::endl;
- }else if(ctx->tensorname() != nullptr){
-  cpp_source << "auto " << ctx->datacontainer()->getText() << " = "
-             << "exatn::getLocalTensor(\"" << ctx->tensorname()->getText() << "\");" << std::endl;
+ const std::string & tensor_name = ctx->datacontainer()->getText();
+ auto iter = args.find(tensor_name);
+ if(iter == args.end()){
+  args.emplace(std::make_pair(tensor_name,"talsh::Tensor"));
+  if(ctx->tensor() != nullptr){
+   cpp_source << "auto " << tensor_name << " = " << "exatn::getLocalTensor(\""
+              << ctx->tensor()->tensorname()->getText() << "\");" << std::endl;
+  }else if(ctx->tensorname() != nullptr){
+   cpp_source << "auto " << tensor_name << " = " << "exatn::getLocalTensor(\""
+              << ctx->tensorname()->getText() << "\");" << std::endl;
+  }
+ }else{
+  if(ctx->tensor() != nullptr){
+   cpp_source << tensor_name << " = " << "exatn::getLocalTensor(\""
+              << ctx->tensor()->tensorname()->getText() << "\");" << std::endl;
+  }else if(ctx->tensorname() != nullptr){
+   cpp_source << tensor_name << " = " << "exatn::getLocalTensor(\""
+              << ctx->tensorname()->getText() << "\");" << std::endl;
+  }
  }
  return;
 }
@@ -159,12 +170,18 @@ void TAProLListenerCPPImpl::enterDestroy(TAProLParser::DestroyContext * ctx)
 
 void TAProLListenerCPPImpl::enterNorm1(TAProLParser::Norm1Context * ctx)
 {
+ const std::string & scalar_name = ctx->scalar()->getText();
+ auto iter = args.find(scalar_name);
+ if(iter == args.end()){
+  args.emplace(std::make_pair(scalar_name,"double"));
+  cpp_source << "double " << scalar_name << ";" << std::endl;
+ }
  if(ctx->tensor() != nullptr){
   cpp_source << "exatn::computeNorm1(\"" << ctx->tensor()->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }else if(ctx->tensorname() != nullptr){
   cpp_source << "exatn::computeNorm1(\"" << ctx->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }
  return;
 }
@@ -172,12 +189,18 @@ void TAProLListenerCPPImpl::enterNorm1(TAProLParser::Norm1Context * ctx)
 
 void TAProLListenerCPPImpl::enterNorm2(TAProLParser::Norm2Context * ctx)
 {
+ const std::string & scalar_name = ctx->scalar()->getText();
+ auto iter = args.find(scalar_name);
+ if(iter == args.end()){
+  args.emplace(std::make_pair(scalar_name,"double"));
+  cpp_source << "double " << scalar_name << ";" << std::endl;
+ }
  if(ctx->tensor() != nullptr){
   cpp_source << "exatn::computeNorm2(\"" << ctx->tensor()->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }else if(ctx->tensorname() != nullptr){
   cpp_source << "exatn::computeNorm2(\"" << ctx->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }
  return;
 }
@@ -185,12 +208,18 @@ void TAProLListenerCPPImpl::enterNorm2(TAProLParser::Norm2Context * ctx)
 
 void TAProLListenerCPPImpl::enterMaxabs(TAProLParser::MaxabsContext * ctx)
 {
+ const std::string & scalar_name = ctx->scalar()->getText();
+ auto iter = args.find(scalar_name);
+ if(iter == args.end()){
+  args.emplace(std::make_pair(scalar_name,"double"));
+  cpp_source << "double " << scalar_name << ";" << std::endl;
+ }
  if(ctx->tensor() != nullptr){
   cpp_source << "exatn::computeMaxabs(\"" << ctx->tensor()->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }else if(ctx->tensorname() != nullptr){
   cpp_source << "exatn::computeMaxabs(\"" << ctx->tensorname()->getText()
-             << "\"," << ctx->scalar()->getText() << ");" << std::endl;
+             << "\"," << scalar_name << ");" << std::endl;
  }
  return;
 }

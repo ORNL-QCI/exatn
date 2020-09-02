@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <map>
 
 using namespace taprol;
 
@@ -66,6 +68,7 @@ public:
 protected:
 
   std::ostream& cpp_source;
+  std::map<std::string,std::string> args; //function arg name --> function arg type
 
 };
 
