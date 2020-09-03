@@ -1,3 +1,9 @@
+/** ExaTN: TAProL parser
+REVISION: 2020/09/03
+
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh), Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+
 #include "TAProLListenerCPPImpl.hpp"
 
 namespace exatn {
@@ -39,7 +45,7 @@ void TAProLListenerCPPImpl::enterSubspace(TAProLParser::SubspaceContext *ctx) {
                << " = exatn::createSubspace(\""
                << subspace->spacename()->getText() << "\",\""
                << ctx->spacename()->getText()
-               << "\",std::pair<exatn::DimOffset, exatn::DimOffset>{"
+               << "\",std::pair<exatn::DimOffset,exatn::DimOffset>{"
                << subspace->range()->lowerbound()->getText() << ","
                << subspace->range()->upperbound()->getText() << "});"
                << std::endl;
@@ -68,10 +74,9 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext *ctx) {
     std::string tensor_data_type = "exatn::TensorElementType::REAL64";
     if (ctx->complex() != nullptr)
       tensor_data_type = "exatn::TensorElementType::COMPLEX64";
-    
     cpp_source << "exatn::createTensor(\""
                << ctx->tensor()->tensorname()->getText() << "\","
-               << tensor_data_type << ",TensorSignature{";
+               << "TensorSignature{";
     if (ctx->tensor()->indexlist() != nullptr) {
       const auto &indices = ctx->tensor()->indexlist()->indexname();
       for (auto indx = indices.cbegin(); indx != indices.cend(); ++indx) {
@@ -83,21 +88,22 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext *ctx) {
           cpp_source << ",";
       }
     }
-    cpp_source << "});" << std::endl;
+    cpp_source << "}," << tensor_data_type << ");" << std::endl;
     if (ctx->datacontainer() != nullptr) {
       cpp_source << "exatn::initTensorData(\""
                  << ctx->tensor()->tensorname()->getText() << "\","
                  << ctx->datacontainer()->getText() << ");" << std::endl;
     } else {
       if (ctx->complex() != nullptr) {
-        auto val_str = ctx->complex()->getText();
-        val_str.erase(std::remove_if(val_str.begin(), val_str.end(),
-                       [](char c) { return c == '{' || c == '}'; }), val_str.end());
-
+        auto cmplx_val_str = ctx->complex()->getText();
+        cmplx_val_str.erase(
+            std::remove_if(cmplx_val_str.begin(), cmplx_val_str.end(),
+                           [](char c) { return c == '{' || c == '}'; }),
+            cmplx_val_str.end());
         cpp_source << "exatn::initTensor(\""
                    << ctx->tensor()->tensorname()->getText()
-                   << "\",std::complex<double>(" << val_str << "));"
-                   << std::endl;
+                   << "\",std::complex<double>(" << cmplx_val_str 
+                   << "));" << std::endl;
       } else {
         if (ctx->real() != nullptr) {
           cpp_source << "exatn::initTensor(\""

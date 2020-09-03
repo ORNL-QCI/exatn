@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/02
+REVISION: 2020/09/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -308,9 +308,9 @@ public:
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
      See numerics::Tensor constructors for different creation options. **/
- bool createTensor(const std::string & name,           //in: tensor name
-                   TensorElementType element_type,     //in: tensor element type
-                   const TensorSignature & signature); //in: tensor signature with registered spaces/subspaces
+ bool createTensor(const std::string & name,          //in: tensor name
+                   const TensorSignature & signature, //in: tensor signature with registered spaces/subspaces
+                   TensorElementType element_type);   //in: tensor element type
 
  template <typename... Args>
  bool createTensor(const std::string & name,       //in: tensor name

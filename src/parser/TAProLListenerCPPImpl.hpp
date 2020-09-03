@@ -1,3 +1,9 @@
+/** ExaTN: TAProL parser
+REVISION: 2020/09/03
+
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh), Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+
 #ifndef EXATN_TAPROLLISTENERCPPIMPL_HPP_
 #define EXATN_TAPROLLISTENERCPPIMPL_HPP_
 

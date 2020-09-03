@@ -35,11 +35,4 @@ entry:
 
 int main() {
 
-  std::vector<double> t2;
-  //   // fill t2
-  //   talsh::Tensor tensor;
-
-  //   test(t2, tensor);
-
-  // print tensor
 }
