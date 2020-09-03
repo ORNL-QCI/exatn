@@ -43,8 +43,3 @@ int main() {
 
   // print tensor
 }
-exatn::createTensor("H2", exatn::TensorElementType::COMPLEX64,
-                    TensorSignature{{_a_space, _a},
-                                    {_i_space, _i},
-                                    {_b_space, _b},
-                                    {_j_space, _j}});
