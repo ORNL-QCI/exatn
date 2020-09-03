@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/09/01
+REVISION: 2020/09/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -154,8 +154,13 @@ inline std::shared_ptr<BytePacket> getExternalData(const std::string & tag)
  {return numericalServer->getExternalData(tag);}
 
 
-/** Declares, registers and actually creates a tensor via processing backend.
+/** Declares, registers and actually creates a tensor via the processing backend.
     See numerics::Tensor constructors for different creation options. **/
+inline bool createTensor(const std::string & name,          //in: tensor name
+                         TensorElementType element_type,    //in: tensor element type
+                         const TensorSignature & signature) //in: tensor signature with registered spaces/subspaces
+ {return numericalServer->createTensor(name,element_type,signature);}
+
 template <typename... Args>
 inline bool createTensor(const std::string & name,       //in: tensor name
                          TensorElementType element_type, //in: tensor element type
