@@ -1,3 +1,9 @@
+/** ExaTN: TAProL parser
+REVISION: 2020/09/03
+
+Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh), Alex McCaskey
+Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+
 #include "TAProLListenerCPPImpl.hpp"
 
 namespace exatn {
@@ -82,7 +88,7 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext * ctx)
   std::string tensor_data_type = "exatn::TensorElementType::REAL64";
   if(ctx->complex() != nullptr) tensor_data_type = "exatn::TensorElementType::COMPLEX64";
   cpp_source << "exatn::createTensor(\"" << ctx->tensor()->tensorname()->getText()
-             << "\"," << tensor_data_type << ",TensorSignature{";
+             << "\"," << "TensorSignature{";
   if(ctx->tensor()->indexlist() != nullptr){
    const auto & indices = ctx->tensor()->indexlist()->indexname();
    for(auto indx = indices.cbegin(); indx != indices.cend(); ++indx){
@@ -90,7 +96,7 @@ void TAProLListenerCPPImpl::enterAssign(TAProLParser::AssignContext * ctx)
     if(std::distance(indx,indices.end()) > 1) cpp_source << ",";
    }
   }
-  cpp_source << "});" << std::endl;
+  cpp_source << "}," << tensor_data_type << ");" << std::endl;
   if(ctx->datacontainer() != nullptr){
    cpp_source << "exatn::initTensorData(\"" << ctx->tensor()->tensorname()->getText()
               << "\"," << ctx->datacontainer()->getText() << ");" << std::endl;
