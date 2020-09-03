@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/02
+REVISION: 2020/09/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -771,13 +771,19 @@ bool NumServer::registerTensorIsometry(const std::string & name,
 }
 
 bool NumServer::createTensor(const std::string & name,
-                             TensorElementType element_type,
-                             const TensorSignature & signature)
+                             const TensorSignature & signature,
+                             TensorElementType element_type)
 {
  const unsigned int tensor_rank = signature.getRank();
  std::vector<DimExtent> extents(tensor_rank);
  for(unsigned int i = 0; i < tensor_rank; ++i){
-  extents[i] = space_register_->getSubspace(signature.getDimSpaceId(i),signature.getDimSubspaceId(i))->getDimension();
+  const auto * subspace = space_register_->getSubspace(signature.getDimSpaceId(i),signature.getDimSubspaceId(i));
+  if(subspace != nullptr){
+   extents[i] = subspace->getDimension();
+  }else{
+   std::cout << "#ERROR(exatn::NumServer::createTensor): Unregistered subspace passed!" << std::endl << std::flush;
+   assert(false);
+  }
  }
  return createTensor(name,element_type,TensorShape(extents),signature);
 }
