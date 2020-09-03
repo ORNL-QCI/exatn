@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/01
+REVISION: 2020/09/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -768,6 +768,18 @@ bool NumServer::registerTensorIsometry(const std::string & name,
  auto registered = registerTensorIsometry(name,iso_dims0);
  if(registered) registered = registerTensorIsometry(name,iso_dims1);
  return registered;
+}
+
+bool NumServer::createTensor(const std::string & name,
+                             TensorElementType element_type,
+                             const TensorSignature & signature)
+{
+ const unsigned int tensor_rank = signature.getRank();
+ std::vector<DimExtent> extents(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  extents[i] = space_register_->getSubspace(signature.getDimSpaceId(i),signature.getDimSubspaceId(i))->getDimension();
+ }
+ return createTensor(name,element_type,TensorShape(extents),signature);
 }
 
 bool NumServer::createTensor(std::shared_ptr<Tensor> tensor,

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/07/07
+REVISION: 2020/09/02
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -79,7 +79,7 @@ void TensorOperation::printItFile(std::ofstream & output_file) const
  output_file << " GFlop estimate = " << std::scientific << this->getFlopEstimate()/1e9 << std::endl;
  output_file << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  output_file << "}" << std::endl;
- output_file.flush();
+ //output_file.flush();
  return;
 }
 

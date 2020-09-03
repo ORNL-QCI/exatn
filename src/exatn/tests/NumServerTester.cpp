@@ -132,7 +132,7 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::initTensor("C",0.0); assert(success);
 
  //Contract tensors:
- std::cout << " Case 4: C=A*B out-of-core: ";
+ std::cout << " Case 4: C=A*B out-of-core large dims: ";
  exatn::sync();
  time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("C(i,j)+=A(j,k,l)*B(i,k,l)",1.0); assert(success);
@@ -146,6 +146,35 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("A"); assert(success);
 
  exatn::sync();
+
+/* REQUIRES at least 48 GB Host RAM:
+ //Create tensors:
+ success = exatn::createTensor("A",TensorElementType::COMPLEX64,TensorShape{2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2}); assert(success);
+ success = exatn::createTensor("B",TensorElementType::COMPLEX64,TensorShape{2,2,2,2,2,2,2,2,2,2,1,2,1,2,1,2,2,2,1,2,2,1,1,2,1,2,2,2,2,2,2,1,2,1,2,1,2,2,2,1}); assert(success);
+ success = exatn::createTensor("C",TensorElementType::COMPLEX64,TensorShape{2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1,2,1,2,1,2,2,1,1,1,1,2,1,1,2,1,2,2,2}); assert(success);
+
+ //Initialize tensors:
+ success = exatn::initTensor("A",1e-4); assert(success);
+ success = exatn::initTensor("B",1e-3); assert(success);
+ success = exatn::initTensor("C",0.0); assert(success);
+
+ //Contract tensors:
+ std::cout << " Case 5: C=A*B out-of-core small dims: ";
+ exatn::sync();
+ time_start = exatn::Timer::timeInSecHR();
+ success = exatn::contractTensors("C(c49,c40,c13,c50,c47,c14,c15,c41,c16,c17,c18,c19,c20,c21,c22,c23,c24,c25,c26,c27,c28,c29,c45,c30,c44,c43,c31,c32,c33,c34,c48,c35,c36,c42,c37,c39,c38,c46)+="
+  "A(c49,c40,c13,c50,c62,c47,c14,c15,c63,c41,c64,c65,c16,c66,c67,c68,c69,c17,c18,c19,c70,c71,c72,c73,c74,c75)*"
+  "B(c20,c21,c64,c22,c69,c67,c23,c24,c25,c26,c27,c28,c29,c45,c30,c44,c68,c43,c31,c73,c72,c32,c33,c66,c34,c75,c74,c71,c65,c48,c70,c35,c63,c36,c42,c37,c39,c38,c46,c62)",1.0); assert(success);
+ exatn::sync();
+ duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 8.0*1.099512e3/duration << std::endl;
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("C"); assert(success);
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+
+ exatn::sync(); */
 
  std::cout << "Tensor decomposition:" << std::endl;
  //Create tensors:

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/06/25
+REVISION: 2020/09/02
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
