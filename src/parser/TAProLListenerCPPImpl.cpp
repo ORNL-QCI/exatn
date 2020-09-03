@@ -243,34 +243,31 @@ void TAProLListenerCPPImpl::enterAddition(TAProLParser::AdditionContext *ctx) {
     cpp_source << "exatn::addTensors(\"" << ctx->getText() << "\","
                << ctx->prefactor()->getText() << ");" << std::endl;
   } else {
-    cpp_source << "exatn::addTensors(\"" << ctx->getText() << "\", 1.0);"
+    cpp_source << "exatn::addTensors(\"" << ctx->getText() << "\",1.0);"
                << std::endl;
   }
   return;
 }
 
-void TAProLListenerCPPImpl::enterContraction(
-    TAProLParser::ContractionContext *ctx) {
+void TAProLListenerCPPImpl::enterContraction(TAProLParser::ContractionContext *ctx) {
   if (ctx->prefactor() != nullptr) {
     cpp_source << "exatn::contractTensors(\"" << ctx->getText() << "\","
                << ctx->prefactor()->getText() << ");" << std::endl;
   } else {
-    cpp_source << "exatn::contractTensors(\"" << ctx->getText() << "\", 1.0);"
+    cpp_source << "exatn::contractTensors(\"" << ctx->getText() << "\",1.0);"
                << std::endl;
   }
   return;
 }
 
-void TAProLListenerCPPImpl::enterCompositeproduct(
-    TAProLParser::CompositeproductContext *ctx) {
+void TAProLListenerCPPImpl::enterCompositeproduct(TAProLParser::CompositeproductContext *ctx) {
   cpp_source << "exatn::evaluateTensorNetwork(\""
              << "_SmokyTN"
              << "\",\"" << ctx->getText() << "\");" << std::endl;
   return;
 }
 
-void TAProLListenerCPPImpl::enterTensornetwork(
-    TAProLParser::TensornetworkContext *ctx) {}
+void TAProLListenerCPPImpl::enterTensornetwork(TAProLParser::TensornetworkContext *ctx) {}
 
 } // namespace parser
 

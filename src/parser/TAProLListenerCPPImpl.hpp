@@ -75,8 +75,7 @@ public:
 
 protected:
   std::ostream &cpp_source;
-  std::map<std::string, std::string>
-      args; // function arg name --> function arg type
+  std::map<std::string, std::string> args; // function arg name --> function arg type
 };
 
 } // namespace parser
