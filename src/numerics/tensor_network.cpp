@@ -2006,10 +2006,10 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
      if(max_intermediate_volume > 0 && intermediate_volume > max_intermediate_volume){
       assert(dims.size() > 0); //at least one full dimension is expected
       //Prioritize full indices by their cumulative volume:
-      std::sort(dims.begin(),dims.end(),[&index_volume,&indices](const auto & d1, const auto & d2){
-                                         return index_volume[indices[d1.first].label]
-                                              < index_volume[indices[d2.first].label];
-                                        });
+      std::stable_sort(dims.begin(),dims.end(),[&index_volume,&indices](const auto & d1, const auto & d2){
+                                                return index_volume[indices[d1.first].label]
+                                                     < index_volume[indices[d2.first].label];
+                                               });
       //Reduce the volume of the intermediate tensor by increasing the number of segments per tensor dimensions:
       int i = dims.size() - 1; //split dimensions from the right (because of column-wise tensor storage)
       while(intermediate_volume > max_intermediate_volume){
