@@ -30,6 +30,7 @@
 #define EXATN_TEST15
 #define EXATN_TEST16
 #define EXATN_TEST17
+//#define EXATN_TEST18
 
 
 #ifdef EXATN_TEST0
@@ -1895,6 +1896,82 @@ TEST(NumServerTester, TestSVD)
  exatn::sync();
 }
 #endif
+
+#ifdef EXATN_TEST18
+TEST(NumServerTester, ParserExaTN)
+{
+ using exatn::Tensor;
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::TensorNetwork;
+ using exatn::TensorOperator;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ //Register a user-defined tensor method (simply performs random initialization):
+ exatn::registerTensorMethod("ComputeTwoBodyHamiltonian",
+                             std::shared_ptr<exatn::TensorMethod>{new exatn::numerics::FunctorInitRnd()});
+
+ //Externally provided std::vector with user data used to init T2 (simply set to a specific value):
+ const std::size_t t2_tensor_volume = (84-42+1)*(84-42+1)*(127-0+1)*(127-0+1); //see T2 shape below
+ std::vector<std::complex<float>> data_vector(t2_tensor_volume,std::complex<float>{-1e-3,1e-4});
+
+ //ExaTN code generated from a sample TAProL source (see the exatn::parser test):
+ exatn::openScope("main");
+ auto _my_space = exatn::createVectorSpace("my_space",(255 - 0 + 1));
+ auto _your_space = exatn::createVectorSpace("your_space",(511 - 0 + 1));
+ auto _s0 = exatn::createSubspace("s0","my_space",std::pair<exatn::DimOffset,exatn::DimOffset>{0,127});
+ auto _s0_space = _my_space;
+ auto _s1 = exatn::createSubspace("s1","my_space",std::pair<exatn::DimOffset,exatn::DimOffset>{128,255});
+ auto _s1_space = _my_space;
+ auto _r0 = exatn::createSubspace("r0","your_space",std::pair<exatn::DimOffset,exatn::DimOffset>{42,84});
+ auto _r0_space = _your_space;
+ auto _r1 = exatn::createSubspace("r1","your_space",std::pair<exatn::DimOffset,exatn::DimOffset>{484,511});
+ auto _r1_space = _your_space;
+ auto _i = _s0;
+ auto _i_space = _s0_space;
+ auto _j = _s0;
+ auto _j_space = _s0_space;
+ auto _k = _s0;
+ auto _k_space = _s0_space;
+ auto _l = _s0;
+ auto _l_space = _s0_space;
+ auto _a = _r0;
+ auto _a_space = _r0_space;
+ auto _b = _r0;
+ auto _b_space = _r0_space;
+ auto _c = _r0;
+ auto _c_space = _r0_space;
+ auto _d = _r0;
+ auto _d_space = _r0_space;
+ exatn::createTensor("H2",TensorSignature{{_a_space,_a},{_i_space,_i},{_b_space,_b},{_j_space,_j}},exatn::TensorElementType::COMPLEX32);
+ exatn::initTensor("H2",std::complex<float>(0.0,0.0));
+ exatn::transformTensor("H2","ComputeTwoBodyHamiltonian");
+ exatn::createTensor("T2",TensorSignature{{_a_space,_a},{_b_space,_b},{_i_space,_i},{_j_space,_j}},exatn::TensorElementType::COMPLEX32);
+ exatn::initTensorData("T2",data_vector);
+ exatn::createTensor("Z2",TensorSignature{{_a_space,_a},{_b_space,_b},{_i_space,_i},{_j_space,_j}},exatn::TensorElementType::COMPLEX32);
+ exatn::initTensor("Z2",std::complex<float>(0.0,0.0));
+ exatn::contractTensors("Z2(a,b,i,j)+=H2(a,k,c,i)*T2(b,c,k,j)",1.0);
+ exatn::evaluateTensorNetwork("_SmokyTN","Z2(a,b,i,j)+=H2(c,k,d,l)*T2(c,d,i,j)*T2(a,b,k,l)");
+ exatn::scaleTensor("Z2",0.25);
+ exatn::addTensors("T2(a,b,i,j)+=Z2(a,b,i,j)",1.0);
+ {
+  auto talsh_t2 = exatn::getLocalTensor("T2");
+  exatn::createTensor("X2",TensorSignature{},exatn::TensorElementType::COMPLEX32);
+  exatn::initTensor("X2",std::complex<float>(0.0,0.0));
+  exatn::contractTensors("X2()+=Z2+(a,b,i,j)*Z2(a,b,i,j)",1.0);
+  double norm_x2;
+  exatn::computeNorm1Sync("X2",norm_x2);
+  auto talsh_x2 = exatn::getLocalTensor("X2");
+ }
+ exatn::destroyTensor("X2");
+ exatn::destroyTensor("Z2");
+ exatn::destroyTensor("T2");
+ exatn::destroyTensor("H2");
+ exatn::closeScope();
+}
+#endif
+
 
 int main(int argc, char **argv) {
 
