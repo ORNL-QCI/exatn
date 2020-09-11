@@ -1,12 +1,11 @@
 
 #include <vector>
 
-[[clang::syntax(taprol)]] void test(std::vector<double> t2,
+[[clang::syntax(taprol)]] void test(std::vector<std::complex<float>> t2,
                                     std::shared_ptr<talsh::Tensor> talsh_t2,
                                     std::shared_ptr<talsh::Tensor> talsh_x2,
                                     double &norm_x2) {
-entry:
-  main;
+entry: main;
   scope main group();
   space(complex) : my_space = [0:255], your_space = [0:511];
   subspace(my_space) : s0 = [0:127], s1 = [128:255];
@@ -35,4 +34,22 @@ entry:
 
 int main() {
 
+  exatn::initialize();
+  // Register a user-defined tensor method (simply performs random
+  // initialization):
+  exatn::registerTensorMethod(
+      "ComputeTwoBodyHamiltonian",
+      std::make_shared<exatn::numerics::FunctorInitRnd>());
+
+  // Externally provided std::vector with user data used to init T2 (simply set
+  // to a specific value):
+  const std::size_t t2_tensor_volume = (84 - 42 + 1) * (84 - 42 + 1) *
+                                       (127 - 0 + 1) *
+                                       (127 - 0 + 1); 
+  std::vector<std::complex<float>> data_vector(
+      t2_tensor_volume, std::complex<float>{-1e-3, 1e-4});
+
+  std::shared_ptr<talsh::Tensor> talsh_t2, talsh_x2;
+  double norm_x2;
+  test(data_vector, talsh_t2, talsh_x2, norm_x2);
 }
