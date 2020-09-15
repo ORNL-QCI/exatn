@@ -80,7 +80,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor/include/talshxx.hpp")
   set(TALSHXX_EXISTS "YES")
 endif()
 
-set(EXA_TALSH_ONLY "NO")
+set(EXA_TALSH_ONLY "YES") #reset to "NO" for full ExaTENSOR
 if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
   set(EXA_TALSH_ONLY "YES")
 endif()
@@ -112,7 +112,7 @@ message(STATUS "The BLAS implementation is set to ${BLAS_LIB}")
 message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
 message(STATUS "The BLAS library must also have LAPACK: ${WITH_LAPACK}, ${LAPACK_LIBRARIES}, ${ExaTensor_WITH_LAPACK}")
 message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
-message(STATUS "Solely TAL-SH backend single-node build: ${EXA_TALSH_ONLY}")
+message(STATUS "Solely TAL-SH backend build: ${EXA_TALSH_ONLY}")
 
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
@@ -149,8 +149,8 @@ if(APPLE)
                             CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                             CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                             CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
-                            BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             TOOLKIT=${TOOLKIT}
+                            BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
                             EXA_TALSH_ONLY=YES
                             EXATN_SERVICE=YES
@@ -170,13 +170,16 @@ if(APPLE)
                       COMMAND ${CMAKE_COMMAND}
                             -E
                             env
+                            CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                            CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                            CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                             OMPI_CXX=${CMAKE_CXX_COMPILER}
                             OMPI_CC=${CMAKE_C_COMPILER}
                             OMPI_FC=${CMAKE_Fortran_COMPILER}
                             TOOLKIT=${TOOLKIT}
                             BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
-                            EXA_TALSH_ONLY=NO
+                            EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                             EXATN_SERVICE=YES
                             EXA_OS=NO_LINUX
                             GPU_CUDA=NOCUDA
@@ -196,13 +199,16 @@ if(APPLE)
                       COMMAND ${CMAKE_COMMAND}
                             -E
                             env
+                            CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                            CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                            CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                             MPICH_CXX=${CMAKE_CXX_COMPILER}
                             MPICH_CC=${CMAKE_C_COMPILER}
                             MPICH_FC=${CMAKE_Fortran_COMPILER}
                             TOOLKIT=${TOOLKIT}
                             BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                             EXA_NO_BUILD=${TALSHXX_EXISTS}
-                            EXA_TALSH_ONLY=NO
+                            EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                             EXATN_SERVICE=YES
                             EXA_OS=NO_LINUX
                             GPU_CUDA=NOCUDA
@@ -258,13 +264,16 @@ else()
                         COMMAND ${CMAKE_COMMAND}
                               -E
                               env
+                              CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                              CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                              CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               OMPI_CXX=${CMAKE_CXX_COMPILER}
                               OMPI_CC=${CMAKE_C_COMPILER}
                               OMPI_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
                               BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
-                              EXA_TALSH_ONLY=NO
+                              EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                               EXATN_SERVICE=YES
                               EXA_OS=LINUX
                               GPU_CUDA=CUDA
@@ -286,13 +295,16 @@ else()
                         COMMAND ${CMAKE_COMMAND}
                               -E
                               env
+                              CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                              CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                              CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               MPICH_CXX=${CMAKE_CXX_COMPILER}
                               MPICH_CC=${CMAKE_C_COMPILER}
                               MPICH_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
                               BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
-                              EXA_TALSH_ONLY=NO
+                              EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                               EXATN_SERVICE=YES
                               EXA_OS=LINUX
                               GPU_CUDA=CUDA
@@ -343,13 +355,16 @@ else()
                         COMMAND ${CMAKE_COMMAND}
                               -E
                               env
+                              CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                              CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                              CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               OMPI_CXX=${CMAKE_CXX_COMPILER}
                               OMPI_CC=${CMAKE_C_COMPILER}
                               OMPI_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
                               BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
-                              EXA_TALSH_ONLY=NO
+                              EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                               EXATN_SERVICE=YES
                               EXA_OS=LINUX
                               GPU_CUDA=NOCUDA
@@ -369,13 +384,16 @@ else()
                         COMMAND ${CMAKE_COMMAND}
                               -E
                               env
+                              CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                              CMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                              CMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
                               MPICH_CXX=${CMAKE_CXX_COMPILER}
                               MPICH_CC=${CMAKE_C_COMPILER}
                               MPICH_FC=${CMAKE_Fortran_COMPILER}
                               TOOLKIT=${TOOLKIT}
                               BUILD_TYPE=${EXATENSOR_BUILD_TYPE}
                               EXA_NO_BUILD=${TALSHXX_EXISTS}
-                              EXA_TALSH_ONLY=NO
+                              EXA_TALSH_ONLY=YES #reset to "NO" for full ExaTENSOR
                               EXATN_SERVICE=YES
                               EXA_OS=LINUX
                               GPU_CUDA=NOCUDA

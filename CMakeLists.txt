@@ -148,7 +148,7 @@ if(NOT BLAS_LIB)
 endif()
 
 #If MPI implementation is not user specified, proceed with "NONE"
-set(EXA_TALSH_ONLY "NO")
+set(EXA_TALSH_ONLY "YES") #reset to "NO" for full ExaTENSOR
 if(NOT MPI_LIB)
   set(MPI_LIB NONE)
   set(MPI_ROOT_DIR "")
