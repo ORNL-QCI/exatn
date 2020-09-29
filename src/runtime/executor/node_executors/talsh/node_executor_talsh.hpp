@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/31
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -79,6 +79,7 @@ public:
 
   bool prefetch(const numerics::TensorOperation & op) override;
 
+  /** Returns a locally stored slice copy of a tensor, or nullptr if no RAM. **/
   std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;
 

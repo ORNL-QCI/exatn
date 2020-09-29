@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/08/31
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -244,7 +244,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpCreate & op,
    }
   }
  }
- if(tensor_rank > max_tensor_rank_) max_tensor_rank_ = tensor_rank;
+ if(static_cast<int>(tensor_rank) > max_tensor_rank_) max_tensor_rank_ = static_cast<int>(tensor_rank);
  std::vector<int> extents(tensor_rank);
  std::vector<std::size_t> bases(tensor_rank);
  tensor_rank = 0;
@@ -1119,18 +1119,27 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
    slice = std::make_shared<talsh::Tensor>(signature,dims,std::complex<double>(0.0));
    break;
   default:
-   std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Invalid tensor element type!" << std::endl;
+   std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Invalid tensor element type!"
+             << std::endl << std::flush;
    std::abort();
  }
- auto tens_pos = tensors_.find(tensor.getTensorHash());
- if(tens_pos == tensors_.end()){
-  std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Tensor not found: " << std::endl;
+ if(!(slice->isEmpty())){
+  auto tens_pos = tensors_.find(tensor.getTensorHash());
+  if(tens_pos == tensors_.end()){
+   std::cout << "#ERROR(exatn::runtime::TalshNodeExecutor::getLocalTensor): Tensor not found: " << std::endl;
+   tensor.printIt();
+   std::abort();
+  }
+  tens_pos->second.resetTensorShapeToFull();
+  auto & talsh_tensor = *(tens_pos->second.talsh_tensor);
+  auto error_code = talsh_tensor.extractSlice(nullptr,*slice,offsets);
+  assert(error_code == TALSH_SUCCESS);
+ }else{
+  slice.reset();
+  std::cout << "#WARNING(exatn::runtime::TalshNodeExecutor::getLocalTensor): "
+            << "Unable to allocate a local slice for tensor:" << std::endl;
   tensor.printIt();
-  std::abort();
  }
- tens_pos->second.resetTensorShapeToFull();
- auto & talsh_tensor = *(tens_pos->second.talsh_tensor);
- auto error_code = talsh_tensor.extractSlice(nullptr,*slice,offsets); assert(error_code == TALSH_SUCCESS);
  return slice;
 }
 

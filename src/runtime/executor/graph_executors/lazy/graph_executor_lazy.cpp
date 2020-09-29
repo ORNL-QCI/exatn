@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/09/02
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -125,6 +125,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
               logfile_.flush();
 #endif
             }
+            op->dissociateTensorOperands();
             progress.num_nodes = dag.getNumNodes();
             auto progressed = dag.progressFrontNode(node);
             if(progressed){
@@ -191,6 +192,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             logfile_.flush();
 #endif
           }
+          op->dissociateTensorOperands();
           progress.num_nodes = dag.getNumNodes();
           auto progressed = dag.progressFrontNode(node);
           if(progressed){

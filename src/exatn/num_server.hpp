@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/03
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -584,6 +584,9 @@ public:
  std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name); //in: exatn tensor name
 
  inline double getTimeStampStart() const {return time_start_;}
+
+ /** DEBUG: Prints all currently existing tensors created implicitly. **/
+ void printImplicitTensors() const;
 
 private:
 

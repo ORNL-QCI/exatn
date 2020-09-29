@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/08/11
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -115,6 +115,9 @@ public:
  /** Resets an already existing tensor operand. **/
  bool resetTensorOperand(unsigned int op_num,             //in: tensor operand position
                          std::shared_ptr<Tensor> tensor); //in: tensor
+
+ /** Dissociates all tensor operands (inactivates tensor operation). **/
+ void dissociateTensorOperands();
 
  /** Returns the number of scalar arguments required for the tensor operation. **/
  unsigned int getNumScalars() const;

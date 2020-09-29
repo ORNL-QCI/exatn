@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/03
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -80,7 +80,7 @@ NumServer::NumServer(const ParamConf & parameters,
 
 NumServer::~NumServer()
 {
- destroyOrphanedTensors();
+ destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.begin();
  while(iter != tensors_.end()){
   std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -324,7 +324,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
    auto num_deleted = tensors_.erase(tensor->getName());
    if(num_deleted != 1){
     std::cout << "#ERROR(exatn::NumServer::submit): Attempt to DESTROY a non-existing tensor "
-              << tensor->getName() << std::endl;
+              << tensor->getName() << std::endl << std::flush;
     submitted = false;
    }
   }
@@ -693,6 +693,7 @@ bool NumServer::sync(bool wait)
 bool NumServer::sync(const ProcessGroup & process_group, bool wait)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ destroyOrphanedTensors(); //garbage collection
  auto success = tensor_rt_->sync(wait);
 #ifdef MPI_ENABLED
  if(success){
@@ -1902,7 +1903,10 @@ void NumServer::destroyOrphanedTensors()
 {
  auto iter = implicit_tensors_.begin();
  while(iter != implicit_tensors_.end()){
-  if(iter->unique()){
+  int ref_count = 1;
+  auto tens = tensors_.find((*iter)->getName());
+  if(tens != tensors_.end()) ++ref_count;
+  if(iter->use_count() <= ref_count){
    std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
    destroy_op->setTensorOperand(*iter);
    auto submitted = submit(destroy_op);
@@ -1911,6 +1915,16 @@ void NumServer::destroyOrphanedTensors()
    ++iter;
   }
  }
+ return;
+}
+
+void NumServer::printImplicitTensors() const
+{
+ std::cout << "#DEBUG(exatn::NumServer::printImplicitTensors):" << std::endl;
+ for(const auto & tens: implicit_tensors_){
+  std::cout << tens->getName() << ": Reference count = " << tens.use_count() << std::endl;
+ }
+ std::cout << "#END" << std::endl << std::flush;
  return;
 }
 

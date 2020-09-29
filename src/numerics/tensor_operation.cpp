@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/09/02
+REVISION: 2020/09/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -160,6 +160,16 @@ bool TensorOperation::resetTensorOperand(unsigned int op_num,
  if(op_num >= this->getNumOperandsSet()) return false;
  std::get<0>(operands_[op_num]) = tensor;
  return true;
+}
+
+void TensorOperation::dissociateTensorOperands()
+{
+ for(auto & oprnd: operands_){
+  //std::cout << "#DEBUG: Dissociating " << std::get<0>(oprnd)->getName()
+  //          << " with use_count " << std::get<0>(oprnd).use_count() << std::endl; //debug
+  std::get<0>(oprnd).reset();
+ }
+ return;
 }
 
 unsigned int TensorOperation::getNumScalars() const

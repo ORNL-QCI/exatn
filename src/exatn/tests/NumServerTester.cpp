@@ -31,6 +31,7 @@
 #define EXATN_TEST16
 #define EXATN_TEST17
 //#define EXATN_TEST18
+#define EXATN_TEST19
 
 
 #ifdef EXATN_TEST0
@@ -1969,6 +1970,139 @@ TEST(NumServerTester, ParserExaTN)
  exatn::destroyTensor("T2");
  exatn::destroyTensor("H2");
  exatn::closeScope();
+}
+#endif
+
+#ifdef EXATN_TEST19
+TEST(NumServerTester, testGarbage) {
+ using exatn::TensorShape;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ //exatn::resetRuntimeLoggingLevel(2); // debug
+
+ // Define the initial qubit state vector:
+ std::vector<std::complex<double>> qzero{
+     {1.0, 0.0}, {0.0, 0.0}};
+
+ // Define quantum gates:
+ std::vector<std::complex<double>> hadamard{
+     {1.0, 0.0}, {1.0, 0.0},
+     {1.0, 0.0}, {-1.0, 0.0}};
+ std::vector<std::complex<double>> cnot{
+     {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+     {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+     {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0},
+     {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+
+ // Create qubit tensors:
+ auto success = true;
+ const int NB_QUBITS = 25;
+
+ for (int i = 0; i < NB_QUBITS; ++i) {
+  success = exatn::createTensor("Q" + std::to_string(i), TensorElementType::COMPLEX64, TensorShape{2});
+  assert(success);
+ }
+
+ // Create gate tensors:
+ success = exatn::createTensor("H", TensorElementType::COMPLEX64, TensorShape{2, 2}); assert(success);
+ success = exatn::registerTensorIsometry("H", {0}, {1}); assert(success);
+ success = exatn::createTensor("CNOT", TensorElementType::COMPLEX64, TensorShape{2, 2, 2, 2}); assert(success);
+ success = exatn::registerTensorIsometry("CNOT", {0, 1}, {2, 3}); assert(success);
+
+ // Initialize qubit tensors to zero state:
+ for (int i = 0; i < NB_QUBITS; ++i) {
+  success = exatn::initTensorData("Q" + std::to_string(i), qzero); assert(success);
+ }
+
+ // Initialize necessary gate tensors:
+ success = exatn::initTensorData("H", hadamard); assert(success);
+ success = exatn::initTensorData("CNOT", cnot); assert(success);
+
+ { // Open a new scope:
+  // Build a tensor network from the quantum circuit:
+  TensorNetwork circuit("QuantumCircuit");
+  int tensorCounter = 1;
+  for (int i = 0; i < NB_QUBITS; ++i) {
+   success = circuit.appendTensor(tensorCounter++, exatn::getTensor("Q" + std::to_string(i)), {});
+   assert(success);
+  }
+  for (unsigned int i = 0; i < NB_QUBITS; ++i) {
+   success = circuit.appendTensorGate(tensorCounter++, exatn::getTensor("H"), {i});
+   assert(success);
+  }
+
+  success = circuit.appendTensorGate(tensorCounter++, exatn::getTensor("CNOT"), {1, 2});
+  assert(success);
+
+  const auto testFunc = [](const TensorNetwork &in_tensorNet) {
+   auto tenNetCopy = in_tensorNet;
+   int tensorIdCounter = 1;
+   TensorNetwork appendTenNet("some_net");
+   std::vector<std::pair<unsigned int, unsigned int>> pairings;
+   for (int i = 0; i < NB_QUBITS; ++i) {
+    const std::string braQubitName = "QB" + std::to_string(i);
+    const bool created = exatn::createTensor(braQubitName, TensorElementType::COMPLEX64, TensorShape{2, 2});
+    assert(created);
+    const bool initialized = exatn::initTensorData(braQubitName,
+               std::vector<std::complex<double>>{{1.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {1.0, 0.0}});
+    assert(initialized);
+    pairings.emplace_back(std::make_pair(i, 2 * i));
+
+    appendTenNet.appendTensor(tensorIdCounter, exatn::getTensor(braQubitName),
+                              std::vector<std::pair<unsigned int, unsigned int>>{});
+    tensorIdCounter++;
+   }
+
+   appendTenNet.conjugate();
+   tenNetCopy.appendTensorNetwork(std::move(appendTenNet), pairings);
+   tenNetCopy.collapseIsometries();
+   // Evaluate the quantum circuit expressed as a tensor network:
+   //in_tensorNet.printIt(); // debug
+   //tenNetCopy.printIt(); // debug
+   auto evaluated = exatn::evaluateSync(tenNetCopy); assert(evaluated);
+
+   {
+    std::vector<std::complex<double>> talshVec;
+    auto talsh_tensor = exatn::getLocalTensor(tenNetCopy.getTensor(0)->getName()); assert(talsh_tensor);
+    const std::complex<double> *body_ptr;
+    if (talsh_tensor->getDataAccessHostConst(&body_ptr)) {
+        talshVec.assign(body_ptr, body_ptr + talsh_tensor->getVolume());
+    }
+   }
+
+   //bool success = exatn::destroyTensor(tenNetCopy.getTensor(0)->getName()); assert(success);
+   for (int i = 0; i < NB_QUBITS; ++i) {
+    const bool destroyed = exatn::destroyTensor("QB" + std::to_string(i));
+    assert(destroyed);
+   }
+  };
+
+  for (int i = 0; i < 16; ++i) {
+   //std::cout << "Run " << i << "\n"; //debug
+   testFunc(circuit);
+   exatn::sync();
+   //exatn::numericalServer->printImplicitTensors(); //debug
+  }
+
+  // Synchronize:
+  exatn::sync();
+ }
+
+ // Destroy all tensors:
+ auto destroyed = false;
+ destroyed = exatn::destroyTensor("CNOT"); assert(destroyed);
+ destroyed = exatn::destroyTensor("H"); assert(destroyed);
+ for (int i = 0; i < NB_QUBITS; ++i) {
+  destroyed = exatn::destroyTensor("Q" + std::to_string(i));
+  assert(destroyed);
+ }
+
+ // Synchronize:
+ exatn::sync();
+ // Grab a beer!
 }
 #endif
 
