@@ -30,8 +30,9 @@
 #define EXATN_TEST15
 #define EXATN_TEST16
 #define EXATN_TEST17
-//#define EXATN_TEST18
+//#define EXATN_TEST18 //buggy
 #define EXATN_TEST19
+//#define EXATN_TEST20 //MKL only
 
 
 #ifdef EXATN_TEST0
@@ -2103,6 +2104,66 @@ TEST(NumServerTester, testGarbage) {
  // Synchronize:
  exatn::sync();
  // Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST20
+TEST(NumServerTester, testHyper) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ const auto ltens_val = std::complex<double>{0.001,-0.0001};
+ const auto rtens_val = std::complex<double>{0.002,-0.0002};
+
+ exatn::resetLoggingLevel(1,2); //debug
+
+ bool success = true;
+
+ //Open new scope:
+ {
+  double norm1;
+
+  //Create tensors:
+  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{48,24,320}); assert(success);
+  success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{320,48,48,24}); assert(success);
+  success = exatn::createTensor("R",TENS_ELEM_TYPE,TensorShape{24,320,48,24}); assert(success);
+
+  //Initialize tensors:
+  success = exatn::initTensor("D",std::complex<double>{0.0,0.0}); assert(success);
+  success = exatn::initTensor("L",ltens_val); assert(success);
+  success = exatn::initTensor("R",rtens_val); assert(success);
+  exatn::sync();
+
+  //Contract tensors:
+  success = exatn::contractTensorsSync("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
+  success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
+  success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
+  exatn::sync();
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  std::cout << "Average performance (GFlop/s) = " << 3.0*8.0*(48.0*24.0*320.0*48.0*24.0)/duration/1e9 << std::endl;
+
+  //Check correctness:
+  const double correct_norm1 = std::abs(std::complex<double>{48.0 * 24.0} *
+   std::abs(ltens_val * rtens_val) * std::complex<double>{48.0 * 24.0 * 320.0});
+  success = exatn::computeNorm1Sync("D",norm1); assert(success);
+  std::cout << "Result norm = " << norm1 << " VS correct = " << correct_norm1 << std::endl;
+
+  //Destroy tensors:
+  success = exatn::destroyTensor("R"); assert(success);
+  success = exatn::destroyTensor("L"); assert(success);
+  success = exatn::destroyTensor("D"); assert(success);
+ }
+
+ //Synchronize:
+ exatn::sync();
+ //Grab a beer!
 }
 #endif
 
