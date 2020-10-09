@@ -11,7 +11,7 @@
 #include <ios>
 #include <utility>
 
-
+//Test activation:
 #define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
@@ -229,7 +229,7 @@ TEST(NumServerTester, ExamplarExaTN)
  const exatn::DimExtent VI_RANGE = 60;
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -314,7 +314,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  //Synchronize ExaTN server:
  exatn::sync(all_processes);
- exatn::resetRuntimeLoggingLevel(0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -329,7 +329,7 @@ TEST(NumServerTester, ParallelExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -404,7 +404,7 @@ TEST(NumServerTester, ParallelExaTN)
 
  //All processes: Synchronize ExaTN server:
  success = exatn::sync(all_processes); assert(success);
- exatn::resetRuntimeLoggingLevel(0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -681,7 +681,7 @@ TEST(NumServerTester, superEasyNumServer)
  using exatn::TensorShape;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Example of tensor network processing:
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -751,7 +751,7 @@ TEST(NumServerTester, circuitNumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Quantum Circuit:
  //Q0----H---------
@@ -853,7 +853,7 @@ TEST(NumServerTester, circuitConjugateNumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero {
@@ -934,7 +934,7 @@ TEST(NumServerTester, largeCircuitNumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Quantum Circuit:
  //Q00---H-----
@@ -1079,7 +1079,7 @@ TEST(NumServerTester, Sycamore8NumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 172; //total number of gates is 172
@@ -1205,7 +1205,7 @@ TEST(NumServerTester, Sycamore12NumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 258; //total number of gates is 258
@@ -1322,7 +1322,7 @@ TEST(NumServerTester, rcsNumServer)
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Configuration:
  const int NB_QUBITS = 52;
@@ -1511,7 +1511,7 @@ TEST(NumServerTester, BigMPSNumServer)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  const int nbQubits = 32;
  const std::vector<int> qubitTensorDim(nbQubits, 2);
@@ -1585,7 +1585,7 @@ TEST(NumServerTester, HamiltonianNumServer)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Declare MPS tensors:
  auto q0 = std::make_shared<Tensor>("Q0",TensorShape{2,2});
@@ -1741,7 +1741,7 @@ TEST(NumServerTester, EigenNumServer)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Define Ising Hamiltonian constants:
  constexpr std::complex<double> ZERO{0.0,0.0};
@@ -1831,7 +1831,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- exatn::resetRuntimeLoggingLevel(0); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
@@ -1981,7 +1981,7 @@ TEST(NumServerTester, testGarbage) {
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- //exatn::resetRuntimeLoggingLevel(2); // debug
+ //exatn::resetLoggingLevel(2,2); // debug
 
  // Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero{
@@ -2120,7 +2120,7 @@ TEST(NumServerTester, testHyper) {
  const auto ltens_val = std::complex<double>{0.001,-0.0001};
  const auto rtens_val = std::complex<double>{0.002,-0.0002};
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 

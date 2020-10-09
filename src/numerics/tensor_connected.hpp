@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/04/25
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -23,6 +23,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_leg.hpp"
 #include "tensor.hpp"
 
+#include <iostream>
+#include <fstream>
 #include <memory>
 #include <vector>
 #include <string>
@@ -48,6 +50,8 @@ public:
 
  /** Prints. **/
  void printIt(bool with_hash = false) const;
+ void printItFile(std::ofstream & output_file,
+                  bool with_hash = false) const;
 
  /** Returns the tensor name. **/
  const std::string & getName() const;

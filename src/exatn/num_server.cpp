@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/29
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -303,6 +303,12 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 {
  bool submitted = false;
  if(operation){
+  if(logging_ > 1){
+   logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+            << "]: Submitting tensor operation:" << std::endl;
+   operation->printItFile(logfile_);
+   logfile_.flush(); //`Debug only
+  }
   submitted = true;
   if(operation->getOpcode() == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
    auto tensor = operation->getTensorOperand(0);
@@ -359,6 +365,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
                            << "]: Submitting tensor network <" << network.getName() << "> (" << network.getTensor(0)->getName()
                            << ") for execution by " << num_procs << " processes with memory limit "
                            << process_group.getMemoryLimitPerProcess() << " bytes" << std::endl << std::flush;
+ if(logging_ > 1) network.printItFile(logfile_);
 
  //Determine the pseudo-optimal tensor contraction sequence:
  const auto num_input_tensors = network.getNumTensors();
@@ -695,12 +702,16 @@ bool NumServer::sync(const ProcessGroup & process_group, bool wait)
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  destroyOrphanedTensors(); //garbage collection
  auto success = tensor_rt_->sync(wait);
-#ifdef MPI_ENABLED
  if(success){
+  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+   << "]: Locally synchronized all operations" << std::endl << std::flush;
+#ifdef MPI_ENABLED
   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
   success = success && (errc == MPI_SUCCESS);
- }
+  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+   << "]: Globally synchronized all operations" << std::endl << std::flush;
 #endif
+ }
  return success;
 }
 

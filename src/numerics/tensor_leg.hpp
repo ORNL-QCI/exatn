@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/11/12
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -16,6 +16,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 namespace exatn{
@@ -48,6 +49,7 @@ public:
 
  /** Print. **/
  void printIt() const;
+ void printItFile(std::ofstream & output_file) const;
 
  /** Return the connected tensor id: [0..*]. **/
  unsigned int getTensorId() const;

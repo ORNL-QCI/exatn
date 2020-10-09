@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/04/25
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,7 +9,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <algorithm>
 
-#include <iostream>
 #include <cassert>
 
 namespace exatn{
@@ -32,6 +31,18 @@ void TensorConn::printIt(bool with_hash) const
  std::cout << ": { ";
  for(const auto & leg: legs_) leg.printIt();
  std::cout << " }" << std::endl;
+ return;
+}
+
+void TensorConn::printItFile(std::ofstream & output_file,
+                             bool with_hash) const
+{
+ output_file << id_ << ": ";
+ tensor_->printItFile(output_file,with_hash);
+ if(conjugated_) output_file << "+";
+ output_file << ": { ";
+ for(const auto & leg: legs_) leg.printItFile(output_file);
+ output_file << " }" << std::endl;
  return;
 }
 

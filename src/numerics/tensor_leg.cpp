@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor leg (connection)
-REVISION: 2019/11/12
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,6 +30,18 @@ void TensorLeg::printIt() const
   std::cout << "{" << tensor_id_ << ":" << dimensn_id_ << ";-}";
  }else{
   std::cout << "{" << tensor_id_ << ":" << dimensn_id_ << "}";
+ }
+ return;
+}
+
+void TensorLeg::printItFile(std::ofstream & output_file) const
+{
+ if(direction_ == LegDirection::INWARD){
+  output_file << "{" << tensor_id_ << ":" << dimensn_id_ << ";+}";
+ }else if(direction_ == LegDirection::OUTWARD){
+  output_file << "{" << tensor_id_ << ":" << dimensn_id_ << ";-}";
+ }else{
+  output_file << "{" << tensor_id_ << ":" << dimensn_id_ << "}";
  }
  return;
 }

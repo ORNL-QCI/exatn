@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/08/11
+REVISION: 2020/10/09
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -127,6 +127,8 @@ public:
 
  /** Prints **/
  void printIt(bool with_tensor_hash = false) const;
+ void printItFile(std::ofstream & output_file,
+                  bool with_tensor_hash = false) const;
 
  /** Returns TRUE if the tensor network is empty, FALSE otherwise. **/
  bool isEmpty() const;
