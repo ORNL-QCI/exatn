@@ -33,6 +33,7 @@
 //#define EXATN_TEST18 //buggy
 #define EXATN_TEST19
 //#define EXATN_TEST20 //MKL only
+#define EXATN_TEST21
 
 
 #ifdef EXATN_TEST0
@@ -2137,7 +2138,7 @@ TEST(NumServerTester, testHyper) {
   success = exatn::initTensor("D",std::complex<double>{0.0,0.0}); assert(success);
   success = exatn::initTensor("L",ltens_val); assert(success);
   success = exatn::initTensor("R",rtens_val); assert(success);
-  exatn::sync();
+  success = exatn::sync(); assert(success);
 
   //Contract tensors:
   success = exatn::contractTensorsSync("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
@@ -2145,7 +2146,7 @@ TEST(NumServerTester, testHyper) {
   success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
   success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
   success = exatn::contractTensors("D(i,j,k)+=L(k,a,i,b)*R(b,k,a,j)",0.25); assert(success);
-  exatn::sync();
+  success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
   std::cout << "Average performance (GFlop/s) = " << 3.0*8.0*(48.0*24.0*320.0*48.0*24.0)/duration/1e9 << std::endl;
 
@@ -2162,11 +2163,192 @@ TEST(NumServerTester, testHyper) {
  }
 
  //Synchronize:
- exatn::sync();
+ success = exatn::sync(); assert(success);
  //Grab a beer!
 }
 #endif
 
+#ifdef EXATN_TEST21
+TEST(NumServerTester, neurIPS) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+
+ exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //3:1 1D MERA:
+ {
+  std::cout << "Evaluating a 3:1 MERA 1D diagram: ";
+  const exatn::DimExtent chi = 18;
+  success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+  success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
+
+  success = exatn::initTensor("Z",std::complex<float>{0.0f,0.0f}); assert(success);
+  success = exatn::initTensorRnd("A"); assert(success);
+  success = exatn::initTensorRnd("B"); assert(success);
+  success = exatn::initTensorRnd("C"); assert(success);
+  success = exatn::initTensorRnd("D"); assert(success);
+  success = exatn::initTensorRnd("E"); assert(success);
+  success = exatn::initTensorRnd("F"); assert(success);
+  success = exatn::initTensorRnd("G"); assert(success);
+  success = exatn::sync(); assert(success);
+
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::evaluateTensorNetwork("MERA1d","Z(z0,z1,z2,z3)+=A(a0,a1,a2,z2)*B(b0,b1,b2,z3)*C(c0,c1,a2,b0)*D(d0,d1,a1,c0)*E(e2,e3,d1,c1)*F(a0,d0,e2,z0)*G(e3,b1,b2,z1)");
+  assert(success);
+  success = exatn::sync(); assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+
+  success = exatn::destroyTensor("G"); assert(success);
+  success = exatn::destroyTensor("F"); assert(success);
+  success = exatn::destroyTensor("E"); assert(success);
+  success = exatn::destroyTensor("D"); assert(success);
+  success = exatn::destroyTensor("C"); assert(success);
+  success = exatn::destroyTensor("B"); assert(success);
+  success = exatn::destroyTensor("A"); assert(success);
+  success = exatn::destroyTensor("Z"); assert(success);
+  success = exatn::sync(); assert(success);
+ }
+
+ //AIEM 2:1 TTN:
+ {
+  std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
+  const exatn::DimExtent chi1 = 2;
+  const auto chi2 = chi1*chi1;
+  const auto chi3 = chi2*chi1;
+  const auto chi4 = chi3*chi1;
+  success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
+  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
+  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
+  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
+  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
+  success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
+  success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
+  success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
+  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1,chi1}); assert(success);
+  success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
+  success = exatn::createTensor("J",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
+  success = exatn::createTensor("K",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
+  success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
+  success = exatn::createTensor("M",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
+  success = exatn::createTensor("N",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
+
+  success = exatn::initTensor("Z",std::complex<float>{0.0f,0.0f}); assert(success);
+  success = exatn::initTensorRnd("A"); assert(success);
+  success = exatn::initTensorRnd("B"); assert(success);
+  success = exatn::initTensorRnd("C"); assert(success);
+  success = exatn::initTensorRnd("D"); assert(success);
+  success = exatn::initTensorRnd("E"); assert(success);
+  success = exatn::initTensorRnd("F"); assert(success);
+  success = exatn::initTensorRnd("G"); assert(success);
+  success = exatn::initTensorRnd("H"); assert(success);
+  success = exatn::initTensorRnd("I"); assert(success);
+  success = exatn::initTensorRnd("J"); assert(success);
+  success = exatn::initTensorRnd("K"); assert(success);
+  success = exatn::initTensorRnd("L"); assert(success);
+  success = exatn::initTensorRnd("M"); assert(success);
+  success = exatn::initTensorRnd("N"); assert(success);
+  success = exatn::sync(); assert(success);
+
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::evaluateTensorNetwork("AIEM_TTN","Z(z0,z1,z2)+=A(a0,a1)*B(b0,b1,a0)*C(c0,z1,a1)*D(d0,d1,b1)*E(e0,e1,c0)*F(f0,f1,d1)*G(g0,g1,e0)*H(h0,h1,f1,g0)*I(f0,h0,i2)*J(h1,g1,j2)*K(d0,i2,k2)*L(j2,e1,z0)*M(b0,k2,m2)*N(m2,z2)");
+  assert(success);
+  success = exatn::sync(); assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+
+  success = exatn::destroyTensor("N"); assert(success);
+  success = exatn::destroyTensor("M"); assert(success);
+  success = exatn::destroyTensor("L"); assert(success);
+  success = exatn::destroyTensor("K"); assert(success);
+  success = exatn::destroyTensor("J"); assert(success);
+  success = exatn::destroyTensor("I"); assert(success);
+  success = exatn::destroyTensor("H"); assert(success);
+  success = exatn::destroyTensor("G"); assert(success);
+  success = exatn::destroyTensor("F"); assert(success);
+  success = exatn::destroyTensor("E"); assert(success);
+  success = exatn::destroyTensor("D"); assert(success);
+  success = exatn::destroyTensor("C"); assert(success);
+  success = exatn::destroyTensor("B"); assert(success);
+  success = exatn::destroyTensor("A"); assert(success);
+  success = exatn::destroyTensor("Z"); assert(success);
+  success = exatn::sync(); assert(success);
+ }
+
+ //ML MERA:
+ {
+  std::cout << "Evaluating an ML MERA diagram: ";
+  const exatn::DimExtent chi1 = 3;
+  const auto chi2 = chi1*chi1;
+  const auto chi4 = chi2*chi2;
+  success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
+  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
+  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1,chi1}); assert(success);
+  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{chi1,chi2}); assert(success);
+  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
+  success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{chi1,chi2}); assert(success);
+  success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi2}); assert(success);
+  success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi2,chi2}); assert(success);
+  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{chi2,chi4}); assert(success);
+  success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi4}); assert(success);
+  success = exatn::createTensor("J",TENS_ELEM_TYPE,TensorShape{chi2,chi4}); assert(success);
+  success = exatn::createTensor("K",TENS_ELEM_TYPE,TensorShape{chi4,chi4,chi4}); assert(success);
+
+  success = exatn::initTensor("Z",std::complex<float>{0.0f,0.0f}); assert(success);
+  success = exatn::initTensorRnd("A"); assert(success);
+  success = exatn::initTensorRnd("B"); assert(success);
+  success = exatn::initTensorRnd("C"); assert(success);
+  success = exatn::initTensorRnd("D"); assert(success);
+  success = exatn::initTensorRnd("E"); assert(success);
+  success = exatn::initTensorRnd("F"); assert(success);
+  success = exatn::initTensorRnd("G"); assert(success);
+  success = exatn::initTensorRnd("H"); assert(success);
+  success = exatn::initTensorRnd("I"); assert(success);
+  success = exatn::initTensorRnd("J"); assert(success);
+  success = exatn::initTensorRnd("K"); assert(success);
+  success = exatn::sync(); assert(success);
+
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::evaluateTensorNetwork("ML_MERA","Z(z0,z1,z2)+=A(z0,a1,a2)*B(z1,z2,b2,b3)*C(a1,c1)*D(a2,b2,d2)*E(b3,e1)*F(c1,f1,f2)*G(d2,e1,g2,g3)*H(f1,h1)*I(f2,g2,i2)*J(g3,j1)*K(h1,i2,j1)");
+  assert(success);
+  success = exatn::sync(); assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+
+  success = exatn::destroyTensor("K"); assert(success);
+  success = exatn::destroyTensor("J"); assert(success);
+  success = exatn::destroyTensor("I"); assert(success);
+  success = exatn::destroyTensor("H"); assert(success);
+  success = exatn::destroyTensor("G"); assert(success);
+  success = exatn::destroyTensor("F"); assert(success);
+  success = exatn::destroyTensor("E"); assert(success);
+  success = exatn::destroyTensor("D"); assert(success);
+  success = exatn::destroyTensor("C"); assert(success);
+  success = exatn::destroyTensor("B"); assert(success);
+  success = exatn::destroyTensor("A"); assert(success);
+  success = exatn::destroyTensor("Z"); assert(success);
+  success = exatn::sync(); assert(success);
+ }
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
 
 int main(int argc, char **argv) {
 
