@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/10/09
+REVISION: 2020/10/12
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -412,6 +412,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  double max_intermediate_volume = network.getMaxIntermediateVolume(&max_intermediate_rank);
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                            << "]: Contraction info: FMA flop count = " << std::scientific << network.getFMAFlops()
+                           << "; Max intermediate presence volume = " << max_intermediate_presence_volume
                            << "; Max intermediate rank = " << max_intermediate_rank
                            << " with volume " << max_intermediate_volume << " -> ";
 
