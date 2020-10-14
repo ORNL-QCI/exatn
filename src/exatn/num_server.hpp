@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/09/29
+REVISION: 2020/10/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -95,6 +95,8 @@ using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
 using numerics::FunctorScale;
+using numerics::FunctorNorm1;
+using numerics::FunctorNorm2;
 using numerics::FunctorDiagRank;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
@@ -288,6 +290,9 @@ public:
            const std::string & name, //in: tensor name
            bool wait = true);        //in: wait versus test for completion
 
+ /** Checks whether a given tensor has been allocated storage (created). **/
+ bool tensorAllocated(const std::string & name) const; //in: tensor name
+
  /** Returns a shared pointer to the requested tensor object. **/
  std::shared_ptr<Tensor> getTensor(const std::string & name); //in: tensor name
 
@@ -348,10 +353,31 @@ public:
                        std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
                        TensorElementType element_type);    //in: tensor element type
 
+ /** Creates all tensors in a given tensor network that are still unallocated. **/
+ bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
+                    TensorElementType element_type);        //in: tensor element type
+
+ bool createTensorsSync(TensorNetwork & tensor_network,     //inout: tensor network
+                        TensorElementType element_type);    //in: tensor element type
+
+ bool createTensors(const ProcessGroup & process_group,     //in: chosen group of MPI processes
+                    TensorNetwork & tensor_network,         //inout: tensor network
+                    TensorElementType element_type);        //in: tensor element type
+
+ bool createTensorsSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                        TensorNetwork & tensor_network,     //inout: tensor network
+                        TensorElementType element_type);    //in: tensor element type
+
  /** Destroys a tensor, including its backend representation. **/
  bool destroyTensor(const std::string & name); //in: tensor name
 
  bool destroyTensorSync(const std::string & name); //in: tensor name
+
+ /** Destroys all currently allocated tensors in a given tensor network.
+     Note that the destroyed tensors could also be present in other tensor networks. **/
+ bool destroyTensors(TensorNetwork & tensor_network);     //inout: tensor network
+
+ bool destroyTensorsSync(TensorNetwork & tensor_network); //inout: tensor network
 
  /** Initializes a tensor to some scalar value. **/
  template<typename NumericType>
@@ -374,9 +400,14 @@ public:
                          const std::vector<NumericType> & ext_data); //in: vector with externally provided data
 
  /** Initializes a tensor to some random value. **/
- bool initTensorRnd(const std::string & name); //in: tensor name
+ bool initTensorRnd(const std::string & name);     //in: tensor name
 
  bool initTensorRndSync(const std::string & name); //in: tensor name
+
+ /** Initializes all input tensors of a given tensor network to a random value. **/
+ bool initTensorsRnd(TensorNetwork & tensor_network);     //inout: tensor network
+
+ bool initTensorsRndSync(TensorNetwork & tensor_network); //inout: tensor network
 
  /** Computes 1-norm of a tensor. **/
  bool computeNorm1Sync(const std::string & name, //in: tensor name

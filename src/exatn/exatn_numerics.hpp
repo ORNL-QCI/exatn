@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/09/03
+REVISION: 2020/10/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -206,6 +206,31 @@ inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen gr
  {return numericalServer->createTensorSync(process_group,tensor,element_type);}
 
 
+/** Creates all tensors in a given tensor network that are still unallocated. **/
+inline bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
+                          TensorElementType element_type)         //in: tensor element type
+ {return numericalServer->createTensors(tensor_network,element_type);}
+
+inline bool createTensorsSync(TensorNetwork & tensor_network,     //inout: tensor network
+                              TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensorsSync(tensor_network,element_type);}
+
+inline bool createTensors(const ProcessGroup & process_group,     //in: chosen group of MPI processes
+                          TensorNetwork & tensor_network,         //inout: tensor network
+                          TensorElementType element_type)         //in: tensor element type
+ {return numericalServer->createTensors(process_group,tensor_network,element_type);}
+
+inline bool createTensorsSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                              TensorNetwork & tensor_network,     //inout: tensor network
+                              TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensorsSync(process_group,tensor_network,element_type);}
+
+
+/** Checks whether a given tensor has been allocated storage (created). **/
+inline bool tensorAllocated(const std::string & name) //in: tensor name
+ {return numericalServer->tensorAllocated(name);}
+
+
 /** Returns a shared pointer to the actual tensor object. **/
 inline std::shared_ptr<Tensor> getTensor(const std::string & name) //in: tensor name
  {return numericalServer->getTensor(name);}
@@ -242,6 +267,15 @@ inline bool destroyTensorSync(const std::string & name) //in: tensor name
  {return numericalServer->destroyTensorSync(name);}
 
 
+/** Destroys all currently allocated tensors in a given tensor network.
+    Note that the destroyed tensors could also be present in other tensor networks. **/
+inline bool destroyTensors(TensorNetwork & tensor_network)     //inout: tensor network
+ {return numericalServer->destroyTensors(tensor_network);}
+
+inline bool destroyTensorsSync(TensorNetwork & tensor_network) //inout: tensor network
+ {return numericalServer->destroyTensorsSync(tensor_network);}
+
+
 /** Initializes a tensor to some scalar value. **/
 template<typename NumericType>
 inline bool initTensor(const std::string & name, //in: tensor name
@@ -272,6 +306,14 @@ inline bool initTensorRnd(const std::string & name) //in: tensor name
 
 inline bool initTensorRndSync(const std::string & name) //in: tensor name
  {return numericalServer->initTensorRndSync(name);}
+
+
+/** Initializes all input tensors of a given tensor network to a random value. **/
+inline bool initTensorsRnd(TensorNetwork & tensor_network)     //inout: tensor network
+ {return numericalServer->initTensorsRnd(tensor_network);}
+
+inline bool initTensorsRndSync(TensorNetwork & tensor_network) //inout: tensor network
+ {return numericalServer->initTensorsRndSync(tensor_network);}
 
 
 /** Computes 1-norm of a tensor. **/
@@ -637,6 +679,11 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
+
+
+/** Creates and returns a tensor network builder. **/
+inline std::unique_ptr<exatn::NetworkBuilder> getTensorNetworkBuilder(const std::string & builder_name) //in: tensor network builder name
+ {return std::move(exatn::NetworkBuildFactory::get()->createNetworkBuilder(builder_name));}
 
 
 /** Resets the tensor contraction sequence optimizer that

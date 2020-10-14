@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/10/12
+REVISION: 2020/10/14
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -732,6 +732,11 @@ bool NumServer::sync(const ProcessGroup & process_group, const std::string & nam
  return sync(process_group,*(iter->second),wait);
 }
 
+bool NumServer::tensorAllocated(const std::string & name) const
+{
+ return (tensors_.find(name) != tensors_.cend());
+}
+
 std::shared_ptr<Tensor> NumServer::getTensor(const std::string & name)
 {
  auto iter = tensors_.find(name);
@@ -840,6 +845,48 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
  return submitted;
 }
 
+bool NumServer::createTensors(TensorNetwork & tensor_network,
+                              TensorElementType element_type)
+{
+ return createTensors(getDefaultProcessGroup(),tensor_network,element_type);
+}
+
+bool NumServer::createTensorsSync(TensorNetwork & tensor_network,
+                                  TensorElementType element_type)
+{
+ return createTensorsSync(getDefaultProcessGroup(),tensor_network,element_type);
+}
+
+bool NumServer::createTensors(const ProcessGroup & process_group,
+                              TensorNetwork & tensor_network,
+                              TensorElementType element_type)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(!tensorAllocated(tens_name)) success = createTensor(process_group,tensor,element_type);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::createTensorsSync(const ProcessGroup & process_group,
+                                  TensorNetwork & tensor_network,
+                                  TensorElementType element_type)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(!tensorAllocated(tens_name)) success = createTensorSync(process_group,tensor,element_type);
+  if(!success) break;
+ }
+ return success;
+}
+
 bool NumServer::destroyTensor(const std::string & name) //always synchronous
 {
  destroyOrphanedTensors(); //garbage collection
@@ -870,6 +917,30 @@ bool NumServer::destroyTensorSync(const std::string & name)
  return submitted;
 }
 
+bool NumServer::destroyTensors(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tensorAllocated(tens_name)) success = destroyTensor(tens_name);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::destroyTensorsSync(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tensorAllocated(tens_name)) success = destroyTensorSync(tens_name);
+  if(!success) break;
+ }
+ return success;
+}
+
 bool NumServer::initTensorRnd(const std::string & name)
 {
  return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
@@ -878,6 +949,46 @@ bool NumServer::initTensorRnd(const std::string & name)
 bool NumServer::initTensorRndSync(const std::string & name)
 {
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+}
+
+bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tensorAllocated(tens_name)){
+   if(tens->first == 0){ //output tensor
+    success = initTensor(tens_name,0.0);
+   }else{ //input tensor
+    success = initTensorRnd(tens_name);
+   }
+  }else{
+   success = false;
+  }
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tensorAllocated(tens_name)){
+   if(tens->first == 0){ //output tensor
+    success = initTensor(tens_name,0.0);
+   }else{ //input tensor
+    success = initTensorRnd(tens_name);
+   }
+  }else{
+   success = false;
+  }
+  if(!success) break;
+ }
+ return success;
 }
 
 bool NumServer::computeNorm1Sync(const std::string & name,
