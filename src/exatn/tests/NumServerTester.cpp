@@ -12,7 +12,7 @@
 #include <utility>
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -29,11 +29,12 @@
 #define EXATN_TEST14
 #define EXATN_TEST15
 #define EXATN_TEST16
-#define EXATN_TEST17
+#define EXATN_TEST17*/
 //#define EXATN_TEST18 //buggy
-#define EXATN_TEST19
+//#define EXATN_TEST19
 //#define EXATN_TEST20 //MKL only
-#define EXATN_TEST21
+//#define EXATN_TEST21
+#define EXATN_TEST22
 
 
 #ifdef EXATN_TEST0
@@ -2349,6 +2350,71 @@ TEST(NumServerTester, neurIPS) {
  //Grab a beer!
 }
 #endif
+
+#ifdef EXATN_TEST22
+TEST(NumServerTester, MPSNorm) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+
+ exatn::resetLoggingLevel(1,2); //debug
+
+ bool success = true;
+
+ const int num_qubits = 8;
+ auto output_tensor = std::make_shared<Tensor>("Z0", std::vector<unsigned int>(num_qubits, 2));
+
+ std::cout << "Building MPS tensor network ... " << std::flush;
+ auto builder = exatn::getTensorNetworkBuilder("MPS");
+ success = builder->setParameter("max_bond_dim", 256); assert(success);
+ TensorNetwork mps("QubitRegister", output_tensor, *builder);
+ std::cout << "Done" << std::endl << std::flush;
+ mps.printIt();
+
+ std::cout << "Building MPS norm tensor network ... " << std::flush;
+ TensorNetwork mps_norm(mps);
+ mps_norm.rename("MPSNorm");
+ success = mps.conjugate(); assert(success);
+ std::vector<std::pair<unsigned int, unsigned int>> pairing(num_qubits, {0,0});
+ for(int i = 0; i < num_qubits; ++i) pairing[i] = {i,i};
+ mps_norm.appendTensorNetwork(std::move(mps),pairing);
+ std::cout << "Done" << std::endl << std::flush;
+ mps_norm.printIt();
+
+ std::cout << "Allocating tensor storage ... " << std::flush;
+ success = exatn::createTensors(mps_norm,TENS_ELEM_TYPE); assert(success);
+ std::cout << "Done" << std::endl << std::flush;
+
+ std::cout << "Initializing tensors ... " << std::flush;
+ success = exatn::initTensorsRnd(mps_norm); assert(success);
+ success = exatn::sync(); assert(success);
+ std::cout << "Done" << std::endl << std::flush;
+
+ std::cout << "Determining tensor contraction sequence ... " << std::flush;
+ auto flops = mps_norm.determineContractionSequence("metis");
+ std::cout << "Done" << std::endl << std::flush;
+ exatn::printContractionSequence(mps_norm.exportContractionSequence());
+
+ std::cout << "Evaluating tensor network ... " << std::flush;
+ success = exatn::evaluate(mps_norm); assert(success);
+ success = exatn::sync(); assert(success);
+ std::cout << "Done" << std::endl << std::flush;
+
+ std::cout << "Destroying tensors ... " << std::flush;
+ success = exatn::destroyTensors(mps_norm); assert(success);
+ std::cout << "Done" << std::endl << std::flush;
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
 
 int main(int argc, char **argv) {
 

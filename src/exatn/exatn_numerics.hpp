@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/10/14
+REVISION: 2020/10/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -679,6 +679,18 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
+
+
+/** Prints a tensor contraction sequence. **/
+inline void printContractionSequence(const std::list<numerics::ContrTriple> & contr_seq) //in: tensor contraction sequence
+ {unsigned int i = 0;
+  for(const auto & contr: contr_seq){
+   std::cout << "{" << contr.result_id << ":" << contr.left_id << "," << contr.right_id << "}";
+   if(++i == 10){std::cout << std::endl; i = 0;}
+  }
+  if(i != 0) std::cout << std::endl;
+  return;
+ }
 
 
 /** Creates and returns a tensor network builder. **/
