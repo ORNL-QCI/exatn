@@ -7,7 +7,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_signature.hpp"
 
 #include <iterator>
-#include <cassert>
 
 namespace exatn{
 

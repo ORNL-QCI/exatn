@@ -6,8 +6,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "eigensolver.hpp"
 
-#include <cassert>
-
 namespace exatn{
 
 TensorNetworkEigenSolver::TensorNetworkEigenSolver(std::shared_ptr<TensorOperator> tensor_operator,

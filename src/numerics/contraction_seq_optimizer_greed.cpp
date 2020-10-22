@@ -7,8 +7,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "contraction_seq_optimizer_greed.hpp"
 #include "tensor_network.hpp"
 
-#include <cassert>
-
 #include <vector>
 #include <queue>
 #include <tuple>

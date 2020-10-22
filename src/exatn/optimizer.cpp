@@ -6,8 +6,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "optimizer.hpp"
 
-#include <cassert>
-
 namespace exatn{
 
 TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,

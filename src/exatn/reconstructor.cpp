@@ -8,7 +8,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <unordered_set>
 #include <string>
-#include <cassert>
 
 namespace exatn{
 

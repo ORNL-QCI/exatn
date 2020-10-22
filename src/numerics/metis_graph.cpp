@@ -14,7 +14,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <tuple>
 
 #include <cmath>
-#include <cassert>
 
 namespace exatn{
 

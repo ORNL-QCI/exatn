@@ -6,7 +6,7 @@
 #include <iostream>
 #include <memory>
 
-#include <cassert>
+#include "errors.hpp"
 
 namespace exatn {
 

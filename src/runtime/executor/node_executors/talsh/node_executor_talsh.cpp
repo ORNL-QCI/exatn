@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/09/29
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -16,7 +16,10 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include <mutex>
 
 #include <cstdlib>
-#include <cassert>
+
+#include "errors.hpp"
+
+//#define DEBUG
 
 namespace exatn {
 namespace runtime {
@@ -49,7 +52,7 @@ inline MPI_Datatype get_mpi_tensor_element_kind(int talsh_data_kind)
 
 void TalshNodeExecutor::initialize(const ParamConf & parameters)
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   const bool debugging = true;
 #else
   const bool debugging = false;
@@ -87,7 +90,7 @@ std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 
 TalshNodeExecutor::~TalshNodeExecutor()
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   const bool debugging = true;
 #else
   const bool debugging = false;

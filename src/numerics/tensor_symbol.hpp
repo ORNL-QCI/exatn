@@ -38,7 +38,8 @@ Rationale:
 
 #include <string>
 #include <vector>
-#include <cassert>
+
+#include "errors.hpp"
 
 namespace exatn{
 

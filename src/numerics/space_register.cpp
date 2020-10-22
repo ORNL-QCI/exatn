@@ -8,8 +8,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
 
-#include <cassert>
-
 namespace exatn{
 
 //Register of vector spaces and their subspaces (singleton):

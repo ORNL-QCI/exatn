@@ -1,5 +1,5 @@
 /** ExaTN: Error handling
-REVISION: 2020/09/21
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,9 +7,14 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #ifndef EXATN_ERRORS_HPP_
 #define EXATN_ERRORS_HPP_
 
-#include "timers.hpp"
-
+#include <iostream>
 #include <string>
+
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
+#include <cassert>
 
 namespace exatn {
 
@@ -29,14 +34,14 @@ inline void fatal_error(const std::string & error_msg)
 
 inline void make_sure(bool condition)
 {
- if(!condition) fatal_error();
+ if(!condition) return fatal_error();
  return;
 }
 
 inline void make_sure(bool condition,
                       const std::string & error_msg)
 {
- if(!condition) fatal_error(error_msg);
+ if(!condition) return fatal_error(error_msg);
  return;
 }
 

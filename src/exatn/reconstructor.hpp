@@ -23,6 +23,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <memory>
 #include <vector>
 
+#include "errors.hpp"
+
 namespace exatn{
 
 class TensorNetworkReconstructor{

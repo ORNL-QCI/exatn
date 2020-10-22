@@ -27,7 +27,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <vector>
 #include <complex>
 
-#include <cassert>
+#include "errors.hpp"
 
 namespace exatn{
 

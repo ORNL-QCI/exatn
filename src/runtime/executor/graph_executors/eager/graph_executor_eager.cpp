@@ -12,7 +12,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include <iostream>
 #include <iomanip>
 
-#include <cassert>
+#include "errors.hpp"
 
 namespace exatn {
 namespace runtime {

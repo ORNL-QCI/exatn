@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2020/09/29
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -12,7 +12,9 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include <iostream>
 #include <iomanip>
 
-#include <cassert>
+#include "errors.hpp"
+
+//#define DEBUG
 
 namespace exatn {
 namespace runtime {
@@ -71,7 +73,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
               logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                        << "](LazyGraphExecutor)[EXEC_THREAD]: Initiated prefetch for tensor operation "
                        << progress.current << std::endl;
-#ifndef NDEBUG
+#ifdef DEBUG
               logfile_.flush();
 #endif
             }
@@ -102,7 +104,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
           logfile_ << ": Details:" << std::endl;
           op->printItFile(logfile_);
         }
-#ifndef NDEBUG
+#ifdef DEBUG
         logfile_.flush();
 #endif
       }
@@ -121,7 +123,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             if(logging_.load() != 0){
               logfile_ << "Success [" << std::fixed << std::setprecision(6)
                        << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
-#ifndef NDEBUG
+#ifdef DEBUG
               logfile_.flush();
 #endif
             }
@@ -188,7 +190,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Synced tensor operation "
                      << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
-#ifndef NDEBUG
+#ifdef DEBUG
             logfile_.flush();
 #endif
           }

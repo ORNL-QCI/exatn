@@ -8,8 +8,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
 
-#include <cassert>
-
 namespace exatn{
 
 bool parse_tensor(const std::string & tensor,        //in: tensor as a string

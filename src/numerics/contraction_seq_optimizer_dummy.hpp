@@ -12,6 +12,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "contraction_seq_optimizer.hpp"
 
+#include "errors.hpp"
+
 namespace exatn{
 
 namespace numerics{

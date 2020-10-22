@@ -17,6 +17,8 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 
+#include "errors.hpp"
+
 namespace exatn{
 
 namespace numerics{

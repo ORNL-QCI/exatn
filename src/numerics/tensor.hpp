@@ -45,8 +45,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_signature.hpp"
 #include "tensor_leg.hpp"
 
-#include <cassert>
-
 #include <iostream>
 #include <fstream>
 #include <type_traits>
@@ -55,6 +53,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <vector>
 #include <list>
 #include <memory>
+
+#include "errors.hpp"
 
 namespace exatn{
 

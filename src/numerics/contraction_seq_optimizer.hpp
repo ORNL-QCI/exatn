@@ -18,6 +18,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <unordered_map>
 #include <functional>
 
+#include "errors.hpp"
+
 namespace exatn{
 
 namespace numerics{

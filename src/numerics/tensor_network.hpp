@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/10/15
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -68,6 +68,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <tuple>
 #include <string>
 #include <memory>
+
+#include "errors.hpp"
 
 namespace exatn{
 
@@ -341,7 +343,8 @@ public:
  /** Imports and caches an externally provided tensor contraction sequence. **/
  void importContractionSequence(const std::list<ContrTriple> & contr_sequence, //in: imported tensor contraction sequence
                                 double fma_flops = 0.0); //in: FMA flop count for the imported tensor contraction sequence
- /** Imports and caches an externally provided tensor contraction sequence given as a plain vector. **/
+ /** Imports and caches an externally provided tensor contraction sequence given as a plain vector.
+     The plain vector contains flattened tensor contraction triplets (ContrTriple). **/
  void importContractionSequence(const std::vector<unsigned int> & contr_sequence_content, //in: imported tensor contraction sequence
                                 double fma_flops = 0.0); //in: FMA flop count for the imported tensor contraction sequence
 

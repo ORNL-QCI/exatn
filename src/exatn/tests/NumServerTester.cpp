@@ -11,6 +11,8 @@
 #include <ios>
 #include <utility>
 
+#include "errors.hpp"
+
 //Test activation:
 /*#define EXATN_TEST0
 #define EXATN_TEST1
@@ -2395,7 +2397,22 @@ TEST(NumServerTester, MPSNorm) {
  std::cout << "Done" << std::endl << std::flush;
 
  std::cout << "Determining tensor contraction sequence ... " << std::flush;
- auto flops = mps_norm.determineContractionSequence("metis");
+ double flops = 0.0;
+ if(num_qubits == 32){
+  std::vector<unsigned int> contr_seq {
+   112,47,48,111,49,50,134,46,45,97,134,44,120,41,40,119,43,42,133,38,37,108,133,36,132,33,34,107,132,35,
+   131,16,17,94,131,18,106,13,12,105,14,15,122,9,8,121,11,10,130,1,2,115,130,3,69,51,19,129,23,24,
+   82,129,25,128,20,21,81,128,22,127,64,62,114,127,63,126,32,30,113,126,31,99,60,61,125,27,28,89,125,29,
+   124,55,56,88,124,57,123,52,53,87,123,54,118,121,122,110,119,120,104,7,118,101,115,4,100,113,114,98,111,112,
+   96,39,110,95,107,108,93,105,106,92,6,104,91,101,5,90,99,100,86,97,98,85,95,96,84,93,94,83,91,92,
+   79,89,90,78,87,88,76,85,86,75,83,84,74,81,82,72,79,59,71,58,78,70,75,76,68,26,74,67,71,72,
+   66,69,70,65,67,68,0,65,66
+  };
+  flops = 7.3569e+10;
+  mps_norm.importContractionSequence(contr_seq,flops);
+ }else{
+  flops = mps_norm.determineContractionSequence("metis");
+ }
  std::cout << "Done: Flop count = " << flops << std::endl << std::flush;
  exatn::printContractionSequence(mps_norm.exportContractionSequence());
 

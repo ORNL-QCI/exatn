@@ -35,6 +35,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <iostream>
 #include <fstream>
 
+#include "errors.hpp"
+
 namespace exatn{
 
 namespace numerics{

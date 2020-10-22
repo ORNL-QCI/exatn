@@ -4,7 +4,7 @@
 #include <iostream>
 #include <utility>
 
-#include <assert.h>
+#include "errors.hpp"
 
 using namespace exatn;
 using namespace exatn::numerics;

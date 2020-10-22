@@ -12,8 +12,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "metis_graph.hpp"
 
 #include <iostream>
-#include <cassert>
-
 #include <string>
 #include <vector>
 #include <list>

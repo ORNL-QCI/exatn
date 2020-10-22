@@ -19,7 +19,6 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #endif
 
 #include <cstddef>
-#include <cassert>
 
 namespace exatn{
 

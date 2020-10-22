@@ -40,7 +40,7 @@ Rationale:
 #include <atomic>
 #include <mutex>
 
-#include <cassert>
+#include "errors.hpp"
 
 namespace exatn {
 namespace runtime {

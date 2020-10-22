@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/08/10
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -17,6 +17,10 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include <vector>
 #include <iostream>
 
+#include "errors.hpp"
+
+//#define DEBUG
+
 namespace exatn {
 namespace runtime {
 
@@ -31,7 +35,7 @@ TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), logging_(0), executing_(false), scope_set_(false), alive_(false)
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   const bool debugging = true;
 #else
   const bool debugging = false;
@@ -53,7 +57,7 @@ TensorRuntime::TensorRuntime(const ParamConf & parameters,
  graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
  current_dag_(nullptr), logging_(0), executing_(false), scope_set_(false), alive_(false)
 {
-#ifndef NDEBUG
+#ifdef DEBUG
   const bool debugging = true;
 #else
   const bool debugging = false;

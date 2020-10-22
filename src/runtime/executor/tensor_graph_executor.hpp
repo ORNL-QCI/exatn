@@ -33,6 +33,8 @@ Rationale:
 #include <fstream>
 #include <iomanip>
 
+#include "errors.hpp"
+
 namespace exatn {
 namespace runtime {
 

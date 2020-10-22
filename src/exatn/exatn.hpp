@@ -8,6 +8,8 @@
 #include "eigensolver.hpp"
 #include "param_conf.hpp"
 
+#include "errors.hpp"
+
 namespace exatn {
 
 /** Initializes ExaTN **/

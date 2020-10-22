@@ -8,7 +8,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
 #include "tensor_exec_state.hpp"
 
 #include <iostream>
-#include <cassert>
+
+#include "errors.hpp"
 
 namespace exatn {
 namespace runtime {
