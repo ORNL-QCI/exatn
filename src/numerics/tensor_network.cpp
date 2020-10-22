@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/10/09
+REVISION: 2020/10/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1734,7 +1734,8 @@ void TensorNetwork::markOptimizableTensors(std::function<bool (const Tensor &)> 
 
 
 double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn & right_tensor,
-                                double * diff_volume, double * arithm_intensity, bool adjust_cost)
+                                double * total_volume, double * diff_volume,
+                                double * arithm_intensity, bool adjust_cost)
 {
  double flops = 0.0, left_vol = 1.0, right_vol = 1.0, contr_vol = 1.0;
  const auto left_id = left_tensor.getTensorId();
@@ -1751,8 +1752,10 @@ double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn
   right_vol *= dim_ext;
  }
  flops = left_vol * right_vol / contr_vol; //FMA flops (no FMA prefactor)
- if(diff_volume != nullptr) *diff_volume = flops / contr_vol - (left_vol + right_vol);
- if(arithm_intensity != nullptr) *arithm_intensity = flops / (left_vol + right_vol);
+ double tot_vol = left_vol + right_vol + (flops / contr_vol); //total volume of tensors
+ if(total_volume != nullptr) *total_volume = tot_vol;
+ if(diff_volume != nullptr) *diff_volume = (flops / contr_vol) - (left_vol + right_vol);
+ if(arithm_intensity != nullptr) *arithm_intensity = flops / tot_vol;
  if(adjust_cost){ //increase the "effective" flop count if arithmetic intensity is low
   //`Finish: flops *= f(arithm_intensity): [max --> 1]
  }
@@ -1761,7 +1764,8 @@ double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn
 
 
 double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int right_id,
-                                         double * diff_volume, double * arithm_intensity, bool adjust_cost)
+                                         double * total_volume, double * diff_volume,
+                                         double * arithm_intensity, bool adjust_cost)
 {
  double flops = -1.0; //error
  if(left_id != 0 && right_id != 0){
@@ -1770,14 +1774,14 @@ double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int righ
    assert(left_tensor != nullptr);
    const auto * right_tensor = this->getTensorConn(right_id);
    assert(right_tensor != nullptr);
-   flops = getTensorContractionCost(*left_tensor,*right_tensor,diff_volume,arithm_intensity,adjust_cost);
+   flops = getTensorContractionCost(*left_tensor,*right_tensor,total_volume,diff_volume,arithm_intensity,adjust_cost);
   }else{
-   std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: " <<
-   "Two tensors to be contracted are identical!" << std::endl;
+   std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: "
+             << "Two tensors to be contracted are identical!" << std::endl;
   }
  }else{
-  std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: " <<
-   "The output tensor of the tensor network (tensor 0) cannot be contracted!" << std::endl;
+  std::cout << "#ERROR(TensorNetwork::getContractionCost): Invalid request: "
+            << "The output tensor of the tensor network (tensor 0) cannot be contracted!" << std::endl;
  }
  return flops;
 }

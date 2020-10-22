@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/10/09
+REVISION: 2020/10/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,6 +84,7 @@ bool tensorNameIsIntermediate(const Tensor & tensor,            //in: tensor
 //Free function analogue of TensorNetwork::getContractionCost:
 double getTensorContractionCost(const TensorConn & left_tensor,
                                 const TensorConn & right_tensor,
+                                double * total_volume = nullptr,
                                 double * diff_volume = nullptr,
                                 double * arithm_intensity = nullptr,
                                 bool adjust_cost = false);
@@ -324,6 +325,7 @@ public:
      neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
  double getContractionCost(unsigned int left_id,  //in: left tensor id (present in the tensor network)
                            unsigned int right_id, //in: right tensor id (present in the tensor network)
+                           double * total_volume = nullptr, //out: total volume of all tensors
                            double * diff_volume = nullptr, //out: vol(result) - vol(left) - vol(right)
                            double * arithm_intensity = nullptr, //out: arithmetic intensity of the tensor contraction
                            bool adjust_cost = false); //in: whether or not to adjust the flops cost due to arithmetic intensity

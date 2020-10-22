@@ -2361,11 +2361,11 @@ TEST(NumServerTester, MPSNorm) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
- const int num_qubits = 8;
+ const int num_qubits = 32;
  auto output_tensor = std::make_shared<Tensor>("Z0", std::vector<unsigned int>(num_qubits, 2));
 
  std::cout << "Building MPS tensor network ... " << std::flush;
@@ -2396,7 +2396,7 @@ TEST(NumServerTester, MPSNorm) {
 
  std::cout << "Determining tensor contraction sequence ... " << std::flush;
  auto flops = mps_norm.determineContractionSequence("metis");
- std::cout << "Done" << std::endl << std::flush;
+ std::cout << "Done: Flop count = " << flops << std::endl << std::flush;
  exatn::printContractionSequence(mps_norm.exportContractionSequence());
 
  std::cout << "Evaluating tensor network ... " << std::flush;

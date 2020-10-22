@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Greedy heuristics
-REVISION: 2020/04/29
+REVISION: 2020/10/15
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -97,9 +97,9 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
       for(auto & j: adjacent_tensors){
        if(j > i){ //unique pairs
         const auto & tensor_j = *(parentTensNet.getTensorConn(j));
-        double diff_vol;
-        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&diff_vol); //tensor contraction cost (flops)
-        //double contrCost = parentTensNet.getContractionCost(i,j,&diff_vol); //tensor contraction cost (flops)
+        double tot_vol, diff_vol;
+        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&tot_vol,&diff_vol); //tensor contraction cost (flops)
+        //double contrCost = parentTensNet.getContractionCost(i,j,&tot_vol,&diff_vol); //tensor contraction cost (flops)
         //std::cout << "  New candidate contracted pair of tensors is {" << i << "," << j << "} with cost " << contrCost << std::endl; //debug
         TensorNetwork tensNet(parentTensNet);
         auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
@@ -119,9 +119,9 @@ double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNe
        auto j = iter_j->first;
        if(j != 0){ //exclude output tensor
         const auto & tensor_j = iter_j->second; //connected tensor j
-        double diff_vol;
-        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&diff_vol); //tensor contraction cost (flops)
-        //double contrCost = parentTensNet.getContractionCost(i,j,&diff_vol); //tensor contraction cost (flops)
+        double tot_vol, diff_vol;
+        double contrCost = getTensorContractionCost(tensor_i,tensor_j,&tot_vol,&diff_vol); //tensor contraction cost (flops)
+        //double contrCost = parentTensNet.getContractionCost(i,j,&tot_vol,&diff_vol); //tensor contraction cost (flops)
         //std::cout << "  New candidate contracted pair of tensors is {" << i << "," << j << "} with cost " << contrCost << std::endl; //debug
         TensorNetwork tensNet(parentTensNet);
         auto contracted = tensNet.mergeTensors(i,j,intermediate_id); assert(contracted);
