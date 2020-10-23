@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/10/14
+REVISION: 2020/10/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -468,10 +468,13 @@ bool NumServer::submit(const ProcessGroup & process_group,
     logfile_ << std::endl;
    }
    std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> intermediate_slices; //temporary slices of intermediates
-   std::unordered_map<numerics::TensorHashType,std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
+   std::list<std::shared_ptr<numerics::Tensor>> input_slices; //temporary slices of input tensors
    //Execute all tensor operations for the current tensor sub-network:
    for(auto op = op_list.begin(); op != op_list.end(); ++op){
-    if(debugging && serialize) (*op)->printIt(); //debug
+    if(debugging && logging_ > 1){ //debug
+     logfile_ << "Next tensor operation from the tensor network operation list:" << std::endl;
+     (*op)->printItFile(logfile_);
+    }
     const auto num_operands = (*op)->getNumOperands();
     std::shared_ptr<TensorOperation> tens_op = (*op)->clone();
     //Substitute sliced tensor operands with their respective slices from the current tensor sub-network:
@@ -479,6 +482,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
     for(unsigned int op_num = 0; op_num < num_operands; ++op_num){
      auto tensor = (*op)->getTensorOperand(op_num);
      const auto tensor_rank = tensor->getRank();
+     if(debugging && logging_ > 1){ //debug
+      logfile_ << "Next tensor operand " << op_num << " named " << tensor->getName();
+     }
      bool tensor_is_output;
      bool tensor_is_intermediate = tensorNameIsIntermediate(*tensor,&tensor_is_output);
      tensor_is_output = (tensor == output_tensor);
@@ -494,14 +500,12 @@ bool NumServer::submit(const ProcessGroup & process_group,
      const auto * tensor_info = network.getSplitTensorInfo(key);
      //Replace the full tensor operand with its respective slice (if found):
      if(tensor_info != nullptr){ //tensor has splitted indices
+      if(debugging && logging_ > 1) logfile_ << " with split indices" << std::endl; //debug
       std::shared_ptr<numerics::Tensor> tensor_slice;
       //Look up the tensor slice in case it has already been created:
       if(tensor_is_intermediate && (!tensor_is_output)){ //pure intermediate tensor
        auto slice_iter = intermediate_slices.find(tensor->getTensorHash()); //look up by the hash of the parental tensor
        if(slice_iter != intermediate_slices.end()) tensor_slice = slice_iter->second;
-      }else{ //input/output tensor
-       auto slice_iter = input_slices.find(tensor->getTensorHash()); //look up by the hash of the parental tensor
-       if(slice_iter != input_slices.end()) tensor_slice = slice_iter->second;
       }
       //Create the tensor slice upon first encounter:
       if(!tensor_slice){
@@ -528,9 +532,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
        if(tensor_is_intermediate && (!tensor_is_output)){ //pure intermediate tensor
         auto res = intermediate_slices.emplace(std::make_pair(tensor->getTensorHash(),tensor_slice));
         assert(res.second);
-       }else{ //input tensor
-        auto res = input_slices.emplace(std::make_pair(tensor->getTensorHash(),tensor_slice));
-        assert(res.second);
+       }else{ //input/output tensor
+        input_slices.emplace_back(tensor_slice);
        }
       }
       //Replace the sliced tensor operand with its current slice in the primary tensor operation:
@@ -554,6 +557,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
        extract_slice->setTensorOperand(tensor);
        submitted = submit(extract_slice); if(!submitted) return false;
       }
+     }else{
+      if(debugging && logging_ > 1) logfile_ << " without split indices" << std::endl; //debug
      }
     } //loop over tensor operands
     //Submit the primary tensor operation with the current slices:
@@ -569,10 +574,10 @@ bool NumServer::submit(const ProcessGroup & process_group,
     //Destroy temporary input tensor slices:
     for(auto & input_slice: input_slices){
      std::shared_ptr<TensorOperation> destroy_slice = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-     destroy_slice->setTensorOperand(input_slice.second);
+     destroy_slice->setTensorOperand(input_slice);
      submitted = submit(destroy_slice); if(!submitted) return false;
     }
-    if(serialize) sync(); //debug
+    if(serialize) sync(process_group); //sync for serialization
     input_slices.clear();
    } //loop over tensor operations
    //Erase intermediate tensor slices once all tensor operations have been executed:

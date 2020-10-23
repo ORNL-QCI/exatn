@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -31,11 +31,11 @@
 #define EXATN_TEST14
 #define EXATN_TEST15
 #define EXATN_TEST16
-#define EXATN_TEST17*/
+#define EXATN_TEST17
 //#define EXATN_TEST18 //buggy
-//#define EXATN_TEST19
+#define EXATN_TEST19
 //#define EXATN_TEST20 //MKL only
-//#define EXATN_TEST21
+#define EXATN_TEST21
 #define EXATN_TEST22
 
 
@@ -2363,7 +2363,7 @@ TEST(NumServerTester, MPSNorm) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -2399,7 +2399,7 @@ TEST(NumServerTester, MPSNorm) {
  std::cout << "Determining tensor contraction sequence ... " << std::flush;
  double flops = 0.0;
  if(num_qubits == 32){
-  std::vector<unsigned int> contr_seq {
+  std::vector<unsigned int> contr_seq{
    112,47,48,111,49,50,134,46,45,97,134,44,120,41,40,119,43,42,133,38,37,108,133,36,132,33,34,107,132,35,
    131,16,17,94,131,18,106,13,12,105,14,15,122,9,8,121,11,10,130,1,2,115,130,3,69,51,19,129,23,24,
    82,129,25,128,20,21,81,128,22,127,64,62,114,127,63,126,32,30,113,126,31,99,60,61,125,27,28,89,125,29,
