@@ -32,9 +32,9 @@
 #define EXATN_TEST15
 #define EXATN_TEST16
 #define EXATN_TEST17
-//#define EXATN_TEST18 //buggy
+//#define EXATN_TEST18 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST19
-//#define EXATN_TEST20 //MKL only
+//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)
 #define EXATN_TEST21
 #define EXATN_TEST22
 
@@ -2181,7 +2181,7 @@ TEST(NumServerTester, neurIPS) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2229,7 +2229,7 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 2;
+  const exatn::DimExtent chi1 = 4;
   const auto chi2 = chi1*chi1;
   const auto chi3 = chi2*chi1;
   const auto chi4 = chi3*chi1;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Metis heuristics
-REVISION: 2020/05/20
+REVISION: 2020/10/25
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -203,8 +203,8 @@ void ContractionSeqOptimizerMetis::determineContrSequence(const TensorNetwork & 
                   << num_vertices << " vertices into " << num_miniparts_safe << " mini-parts!" << std::endl << std::flush;
        }
        for(std::size_t k = 0; k <= j; ++k) graphs.pop_back();
-       assert(num_miniparts_safe != 2);
        num_miniparts_safe = 2;
+       imbalance = (imbalance + 1.0)/2.0;
        success = false;
        break;
       }
