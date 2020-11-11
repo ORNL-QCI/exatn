@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/10/14
+REVISION: 2020/11/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_rnd.hpp"
 #include "functor_init_dat.hpp"
 #include "functor_scale.hpp"
+#include "functor_maxabs.hpp"
 #include "functor_norm1.hpp"
 #include "functor_norm2.hpp"
 #include "functor_diag_rank.hpp"
@@ -97,6 +98,7 @@ using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
 using numerics::FunctorScale;
+using numerics::FunctorMaxAbs;
 using numerics::FunctorNorm1;
 using numerics::FunctorNorm2;
 using numerics::FunctorDiagRank;
@@ -410,6 +412,10 @@ public:
  bool initTensorsRnd(TensorNetwork & tensor_network);     //inout: tensor network
 
  bool initTensorsRndSync(TensorNetwork & tensor_network); //inout: tensor network
+
+ /** Computes max-abs norm of a tensor. **/
+ bool computeMaxAbsSync(const std::string & name, //in: tensor name
+                        double & norm);           //out: tensor norm
 
  /** Computes 1-norm of a tensor. **/
  bool computeNorm1Sync(const std::string & name, //in: tensor name

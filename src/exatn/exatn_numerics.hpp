@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/10/15
+REVISION: 2020/11/11
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -314,6 +314,12 @@ inline bool initTensorsRnd(TensorNetwork & tensor_network)     //inout: tensor n
 
 inline bool initTensorsRndSync(TensorNetwork & tensor_network) //inout: tensor network
  {return numericalServer->initTensorsRndSync(tensor_network);}
+
+
+/** Computes max-abs norm of a tensor. **/
+inline bool computeMaxAbsSync(const std::string & name, //in: tensor name
+                              double & norm)            //out: tensor norm
+ {return numericalServer->computeMaxAbsSync(name,norm);}
 
 
 /** Computes 1-norm of a tensor. **/
