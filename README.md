@@ -116,20 +116,23 @@ $ python3 -m pip install --upgrade cmake
 ``` bash
 $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
+$ git submodule init
+$ git submodule update --init --recursive
 $ mkdir build && cd build
-$ cmake .. -DEXATN_BUILD_TESTS=TRUE
-  For execution on NVIDIA GPU:
-  -DENABLE_CUDA=True
-  For GPU execution via very recent CUDA versions with GNU compiler:
-  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+$ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
   For CPU accelerated matrix algebra via a CPU BLAS library:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
-   where the choices are ATLAS, MKL, ACML, ESSL. ATLAS is used to
-   designate any default Linux BLAS library (libblas.so).
+   where the choices are OPENBLAS, ATLAS, MKL, ACML, ESSL.
    If you use Intel MKL, you will need to provide the following
-   environment variable instead of BLAS_PATH:
+   environment variable instead of BLAS_PATH above:
   -DPATH_INTEL_ROOT=<PATH_TO_INTEL_ROOT_DIRECTORY>
-  For multi-node execution via MPI (ExaTENSOR backend requires Fortran):
+  For execution on NVIDIA GPU:
+  -DENABLE_CUDA=True
+   You can adjust the NVIDIA GPU compute capability via setting
+   an environment variable GPU_SM_ARCH, for example GPU_SM_ARCH=70 (Volta).
+  For GPU execution via very recent CUDA versions with the GNU compiler:
+  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+  For multi-node execution via MPI:
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
    where the choices are OPENMPI or MPICH. Note that the OPENMPI choice
    also covers its derivatives, for example Spectrum MPI. The MPICH choice
@@ -145,13 +148,17 @@ your application with ExaTN.
 
 In order to fully clean the build, you will need to do the following:
 ``` bash
-$ make clean (inside your ExaTN build directory)
-$ make clean (inside tpls/ExaTensor)
+$ cd ../tpls/ExaTensor
+$ make clean
+$ cd ../../build
+$ make clean
 $ rm -r ~/.exatn
+$ make rebuild_cache
+$ make install
 ```
 
 ```
-Example of a typical workstation configuration with no BLAS (slow):
+Example of a typical workstation configuration with no BLAS (very slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -161,6 +168,12 @@ cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+
+Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel):
 cmake ..
@@ -172,30 +185,37 @@ Example of a typical workstation configuration with default Linux BLAS (found in
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+
+Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib) and CUDA:
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
 Example of an MPI enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 ```
 
@@ -205,11 +225,6 @@ supports up to GCC 7, so if your default `g++` is version 8, then you will need 
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
-
-When requesting the multi-node MPI build, the tensor algebra library ExaTENSOR
-is used as the default multi-node execution backend. Due to numerous bugs in
-Fortran compilers and MPI libraries, the only tested choices are the following:
-gcc-8 compiler, intel-18+ compiler, openmpi-3.1.0 library, mpich-3.2.1 library or later.
 
 To link the C++ ExaTN library with your application, use the following command which
 will show which libraries will need to be linked:
@@ -223,7 +238,7 @@ $ export PYTHONPATH=$PYTHONPATH:~/.exatn
 ```
 It may also be helpful to have mpi4py installed.
 
-## Mac OS X Build Instructions (no MPI)
+## Mac OS X Build Instructions (no MPI, poorly supported)
 First install GCC via homebrew:
 ```
 $ brew install gcc@8
