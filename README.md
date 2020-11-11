@@ -5,21 +5,33 @@
 
 # ExaTN library: Exascale Tensor Networks
 
-NOTE: The ExaTN library is still work in progress. While many functionalities
-are already working, some are still under development. The full release will
-be coming in the next months, supported by documentation and examples.
-
-ExaTN is a software library for expressing and processing
-hierarchical tensor networks on homo- and heterogeneous HPC
+ExaTN is a software library for expressing, manipulating and processing
+arbitrary tensor networks on homo- and heterogeneous HPC
 platforms of vastly different scale, from laptops to leadership
 HPC systems. The library can be leveraged in any computational
-domain which heavily relies on large-scale numerical tensor algebra:
- (a) Quantum many-body theory in condensed matter physics;
- (b) Quantum many-body theory in quantum chemistry;
- (c) Quantum computing simulations;
- (d) General relativity simulations;
- (e) Multivariate data analytics;
- (f) Tensor-based neural network algorithms.
+domain that relies heavily on numerical tensor algebra: <br>
+ * Quantum many-body theory in condensed matter physics;
+ * Quantum many-body theory in quantum chemistry;
+ * Quantum computing simulations;
+ * General relativity simulations;
+ * Multivariate data analytics;
+ * Tensor-based neural network algorithms.
+
+
+## Concepts and Usage
+
+The ExaTN C++ header to include is exatn.hpp. ExaTN provides two kinds of API: <br>
+ 1. Declarative API is used to declare, construct and manipulate C++ objects
+    implementing the ExaTN library concepts, like tensors, tensor networks,
+    tensor network operators, tensor network expansions, etc. The corresponding
+    C++ header files are located in src/numerics.
+ 2. Executive API is used to perform numerical processing on tensors,
+    tensor networks, tensor network operators, tensor network expansions, etc.
+    The corresponding header file is src/exatn/exatn_numerics.hpp.
+
+There are multiple examples available in src/exatn/test/NumServerTester.cpp, but you should
+ignore any of them which use direct numericalServer->API calls (these are internal tests).
+
 
 ## Quick Start
 Click [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ornl-qci/exatn)
@@ -47,18 +59,20 @@ Navigate to ``https://localhost:3000`` in your browser to open the IDE and get s
 ## API Documentation
 For detailed class documentation, please see our [API Documentation](https://ornl-qci.github.io/exatn-api-docs) page.
 
+
 ## Dependencies
 ```
 Compiler (C++11, optional Fortran-2003 for multi-node execution with ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
 MPI (optional): MPICH 3+ (recommended), OpenMPI 3+
-BLAS (optional): ATLAS (default Linux BLAS), MKL, ACML, ESSL
-CUDA 9+ (optional)
+BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
+CUDA 9+ (optional for NVIDIA GPU)
 CMake 3.9+ (for build)
 ```
 For TaProl Parser Development
 ```
 ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/parser).
 ```
+
 
 ## Linux Build instructions
 ```
