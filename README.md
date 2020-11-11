@@ -40,9 +40,26 @@ Main ExaTN C++ objects:
 
  * `exatn::Tensor` (`src/numerics/tensor.hpp`): An abstraction of a tensor defined by
    * Tensor name: Alphanumeric with underscores, must begin with a letter;
-   * Tensor shape: A vector of tensor dimension extents;
-   * Tensor signature: A vector of tensor dimension identifiers;
- * `exatn::TensorNetwork` (`src/numerics/tensor_network.hpp`): X
+   * Tensor shape: A vector of tensor dimension extents (extent of each tensor dimension);
+   * Tensor signature (optional): A vector of tensor dimension identifiers. A tensor dimension
+     identifier either associates the tensor dimension with a specific registered vector
+     space/subspace or simply provides a base offset for defining tensor slices (default is 0).
+ * `exatn::TensorNetwork` (`src/numerics/tensor_network.hpp`): A tensor network is an aggregate
+   of tensors where each tensor may be connected to other tensors via associating corresponding
+   tensor dimensions as specified by a directed multi-graph in which each vertex represents a
+   tensor with each attached (directed) edge being a tensor dimension. Each directed edge
+   connects two dimensions coming from two different tensors. Graph vertices may also have
+   open edges (edges with an open end) which correspond to uncontrcacted tensor dimensions.
+   The tensors constituting a tensor network are called *input* tensors. Each tensor network
+   is also automatically equipped with the *output* tensor which collects all uncontracted
+   tensor dimensions, thus representing the tensor-result of a full contraction of the
+   tensor network.
+ * `exatn::TensorOperator` (`src/numerics/tensor_operator.hpp`): A tensor network operator
+   is a tensor network in which open edges are distinguished by their belonging to either
+   the ket or bra (dual) tensor space.
+ * `exatn::TensorExpansion` (`src/numerics/tensor_expansion.hpp`): A tensor network expansion
+   is a linear combination of tensor networks with complex coefficients. All tensor networks
+   in a tensor network expansion must have their output tensors possess the same shape.
 
 
 ## Quick Start
