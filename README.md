@@ -21,27 +21,28 @@ domain that relies heavily on numerical tensor algebra:
 
 ## Concepts and Usage
 
-The ExaTN C++ header to include is exatn.hpp. ExaTN provides two kinds of API:
+The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
 
  1. Declarative API is used to declare, construct and manipulate C++ objects
     implementing the ExaTN library concepts, like tensors, tensor networks,
     tensor network operators, tensor network expansions, etc. The corresponding
-    C++ header files are located in src/numerics. Note that the declarative API
+    C++ header files are located in `src/numerics`. Note that the declarative API
     calls do not allocate storage for tensors.
  2. Executive API is used to perform storage allocation and numerical processing
     of tensors, tensor networks, tensor network operators, tensor network expansions,
-    etc. The corresponding header file is src/exatn/exatn_numerics.hpp.
+    etc. The corresponding header file is `src/exatn/exatn_numerics.hpp`.
 
-There are multiple examples available in src/exatn/tests/NumServerTester.cpp, but you should
-ignore any of them which use direct numericalServer->API calls (these are internal tests).
+There are multiple examples available in `src/exatn/tests/NumServerTester.cpp`, but you should
+ignore any of them which use direct numericalServer->API calls (these are internal tests). The
+`main` function at the very bottom shows how to initialize and finalize ExaTN.
 
 Main ExaTN C++ objects:
 
- * exatn::Tensor (src/numerics/tensor.hpp): An abstraction of a tensor defined by
+ * `exatn::Tensor` (`src/numerics/tensor.hpp`): An abstraction of a tensor defined by
    * Tensor name: Alphanumeric with underscores, must begin with a letter;
    * Tensor shape: A vector of tensor dimension extents;
    * Tensor signature: A vector of tensor dimension identifiers;
- * exatn::TensorNetwork (src/numerics/tensor_network.hpp): X
+ * `exatn::TensorNetwork` (`src/numerics/tensor_network.hpp`): X
 
 
 ## Quick Start
