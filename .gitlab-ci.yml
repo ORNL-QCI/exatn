@@ -10,8 +10,7 @@ build_devel:
   - devel
   script:
   - cd docker/ci/ubuntu1804/nocuda/devel && docker build -t exatn/devel . --no-cache && docker run --rm exatn/devel bash -c "cd exatn/build && ctest --output-on-failure"
-  - docker rm $(docker ps -a -f status=exited -q)
-  - docker rmi $(docker images -f dangling=true)
+  - docker system prune -f
   - docker rmi -f exatn/devel
 
 build_master:
@@ -22,8 +21,7 @@ build_master:
   - master
   script:
   - cd docker/ci/ubuntu1804/nocuda/master && docker build -t exatn/master . --no-cache && docker run --rm exatn/master bash -c "cd exatn/build && ctest --output-on-failure"
-  - docker rm $(docker ps -a -f status=exited -q)
-  - docker rmi $(docker images -f dangling=true)
+  - docker system prune -f
   - docker rmi -f exatn/master
 
 docker run_docker_deploy:
@@ -34,6 +32,5 @@ docker run_docker_deploy:
   - cd docker/deploy/dev && docker build -t exatn/exatn . --no-cache
   - echo "$REGISTRY_PASSWORD" | docker login -u exatn --password-stdin
   - docker push exatn/exatn
-  - docker rm $(docker ps -a -f status=exited -q)
-  - docker rmi $(docker images -f dangling=true)
+  - docker system prune -f
   - docker rmi -f exatn/exatn
