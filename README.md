@@ -5,21 +5,62 @@
 
 # ExaTN library: Exascale Tensor Networks
 
-NOTE: The ExaTN library is still work in progress. While many functionalities
-are already working, some are still under development. The full release will
-be coming in the next months, supported by documentation and examples.
-
-ExaTN is a software library for expressing and processing
-hierarchical tensor networks on homo- and heterogeneous HPC
+ExaTN is a software library for expressing, manipulating and processing
+arbitrary tensor networks on homo- and heterogeneous HPC
 platforms of vastly different scale, from laptops to leadership
 HPC systems. The library can be leveraged in any computational
-domain which heavily relies on large-scale numerical tensor algebra:
- (a) Quantum many-body theory in condensed matter physics;
- (b) Quantum many-body theory in quantum chemistry;
- (c) Quantum computing simulations;
- (d) General relativity simulations;
- (e) Multivariate data analytics;
- (f) Tensor-based neural network algorithms.
+domain that relies heavily on numerical tensor algebra:
+
+ * Quantum many-body theory in condensed matter physics;
+ * Quantum many-body theory in quantum chemistry;
+ * Quantum computing simulations;
+ * General relativity simulations;
+ * Multivariate data analytics;
+ * Tensor-based neural network algorithms.
+
+
+## Concepts and Usage
+
+The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
+
+ 1. Declarative API is used to declare, construct and manipulate C++ objects
+    implementing the ExaTN library concepts, like tensors, tensor networks,
+    tensor network operators, tensor network expansions, etc. The corresponding
+    C++ header files are located in `src/numerics`. Note that the declarative API
+    calls do not allocate storage for tensors.
+ 2. Executive API is used to perform storage allocation and numerical processing
+    of tensors, tensor networks, tensor network operators, tensor network expansions,
+    etc. The corresponding header file is `src/exatn/exatn_numerics.hpp`.
+
+There are multiple examples available in `src/exatn/tests/NumServerTester.cpp`, but you should
+ignore any of them which use direct numericalServer->API calls (these are internal tests). The
+`main` function at the very bottom shows how to initialize and finalize ExaTN.
+
+Main ExaTN C++ objects:
+
+ * `exatn::Tensor` (`src/numerics/tensor.hpp`): An abstraction of a tensor defined by
+   * Tensor name: Alphanumeric with underscores, must begin with a letter;
+   * Tensor shape: A vector of tensor dimension extents (extent of each tensor dimension);
+   * Tensor signature (optional): A vector of tensor dimension identifiers. A tensor dimension
+     identifier either associates the tensor dimension with a specific registered vector
+     space/subspace or simply provides a base offset for defining tensor slices (default is 0).
+ * `exatn::TensorNetwork` (`src/numerics/tensor_network.hpp`): A tensor network is an aggregate
+   of tensors where each tensor may be connected to other tensors via associating corresponding
+   tensor dimensions as specified by a directed multi-graph in which each vertex represents a
+   tensor with each attached (directed) edge being a tensor dimension. Each directed edge
+   connects two dimensions coming from two different tensors. Graph vertices may also have
+   open edges (edges with an open end) which correspond to uncontrcacted tensor dimensions.
+   The tensors constituting a tensor network are called *input* tensors. Each tensor network
+   is also automatically equipped with the *output* tensor which collects all uncontracted
+   tensor dimensions, thus representing the tensor-result of a full contraction of the
+   tensor network.
+ * `exatn::TensorOperator` (`src/numerics/tensor_operator.hpp`): A tensor network operator
+   is a tensor network in which open edges are distinguished by their belonging to either
+   the ket or bra (dual) tensor space.
+ * `exatn::TensorExpansion` (`src/numerics/tensor_expansion.hpp`): A tensor network expansion
+   is a linear combination of tensor networks with complex coefficients. All tensor networks
+   in a tensor network expansion must have their output tensors possess the same shape.
+
 
 ## Quick Start
 Click [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ornl-qci/exatn)
@@ -47,18 +88,20 @@ Navigate to ``https://localhost:3000`` in your browser to open the IDE and get s
 ## API Documentation
 For detailed class documentation, please see our [API Documentation](https://ornl-qci.github.io/exatn-api-docs) page.
 
+
 ## Dependencies
 ```
 Compiler (C++11, optional Fortran-2003 for multi-node execution with ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
 MPI (optional): MPICH 3+ (recommended), OpenMPI 3+
-BLAS (optional): ATLAS (default Linux BLAS), MKL, ACML, ESSL
-CUDA 9+ (optional)
+BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
+CUDA 9+ (optional for NVIDIA GPU)
 CMake 3.9+ (for build)
 ```
 For TaProl Parser Development
 ```
 ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/parser).
 ```
+
 
 ## Linux Build instructions
 ```
@@ -73,20 +116,23 @@ $ python3 -m pip install --upgrade cmake
 ``` bash
 $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
+$ git submodule init
+$ git submodule update --init --recursive
 $ mkdir build && cd build
-$ cmake .. -DEXATN_BUILD_TESTS=TRUE
-  For execution on NVIDIA GPU:
-  -DENABLE_CUDA=True
-  For GPU execution via very recent CUDA versions with GNU compiler:
-  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+$ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
   For CPU accelerated matrix algebra via a CPU BLAS library:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
-   where the choices are ATLAS, MKL, ACML, ESSL. ATLAS is used to
-   designate any default Linux BLAS library (libblas.so).
+   where the choices are OPENBLAS, ATLAS, MKL, ACML, ESSL.
    If you use Intel MKL, you will need to provide the following
-   environment variable instead of BLAS_PATH:
+   environment variable instead of BLAS_PATH above:
   -DPATH_INTEL_ROOT=<PATH_TO_INTEL_ROOT_DIRECTORY>
-  For multi-node execution via MPI (ExaTENSOR backend requires Fortran):
+  For execution on NVIDIA GPU:
+  -DENABLE_CUDA=True
+   You can adjust the NVIDIA GPU compute capability via setting
+   an environment variable GPU_SM_ARCH, for example GPU_SM_ARCH=70 (Volta).
+  For GPU execution via very recent CUDA versions with the GNU compiler:
+  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+  For multi-node execution via MPI:
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
    where the choices are OPENMPI or MPICH. Note that the OPENMPI choice
    also covers its derivatives, for example Spectrum MPI. The MPICH choice
@@ -102,13 +148,17 @@ your application with ExaTN.
 
 In order to fully clean the build, you will need to do the following:
 ``` bash
-$ make clean (inside your ExaTN build directory)
-$ make clean (inside tpls/ExaTensor)
+$ cd ../tpls/ExaTensor
+$ make clean
+$ cd ../../build
+$ make clean
 $ rm -r ~/.exatn
+$ make rebuild_cache
+$ make install
 ```
 
 ```
-Example of a typical workstation configuration with no BLAS (slow):
+Example of a typical workstation configuration with no BLAS (very slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -118,6 +168,12 @@ cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+
+Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib):
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel):
 cmake ..
@@ -129,30 +185,37 @@ Example of a typical workstation configuration with default Linux BLAS (found in
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+
+Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib) and CUDA:
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
 Example of an MPI enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 ```
 
@@ -162,11 +225,6 @@ supports up to GCC 7, so if your default `g++` is version 8, then you will need 
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
-
-When requesting the multi-node MPI build, the tensor algebra library ExaTENSOR
-is used as the default multi-node execution backend. Due to numerous bugs in
-Fortran compilers and MPI libraries, the only tested choices are the following:
-gcc-8 compiler, intel-18+ compiler, openmpi-3.1.0 library, mpich-3.2.1 library or later.
 
 To link the C++ ExaTN library with your application, use the following command which
 will show which libraries will need to be linked:
@@ -180,7 +238,7 @@ $ export PYTHONPATH=$PYTHONPATH:~/.exatn
 ```
 It may also be helpful to have mpi4py installed.
 
-## Mac OS X Build Instructions (no MPI)
+## Mac OS X Build Instructions (no MPI, poorly supported)
 First install GCC via homebrew:
 ```
 $ brew install gcc@8
