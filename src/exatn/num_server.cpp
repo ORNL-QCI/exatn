@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/11/11
+REVISION: 2020/11/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,6 +35,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
+ mpi_error = MPI_Comm_rank(MPI_COMM_WORLD,&global_process_rank_); assert(mpi_error == MPI_SUCCESS);
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
  std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
  process_self_ = std::make_shared<ProcessGroup>(MPICommProxy(MPI_COMM_SELF),myself);
@@ -57,7 +58,7 @@ NumServer::NumServer(const ParamConf & parameters,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0)
 {
- num_processes_ = 1; process_rank_ = 0;
+ num_processes_ = 1; process_rank_ = 0; global_process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
  std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
  process_self_ = std::make_shared<ProcessGroup>(intra_comm_,myself); //intra-communicator is empty here
@@ -139,7 +140,7 @@ void NumServer::deactivateContrSeqCaching()
 
 void NumServer::resetClientLoggingLevel(int level){
  if(logging_ == 0){
-  if(level != 0) logfile_.open("exatn_main_thread."+std::to_string(process_rank_)+".log", std::ios::out | std::ios::trunc);
+  if(level != 0) logfile_.open("exatn_main_thread."+std::to_string(global_process_rank_)+".log", std::ios::out | std::ios::trunc);
  }else{
   if(level == 0) logfile_.close();
  }

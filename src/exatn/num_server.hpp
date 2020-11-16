@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/11/11
+REVISION: 2020/11/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,6 +37,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "space_register.hpp"
+#include "tensor_range.hpp"
 #include "tensor.hpp"
 #include "tensor_operation.hpp"
 #include "tensor_op_factory.hpp"
@@ -78,6 +79,7 @@ namespace exatn{
 //Primary numerics:: types exposed to the user:
 using numerics::VectorSpace;
 using numerics::Subspace;
+using numerics::TensorRange;
 using numerics::TensorShape;
 using numerics::TensorSignature;
 using numerics::TensorLeg;
@@ -649,8 +651,9 @@ private:
 
  int logging_; //logging level
  std::ofstream logfile_; //log file
- int num_processes_; //total number of parallel processes
- int process_rank_; //global rank of the current parallel process
+ int num_processes_; //total number of parallel processes in the dedicated MPI communicator
+ int process_rank_; //rank of the current parallel process in the dedicated MPI communicator
+ int global_process_rank_; //rank of the current parallel process in MPI_COMM_WORLD
  MPICommProxy intra_comm_; //global MPI intra-communicator used to initialize the Numerical Server
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/06/01
+REVISION: 2020/11/16
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -168,10 +168,12 @@ private:
   std::string graph_executor_name_;
   /** Tensor graph (DAG) node executor name **/
   std::string node_executor_name_;
-  /** Total number of parallel processes **/
+  /** Total number of parallel processes in the dedicated MPI communicator **/
   int num_processes_;
-  /** Rank of the current parallel process **/
+  /** Rank of the current parallel process in the dedicated MPI communicator **/
   int process_rank_;
+  /** Rank of the current parallel process in MPI_COMM_WORLD **/
+  int global_process_rank_;
   /** Current tensor graph (DAG) executor **/
   std::shared_ptr<TensorGraphExecutor> graph_executor_;
   /** Active execution graphs (DAGs) **/

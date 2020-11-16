@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/08/09
+REVISION: 2020/11/16
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -43,7 +43,7 @@ class TensorGraphExecutor : public Identifiable, public Cloneable<TensorGraphExe
 public:
 
   TensorGraphExecutor():
-   node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1),
+   node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1), global_process_rank_(-1),
    logging_(0), stopping_(false), active_(false), time_start_(exatn::Timer::timeInSecHR())
   {}
 
@@ -59,8 +59,10 @@ public:
   /** Sets/resets the DAG node executor (tensor operation executor). **/
   void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
                          const ParamConf & parameters,
-                         unsigned int process_rank) {
+                         unsigned int process_rank,
+                         unsigned int global_process_rank) {
     process_rank_.store(process_rank);
+    global_process_rank_.store(global_process_rank);
     node_executor_ = node_executor;
     if(node_executor_){
       if(logging_.load() != 0){
@@ -80,8 +82,8 @@ public:
   /** Resets the logging level (0:none). **/
   void resetLoggingLevel(int level = 0) {
     if(logging_.load() == 0){
-      while(level != 0 && process_rank_.load() < 0);
-      if(level != 0) logfile_.open("exatn_exec_thread."+std::to_string(process_rank_.load())+".log", std::ios::out | std::ios::trunc);
+      while(level != 0 && global_process_rank_.load() < 0);
+      if(level != 0) logfile_.open("exatn_exec_thread."+std::to_string(global_process_rank_.load())+".log", std::ios::out | std::ios::trunc);
     }else{
       if(level == 0) logfile_.close();
     }
@@ -132,6 +134,7 @@ protected:
   std::shared_ptr<TensorNodeExecutor> node_executor_; //intr-node tensor operation executor
   std::atomic<std::size_t> num_ops_issued_; //total number of issued tensor operations
   std::atomic<int> process_rank_; //current process rank
+  std::atomic<int> global_process_rank_; //current global process rank (in MPI_COMM_WORLD)
   std::atomic<int> logging_;      //logging level (0:none)
   std::atomic<bool> stopping_;    //signal to pause the execution thread
   std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
