@@ -651,8 +651,9 @@ private:
 
  int logging_; //logging level
  std::ofstream logfile_; //log file
- int num_processes_; //total number of parallel processes
- int process_rank_; //global rank of the current parallel process
+ int num_processes_; //total number of parallel processes in the dedicated MPI communicator
+ int process_rank_; //rank of the current parallel process in the dedicated MPI communicator
+ int global_process_rank_; //rank of the current parallel process in MPI_COMM_WORLD
  MPICommProxy intra_comm_; //global MPI intra-communicator used to initialize the Numerical Server
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
