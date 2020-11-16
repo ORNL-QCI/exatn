@@ -37,6 +37,7 @@
 //#define EXATN_TEST20 //MKL only (tensor hyper-contraction)
 #define EXATN_TEST21
 #define EXATN_TEST22
+#define EXATN_TEST23
 
 
 #ifdef EXATN_TEST0
@@ -2424,6 +2425,99 @@ TEST(NumServerTester, MPSNorm) {
  std::cout << "Destroying tensors ... " << std::flush;
  success = exatn::destroyTensors(mps_norm); assert(success);
  std::cout << "Done" << std::endl << std::flush;
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST23
+TEST(NumServerTester, UserDefinedMethod) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
+
+ const unsigned int num_occupied = 12;
+ const unsigned int num_virtuals = 36;
+ const unsigned int num_total = num_occupied + num_virtuals;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Create a tensor:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{num_virtuals,num_virtuals,num_occupied,num_occupied});
+ assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("A"); assert(success);
+
+ //Define a user-defined tensor method:
+ class MyTensorMethod: public exatn::TensorMethod {
+ public:
+
+  MyTensorMethod(unsigned int num_occ,
+                 unsigned int num_virt,
+                 const std::vector<double> & denominators):
+   num_occ_(num_occ), num_virt_(num_virt), denominators_(denominators) {}
+
+  const std::string name() const override {return "MyTensorMethod";}
+
+  const std::string description() const override {return "Division by denominators";}
+
+  void pack(BytePacket & packet) override {} //ignore
+
+  void unpack(BytePacket & packet) override {} //ignore
+
+  int apply(talsh::Tensor & tensor) override {
+   //Get access to the tensor body:
+   double * body;
+   auto access_granted = tensor.getDataAccessHost(&body); assert(access_granted);
+   //Retrive tensor dimension extents:
+   unsigned int num_dims = 0;
+   const auto * tensor_dims = tensor.getDimExtents(num_dims); assert(tensor_dims != nullptr);
+   if(num_dims > 0 && num_dims%2 == 0){ //assume first half dims are virt, second half are occ
+    //Create a range over all tensor dimensions:
+    exatn::TensorRange tens_range(num_dims,tensor_dims);
+    //Divide each tensor element by a denominator:
+    bool not_over = true;
+    while(not_over){
+     const auto & multi_index = tens_range.getMultiIndex();
+     //Compute the denominator for the current tensor element:
+     double den = 0.0;
+     for(unsigned int i = 0; i < num_dims/2; ++i) den += denominators_[num_occ_ + multi_index[i]]; //virt
+     for(unsigned int i = num_dims/2; i < num_dims; ++i) den -= denominators_[multi_index[i]]; //occ
+     body[tens_range.localOffset()] /= den; //divide the tensor element by its denominator
+     not_over = tens_range.next(); //proceed to the next tensor element
+    }
+   }else{
+    assert(false);
+   }
+   return 0;
+  }
+
+ private:
+
+  unsigned int num_occ_;
+  unsigned int num_virt_;
+  std::vector<double> denominators_;
+ };
+
+ //Apply the user-defined tensor method to a tensor:
+ std::vector<double> denominators(num_total);
+ for(unsigned int i = 0; i < num_total; ++i) denominators[i] = static_cast<double>(i+1);
+ success = exatn::transformTensor("A",std::shared_ptr<exatn::TensorMethod>(
+                                       new MyTensorMethod(num_occupied,num_virtuals,denominators)));
+ success = exatn::sync(); assert(success);
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

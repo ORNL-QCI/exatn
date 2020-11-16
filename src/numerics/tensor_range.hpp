@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/08/09
+REVISION: 2020/11/16
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -53,6 +53,10 @@ public:
 
  inline TensorRange(const std::vector<DimExtent> & extents); //in: extent of each dimension (base offset = 0)
 
+ template <typename IntegralType>
+ inline TensorRange(const unsigned int num_dims,   //in: number of dimensions
+                    const IntegralType extents[]); //in: dimension extents
+
  TensorRange(const TensorRange &) = default;
  TensorRange & operator=(const TensorRange &) = default;
  TensorRange(TensorRange &&) noexcept = default;
@@ -73,6 +77,9 @@ public:
      TRUE on success, FALSE if the subrange is empty for the current progress agent. **/
  inline bool reset(unsigned int num_agents,  //number of concurrent agents (iterators)
                    unsigned int agent_rank); //current agend id: [0..num_agents-1]
+
+ /** Returns the current multi-index value. **/
+ inline const std::vector<DimOffset> & getMultiIndex() const;
 
  /** Retrieves a specific index from the multi-index. **/
  inline DimOffset getIndex(unsigned int position) const;
@@ -169,6 +176,25 @@ inline TensorRange::TensorRange(const std::vector<DimExtent> & extents): //in: e
 }
 
 
+template <typename IntegralType>
+inline TensorRange::TensorRange(const unsigned int num_dims,   //in: number of dimensions
+                                const IntegralType extents[]): //in: dimension extents
+ bases_(num_dims,0), extents_(num_dims,0), strides_(num_dims), mlndx_(num_dims)
+{
+ if(num_dims > 0){
+  for(unsigned int i = 0; i < num_dims; ++i) extents_[i] = extents[i];
+  volume_ = 1;
+  for(unsigned int i = 0; i < num_dims; ++i){
+   strides_[i] = volume_;
+   volume_ *= extents_[i];
+  }
+ }else{
+  volume_ = 0;
+ }
+ reset();
+}
+
+
 inline DimExtent TensorRange::localVolume() const
 {
  return volume_;
@@ -208,6 +234,12 @@ inline bool TensorRange::reset(unsigned int num_agents,
   offs /= extents_[i];
  }
  return true;
+}
+
+
+inline const std::vector<DimOffset> & TensorRange::getMultiIndex() const
+{
+ return mlndx_;
 }
 
 
