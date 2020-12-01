@@ -1,7 +1,10 @@
 #include "exatn_py_utils.hpp"
 #include "pybind11/pybind11.h"
+#include <pybind11/iostream.h>
+#include <pybind11/numpy.h>
 #include "talshxx.hpp"
 #include "tensor_basic.hpp"
+
 
 #include "exatn_numerics.hpp"
 #include "tensor_expansion.hpp"
@@ -66,7 +69,15 @@ py::class_<exatn::numerics::TensorExpansion,
       .def(py::init<const TensorNetwork &>())
       .def(py::init<const std::string &, const std::string &,
                     const std::map<std::string, std::shared_ptr<Tensor>>>())
-      .def("printIt", &exatn::numerics::TensorNetwork::printIt, "with_tensor_hash"_a = false, "")
+      .def("printIt", [](TensorNetwork *tn, bool with_hash){
+          py::scoped_ostream_redirect stream(
+          std::cout,                               // std::ostream&
+          // NOTE: renamed to py::module_ in pybind11 2.6
+          py::module::import("sys").attr("stdout") // Python output
+        );
+        tn->printIt(with_hash);}
+        , "with_tensor_hash"_a = false, ""
+        )
       .def("rename", &exatn::numerics::TensorNetwork::rename, "")
       .def("getName", &exatn::numerics::TensorNetwork::getName, "")
       .def("conjugate", &TensorNetwork::conjugate, "")
@@ -302,6 +313,11 @@ py::class_<exatn::numerics::TensorExpansion,
   m.def("print", &printTensorDataNoNumServer, "");
   m.def("transformTensor", &generalTransformWithDataNoNumServer, "");
   m.def(
+      "evaluateTensorNetworkAsync",
+      [](const std::string& name, const std::string& network){
+         return exatn::evaluateTensorNetwork(name,network);},
+      "");
+  m.def(
       "evaluateTensorNetwork",
       [](const std::string& name, const std::string& network){
          return exatn::evaluateTensorNetworkSync(name,network);},
@@ -329,37 +345,42 @@ py::class_<exatn::numerics::TensorExpansion,
       auto worked = local_tensor->getDataAccessHost(&elements);
       auto cap = py::capsule(
           elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
+      auto arr = py::array_t<
+          double,
+          py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
       return arr;
-    } else if (tensorType == talsh::COMPLEX64) {
+    } else {
+      assert(false && "Invalid TensorElementType");
+    }
+    return py::array_t<double, py::array::f_style|py::array::forcecast>();
+  });
+  m.def("getLocalTensorComplex", [](const std::string &name) {
+    auto local_tensor = exatn::getLocalTensor(name);
+    unsigned int nd = local_tensor->getRank();
+
+    std::vector<std::size_t> dims_vec(nd);
+    auto dims = local_tensor->getDimExtents(nd);
+    for (int i = 0; i < nd; i++) {
+      dims_vec[i] = dims[i];
+    }
+
+    auto tensorType = local_tensor->getElementType();
+
+    if (tensorType == talsh::COMPLEX64) {
       std::complex<double> *elements;
       auto worked = local_tensor->getDataAccessHost(&elements);
       auto cap = py::capsule(
           elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
+      auto arr = py::array_t<
+          std::complex<double>,
+          py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
       return arr;
-
-    } else if (tensorType == talsh::COMPLEX32) {
-      std::complex<float> *elements;
-      auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
-
-    } else if (tensorType == talsh::REAL32) {
-      float *elements;
-      auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
-
     } else {
       assert(false && "Invalid TensorElementType");
     }
-    return py::array();
+    return py::array_t<std::complex<double>, py::array::f_style|py::array::forcecast>();
   });
+  m.def("tensorAllocated", &tensorAllocated, "");
   m.def("destroyTensor", &destroyTensor, "");
   // exatn_numerics API
   // Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha 
