@@ -221,11 +221,13 @@ cmake ..
 
 Example of an MPI-enabled configuration with OpenBLAS and CUDA on Summit:
 CC=gcc CXX=g++ FC=gfortran cmake ..
--DCMAKE_INSTALL_PREFIX=*PATH_TO_YOUR_HOME*/.exatn -DCMAKE_BUILD_TYPE=Release
+-DCMAKE_INSTALL_PREFIX=<PATH_TO_YOUR_HOME>/.exatn -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++
--DBLAS_LIB=OPENBLAS -DBLAS_PATH=*PATH_TO_YOUR_OPENBLAS*/lib
--DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=*PATH_TO_YOUR_SPECTRUM_MPI*
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=<PATH_TO_YOUR_OPENBLAS>/lib
+-DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=<PATH_TO_YOUR_SPECTRUM_MPI>
+
+On Summit, you can look up the location of libraries by "module show MODULE_NAME".
 ```
 
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
