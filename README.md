@@ -33,15 +33,16 @@ The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
     etc. The corresponding header file is `src/exatn/exatn_numerics.hpp`.
 
 There are multiple examples available in `src/exatn/tests/NumServerTester.cpp`, but you should
-ignore any of them which use direct numericalServer->API calls (these are internal tests). The
-`main` function at the very bottom shows how to initialize and finalize ExaTN.
+ignore those which use direct `numericalServer->API` calls (these are internal tests). The
+`main` function at the very bottom shows how to initialize and finalize ExaTN. Note that ExaTN
+assumes the column-major storage of tensors (importan for initialization with external data).
 
 Main ExaTN C++ objects:
 
  * `exatn::Tensor` (`src/numerics/tensor.hpp`): An abstraction of a tensor defined by
-   * Tensor name: Alphanumeric with underscores, must begin with a letter;
-   * Tensor shape: A vector of tensor dimension extents (extent of each tensor dimension);
-   * Tensor signature (optional): A vector of tensor dimension identifiers. A tensor dimension
+   * *Tensor name*: Alphanumeric with underscores, must begin with a letter;
+   * *Tensor shape*: A vector of tensor dimension extents (extent of each tensor dimension);
+   * *Tensor signature* (optional): A vector of tensor dimension identifiers. A tensor dimension
      identifier either associates the tensor dimension with a specific registered vector
      space/subspace or simply provides a base offset for defining tensor slices (default is 0).
  * `exatn::TensorNetwork` (`src/numerics/tensor_network.hpp`): A tensor network is an aggregate
@@ -202,7 +203,7 @@ cmake ..
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
-Example of an MPI enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
+Example of an MPI-enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -210,13 +211,23 @@ cmake ..
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
-Example of an MPI enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
+Example of an MPI-enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
+
+Example of an MPI-enabled configuration with OpenBLAS and CUDA on Summit:
+CC=gcc CXX=g++ FC=gfortran cmake ..
+-DCMAKE_INSTALL_PREFIX=<PATH_TO_YOUR_HOME>/.exatn -DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=<PATH_TO_YOUR_OPENBLAS>/lib
+-DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=<PATH_TO_YOUR_SPECTRUM_MPI>
+
+On Summit, you can look up the location of libraries by "module show MODULE_NAME".
 ```
 
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
