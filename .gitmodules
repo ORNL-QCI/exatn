@@ -13,3 +13,6 @@
 [submodule "tpls/ExaTensor"]
 	path = tpls/ExaTensor
 	url = https://github.com/ornl-qci/ExaTensor
+[submodule "tpls/metis"]
+	path = tpls/metis
+	url = https://github.com/ORNL-QCI/metis.git
