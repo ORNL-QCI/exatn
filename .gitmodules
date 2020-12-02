@@ -15,4 +15,4 @@
 	url = https://github.com/ornl-qci/ExaTensor
 [submodule "tpls/metis"]
 	path = tpls/metis
-	url = https://github.com/ornl-qci/metis
+	url = https://github.com/ORNL-QCI/metis.git
