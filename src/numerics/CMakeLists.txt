@@ -56,7 +56,7 @@ target_include_directories(${LIBRARY_NAME}
                            ${CMAKE_SOURCE_DIR}/src/runtime
                            ${CMAKE_SOURCE_DIR}/src/runtime/executor
                            ${CMAKE_SOURCE_DIR}/src/exatn)
-target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor exatn-utils metis)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor exatn-utils metis GKlib)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
