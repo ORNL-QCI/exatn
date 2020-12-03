@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/11/16
+REVISION: 2020/12/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_val.hpp"
 #include "functor_init_rnd.hpp"
 #include "functor_init_dat.hpp"
+#include "functor_init_file.hpp"
 #include "functor_scale.hpp"
 #include "functor_maxabs.hpp"
 #include "functor_norm1.hpp"
@@ -99,6 +100,7 @@ using numerics::ContractionSeqOptimizerFactory;
 using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
+using numerics::FunctorInitFile;
 using numerics::FunctorScale;
 using numerics::FunctorMaxAbs;
 using numerics::FunctorNorm1;
@@ -404,6 +406,20 @@ public:
  template<typename NumericType>
  bool initTensorDataSync(const std::string & name,                   //in: tensor name
                          const std::vector<NumericType> & ext_data); //in: vector with externally provided data
+
+/** Initializes a tensor with externally provided data read from a file with format:
+     Storage format (string: {dense|list})
+     Tensor name
+     Tensor shape (space-separated dimension extents)
+     Tensor signature (space-separated dimension base offsets)
+     Tensor elements:
+      Dense format: Numeric values (column-wise order), any number of values per line
+      List format: Numeric value and Multi-index in each line **/
+ bool initTensorFile(const std::string & name,      //in: tensor name
+                     const std::string & filename); //in: file name with tensor data
+
+ bool initTensorFileSync(const std::string & name,      //in: tensor name
+                         const std::string & filename); //in: file name with tensor data
 
  /** Initializes a tensor to some random value. **/
  bool initTensorRnd(const std::string & name);     //in: tensor name

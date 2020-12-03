@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/11/11
+REVISION: 2020/12/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -298,6 +298,23 @@ template<typename NumericType>
 inline bool initTensorDataSync(const std::string & name,                  //in: tensor name
                                const std::vector<NumericType> & ext_data) //in: externally provided data
  {return numericalServer->initTensorDataSync(name,ext_data);}
+
+
+/** Initializes a tensor with externally provided data read from a file with format:
+     Storage format (string: {dense|list})
+     Tensor name
+     Tensor shape (space-separated dimension extents)
+     Tensor signature (space-separated dimension base offsets)
+     Tensor elements:
+      Dense format: Numeric values (column-wise order), any number of values per line
+      List format: Numeric value and Multi-index in each line **/
+inline bool initTensorFile(const std::string & name,     //in: tensor name
+                           const std::string & filename) //in: file name with tensor data
+ {return numericalServer->initTensorFile(name,filename);}
+
+inline bool initTensorFileSync(const std::string & name,     //in: tensor name
+                               const std::string & filename) //in: file name with tensor data
+ {return numericalServer->initTensorFileSync(name,filename);}
 
 
 /** Initializes the tensor body with random values. **/

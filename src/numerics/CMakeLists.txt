@@ -43,6 +43,7 @@ add_library(${LIBRARY_NAME}
             functor_init_val.cpp
             functor_init_rnd.cpp
             functor_init_dat.cpp
+            functor_init_file.cpp
             functor_scale.cpp
             functor_maxabs.cpp
             functor_norm1.cpp

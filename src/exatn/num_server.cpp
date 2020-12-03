@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/11/16
+REVISION: 2020/12/03
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -944,6 +944,18 @@ bool NumServer::destroyTensorsSync(TensorNetwork & tensor_network)
   if(!success) break;
  }
  return success;
+}
+
+bool NumServer::initTensorFile(const std::string & name,
+                               const std::string & filename)
+{
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitFile(filename)));
+}
+
+bool NumServer::initTensorFileSync(const std::string & name,
+                                   const std::string & filename)
+{
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitFile(filename)));
 }
 
 bool NumServer::initTensorRnd(const std::string & name)
