@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/03
+REVISION: 2020/12/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1940,6 +1940,22 @@ bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
  bool parsed = submit(op);
  if(parsed) parsed = sync(*op);
  return parsed;
+}
+
+bool NumServer::printTensor(const std::string & name){
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorPrint()));
+}
+
+bool NumServer::printTensorSync(const std::string & name){
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorPrint()));
+}
+
+bool NumServer::printTensorFile(const std::string & name, const std::string & filename){
+ return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorPrint(filename)));
+}
+
+bool NumServer::printTensorFileSync(const std::string & name, const std::string & filename){
+ return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorPrint(filename)));
 }
 
 bool NumServer::evaluateTensorNetwork(const std::string & name,

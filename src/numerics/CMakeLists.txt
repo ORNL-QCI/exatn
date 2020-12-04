@@ -48,7 +48,8 @@ add_library(${LIBRARY_NAME}
             functor_maxabs.cpp
             functor_norm1.cpp
             functor_norm2.cpp
-            functor_diag_rank.cpp)
+            functor_diag_rank.cpp
+            functor_print.cpp)
 
 target_include_directories(${LIBRARY_NAME}
                     PUBLIC .

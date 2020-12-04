@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/12/03
+REVISION: 2020/12/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -574,6 +574,24 @@ inline bool orthogonalizeTensorMGS(const std::string & name) //in: tensor name
 
 inline bool orthogonalizeTensorMGSSync(const std::string & name) //in: tensor name
  {return numericalServer->orthogonalizeTensorMGSSync(name);}
+
+
+/** Prints a tensor to the standard output. **/
+inline bool printTensor(const std::string & name) //in: tensor name
+ {return numericalServer->printTensor(name);}
+
+inline bool printTensorSync(const std::string & name) //in: tensor name
+ {return numericalServer->printTensorSync(name);}
+
+
+/** Prints a tensor to a file. **/
+inline bool printTensorFile(const std::string & name,     //in: tensor name
+                            const std::string & filename) //in: file name
+ {return numericalServer->printTensorFile(name,filename);}
+
+inline bool printTensorFileSync(const std::string & name,     //in: tensor name
+                                const std::string & filename) //in: file name
+ {return numericalServer->printTensorFileSync(name,filename);}
 
 
 /** Performs a full evaluation of a tensor network specified symbolically, based on

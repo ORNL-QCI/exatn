@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/03
+REVISION: 2020/12/04
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -61,6 +61,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_norm1.hpp"
 #include "functor_norm2.hpp"
 #include "functor_diag_rank.hpp"
+#include "functor_print.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -106,6 +107,7 @@ using numerics::FunctorMaxAbs;
 using numerics::FunctorNorm1;
 using numerics::FunctorNorm2;
 using numerics::FunctorDiagRank;
+using numerics::FunctorPrint;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
@@ -612,6 +614,18 @@ public:
  bool orthogonalizeTensorMGS(const std::string & name); //in: tensor name
 
  bool orthogonalizeTensorMGSSync(const std::string & name); //in: tensor name
+
+ /** Prints a tensor to the standard output. **/
+ bool printTensor(const std::string & name); //in: tensor name
+
+ bool printTensorSync(const std::string & name); //in: tensor name
+
+ /** Prints a tensor to a file. **/
+ bool printTensorFile(const std::string & name,      //in: tensor name
+                      const std::string & filename); //in: file name
+
+ bool printTensorFileSync(const std::string & name,      //in: tensor name
+                          const std::string & filename); //in: file name
 
  /** Performs a full evaluation of a tensor network based on the symbolic
      specification involving already created tensors (including the output). **/
