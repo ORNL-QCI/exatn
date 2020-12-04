@@ -38,6 +38,7 @@
 #define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
+#define EXATN_TEST24
 
 
 #ifdef EXATN_TEST0
@@ -2517,6 +2518,54 @@ TEST(NumServerTester, UserDefinedMethod) {
  success = exatn::sync(); assert(success);
 
  //Destroy tensors:
+ success = exatn::destroyTensor("A"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST24
+TEST(NumServerTester, PrintTensors) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Create tensors:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{2,3,4,2}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{2,3,4,2}); assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensor("B",0.0); assert(success);
+
+ //Print tensor A to screen:
+ success = exatn::printTensorSync("A"); assert(success);
+
+ //Print tensor A to file:
+ success = exatn::printTensorFileSync("A","tensor.txt"); assert(success);
+
+ //Init tensor B from file:
+ success = exatn::initTensorFile("B","tensor.txt"); assert(success);
+
+ //Print tensor B to screen:
+ success = exatn::printTensorSync("B"); assert(success);
+
+ //Sync:
+ success = exatn::sync(); assert(success);
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:

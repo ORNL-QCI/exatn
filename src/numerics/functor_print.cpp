@@ -72,10 +72,12 @@ int FunctorPrint::apply(talsh::Tensor & local_tensor) //tensor slice (in general
    for(unsigned int i = 0; i < rank; ++i) *output << " " << offsets[i];
    *output << std::endl;
    if(element_type == talsh::COMPLEX32 || element_type == talsh::COMPLEX64) tensor_volume *= 2;
+   *output << std::scientific;
    for(std::size_t i = 0; i < tensor_volume; ++i){
     *output << " " << tensor_body[i];
-    if(i%16 == 0) *output << std::endl;
+    if(i%16 == 15) *output << std::endl;
    }
+   if(tensor_volume%16 != 0) *output << std::endl;
    if(filename_.length() > 0) tensor_file.close();
   }else{
    std::cout << "#ERROR(exatn::numerics::FunctorPrint): Output failed!" << std::endl << std::flush;
