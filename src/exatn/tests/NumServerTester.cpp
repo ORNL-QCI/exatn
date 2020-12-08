@@ -52,14 +52,17 @@ TEST(NumServerTester, PerformanceExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- const exatn::DimExtent DIM = 1024; //1024 for low-end CPU, 3072 for Maxwell, 4096 for Pascal and Volta
+ const exatn::DimExtent DIM = 1024; //CPU: 1024 for low-end CPU, 2048 for high-end CPU
+                                    //3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
 
- bool success = true;
+ //exatn::activateFastMath(); //fast math (mixed-precision)
 
  std::cout << "Contractions of rank-2 tensors:" << std::endl;
+ bool success = true;
+
  //Create tensors:
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
