@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/04
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -151,7 +151,21 @@ void NumServer::resetClientLoggingLevel(int level){
 void NumServer::resetRuntimeLoggingLevel(int level)
 {
  while(!tensor_rt_);
+ bool synced = tensor_rt_->sync(); assert(synced);
  tensor_rt_->resetLoggingLevel(level);
+ return;
+}
+
+void NumServer::activateFastMath()
+{
+ while(!tensor_rt_);
+ bool synced = tensor_rt_->sync(); assert(synced);
+ tensor_rt_->activateFastMath();
+ if(logging_ > 0){
+  logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+           << "]: Fast math activated (if available); Tensor runtime synced" << std::endl << std::flush;
+ }
+ synced = tensor_rt_->sync(); assert(synced);
  return;
 }
 

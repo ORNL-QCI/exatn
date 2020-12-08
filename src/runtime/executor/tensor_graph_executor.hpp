@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/11/16
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -89,6 +89,12 @@ public:
     }
     logging_.store(level);
     return;
+  }
+
+  /** Activates mixed-precision fast math on all devices (if available). **/
+  void activateFastMath() {
+    while(!node_executor_);
+    return node_executor_->activateFastMath();
   }
 
   /** Returns the Host memory buffer size in bytes provided by the node executor. **/

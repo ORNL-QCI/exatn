@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/04
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -162,6 +162,9 @@ public:
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
+
+ /** Activates mixed-precision fast math operations on all devices (if available). **/
+ void activateFastMath();
 
  /** Returns the Host memory buffer size in bytes provided by the runtime. **/
  std::size_t getMemoryBufferSize() const;

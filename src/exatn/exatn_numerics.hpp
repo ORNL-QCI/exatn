@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/12/04
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -771,6 +771,11 @@ inline void resetLoggingLevel(int client_level = 0,
  {resetClientLoggingLevel(client_level);
   resetRuntimeLoggingLevel(runtime_level);
   return;}
+
+
+/** Activates mixed-precision fast math operations on all devices (if available). **/
+inline void activateFastMath()
+ {return numericalServer->activateFastMath();}
 
 
 /** Returns the Host memory buffer size in bytes provided by the runtime. **/

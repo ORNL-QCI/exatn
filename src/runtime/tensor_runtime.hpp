@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/11/16
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,6 +87,9 @@ public:
 
   /** Resets the logging level (0:none) [MAIN THREAD]. **/
   void resetLoggingLevel(int level = 0);
+
+  /** Activates mixed-precision fast math on all devices (if available). **/
+  void activateFastMath();
 
   /** Returns the Host memory buffer size in bytes provided by the executor. **/
   std::size_t getMemoryBufferSize() const;

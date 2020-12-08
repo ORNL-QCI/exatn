@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/09/29
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -39,6 +39,8 @@ public:
   virtual ~TalshNodeExecutor();
 
   void initialize(const ParamConf & parameters) override;
+
+  void activateFastMath() override;
 
   std::size_t getMemoryBufferSize() const override;
 

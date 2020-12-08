@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/11/16
+REVISION: 2020/12/08
 
 Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
@@ -138,6 +138,13 @@ void TensorRuntime::resetLoggingLevel(int level)
  graph_executor_->resetLoggingLevel(level);
  logging_ = level;
  return;
+}
+
+
+void TensorRuntime::activateFastMath()
+{
+ while(!graph_executor_);
+ return graph_executor_->activateFastMath();
 }
 
 
