@@ -1,4 +1,4 @@
-![ExaTN](ExaTN.tif)
+![ExaTN](ExaTN.png)
 
 | Branch | Status |
 |:-------|:-------|
