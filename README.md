@@ -1,3 +1,5 @@
+![ExaTN](ExaTN.tif)
+
 | Branch | Status |
 |:-------|:-------|
 |master | [![pipeline status](https://code.ornl.gov/qci/exatn/badges/master/pipeline.svg)](https://code.ornl.gov/qci/exatn/commits/master) |
