@@ -306,6 +306,15 @@ TEST(NumServerTester, ExamplarExaTN)
             + std::pow(std::pow(double{VI_RANGE},2)*(2e-4)*(2e-3)*1.0,2)*std::pow(double{VI_RANGE},2)*std::pow(double{OC_RANGE},2)*0.25
            << std::endl << std::flush;
  body_ptr = nullptr;
+ //Retrieve scalar via talsh::Tensor::View:
+ auto scalar_view = local_copy->getSliceView<exatn::TensorDataType<TENS_ELEM_TYPE>::value>(); //scalar view
+ std::cout << "ENERGY value (via tensor view) = " << scalar_view[std::initializer_list<int>{}] << std::endl;
+ local_copy.reset();
+
+ //Access a tensor element directly via talsh::Tensor::View:
+ local_copy = exatn::getLocalTensor("Z2"); assert(local_copy);
+ auto tensor_view = local_copy->getSliceView<exatn::TensorDataType<TENS_ELEM_TYPE>::value>(); //full tensor view
+ std::cout << "Z2[2,3,1,0] = " << tensor_view[{2,3,1,0}] << std::endl;
  local_copy.reset();
 
  //Synchronize ExaTN server:
