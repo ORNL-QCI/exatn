@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/10/09
+REVISION: 2020/12/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -165,6 +165,12 @@ void TensorConn::conjugate()
 {
  if(id_ != 0) conjugated_ = !conjugated_; //output tensors do not conjugate
  for(auto & leg: legs_) leg.reverseDirection();
+ return;
+}
+
+void TensorConn::conjugate(bool conjug)
+{
+ if(conjugated_ != conjug) return conjugate();
  return;
 }
 

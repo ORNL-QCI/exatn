@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/10/09
+REVISION: 2020/12/21
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -101,7 +101,8 @@ public:
 
  /** Deletes an existing tensor leg, reducing the tensor rank by one. **/
  void deleteLeg(unsigned int leg_id);  //in: leg id to delete
- /** Deletes a set of existing tensor legs, reducing the tensor rank. **/
+ /** Deletes a set of existing tensor legs, reducing the tensor rank.
+     The passed vector of leg ids will be sorted on return. **/
  void deleteLegs(std::vector<unsigned int> & leg_ids); //inout: vector of leg ids to delete
 
  /** Appends a new tensor leg as the last leg, increasing the tensor rank by one. **/
@@ -113,7 +114,8 @@ public:
 
  /** Conjugates the connected tensor, which includes complex conjugation
      of the tensor itself as well as tensor leg direction reversal. **/
- void conjugate();
+ void conjugate(); //changes the current conjugation status to the opposite
+ void conjugate(bool conjug); //changes the conjugation status to the requested one
 
  /** Replaces the stored tensor with a new one (same shape and signature). **/
  void replaceStoredTensor(const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
