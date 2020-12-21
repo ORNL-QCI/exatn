@@ -324,62 +324,58 @@ py::class_<exatn::numerics::TensorExpansion,
 
     auto tensorType = local_tensor->getElementType();
 
-    if (tensorType == talsh::REAL64) {
+    if (tensorType == talsh::REAL32) {
+      float *elements;
+      auto worked = local_tensor->getDataAccessHost(&elements);
+      auto cap = py::capsule(elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array_t<float, py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
+      return static_cast<py::array>(arr);
+
+    } else if(tensorType == talsh::REAL64) {
       double *elements;
       auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
-    } else if (tensorType == talsh::COMPLEX64) {
-      std::complex<double> *elements;
-      auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
+      auto cap = py::capsule(elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array_t<double, py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
+      return static_cast<py::array>(arr);
 
     } else if (tensorType == talsh::COMPLEX32) {
       std::complex<float> *elements;
       auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
+      auto cap = py::capsule(elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array_t<std::complex<float>, py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
+      return static_cast<py::array>(arr);
 
-    } else if (tensorType == talsh::REAL32) {
-      float *elements;
+    } else if (tensorType == talsh::COMPLEX64) {
+      std::complex<double> *elements;
       auto worked = local_tensor->getDataAccessHost(&elements);
-      auto cap = py::capsule(
-          elements, [](void *v) { /* deleter, I do not own this... */ });
-      auto arr = py::array(dims_vec, elements, cap);
-      return arr;
+      auto cap = py::capsule(elements, [](void *v) { /* deleter, I do not own this... */ });
+      auto arr = py::array_t<std::complex<double>, py::array::f_style | py::array::forcecast>(dims_vec, elements, cap);
+      return static_cast<py::array>(arr);
 
     } else {
       assert(false && "Invalid TensorElementType");
     }
-    return py::array();
   });
   m.def("destroyTensor", &destroyTensor, "");
   // exatn_numerics API
-  // Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha 
+  // Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha
   // Input: symbolic tensor contraction specification & alpha factor (default = 1.0)
   m.def(
-    "contractTensors", 
+    "contractTensors",
     // Default contraction: alpha = 1.0
     [](const std::string& contraction) {
       return exatn::contractTensorsSync(contraction, 1.0);
     },
     "");
   m.def(
-    "contractTensors", 
+    "contractTensors",
     // Floating-point alpha
     [](const std::string& contraction, double alpha) {
       return exatn::contractTensorsSync(contraction, alpha);
     },
     "");
   m.def(
-    "contractTensors", 
+    "contractTensors",
     // Complex alpha
     [](const std::string& contraction, std::complex<double> alpha) {
       return exatn::contractTensorsSync(contraction, alpha);
@@ -387,7 +383,7 @@ py::class_<exatn::numerics::TensorExpansion,
     "");
   // Initializes the tensor body with random values.
   m.def(
-    "initTensorRnd", 
+    "initTensorRnd",
     [](const std::string& name) {
       return exatn::initTensorRndSync(name);
     },
@@ -401,28 +397,28 @@ py::class_<exatn::numerics::TensorExpansion,
   //   R(b,j,a,i,d) is the right SVD factor,
   //   S(i,j) is the middle SVD factor (the diagonal with singular values).
   m.def(
-    "svd", 
+    "svd",
     [](const std::string& contraction) {
       return exatn::decomposeTensorSVDSync(contraction);
     },
     "");
   // SVD with singular values absorbed by the left tensor
   m.def(
-    "svdL", 
+    "svdL",
     [](const std::string& contraction) {
       return exatn::decomposeTensorSVDLSync(contraction);
     },
     "");
   // SVD with singular values absorbed by the right tensor
   m.def(
-    "svdR", 
+    "svdR",
     [](const std::string& contraction) {
       return exatn::decomposeTensorSVDRSync(contraction);
     },
     "");
   // SVD with square root of singular values absorbed by the left and right tensors
   m.def(
-    "svdLR", 
+    "svdLR",
     [](const std::string& contraction) {
       return exatn::decomposeTensorSVDLRSync(contraction);
     },
