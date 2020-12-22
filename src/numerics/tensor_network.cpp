@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/10/15
+REVISION: 2020/12/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1267,8 +1267,9 @@ bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
 }
 
 
-bool TensorNetwork::deleteTensor(unsigned int tensor_id)
+bool TensorNetwork::deleteTensor(unsigned int tensor_id, bool * deltas_appended)
 {
+ if(deltas_appended != nullptr) *deltas_appended = false;
  if(tensor_id == 0){
   std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
    "Deleting the output tensor of the tensor network is forbidden!" << std::endl;
@@ -1300,7 +1301,7 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
   for(const auto & leg: legs){
    const auto other_tensor_id = leg.getTensorId();
    const auto other_tensor_leg_id = leg.getDimensionId();
-   if(other_tensor_id != 0){ //connections to the output tensor are ingored (they will disappear)
+   if(other_tensor_id != 0){ //connections to the output tensor will require addition of delta tensors
     auto * other_tensor = this->getTensorConn(other_tensor_id);
     assert(other_tensor != nullptr);
     auto other_tensor_leg = other_tensor->getTensorLeg(other_tensor_leg_id);
@@ -1320,10 +1321,27 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id)
     orphaned_legs.emplace_back(other_tensor_leg_id);
    }
   }
-  //Delete orphaned legs of the output tensor:
+  //Append delta tensors for orphaned legs of the output tensor:
   if(orphaned_legs.size() > 0){
-   output_tensor->deleteLegs(orphaned_legs);
+   //output_tensor->deleteLegs(orphaned_legs);
+   for(auto leg_id: orphaned_legs){
+    output_tensor_rank = output_tensor->getNumLegs();
+    auto dim_ext = output_tensor->getDimExtent(leg_id);
+    auto dim_atr = output_tensor->getDimSpaceAttr(leg_id);
+    auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
+    auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
+                                                std::make_shared<Tensor>("_delta",
+                                                 std::initializer_list<decltype(dim_ext)>{dim_ext,dim_ext},
+                                                 std::initializer_list<decltype(dim_atr)>{dim_atr,dim_atr}),
+                                                delta_tensor_id,
+                                                std::vector<TensorLeg>{TensorLeg{0,leg_id},
+                                                                       TensorLeg{0,output_tensor_rank+1}});
+    assert(appended);
+    output_tensor->resetLeg(leg_id,TensorLeg{delta_tensor_id,0});
+    output_tensor->appendLeg(dim_atr,dim_ext,TensorLeg{delta_tensor_id,1});
+   }
    this->updateConnections(0);
+   if(deltas_appended != nullptr) *deltas_appended = true;
   }
  }
  //Delete the tensor from the network:

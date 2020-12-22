@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/10/22
+REVISION: 2020/12/22
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -249,9 +249,11 @@ public:
 
  /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
      The released tensor legs will be joined at the end of the output tensor,
-     unless a tensor leg was already connected to the output tensor, in which case
-     it will be deleted completely, resulting in a reduced rank of the output tensor. **/
- bool deleteTensor(unsigned int tensor_id); //in: id of the tensor to be deleted
+     unless a tensor leg had already been connected to the output tensor, in which case
+     a rank-2 Kronecker delta will be connected to that orphaned leg with the other leg
+     of the Kronecker delta tensor getting joined at the end of the output tensor. **/
+ bool deleteTensor(unsigned int tensor_id,            //in: id of the tensor to be deleted
+                   bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
 
  /** Merges two tensors in a finalized tensor network by replacing them by their contracted product:
      result = left * right: All participating tensor ids must be distinct and not equal to 0.
@@ -420,6 +422,12 @@ protected:
                                      bool dynamic_id_enabled,
                                      unsigned int tensor_id,
                                      Args&&... args); //arguments for TensorConn ctor
+ template <typename... Args>
+ inline bool emplaceTensorConnPrefDirect(bool dynamic_name_enabled,
+                                         const std::string & name_prefix,
+                                         bool dynamic_id_enabled,
+                                         unsigned int tensor_id,
+                                         Args&&... args); //arguments for TensorConn ctor
 
  /** Erases a connected tensor from the tensor network. **/
  inline bool eraseTensorConn(unsigned int tensor_id);
@@ -572,6 +580,31 @@ inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_name_enabled,
   if(dynamic_name_enabled){
    auto & stored_tensor = *(res.first->second.getTensor());
    stored_tensor.rename(generateTensorName(stored_tensor,"x")); //intermediate tensor prefix "x": _xHASH
+  }
+ }
+ return res.second;
+}
+
+
+template <typename... Args>
+inline bool TensorNetwork::emplaceTensorConnPrefDirect(bool dynamic_name_enabled,
+                                                       const std::string & name_prefix,
+                                                       bool dynamic_id_enabled,
+                                                       unsigned int tensor_id,
+                                                       Args&&... args)
+{
+ auto res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ if(!(res.second) && dynamic_id_enabled){
+  tensor_id = getMaxTensorId() + 1;
+  assert(tensor_id != 0); //unsigned int overflow
+  res = tensors_.emplace(tensor_id,TensorConn(std::forward<Args>(args)...));
+ }
+ if(res.second){
+  res.first->second.resetTensorId(tensor_id);
+  updateMaxTensorIdOnAppend(tensor_id);
+  if(dynamic_name_enabled){
+   auto & stored_tensor = *(res.first->second.getTensor());
+   stored_tensor.rename(generateTensorName(stored_tensor,name_prefix));
   }
  }
  return res.second;
