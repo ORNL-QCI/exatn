@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/06/30
+REVISION: 2020/12/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_symbol.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 namespace exatn{
 
@@ -350,6 +351,19 @@ void Tensor::registerIsometry(const std::vector<unsigned int> & isometry)
 const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 {
  return isometries_;
+}
+
+bool Tensor::withIsometricDimension(unsigned int dim_id, const std::vector<unsigned int> ** iso_group) const
+{
+ bool found = false;
+ for(const auto & group: isometries_){
+  if(std::find(group.cbegin(),group.cend(),dim_id) != group.cend()){
+   if(iso_group != nullptr) *iso_group = &group;
+   found = true;
+   break;
+  }
+ }
+ return found;
 }
 
 TensorHashType Tensor::getTensorHash() const

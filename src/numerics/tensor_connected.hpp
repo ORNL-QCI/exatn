@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/12/21
+REVISION: 2020/12/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -127,6 +127,10 @@ public:
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
+
+ /** Returns TRUE if the given tensor dimension belongs to a registered isometry group. **/
+ bool withIsometricDimension(unsigned int dim_id,                                           //in: tensor dimension id
+                             const std::vector<unsigned int> ** iso_group = nullptr) const; //out: pointer to the registered isometric group
 
  /** Returns whether this connected tensor is optimizable or not (whether or not this
      connected tensor should be optimized during the tensor network functional optimization).**/

@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -38,7 +38,8 @@
 #define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
-#define EXATN_TEST24
+#define EXATN_TEST24*/
+#define EXATN_TEST25
 
 
 #ifdef EXATN_TEST0
@@ -2579,6 +2580,56 @@ TEST(NumServerTester, PrintTensors) {
  //Destroy tensors:
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST25
+TEST(NumServerTester, CollapseTensors) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Test tensor deletion:
+ TensorNetwork network("tensnet");
+ auto tensor = exatn::makeSharedTensor("T",TensorShape{16,32});
+ success = network.appendTensor(1,tensor,{}); assert(success);
+ success = network.appendTensor(2,tensor,{{0,0},{1,1}}); assert(success);
+ network.printIt();
+ bool deltas_appended = false;
+ success = network.deleteTensor(1,&deltas_appended); assert(success);
+ network.printIt();
+ success = network.deleteTensor(2,&deltas_appended); assert(success);
+ network.printIt();
+
+ //Test isometric collapse:
+ TensorNetwork isonet("isonet");
+ auto unitary = exatn::makeSharedTensor("U",TensorShape{8,8});
+ auto isometry = exatn::makeSharedTensor("V",TensorShape{16,16,8});
+ isometry->registerIsometry({0,1});
+ success = isonet.appendTensor(1,unitary,{}); assert(success);
+ success = isonet.appendTensor(2,unitary,{{0,0}},{},true); assert(success);
+ success = isonet.appendTensor(3,isometry,{{0,2}}); assert(success);
+ success = isonet.appendTensor(4,isometry,{{0,2},{1,0},{2,1}},{},true); assert(success);
+ isonet.printIt();
+ success = isonet.collapseIsometries(); assert(success);
+ isonet.printIt();
+ unitary->registerIsometry({0});
+ unitary->registerIsometry({1});
+ success = isonet.collapseIsometries(); assert(success);
+ isonet.printIt();
 
  //Synchronize:
  success = exatn::sync(); assert(success);

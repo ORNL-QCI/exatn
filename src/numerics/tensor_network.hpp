@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/22
+REVISION: 2020/12/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -300,7 +300,7 @@ public:
      with the same tensor via the same subset of tensor dimensions. In this case, make sure
      that the tensor processing runtime of your choice supports tensor tracing, or, in case
      of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
- bool collapseIsometries();
+ bool collapseIsometries(bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
 
  /** Decomposes all tensors in the tensor network to restrict the highest tensor order to 3. **/
  bool decomposeTensors();

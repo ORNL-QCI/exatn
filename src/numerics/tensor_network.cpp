@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/22
+REVISION: 2020/12/28
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1330,7 +1330,7 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id, bool * deltas_appended)
     auto dim_atr = output_tensor->getDimSpaceAttr(leg_id);
     auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
     auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
-                                                std::make_shared<Tensor>("_delta",
+                                                std::make_shared<Tensor>("_delta", //name will be changed
                                                  std::initializer_list<decltype(dim_ext)>{dim_ext,dim_ext},
                                                  std::initializer_list<decltype(dim_atr)>{dim_atr,dim_atr}),
                                                 delta_tensor_id,
@@ -1571,14 +1571,16 @@ bool TensorNetwork::conjugate()
 }
 
 
-bool TensorNetwork::collapseIsometries()
+bool TensorNetwork::collapseIsometries(bool * deltas_appended)
 {
+ if(deltas_appended != nullptr) *deltas_appended = false;
  bool simplified = false;
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::collapseIsometries): Invalid request: " <<
    "Unfinalized tensor network may not be simplified!" << std::endl;
   return simplified;
  }
+ auto * output_tensor = this->getTensorConn(0); assert(output_tensor != nullptr);
  auto another_collapse = true;
  while(another_collapse){
   another_collapse = false;
@@ -1630,16 +1632,36 @@ bool TensorNetwork::collapseIsometries()
        if(tensor_legs[i].getTensorId() == 0 || conj_tensor_legs[i].getTensorId() == 0) num_open_legs++;
        if(tensor_legs[i].getTensorId() == 0 && conj_tensor_legs[i].getTensorId() == 0) num_spectators++;
       }
-      if(num_iso_legs == iso_group.size()){ //isometric tensor connection identified: Collapse
-       if(num_spectators == 0){ //`Spectators (orphaned legs) are not yet supported
-        if(num_open_legs > 0) this->resetOutputTensor(); //new open legs need to be appended to the output tensor
-        for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
-         auto first_tensor_id = tensor_legs[i].getTensorId();
-         if(first_tensor_id != iso_matched_tensor_id){
-          auto first_tensor_dimsn = tensor_legs[i].getDimensionId();
-          auto second_tensor_id = conj_tensor_legs[i].getTensorId();
-          assert(second_tensor_id != tensor_id);
-          auto second_tensor_dimsn = conj_tensor_legs[i].getDimensionId();
+      if(num_iso_legs == iso_group.size()){ //a single isometric connection between tensors identified: Collapse
+       if(num_open_legs > 0) this->resetOutputTensor(); //new open legs need to be appended to the output tensor
+       for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
+        auto first_tensor_id = tensor_legs[i].getTensorId();
+        if(first_tensor_id != iso_matched_tensor_id){
+         auto first_tensor_dimsn = tensor_legs[i].getDimensionId();
+         auto second_tensor_id = conj_tensor_legs[i].getTensorId();
+         assert(second_tensor_id != tensor_id);
+         auto second_tensor_dimsn = conj_tensor_legs[i].getDimensionId();
+         if(first_tensor_id == 0 && second_tensor_id == 0){ //insert an explicit Delta tensor for a spectator
+          auto output_tensor_rank = output_tensor->getNumLegs();
+          auto dim_ext0 = output_tensor->getDimExtent(first_tensor_dimsn);
+          auto dim_atr0 = output_tensor->getDimSpaceAttr(first_tensor_dimsn);
+          auto dim_ext1 = output_tensor->getDimExtent(second_tensor_dimsn);
+          auto dim_atr1 = output_tensor->getDimSpaceAttr(second_tensor_dimsn);
+          assert(dim_ext0 == dim_ext1);
+          assert(dim_atr0 == dim_atr1);
+          auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
+          auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
+                                                      std::make_shared<Tensor>("_delta", //name will be changed
+                                                       std::initializer_list<decltype(dim_ext0)>{dim_ext0,dim_ext1},
+                                                       std::initializer_list<decltype(dim_atr0)>{dim_atr0,dim_atr1}),
+                                                      delta_tensor_id,
+                                                      std::vector<TensorLeg>{TensorLeg{0,first_tensor_dimsn},
+                                                                             TensorLeg{0,second_tensor_dimsn}});
+          assert(appended);
+          output_tensor->resetLeg(first_tensor_dimsn,TensorLeg{delta_tensor_id,0});
+          output_tensor->resetLeg(second_tensor_dimsn,TensorLeg{delta_tensor_id,1});
+          if(deltas_appended != nullptr) *deltas_appended = true;
+         }else{ //Delta tensor is absorbed into the adjacent input tensor
           auto leg = this->getTensorConn(first_tensor_id)->getTensorLeg(first_tensor_dimsn);
           leg.resetTensorId(second_tensor_id);
           leg.resetDimensionId(second_tensor_dimsn);
@@ -1650,6 +1672,43 @@ bool TensorNetwork::collapseIsometries()
           this->getTensorConn(second_tensor_id)->resetLeg(second_tensor_dimsn,leg);
          }
         }
+       }
+       auto erased = eraseTensorConn(tensor_id); assert(erased);
+       erased = eraseTensorConn(iso_matched_tensor_id); assert(erased);
+       another_collapse = true;
+       simplified = true;
+      }else if(num_iso_legs > iso_group.size() && num_iso_legs == tensor.getNumLegs()){ //potential double isometric connection between tensors (delta trace)
+       bool double_isometry = true;
+       for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
+        if(tensor.withIsometricDimension(i)){
+         if(tensor_legs[i].getDimensionId() != i){
+          double_isometry = false;
+          break;
+         }
+        }else{
+         double_isometry = false;
+         break;
+        }
+       }
+       if(double_isometry){ //contract the isometric tensor pair into the Delta tensor
+        for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
+         assert(tensor_legs[i].getDimensionId() == i);
+         assert(conj_tensor_legs[i].getDimensionId() == i);
+         if(std::find(iso_group.cbegin(),iso_group.cend(),i) == iso_group.cend()){
+          auto dim_ext = tensor.getDimExtent(i);
+          auto dim_atr = tensor.getDimSpaceAttr(i);
+          auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
+          auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
+                                                      std::make_shared<Tensor>("_delta", //name will be changed
+                                                       std::initializer_list<decltype(dim_ext)>{dim_ext,dim_ext},
+                                                       std::initializer_list<decltype(dim_atr)>{dim_atr,dim_atr}),
+                                                      delta_tensor_id,
+                                                      std::vector<TensorLeg>{TensorLeg{delta_tensor_id,1},
+                                                                             TensorLeg{delta_tensor_id,0}});
+          assert(appended);
+          if(deltas_appended != nullptr) *deltas_appended = true;
+         }
+        }
         auto erased = eraseTensorConn(tensor_id); assert(erased);
         erased = eraseTensorConn(iso_matched_tensor_id); assert(erased);
         another_collapse = true;
@@ -1657,6 +1716,7 @@ bool TensorNetwork::collapseIsometries()
        }
       }
      }
+     if(another_collapse) break;
     }
    }
    if(!another_collapse) ++iter;
