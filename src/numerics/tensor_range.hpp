@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/11/16
+REVISION: 2020/12/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -83,6 +83,9 @@ public:
 
  /** Retrieves a specific index from the multi-index. **/
  inline DimOffset getIndex(unsigned int position) const;
+
+ /** Tests whether all indices in the current multi-index have the same value. **/
+ inline bool onDiagonal() const;
 
  /** Returns the flat offset produced by the current multi-index value per se. **/
  inline DimOffset localOffset() const; //little endian
@@ -247,6 +250,19 @@ inline DimOffset TensorRange::getIndex(unsigned int position) const
 {
  assert(position < mlndx_.size());
  return mlndx_[position];
+}
+
+
+inline bool TensorRange::onDiagonal() const
+{
+ bool diag = true;
+ for(int i = 1; i < mlndx_.size(); ++i){
+  if((bases_[i] + mlndx_[i]) != (bases_[i-1] + mlndx_[i-1])){
+   diag = false;
+   break;
+  }
+ }
+ return diag;
 }
 
 

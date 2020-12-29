@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -38,7 +38,7 @@
 #define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
-#define EXATN_TEST24*/
+#define EXATN_TEST24
 #define EXATN_TEST25
 
 
@@ -2621,6 +2621,8 @@ TEST(NumServerTester, CollapseTensors) {
  isometry->registerIsometry({0,1});
  success = isonet.appendTensor(1,unitary,{}); assert(success);
  success = isonet.appendTensor(2,unitary,{{0,0}},{},true); assert(success);
+ isonet.printIt();
+ TensorNetwork uninet(isonet);
  success = isonet.appendTensor(3,isometry,{{0,2}}); assert(success);
  success = isonet.appendTensor(4,isometry,{{0,2},{1,0},{2,1}},{},true); assert(success);
  isonet.printIt();
@@ -2630,6 +2632,8 @@ TEST(NumServerTester, CollapseTensors) {
  unitary->registerIsometry({1});
  success = isonet.collapseIsometries(); assert(success);
  isonet.printIt();
+ success = uninet.collapseIsometries(); assert(success);
+ uninet.printIt();
 
  //Synchronize:
  success = exatn::sync(); assert(success);

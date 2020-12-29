@@ -37,7 +37,7 @@ The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
 There are multiple examples available in `src/exatn/tests/NumServerTester.cpp`, but you should
 ignore those which use direct `numericalServer->API` calls (these are internal tests). The
 `main` function at the very bottom shows how to initialize and finalize ExaTN. Note that ExaTN
-assumes the column-major storage of tensors (importan for initialization with external data).
+assumes the column-major storage of tensors (important for initialization with external data).
 
 Main ExaTN C++ objects:
 

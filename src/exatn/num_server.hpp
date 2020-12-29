@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/08
+REVISION: 2020/12/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -17,19 +17,19 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
  (b) Processing of individual tensor operations, tensor networks and tensor network expansions
      has asynchronous semantics: Submit TensorOperation/TensorNetwork/TensorExpansion for
      processing, then synchronize on the tensor-result or the accumulator tensor.
-     Processing of a tensor operation means evaluating the output tensor operand (#0).
-     Processing of a tensor network means evaluating the output tensor (#0),
+     Processing of a tensor operation means evaluating all its output tensor operands.
+     Processing of a tensor network means evaluating its output tensor (#0),
      which is automatically initialized to zero before the evaluation.
      Processing of a tensor network expansion means evaluating all constituent
      tensor network components and accumulating them into the accumulator tensor
      with their respective prefactors. Synchronization of processing of a tensor operation,
      tensor network or tensor network expansion means ensuring that the tensor-result,
-     either the output tensor or accumulator tensor, has been fully computed.
+     either the output tensor or the accumulator tensor, has been fully computed.
  (c) Namespace exatn introduces a number of aliases for types imported from exatn::numerics.
      Importantly exatn::TensorMethod, which is talsh::TensorFunctor<Indentifiable>,
      defines the interface which needs to be implemented by the application in order
-     to perform an arbitrary custom unary transform operation on exatn::Tensor.
-     This is the only portable way to arbitrarily modify tensor content.
+     to perform a custom unary transformation/initialization operation on exatn::Tensor.
+     This is the only portable way to modify the tensor content in a desired way.
 **/
 
 #ifndef EXATN_NUM_SERVER_HPP_
@@ -55,6 +55,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_val.hpp"
 #include "functor_init_rnd.hpp"
 #include "functor_init_dat.hpp"
+#include "functor_init_delta.hpp"
 #include "functor_init_file.hpp"
 #include "functor_scale.hpp"
 #include "functor_maxabs.hpp"
@@ -101,6 +102,7 @@ using numerics::ContractionSeqOptimizerFactory;
 using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
+using numerics::FunctorInitDelta;
 using numerics::FunctorInitFile;
 using numerics::FunctorScale;
 using numerics::FunctorMaxAbs;
@@ -274,7 +276,7 @@ public:
            const Tensor & tensor,
            bool wait = true);
  /** Synchronizes execution of a specific tensor operation.
-     Changing wait to FALSE, only tests for completion.
+     Changing wait to FALSE will only test for completion.
     `This method has local synchronization semantics! **/
  bool sync(TensorOperation & operation,
            bool wait = true);
@@ -662,9 +664,15 @@ public:
  /** DEBUG: Prints all currently existing tensors created implicitly. **/
  void printImplicitTensors() const;
 
-private:
+protected:
 
+ /** Submits an individual tensor operation for processing. **/
+ bool submitOp(std::shared_ptr<TensorOperation> operation); //in: tensor operation for numerical evaluation
+
+ /** Destroys orphaned tensors (garbage collection). **/
  void destroyOrphanedTensors();
+
+private:
 
  std::shared_ptr<numerics::SpaceRegister> space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id

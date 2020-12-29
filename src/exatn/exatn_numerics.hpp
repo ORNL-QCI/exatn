@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/12/08
+REVISION: 2020/12/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,11 +18,11 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
         base offset (first basis vector belonging to it) and its dimension.
  2. Index labels:
     (a) Any registered subspace can be assigned a symbolic index label serving as a placeholder for it;
-        any index label can only refer to a single registered (named) subspace it is associated with.
+        an index label can only refer to a single registered (named) subspace it is associated with.
  3. Tensor:
     (a) A tensor is defined by its name, shape and signature.
-    (b) Tensor shape is an ordered list of tensor dimension extents.
-    (c) Tensor signature is an ordered list of {space_id,subspace_id} pairs
+    (b) Tensor shape is an ordered tuple of tensor dimension extents.
+    (c) Tensor signature is an ordered tuple of {space_id,subspace_id} pairs
         for each tensor dimension. In case space_id = SOME_SPACE, subspace_id
         is simply the base offset in the anonymous vector space (min = 0).
  4. Tensor operation:
@@ -34,7 +34,9 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
         and (directed) edges show which dimensions of these tensors are contracted
         with each other. By default, each edge connects two dimensions in two separate
         tensors (vertices), although these tensors themselves may be identical.
-    (b) The same tensor may enter the given tensor network multiple times
+        Partial/full traces within a tensor are allowed in a tensor network although
+        they must be supported by the processing backend in order to be computed.
+    (b) The same tensor may be present in the given tensor network multiple times
         via different vertices, either normal or conjugated.
     (c) Each tensor network has an implicit output tensor collecting all open
         edges from all input tensors. Evaluating the tensor network means
@@ -43,33 +45,37 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
         of all constituent input tensors, but does not apply to the output tensor per se
         because the output tensor is simply the result of the full contraction of the tensor
         network. The conjugation operation also reverses the direction of all edges.
-    (e) A single input tensor may enter multiple tensor networks.
+    (e) An input tensor may be present in multiple tensor networks and its lifetime
+        is not bound to the lifetime of any tensor network it belongs to.
  6. Tensor network expansion:
     (a) Tensor network expansion is a linear combination of tensor networks
         with some complex coefficients. The output tensors of all constituent
         tensor networks must be congruent. Evaluating the tensor network
         expansion means computing the sum of all these output tensors scaled
-        by their respective coefficients.
-    (b) A tensor network expansion may either belong to the ket or bra dual space.
+        by their respective (complex) coefficients.
+    (b) A tensor network expansion may either belong to the primary ket or dual bra space.
         The conjugation operation transitions the tensor network expansion between
         the ket and bra spaces.
-    (c) A single tensor network may enter multiple tensor network expansions.
+    (c) A single tensor network may enter multiple tensor network expansions and its
+        lifetime is not bound by the lifetime of any tensor network expansion it belongs to.
  7. Tensor network operator:
     (a) Tensor network operator is a linear combination of tensors and/or tensor networks
-        where each tensor (or tensor network) component attributes some of its open edges
-        to the ket space and some to the dual bra space, thus establishing a map between
-        the two. Therefore, a tensor network operator has a ket shape and a bra shape.
+        where each tensor (or tensor network) component associates some of its open edges
+        to a primary ket space and some to a dual bra space, thus establishing a map
+        between the two generally distinct spaces. Therefore, a tensor network operator
+        has a ket shape and a bra shape. All components of a tensor network operator
+        must adhere to the same ket/bra shapes.
     (b) A tensor network operator may act on a ket tensor network expansion if its ket
-        shape matches the shape of this ket tensor network expansion.
+        shape matches the shape of that ket tensor network expansion.
         A tensor network operator may act on a bra tensor network expansion if its bra
-        shape matches the shape of this bra tensor network expansion.
+        shape matches the shape of that bra tensor network expansion.
     (c) A full contraction may be formed between a bra tensor network expansion,
         a tensor network operator, and a ket tensor network expansion if the bra shape
         of the tensor network operator matches the shape of the bra tensor network
         expansion and the ket shape of the tensor network operator matches the shape
-        if the ket tensor network expansion.
+        of the ket tensor network expansion.
     (d) Any contraction of a tensor network operator with a ket/bra tensor network
-        expansion (or both) forms a tensor network expansion.
+        expansion (or both) forms another tensor network expansion.
 **/
 
 #ifndef EXATN_NUMERICS_HPP_
@@ -206,7 +212,7 @@ inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen gr
  {return numericalServer->createTensorSync(process_group,tensor,element_type);}
 
 
-/** Creates all tensors in a given tensor network that are still unallocated. **/
+/** Creates all tensors in a given tensor network that are still unallocated storage. **/
 inline bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
                           TensorElementType element_type)         //in: tensor element type
  {return numericalServer->createTensors(tensor_network,element_type);}
@@ -268,7 +274,8 @@ inline bool destroyTensorSync(const std::string & name) //in: tensor name
 
 
 /** Destroys all currently allocated tensors in a given tensor network.
-    Note that the destroyed tensors could also be present in other tensor networks. **/
+    Note that the destroyed tensors could also be present in other tensor networks
+    in which case they will no longer be processible. **/
 inline bool destroyTensors(TensorNetwork & tensor_network)     //inout: tensor network
  {return numericalServer->destroyTensors(tensor_network);}
 
@@ -288,7 +295,8 @@ inline bool initTensorSync(const std::string & name, //in: tensor name
  {return numericalServer->initTensorSync(name,value);}
 
 
-/** Initializes a tensor with externally provided data. **/
+/** Initializes a tensor with externally provided data stored
+    in a flattened vector in the generalized column-wise order. **/
 template<typename NumericType>
 inline bool initTensorData(const std::string & name,                  //in: tensor name
                            const std::vector<NumericType> & ext_data) //in: externally provided data
@@ -306,8 +314,8 @@ inline bool initTensorDataSync(const std::string & name,                  //in: 
      Tensor shape (space-separated dimension extents)
      Tensor signature (space-separated dimension base offsets)
      Tensor elements:
-      Dense format: Numeric values (column-wise order), any number of values per line
-      List format: Numeric value and Multi-index in each line **/
+      Dense format: Numeric values (column-wise order), any number of values per line;
+      List format: Numeric value and Multi-index in each line. **/
 inline bool initTensorFile(const std::string & name,     //in: tensor name
                            const std::string & filename) //in: file name with tensor data
  {return numericalServer->initTensorFile(name,filename);}
@@ -739,8 +747,8 @@ inline std::unique_ptr<exatn::NetworkBuilder> getTensorNetworkBuilder(const std:
  {return std::move(exatn::NetworkBuildFactory::get()->createNetworkBuilder(builder_name));}
 
 
-/** Resets the tensor contraction sequence optimizer that
-    is invoked when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
+/** Resets the tensor contraction sequence optimizer that is invoked
+    when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name)
  {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
 
@@ -770,7 +778,8 @@ inline void resetLoggingLevel(int client_level = 0,
                               int runtime_level = 0)
  {resetClientLoggingLevel(client_level);
   resetRuntimeLoggingLevel(runtime_level);
-  return;}
+  return;
+ }
 
 
 /** Activates mixed-precision fast math operations on all devices (if available). **/

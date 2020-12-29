@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/08
+REVISION: 2020/12/29
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "timers.hpp"
 
 #include <vector>
+#include <stack>
 #include <list>
 #include <map>
 #include <future>
@@ -313,7 +314,7 @@ const Subspace * NumServer::getSubspace(const std::string & subspace_name) const
  return space_register_->getSubspace(space_name,subspace_name);
 }
 
-bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
+bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
 {
  bool submitted = false;
  if(operation){
@@ -351,6 +352,54 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
   if(submitted) tensor_rt_->submit(operation);
  }
  return submitted;
+}
+
+bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
+{
+ bool success = true;
+ const auto num_operands = operation->getNumOperands();
+ auto elem_type = TensorElementType::VOID;
+ for(unsigned int i = 0; i < num_operands; ++i){
+  auto operand = operation->getTensorOperand(i);
+  elem_type = operand->getElementType();
+  if(elem_type != TensorElementType::VOID) break;
+ }
+ std::stack<unsigned int> deltas;
+ for(unsigned int i = 0; i < num_operands; ++i){
+  auto operand = operation->getTensorOperand(i);
+  const auto & tensor_name = operand->getName();
+  if(tensor_name.length() >= 2){
+   if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
+    assert(elem_type != TensorElementType::VOID);
+    std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+    op0->setTensorOperand(operand);
+    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
+    success = submitOp(op0);
+    if(success){
+     deltas.push(i);
+     std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+     op1->setTensorOperand(operand);
+     std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+      resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
+     success = submitOp(op1);
+    }
+   }
+  }
+  if(!success) break;
+ }
+ if(success){
+  success = submitOp(operation);
+  if(success){
+   while(!deltas.empty()){
+    auto operand = operation->getTensorOperand(deltas.top());
+    std::shared_ptr<TensorOperation> op2 = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+    op2->setTensorOperand(operand);
+    success = submitOp(op2); if(!success) break;
+    deltas.pop();
+   }
+  }
+ }
+ return success;
 }
 
 bool NumServer::submit(TensorNetwork & network)
