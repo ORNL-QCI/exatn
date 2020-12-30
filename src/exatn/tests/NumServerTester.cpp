@@ -2602,16 +2602,16 @@ TEST(NumServerTester, CollapseTensors) {
 
  bool success = true;
 
- //Test tensor deletion:
+ //Test tensor differentiation:
  TensorNetwork network("tensnet");
  auto tensor = exatn::makeSharedTensor("T",TensorShape{16,32});
  success = network.appendTensor(1,tensor,{}); assert(success);
  success = network.appendTensor(2,tensor,{{0,0},{1,1}}); assert(success);
  network.printIt();
  bool deltas_appended = false;
- success = network.deleteTensor(1,&deltas_appended); assert(success);
+ success = network.differentiateTensor(1,&deltas_appended); assert(success);
  network.printIt();
- success = network.deleteTensor(2,&deltas_appended); assert(success);
+ success = network.differentiateTensor(2,&deltas_appended); assert(success);
  network.printIt();
 
  //Test isometric collapse:

@@ -249,11 +249,24 @@ public:
 
  /** Deletes a tensor from a finalized tensor network (output tensor cannot be deleted).
      The released tensor legs will be joined at the end of the output tensor,
-     unless a tensor leg had already been connected to the output tensor, in which case
-     a rank-2 Kronecker delta will be connected to that orphaned leg with the other leg
-     of the Kronecker delta tensor getting joined at the end of the output tensor. **/
- bool differentiateTensor(unsigned int tensor_id,            //in: id of the tensor to be deleted
+     unless a tensor leg was already connected to the output tensor, in which case
+     it will be deleted completely, resulting in a reduced rank of the output tensor. **/
+ bool deleteTensor(unsigned int tensor_id); //in: id of the input tensor to be deleted
+
+ /** Differentiates a finalized tensor network against a given input tensor (id > 0).
+     The chosen input tensor will be removed from the tensor network and the released
+     tensor legs will be joined at the end of the output tensor, unless a tensor leg
+     was already connected to the output tensor, in which case a rank-2 Kronecker delta
+     will be connected to that orphaned leg with the other leg of the Kronecker delta
+     tensor getting joined at the end of the output tensor. This operation never reduces
+     the rank of the output tensor because it preserves spectator lines via the insertion
+     of the rank-2 Kronecker Deltas (a spectator line is an orphaned line). **/
+ bool differentiateTensor(unsigned int tensor_id,            //in: id of the input tensor to be differentiated against
                           bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
+
+ /** Deletes all Kronecker delta tensors present in the tensor network. Returns TRUE
+     if at least one Kronecker delta was found and deleted, FALSE otherwise. **/
+ bool deleteKroneckerDeltas();
 
  /** Merges two tensors in a finalized tensor network by replacing them by their contracted product:
      result = left * right: All participating tensor ids must be distinct and not equal to 0.
@@ -282,9 +295,13 @@ public:
  bool substituteTensor(const std::string & name,        //in: name of the tensor to be substituted
                        std::shared_ptr<Tensor> tensor); ////in: substituting tensor
 
- /** Returns the list of id's the given tensor enters the tensor network with. **/
+ /** Returns the list of in-network id's the given tensor enters the tensor network with.
+     Note that the tensor conjugation status in the tensor network matters here. **/
  std::vector<unsigned int> getTensorIdsInNetwork(const std::string & name,       //in: tensor name
-                                                 bool conjugated = false) const; //in: whether or not look for conjugated tensors with the given name
+                                                 bool conjugated = false) const; //in: whether or not to look for conjugated tensors with the given name
+
+ /** Returns the list of in-network tensor id's for all input tensors satisfying the given predicate. **/
+ std::vector<unsigned int> getTensorIdsInNetwork(std::function<bool (const Tensor &)> predicate) const;
 
  /** Conjugates the tensor network, which includes complex conjugation of
      all tensors as well as reversal of the direction of all tensor legs. **/
@@ -293,13 +310,13 @@ public:
  /** Collapses all isometric tensor pairs, thus simplifying the tensor network.
      Returns TRUE if at least one isometric tensor pair has been collapsed.
      An isometric tensor pair is a pair of a tensor and its conjugate which
-     are solely contracted over exactly one of their isometric dimension groups
-     while all other contracted dimensions of both tensors must involve other tensors.
-     Note that an isometric collapse may introduce trace legs in the remaining tensors
-     of the tensor network in case both tensors from the isometric tensor pair were contracted
-     with the same tensor via the same subset of tensor dimensions. In this case, make sure
-     that the tensor processing runtime of your choice supports tensor tracing, or, in case
-     of the output tensor it should be able to handle spectators (orphaned tensor legs). **/
+     are contracted over at least one of their isometric dimension groups.
+     Note that an isometric collapse may introduce trace legs in the remaining
+     tensors of the tensor network in case both tensors from the isometric tensor
+     pair were contracted with the same tensor via the same subset of tensor dimensions.
+     In this case, make sure that the tensor processing runtime of your choice supports
+     tensor tracing, or, in case of the output tensor, it should be able to handle spectators
+     (orphaned tensor legs) which are currently replaced by the rank-2 Kronecker deltas. **/
  bool collapseIsometries(bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
 
  /** Decomposes all tensors in the tensor network to restrict the highest tensor order to 3. **/

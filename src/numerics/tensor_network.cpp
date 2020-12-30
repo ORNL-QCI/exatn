@@ -1267,17 +1267,84 @@ bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
 }
 
 
+bool TensorNetwork::deleteTensor(unsigned int tensor_id)
+{
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+   "Deleting the output tensor of the tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+   "Deleting a tensor from an unfinalized tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
+ //Append the released legs from the deleted tensor to the output tensor:
+ auto * tensor = this->getTensorConn(tensor_id);
+ if(tensor == nullptr){
+  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+   "Tensor with id " << tensor_id << " is not found in the tensor network!" << std::endl;
+  return false;
+ }
+ //Reconnect the tensors connected to the deleted tensor to the output tensor:
+ auto tensor_rank = tensor->getNumLegs();
+ if(tensor_rank > 0){
+  auto * output_tensor = this->getTensorConn(0);
+  assert(output_tensor != nullptr);
+  auto output_tensor_rank = output_tensor->getNumLegs();
+  //Reconnect input tensors:
+  std::vector<unsigned int> orphaned_legs;
+  const auto & legs = tensor->getTensorLegs();
+  for(const auto & leg: legs){
+   const auto other_tensor_id = leg.getTensorId();
+   const auto other_tensor_leg_id = leg.getDimensionId();
+   if(other_tensor_id != 0){ //connections to the output tensor are ingored (they will disappear)
+    auto * other_tensor = this->getTensorConn(other_tensor_id);
+    assert(other_tensor != nullptr);
+    auto other_tensor_leg = other_tensor->getTensorLeg(other_tensor_leg_id);
+    other_tensor_leg.resetTensorId(0);
+    other_tensor_leg.resetDimensionId(output_tensor_rank);
+    other_tensor->resetLeg(other_tensor_leg_id,other_tensor_leg);
+    output_tensor->appendLeg(other_tensor->getDimSpaceAttr(other_tensor_leg_id),
+                             other_tensor->getDimExtent(other_tensor_leg_id),
+                             TensorLeg(
+                              other_tensor_id,
+                              other_tensor_leg_id,
+                              reverseLegDirection(other_tensor_leg.getDirection())
+                             )
+                            );
+    output_tensor_rank = output_tensor->getNumLegs();
+   }else{ //orphaned leg (former connection to the output tensor)
+    orphaned_legs.emplace_back(other_tensor_leg_id);
+   }
+  }
+  //Delete orphaned legs of the output tensor:
+  if(orphaned_legs.size() > 0){
+   output_tensor->deleteLegs(orphaned_legs);
+   this->updateConnections(0);
+  }
+ }
+ //Delete the tensor from the network:
+ tensor = nullptr;
+ auto erased = eraseTensorConn(tensor_id); assert(erased);
+ invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ return true;
+}
+
+
 bool TensorNetwork::differentiateTensor(unsigned int tensor_id, bool * deltas_appended)
 {
  if(deltas_appended != nullptr) *deltas_appended = false;
  if(tensor_id == 0){
   std::cout << "#ERROR(TensorNetwork::differentiateTensor): Invalid request: " <<
-   "Deleting the output tensor of the tensor network is forbidden!" << std::endl;
+   "Differentiating against the output tensor of the tensor network is forbidden!" << std::endl;
   return false;
  }
  if(finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::differentiateTensor): Invalid request: " <<
-   "Deleting a tensor from an unfinalized tensor network is forbidden!" << std::endl;
+   "Differentiation of an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
  //Reset the output tensor to a new one:
@@ -1348,6 +1415,27 @@ bool TensorNetwork::differentiateTensor(unsigned int tensor_id, bool * deltas_ap
  auto erased = eraseTensorConn(tensor_id); assert(erased);
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  return true;
+}
+
+
+bool TensorNetwork::deleteKroneckerDeltas()
+{
+ auto predicate = [](const Tensor & tensor){
+  bool is_delta_tensor = false;
+  const auto & tensor_name = tensor.getName();
+  if(tensor_name.length() >= 2){
+   if(tensor_name[0] == '_' && tensor_name[1] == 'd') is_delta_tensor = true;
+  }
+  return is_delta_tensor;
+ };
+ const auto tensor_ids = getTensorIdsInNetwork(predicate);
+ if(tensor_ids.size() > 0){
+  for(const auto & id: tensor_ids){
+   auto success = deleteTensor(id); assert(success);
+  }
+  return true;
+ }
+ return false;
 }
 
 
@@ -1555,6 +1643,18 @@ std::vector<unsigned int> TensorNetwork::getTensorIdsInNetwork(const std::string
      kv.second.isComplexConjugated() == conjugated) ids.emplace_back(kv.first);
  }
  return ids;
+}
+
+
+std::vector<unsigned int> TensorNetwork::getTensorIdsInNetwork(std::function<bool (const Tensor &)> predicate) const
+{
+ std::vector<unsigned int> tensor_ids;
+ for(const auto & tensor: tensors_){
+  if(tensor.first != 0){ //ignore the output tensor of the tensor network
+   if(predicate(*(tensor.second.getTensor()))) tensor_ids.emplace_back(tensor.first);
+  }
+ }
+ return tensor_ids;
 }
 
 
