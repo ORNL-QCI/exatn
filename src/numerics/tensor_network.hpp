@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/28
+REVISION: 2020/12/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -252,8 +252,8 @@ public:
      unless a tensor leg had already been connected to the output tensor, in which case
      a rank-2 Kronecker delta will be connected to that orphaned leg with the other leg
      of the Kronecker delta tensor getting joined at the end of the output tensor. **/
- bool deleteTensor(unsigned int tensor_id,            //in: id of the tensor to be deleted
-                   bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
+ bool differentiateTensor(unsigned int tensor_id,            //in: id of the tensor to be deleted
+                          bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
 
  /** Merges two tensors in a finalized tensor network by replacing them by their contracted product:
      result = left * right: All participating tensor ids must be distinct and not equal to 0.

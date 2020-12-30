@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/28
+REVISION: 2020/12/30
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1267,16 +1267,16 @@ bool TensorNetwork::reorderOutputModes(const std::vector<unsigned int> & order)
 }
 
 
-bool TensorNetwork::deleteTensor(unsigned int tensor_id, bool * deltas_appended)
+bool TensorNetwork::differentiateTensor(unsigned int tensor_id, bool * deltas_appended)
 {
  if(deltas_appended != nullptr) *deltas_appended = false;
  if(tensor_id == 0){
-  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::differentiateTensor): Invalid request: " <<
    "Deleting the output tensor of the tensor network is forbidden!" << std::endl;
   return false;
  }
  if(finalized_ == 0){
-  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::differentiateTensor): Invalid request: " <<
    "Deleting a tensor from an unfinalized tensor network is forbidden!" << std::endl;
   return false;
  }
@@ -1285,7 +1285,7 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id, bool * deltas_appended)
  //Append the released legs from the deleted tensor to the output tensor:
  auto * tensor = this->getTensorConn(tensor_id);
  if(tensor == nullptr){
-  std::cout << "#ERROR(TensorNetwork::deleteTensor): Invalid request: " <<
+  std::cout << "#ERROR(TensorNetwork::differentiateTensor): Invalid request: " <<
    "Tensor with id " << tensor_id << " is not found in the tensor network!" << std::endl;
   return false;
  }
@@ -1323,7 +1323,6 @@ bool TensorNetwork::deleteTensor(unsigned int tensor_id, bool * deltas_appended)
   }
   //Append delta tensors for orphaned legs of the output tensor:
   if(orphaned_legs.size() > 0){
-   //output_tensor->deleteLegs(orphaned_legs);
    for(auto leg_id: orphaned_legs){
     output_tensor_rank = output_tensor->getNumLegs();
     auto dim_ext = output_tensor->getDimExtent(leg_id);
