@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/03/14
+REVISION: 2021/01/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network expansion is an ordered linear expansion
@@ -20,7 +20,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
  (d) A direct product tensor network expansion can be formed from
      two tensor network expansions from the same space (bra*bra, ket*ket).
  (e) A tensor network operator can be applied to a tensor network expansion,
-     producing another tensor network expansion in the same space.
+     producing another tensor network expansion.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_EXPANSION_HPP_
@@ -104,9 +104,9 @@ public:
                  const std::string & tensor_name,   //in: the name of the tensor which the derivative is taken against
                  bool conjugated = false);          //in: whether or not to differentiate with respect to conjugated tensors with the given name
 
- /** Clones the given tensor network expansion. By default, the output
-     tensor in each tensor network component of the newly created tensor
-     network expansion will be reset to a new one. The name of the newly
+ /** Clones the given tensor network expansion. If reset_output_tensors is TRUE,
+     the output tensor in each tensor network component of the newly created
+     tensor network expansion will be reset to a new one. The name of the newly
      created tensor network expansion will be the same as the original one,
      unless the new name is explicitly provided. **/
  TensorExpansion(const TensorExpansion & another,    //in: another tensor expansion to clone
@@ -180,6 +180,9 @@ public:
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:
      The ket tensor network expansion becomes a bra, and vice versa. **/
  void conjugate();
+
+ /** Multiplies all components of the tensor network expansion by a given complex number. **/
+ void rescale(std::complex<double> scaling_factor);
 
  /** Prints. **/
  void printIt() const;

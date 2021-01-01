@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2020/03/14
+REVISION: 2021/01/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_expansion.hpp"
 
@@ -71,7 +71,7 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
   auto ids = iter->network_->getTensorIdsInNetwork(tensor_name,conjugated);
   for(const auto & id: ids){
    auto derivnet = makeSharedTensorNetwork(*(iter->network_));
-   auto differentiated = derivnet->deleteTensor(id); assert(differentiated);
+   auto differentiated = derivnet->differentiateTensor(id); assert(differentiated);
    appendComponent(derivnet,iter->coefficient_);
   }
  }
@@ -166,6 +166,13 @@ void TensorExpansion::conjugate()
   component.coefficient_ = std::conj(component.coefficient_);
  }
  ket_ = !ket_;
+ return;
+}
+
+
+void TensorExpansion::rescale(std::complex<double> scaling_factor)
+{
+ for(auto & component: components_) component.coefficient_ *= scaling_factor;
  return;
 }
 

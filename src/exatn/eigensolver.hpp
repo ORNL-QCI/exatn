@@ -1,8 +1,8 @@
 /** ExaTN:: Extreme eigenvalue/eigenvector solver over tensor networks
-REVISION: 2020/01/24
+REVISION: 2021/01/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) The tensor network expansion eigensolver finds the approximate extreme
@@ -33,7 +33,7 @@ public:
 
  TensorNetworkEigenSolver(std::shared_ptr<TensorOperator> tensor_operator,   //in: tensor operator the extreme eigenroots of which are to be found
                           std::shared_ptr<TensorExpansion> tensor_expansion, //in: tensor network expansion form that will be used for each eigenvector
-                          double tolerance);                                 //in: desired numerical covergence tolerance
+                          double tolerance);                                 //in: desired numerical convergence tolerance
 
  TensorNetworkEigenSolver(const TensorNetworkEigenSolver &) = default;
  TensorNetworkEigenSolver & operator=(const TensorNetworkEigenSolver &) = default;

@@ -1,14 +1,14 @@
-/** ExaTN:: Reconstructor of an approximate tensor network expansion from a given tensor network expansion
-REVISION: 2020/03/17
+/** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
+REVISION: 2021/01/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) Given a tensor network expansion of some form, the tensor network reconstructor
      optimizes its tensor factors to maximize the overlap with another given constant
-     tensor network expansion, thus providing an approximation to it.
-     The reconstruction fidelity is the overlap between the two tensor network expansions.
+     tensor network expansion, thus providing an approximation to it. The reconstruction
+     fidelity is the squared overlap between the two tensor network expansions.
      The reconstruction tolerance is a numerical tolerance used for checking convergence
      of the underlying linear algebra procedures.
  (B) The reconstructed tensor network expansion must be a Ket (primary space) and
@@ -31,8 +31,8 @@ class TensorNetworkReconstructor{
 
 public:
 
- TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor expansion to be reconstructed (constant)
-                            std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor expansion (unoptimized)
+ TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
+                            std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor network expansion
                             double tolerance);                            //in: desired reconstruction convergence tolerance
 
  TensorNetworkReconstructor(const TensorNetworkReconstructor &) = default;
@@ -43,7 +43,7 @@ public:
 
  /** Approximately reconstructs a tensor network expansion via another tensor network
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
-     that is, the overlap between the two tensor network expansions, [0..1]. **/
+     that is, the squared overlap between the two tensor network expansions: [0..1]. **/
  bool reconstruct(double * fidelity);
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
@@ -53,13 +53,13 @@ private:
 
  struct Environment{
   std::shared_ptr<Tensor> tensor;     //tensor being optimized
-  std::shared_ptr<Tensor> gradient;   //gradient w.r.t. the tensor
+  std::shared_ptr<Tensor> gradient;   //gradient w.r.t. the tensor being optimized
   TensorExpansion gradient_expansion; //gradient tensor network expansion
  };
 
- std::shared_ptr<TensorExpansion> expansion_;   //tensor expansion to reconstruct
- std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor expansion
- double epsilon_;                               //epsilon value for gradient descent
+ std::shared_ptr<TensorExpansion> expansion_;   //tensor network expansion to reconstruct
+ std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor network expansion
+ double epsilon_;                               //epsilon value for the gradient descent based tensor update
  double tolerance_;                             //numerical reconstruction convergence tolerance
  double fidelity_;                              //actually achieved reconstruction fidelity
  std::vector<Environment> environments_;        //optimization environments for each optimizable tensor
