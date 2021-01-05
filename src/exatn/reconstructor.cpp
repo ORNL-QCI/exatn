@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/01
+REVISION: 2021/01/04
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -14,7 +14,8 @@ namespace exatn{
 TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,
                                                        std::shared_ptr<TensorExpansion> approximant,
                                                        double tolerance):
- expansion_(expansion), approximant_(approximant), epsilon_(0.1), tolerance_(tolerance), fidelity_(0.0)
+ expansion_(expansion), approximant_(approximant), epsilon_(0.1), tolerance_(tolerance), fidelity_(0.0),
+ max_iterations_(DEFAULT_MAX_ITERATIONS)
 {
  if(!expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkReconstructor): The reconstructed tensor network expansion must be a ket!"
@@ -31,6 +32,20 @@ TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExp
             << std::endl << std::flush;
   assert(false);
  }
+}
+
+
+void TensorNetworkReconstructor::resetTolerance(double tolerance)
+{
+ tolerance_ = tolerance;
+ return;
+}
+
+
+void TensorNetworkReconstructor::resetMaxIterations(unsigned int max_iterations)
+{
+ max_iterations_ = max_iterations;
+ return;
 }
 
 
@@ -113,7 +128,9 @@ bool TensorNetworkReconstructor::reconstruct(double * fidelity)
   done = computeNorm1Sync("_scalar_norm",input_expansion_norm); assert(done);
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the input tensor network expansion = "
             << input_expansion_norm << std::endl; //debug
+  unsigned int iteration = 0;
   while(!converged){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << ++iteration << std::endl; //debug
    double max_grad_maxabs = 0.0;
    for(auto & environment: environments_){
     //Create the gradient tensor:
@@ -126,6 +143,7 @@ bool TensorNetworkReconstructor::reconstruct(double * fidelity)
     double grad_maxabs = 0.0;
     done = computeMaxAbsSync(environment.gradient->getName(),grad_maxabs); assert(done);
     if(grad_maxabs > max_grad_maxabs) max_grad_maxabs = grad_maxabs;
+    std::cout << " Gradient w.r.t. " << environment.tensor->getName() << " = " << grad_maxabs << std::endl; //debug
     //Update the optimizable tensor using the computed gradient:
     if(grad_maxabs > tolerance_){
      std::string add_pattern;

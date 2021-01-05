@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -39,7 +39,8 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25
+#define EXATN_TEST25*/
+#define EXATN_TEST26
 
 
 #ifdef EXATN_TEST0
@@ -2634,6 +2635,78 @@ TEST(NumServerTester, CollapseTensors) {
  isonet.printIt();
  success = uninet.collapseIsometries(); assert(success);
  uninet.printIt();
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST26
+TEST(NumServerTester, Reconstructor) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Create tensors:
+ const int bond_dim = 16;
+ success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{16,32}); assert(success);
+ success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{16,32}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,16}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,32}); assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("T"); assert(success);
+ success = exatn::initTensor("Z",0.0); assert(success);
+ success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensorRnd("B"); assert(success);
+
+ //Construct necessary tensor networks expansions:
+ auto approx_net = std::shared_ptr<TensorNetwork>(new TensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)",
+                                                                    {{"A",exatn::getTensor("A")},
+                                                                     {"B",exatn::getTensor("B")},
+                                                                     {"Z",exatn::getTensor("Z")}}));
+ approx_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto approximant = exatn::makeSharedTensorExpansion();
+ approximant->appendComponent(approx_net,{1.0,0.0});
+ approximant->conjugate();
+ approximant->rename("Approximant");
+
+ auto target_net = exatn::makeSharedTensorNetwork("TargetNet");
+ target_net->appendTensor(1,exatn::getTensor("T"),{});
+ auto target = exatn::makeSharedTensorExpansion();
+ target->appendComponent(target_net,{1.0,0.0});
+ target->rename("Target");
+
+ //Construct the reconstructor (solver):
+ exatn::TensorNetworkReconstructor reconstructor(target,approximant);
+
+ //Run the reconstructor:
+ success = exatn::sync(); assert(success);
+ double fidelity;
+ bool reconstructed = reconstructor.reconstruct(&fidelity);
+ success = exatn::sync(); assert(success);
+ if(reconstructed){
+  std::cout << "Reconstruction succeeded!" << std::endl;
+ }else{
+  std::cout << "Reconstruction failed!" << std::endl;
+ }
+
+ //Destroy tensors:
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+ success = exatn::destroyTensor("Z"); assert(success);
+ success = exatn::destroyTensor("T"); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

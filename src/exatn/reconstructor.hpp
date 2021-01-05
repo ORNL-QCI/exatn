@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/01
+REVISION: 2021/01/04
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,15 +31,24 @@ class TensorNetworkReconstructor{
 
 public:
 
+ static constexpr const double DEFAULT_TOLERANCE = 1e-6;
+ static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
+
  TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
                             std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor network expansion
-                            double tolerance);                            //in: desired reconstruction convergence tolerance
+                            double tolerance = DEFAULT_TOLERANCE);        //in: desired reconstruction convergence tolerance
 
  TensorNetworkReconstructor(const TensorNetworkReconstructor &) = default;
  TensorNetworkReconstructor & operator=(const TensorNetworkReconstructor &) = default;
  TensorNetworkReconstructor(TensorNetworkReconstructor &&) noexcept = default;
  TensorNetworkReconstructor & operator=(TensorNetworkReconstructor &&) noexcept = default;
  ~TensorNetworkReconstructor() = default;
+
+ /** Resets the reconstruction tolerance. **/
+ void resetTolerance(double tolerance);
+
+ /** Resets the max number of macro-iterations (sweeping epochs). **/
+ void resetMaxIterations(unsigned int max_iterations);
 
  /** Approximately reconstructs a tensor network expansion via another tensor network
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
@@ -62,6 +71,7 @@ private:
  double epsilon_;                               //epsilon value for the gradient descent based tensor update
  double tolerance_;                             //numerical reconstruction convergence tolerance
  double fidelity_;                              //actually achieved reconstruction fidelity
+ unsigned int max_iterations_;                  //max number of macro-iterations
  std::vector<Environment> environments_;        //optimization environments for each optimizable tensor
 };
 
