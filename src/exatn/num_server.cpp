@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/29
+REVISION: 2021/01/06
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 #include "tensor_range.hpp"
@@ -705,7 +705,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
   op->setTensorOperand(output_tensor,conjugated);
   op->setScalar(0,component->coefficient_);
   std::string add_pattern;
-  auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern); assert(generated);
+  auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern,false,
+                                             accumulator->getName(),output_tensor->getName());
+  assert(generated);
   op->setIndexPattern(add_pattern);
   accumulations.emplace_back(op);
  }
@@ -966,7 +968,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
  op->setTensorOperand(iter->second);
  auto submitted = submit(op);
- if(submitted) submitted = sync(*op);
+ if(submitted) submitted = sync(*op); //`Do I need to always sync Destroy?
  return submitted;
 }
 

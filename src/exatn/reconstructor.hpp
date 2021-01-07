@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/04
+REVISION: 2021/01/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,7 +31,8 @@ class TensorNetworkReconstructor{
 
 public:
 
- static constexpr const double DEFAULT_TOLERANCE = 1e-6;
+ static constexpr const double DEFAULT_TOLERANCE = 1e-5;
+ static constexpr const double DEFAULT_LEARN_RATE = 0.1;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
 
  TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
@@ -53,10 +54,12 @@ public:
  /** Approximately reconstructs a tensor network expansion via another tensor network
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
      that is, the squared overlap between the two tensor network expansions: [0..1]. **/
- bool reconstruct(double * fidelity);
+ bool reconstruct(double * residual_norm2, //out: squared 2-norm of the residual tensor
+                  double * fidelity);      //out: squared overlap
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
- std::shared_ptr<TensorExpansion> getSolution(double * fidelity = nullptr);
+ std::shared_ptr<TensorExpansion> getSolution(double * residual_norm2, //out: squared 2-norm of the residual tensor
+                                              double * fidelity);      //out: squared overlap
 
 private:
 
@@ -68,10 +71,11 @@ private:
 
  std::shared_ptr<TensorExpansion> expansion_;   //tensor network expansion to reconstruct
  std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor network expansion
+ unsigned int max_iterations_;                  //max number of macro-iterations
  double epsilon_;                               //epsilon value for the gradient descent based tensor update
  double tolerance_;                             //numerical reconstruction convergence tolerance
- double fidelity_;                              //actually achieved reconstruction fidelity
- unsigned int max_iterations_;                  //max number of macro-iterations
+ double residual_norm2_;                        //squared 2-norm of the residual tensor
+ double fidelity_;                              //achieved reconstruction fidelity (squared overlap)
  std::vector<Environment> environments_;        //optimization environments for each optimizable tensor
 };
 

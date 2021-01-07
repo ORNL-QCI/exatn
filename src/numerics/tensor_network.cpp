@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/30
+REVISION: 2021/01/06
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
@@ -2129,7 +2129,13 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
     success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
     if(success){
      assert(!conjugated); //output tensor operands never appear conjugated
-     const auto & intermediate = *(op.getTensorOperand(0));
+     auto intermediate_p = op.getTensorOperand(0);
+     if(intermediate_p == nullptr){ //trap
+      std::cout << "#ERROR(exatn::TensorNetwork::splitIndices): Tensor operation is missing operand #0:" << std::endl;
+      op.printIt();
+      assert(false);
+     }
+     const auto & intermediate = *intermediate_p;
      const auto & intermediate_name = intermediate.getName();
      assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
      assert(indices.size() == intermediate.getRank());
@@ -2415,6 +2421,14 @@ void TensorNetwork::printSplitIndexInfo(std::ofstream & output_file, bool with_a
   }
  }
  output_file << "#END INFO\n";
+ return;
+}
+
+
+void TensorNetwork::printOperationList() const
+{
+ std::cout << "TensorNetwork " << name_ << ": Tensor operation list:" << std::endl;
+ for(auto & op: operations_) op->printIt();
  return;
 }
 

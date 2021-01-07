@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/09/29
+REVISION: 2021/01/07
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operation.hpp"
 #include "tensor_symbol.hpp"
@@ -20,7 +20,7 @@ TensorOperation::TensorOperation(TensorOpCode opcode,
                                  std::size_t mutability,
                                  std::initializer_list<int> symbolic_positions):
  symb_pos_(symbolic_positions), num_operands_(num_operands), num_scalars_(num_scalars),
- mutation_(mutability), opcode_(opcode), id_(0),
+ mutation_(mutability), opcode_(opcode), id_(0), repeatable_(true),
  scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
  operands_.reserve(num_operands);
@@ -48,9 +48,14 @@ void TensorOperation::printIt() const
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);
-  std::cout << " ";
-  tensor->printIt();
-  std::cout << std::endl;
+  if(tensor != nullptr){
+   std::cout << " ";
+   tensor->printIt();
+   std::cout << std::endl;
+  }else{
+   std::cout << "#ERROR(exatn::TensorOperation::printIt): Tensor operand is NULL!" << std::endl << std::flush;
+   assert(false);
+  }
  }
  for(const auto & scalar: scalars_){
   std::cout << " " << scalar;
@@ -68,9 +73,14 @@ void TensorOperation::printItFile(std::ofstream & output_file) const
  if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);
-  output_file << " ";
-  tensor->printItFile(output_file);
-  output_file << std::endl;
+  if(tensor != nullptr){
+   output_file << " ";
+   tensor->printItFile(output_file);
+   output_file << std::endl;
+  }else{
+   std::cout << "#ERROR(exatn::TensorOperation::printItFile): Tensor operand is NULL!" << std::endl << std::flush;
+   assert(false);
+  }
  }
  for(const auto & scalar: scalars_){
   output_file << " " << scalar;
@@ -164,10 +174,12 @@ bool TensorOperation::resetTensorOperand(unsigned int op_num,
 
 void TensorOperation::dissociateTensorOperands()
 {
- for(auto & oprnd: operands_){
-  //std::cout << "#DEBUG: Dissociating " << std::get<0>(oprnd)->getName()
-  //          << " with use_count " << std::get<0>(oprnd).use_count() << std::endl; //debug
-  std::get<0>(oprnd).reset();
+ if(!repeatable_){
+  for(auto & oprnd: operands_){
+   //std::cout << "#DEBUG: Dissociating " << std::get<0>(oprnd)->getName()
+   //          << " with use_count " << std::get<0>(oprnd).use_count() << std::endl; //debug
+   std::get<0>(oprnd).reset();
+  }
  }
  return;
 }

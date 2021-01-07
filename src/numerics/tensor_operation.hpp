@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2020/09/29
+REVISION: 2021/01/07
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor operation is a formal numerical operation on one or more tensors.
@@ -200,6 +200,7 @@ protected:
  std::size_t mutation_; //default operand mutability bits: Bit X --> Operand #X
  TensorOpCode opcode_; //tensor operation code
  std::size_t id_; //tensor operation id (unique integer identifier)
+ bool repeatable_; //whether or not the tensor operation may be executed more than once
  Timer timer_; //internal timer
 };
 

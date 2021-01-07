@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/01
+REVISION: 2021/01/06
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -148,8 +148,19 @@ bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network,
 bool TensorExpansion::appendExpansion(const TensorExpansion & another,
                                       const std::complex<double> coefficient)
 {
- if(this->isKet() != another.isKet()) return false;
- if(this->getRank() != another.getRank()) return false;
+ if(!components_.empty()){
+  if(this->isKet() != another.isKet()){
+   std::cout << "#ERROR(exatn::TensorExpansion::appendExpansion): Bra-ket mismatch!" << std::endl << std::flush;
+   return false;
+  }
+  if(this->getRank() != another.getRank()){
+   std::cout << "#ERROR(exatn::TensorExpansion::appendExpansion): Rank mismatch!" << std::endl << std::flush;
+   return false;
+  }
+ }else{
+  ket_ = true; if(!another.isKet()) ket_ = false;
+  rename(another.getName());
+ }
  bool appended = true;
  for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
   appended = this->appendComponent(iter->network_,(iter->coefficient_)*coefficient);
@@ -199,6 +210,21 @@ void TensorExpansion::printIt() const
   component.network_->printIt();
  }
  std::cout << "}" << std::endl;
+ return;
+}
+
+
+void TensorExpansion::printOperationList(unsigned int component_id) const
+{
+ assert(component_id < components_.size());
+ components_[component_id].network_->printOperationList();
+ return;
+}
+
+
+void TensorExpansion::printOperationList() const
+{
+ for(unsigned int i = 0; i < components_.size(); ++i) printOperationList(i);
  return;
 }
 

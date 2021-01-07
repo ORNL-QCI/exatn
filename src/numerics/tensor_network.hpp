@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2020/12/30
+REVISION: 2021/01/06
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network is a set of connected tensors.
@@ -398,6 +398,9 @@ public:
  void printSplitIndexInfo(bool with_affected_tensors = false) const;
  void printSplitIndexInfo(std::ofstream & output_file,
                           bool with_affected_tensors = false) const;
+
+ /** Prints the currently cached tensor operation list. **/
+ void printOperationList() const;
 
  /** Returns the FMA flop count estimate required for evaluating the tensor network,
      if available (if getOperationList has already been invoked). The FMA flop count estimate

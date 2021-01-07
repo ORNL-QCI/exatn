@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2020/09/02
+REVISION: 2021/01/07
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,9 +48,14 @@ void TensorOpCreate::printIt() const
  if(pattern_.length() > 0) std::cout << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);
-  std::cout << " ";
-  tensor->printIt();
-  std::cout << std::endl;
+  if(tensor != nullptr){
+   std::cout << " ";
+   tensor->printIt();
+   std::cout << std::endl;
+  }else{
+   std::cout << "#ERROR(exatn::TensorOpCreate::printIt): Tensor operand is NULL!" << std::endl << std::flush;
+   assert(false);
+  }
  }
  for(const auto & scalar: scalars_){
   std::cout << " " << scalar;
@@ -67,9 +72,14 @@ void TensorOpCreate::printItFile(std::ofstream & output_file) const
  if(pattern_.length() > 0) output_file << " " << pattern_ << std::endl;
  for(const auto & operand: operands_){
   const auto & tensor = std::get<0>(operand);
-  output_file << " ";
-  tensor->printItFile(output_file);
-  output_file << std::endl;
+  if(tensor != nullptr){
+   output_file << " ";
+   tensor->printItFile(output_file);
+   output_file << std::endl;
+  }else{
+   std::cout << "#ERROR(exatn::TensorOpCreate::printItFile): Tensor operand is NULL!" << std::endl << std::flush;
+   assert(false);
+  }
  }
  for(const auto & scalar: scalars_){
   output_file << " " << scalar;

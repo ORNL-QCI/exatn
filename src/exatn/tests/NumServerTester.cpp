@@ -2659,11 +2659,11 @@ TEST(NumServerTester, Reconstructor) {
  bool success = true;
 
  //Create tensors:
- const int bond_dim = 16;
- success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{16,32}); assert(success);
- success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{16,32}); assert(success);
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,16}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,32}); assert(success);
+ const int bond_dim = 2;
+ success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
+ success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,2}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,2}); assert(success);
 
  //Init tensors:
  success = exatn::initTensorRnd("T"); assert(success);
@@ -2681,23 +2681,26 @@ TEST(NumServerTester, Reconstructor) {
  approximant->appendComponent(approx_net,{1.0,0.0});
  approximant->conjugate();
  approximant->rename("Approximant");
+ approximant->printIt();
 
  auto target_net = exatn::makeSharedTensorNetwork("TargetNet");
  target_net->appendTensor(1,exatn::getTensor("T"),{});
  auto target = exatn::makeSharedTensorExpansion();
  target->appendComponent(target_net,{1.0,0.0});
  target->rename("Target");
+ target->printIt();
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor reconstructor(target,approximant);
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
- double fidelity;
- bool reconstructed = reconstructor.reconstruct(&fidelity);
+ double residual_norm2,fidelity;
+ bool reconstructed = reconstructor.reconstruct(&residual_norm2,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
-  std::cout << "Reconstruction succeeded!" << std::endl;
+  std::cout << "Reconstruction succeeded: Residual norm^2 = " << residual_norm2
+                                    << "; Fidelity = " << fidelity << std::endl;
  }else{
   std::cout << "Reconstruction failed!" << std::endl;
  }

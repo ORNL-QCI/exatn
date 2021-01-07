@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/04
+REVISION: 2021/01/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -14,8 +14,8 @@ namespace exatn{
 TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,
                                                        std::shared_ptr<TensorExpansion> approximant,
                                                        double tolerance):
- expansion_(expansion), approximant_(approximant), epsilon_(0.1), tolerance_(tolerance), fidelity_(0.0),
- max_iterations_(DEFAULT_MAX_ITERATIONS)
+ expansion_(expansion), approximant_(approximant), max_iterations_(DEFAULT_MAX_ITERATIONS),
+ epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), residual_norm2_(0.0), fidelity_(0.0)
 {
  if(!expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkReconstructor): The reconstructed tensor network expansion must be a ket!"
@@ -49,27 +49,34 @@ void TensorNetworkReconstructor::resetMaxIterations(unsigned int max_iterations)
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkReconstructor::getSolution(double * fidelity)
+std::shared_ptr<TensorExpansion> TensorNetworkReconstructor::getSolution(double * residual_norm2, double * fidelity)
 {
  if(fidelity_ == 0.0) return std::shared_ptr<TensorExpansion>(nullptr);
- if(fidelity != nullptr) *fidelity = fidelity_;
+ *residual_norm2 = residual_norm2_;
+ *fidelity = fidelity_;
  return approximant_;
 }
 
 
-bool TensorNetworkReconstructor::reconstruct(double * fidelity)
+bool TensorNetworkReconstructor::reconstruct(double * residual_norm2, double * fidelity)
 {
+ assert(residual_norm2 != nullptr);
  assert(fidelity != nullptr);
+
+ residual_norm2_ = 0.0;
+ fidelity_ = 0.0;
 
  //Construct the Lagrangian optimization functional (scalar):
  // <approximant|approximant> - <approximant|expansion>
  TensorExpansion approximant_ket(*approximant_,false); // <approximant|
  approximant_ket.conjugate(); // |approximant>
  TensorExpansion overlap(*approximant_,*expansion_); // <approximant|expansion>
+ overlap.rename("Overlap");
  TensorExpansion normalization(*approximant_,approximant_ket); // <approximant|approximant>
+ normalization.rename("Normalization");
  TensorExpansion lagrangian;
- lagrangian.appendExpansion(normalization,{1.0,0.0});
- lagrangian.appendExpansion(overlap,{-1.0,0.0});
+ bool success = lagrangian.appendExpansion(normalization,{1.0,0.0}); assert(success);
+ success = lagrangian.appendExpansion(overlap,{-1.0,0.0}); assert(success);
  lagrangian.rename("Lagrangian");
 
  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Lagrangian:" << std::endl; //debug
@@ -80,11 +87,14 @@ bool TensorNetworkReconstructor::reconstruct(double * fidelity)
  TensorExpansion expansion_bra(*expansion_,false); // |expansion>
  expansion_bra.conjugate(); // <expansion|
  TensorExpansion input_norm(expansion_bra,*expansion_); // <expansion|expansion>
+ input_norm.rename("InputNorm");
+ TensorExpansion overlap_conj(expansion_bra,approximant_ket); // <expansion|approximant>
+ overlap_conj.rename("OverlapConj");
  TensorExpansion residual;
- residual.appendExpansion(input_norm,{1.0,0.0});
- residual.appendExpansion(normalization,{1.0,0.0});
- residual.appendExpansion(overlap,{-1.0,0.0});
- residual.appendExpansion(TensorExpansion(expansion_bra,approximant_ket),{-1.0,0.0});
+ success = residual.appendExpansion(input_norm,{1.0,0.0}); assert(success);
+ success = residual.appendExpansion(normalization,{1.0,0.0}); assert(success);
+ success = residual.appendExpansion(overlap,{-1.0,0.0}); assert(success);
+ success = residual.appendExpansion(overlap_conj,{-1.0,0.0}); assert(success);
  residual.rename("Residual");
 
  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Residual:" << std::endl; //debug
@@ -126,8 +136,9 @@ bool TensorNetworkReconstructor::reconstruct(double * fidelity)
   done = evaluateSync(input_norm,scalar_norm); assert(done);
   double input_expansion_norm = 0.0;
   done = computeNorm1Sync("_scalar_norm",input_expansion_norm); assert(done);
+  input_expansion_norm = std::sqrt(input_expansion_norm);
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the input tensor network expansion = "
-            << input_expansion_norm << std::endl; //debug
+            << std::scientific << input_expansion_norm << std::endl; //debug
   unsigned int iteration = 0;
   while(!converged){
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << ++iteration << std::endl; //debug
@@ -143,26 +154,48 @@ bool TensorNetworkReconstructor::reconstruct(double * fidelity)
     double grad_maxabs = 0.0;
     done = computeMaxAbsSync(environment.gradient->getName(),grad_maxabs); assert(done);
     if(grad_maxabs > max_grad_maxabs) max_grad_maxabs = grad_maxabs;
-    std::cout << " Gradient w.r.t. " << environment.tensor->getName() << " = " << grad_maxabs << std::endl; //debug
+    std::cout << " Gradient w.r.t. " << environment.tensor->getName()
+              << " = " << grad_maxabs << std::endl; //debug
     //Update the optimizable tensor using the computed gradient:
     if(grad_maxabs > tolerance_){
      std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true,
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true, //`Do I need conjugation here?
                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
     }
     //Destroy the gradient tensor:
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
+   //Compute the residual norm and check convergence:
+   done = initTensorSync("_scalar_norm",0.0); assert(done);
+   done = evaluateSync(residual,scalar_norm); assert(done);
+   done = computeNorm1Sync("_scalar_norm",residual_norm2_); assert(done);
+   std::cout << " Residual norm = " << std::sqrt(residual_norm2_) << std::endl; //debug
    converged = (max_grad_maxabs <= tolerance_);
   }
+  //Compute the approximant norm:
+  done = initTensorSync("_scalar_norm",0.0); assert(done);
+  done = evaluateSync(normalization,scalar_norm); assert(done);
+  double output_expansion_norm = 0.0;
+  done = computeNorm1Sync("_scalar_norm",output_expansion_norm); assert(done);
+  output_expansion_norm = std::sqrt(output_expansion_norm);
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
+            << output_expansion_norm << std::endl; //debug
   //Compute approximation fidelity:
+  double overlap_abs = 0.0;
+  done = initTensorSync("_scalar_norm",0.0); assert(done);
+  done = evaluateSync(overlap_conj,scalar_norm); assert(done);
+  done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated overlap = " << overlap_abs << std::endl;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(overlap,scalar_norm); assert(done);
-  done = computeNorm2Sync("_scalar_norm",fidelity_); assert(done);
+  done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct overlap = " << overlap_abs << std::endl;
+  fidelity_ = overlap_abs * overlap_abs;
   done = destroyTensorSync("_scalar_norm"); assert(done);
  }
 
+ *residual_norm2 = residual_norm2_;
  *fidelity = fidelity_;
  return true;
 }
