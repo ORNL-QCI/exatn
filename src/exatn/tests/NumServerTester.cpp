@@ -2672,10 +2672,7 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::initTensorRnd("B"); assert(success);
 
  //Construct necessary tensor networks expansions:
- auto approx_net = std::shared_ptr<TensorNetwork>(new TensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)",
-                                                                    {{"A",exatn::getTensor("A")},
-                                                                     {"B",exatn::getTensor("B")},
-                                                                     {"Z",exatn::getTensor("Z")}}));
+ auto approx_net = exatn::makeTensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)");
  approx_net->markOptimizableTensors([](const Tensor & tensor){return true;});
  auto approximant = exatn::makeSharedTensorExpansion();
  approximant->appendComponent(approx_net,{1.0,0.0});

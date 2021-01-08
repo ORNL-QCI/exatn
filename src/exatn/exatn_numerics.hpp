@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2020/12/29
+REVISION: 2021/01/08
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  1. Vector space and subspace registration:
@@ -745,6 +745,30 @@ inline void printContractionSequence(const std::list<numerics::ContrTriple> & co
 /** Creates and returns a tensor network builder. **/
 inline std::unique_ptr<exatn::NetworkBuilder> getTensorNetworkBuilder(const std::string & builder_name) //in: tensor network builder name
  {return std::move(exatn::NetworkBuildFactory::get()->createNetworkBuilder(builder_name));}
+
+
+/** Constructs a tensor network from a symbolic specification.
+    All participating tensors must have been created before. **/
+inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string & name,
+                                                               const std::string & symbolic)
+ {std::vector<std::string> symb_tensors;
+  auto success = parse_tensor_network(symbolic,symb_tensors); assert(success);
+  std::map<std::string,std::shared_ptr<Tensor>> tensors;
+  for(const auto & symb_tensor: symb_tensors){
+   bool conj;
+   std::string tens_name;
+   std::vector<exatn::IndexLabel> indices;
+   success = parse_tensor(symb_tensor,tens_name,indices,conj); assert(success);
+   auto tensor = exatn::getTensor(tens_name);
+   if(tensor){
+    tensors.emplace(tens_name,tensor);
+   }else{
+    std::cout << "#ERROR(exatn::makeTensorNetwork): Tensor " << tens_name << " does not exist!" << std::endl;
+    assert(false);
+   }
+  }
+  return std::make_shared<TensorNetwork>(name,symbolic,tensors);
+ }
 
 
 /** Resets the tensor contraction sequence optimizer that is invoked
