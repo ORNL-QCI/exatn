@@ -749,8 +749,8 @@ inline std::unique_ptr<exatn::NetworkBuilder> getTensorNetworkBuilder(const std:
 
 /** Constructs a tensor network from a symbolic specification.
     All participating tensors must have been created before. **/
-inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string & name,
-                                                               const std::string & symbolic)
+inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string & name,     //in: tensor network name
+                                                               const std::string & symbolic) //in: tensor network specification
  {std::vector<std::string> symb_tensors;
   auto success = parse_tensor_network(symbolic,symb_tensors); assert(success);
   std::map<std::string,std::shared_ptr<Tensor>> tensors;

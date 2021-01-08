@@ -1,10 +1,12 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/07
+REVISION: 2021/01/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "reconstructor.hpp"
+
+//#include <talshxx.hpp> //debug
 
 #include <unordered_set>
 #include <string>
@@ -173,6 +175,14 @@ bool TensorNetworkReconstructor::reconstruct(double * residual_norm2, double * f
    std::cout << " Residual norm = " << std::sqrt(residual_norm2_) << std::endl; //debug
    converged = (max_grad_maxabs <= tolerance_);
   }
+  /*//Inspect the residual norm contributions (debug):
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Individual components of residual:";
+  for(auto net_iter = residual.cbegin(); net_iter != residual.cend(); ++net_iter){
+   auto output_tensor = exatn::getLocalTensor(net_iter->network_->getTensor(0)->getName());
+   auto view = output_tensor->getSliceView<float>();
+   std::cout << " " << view[std::initializer_list<int>{}];
+  }
+  std::cout << std::endl;*/
   //Compute the approximant norm:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(normalization,scalar_norm); assert(done);
@@ -191,7 +201,7 @@ bool TensorNetworkReconstructor::reconstruct(double * residual_norm2, double * f
   done = evaluateSync(overlap,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct overlap = " << overlap_abs << std::endl;
-  fidelity_ = overlap_abs * overlap_abs;
+  fidelity_ = std::pow(overlap_abs / (input_expansion_norm * output_expansion_norm), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
  }
 

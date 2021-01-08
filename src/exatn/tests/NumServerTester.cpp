@@ -2660,9 +2660,9 @@ TEST(NumServerTester, Reconstructor) {
 
  //Create tensors:
  const int bond_dim = 2;
- success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
- success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,2}); assert(success);
+ success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{4,2}); assert(success);
+ success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{4,2}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,4}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,2}); assert(success);
 
  //Init tensors:
