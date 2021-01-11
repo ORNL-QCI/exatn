@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/07
+REVISION: 2021/01/11
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,7 +32,7 @@ class TensorNetworkReconstructor{
 public:
 
  static constexpr const double DEFAULT_TOLERANCE = 1e-5;
- static constexpr const double DEFAULT_LEARN_RATE = 0.1;
+ static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
 
  TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
@@ -56,6 +56,9 @@ public:
      that is, the squared overlap between the two tensor network expansions: [0..1]. **/
  bool reconstruct(double * residual_norm2, //out: squared 2-norm of the residual tensor
                   double * fidelity);      //out: squared overlap
+ bool reconstruct(const ProcessGroup & process_group, //in: executing process group
+                  double * residual_norm2,            //out: squared 2-norm of the residual tensor
+                  double * fidelity);                 //out: squared overlap
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
  std::shared_ptr<TensorExpansion> getSolution(double * residual_norm2, //out: squared 2-norm of the residual tensor

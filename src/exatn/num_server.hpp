@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2020/12/29
+REVISION: 2021/01/11
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Numerical server provides basic tensor network processing functionality:
@@ -645,6 +645,16 @@ public:
  bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                 const std::string & name,           //in: tensor network name
                                 const std::string & network);       //in: symbolic tensor network specification
+
+ /** Normalizes a tensor network expansion to a given 2-norm by rescaling
+     all tensor network components by the same factor: Only the tensor
+     network expansion coefficients are affected. **/
+ bool normalize2NormSync(TensorExpansion & expansion, //inout: tensor network expansion
+                         double norm);                //in: desired 2-norm
+
+ bool normalize2NormSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                         TensorExpansion & expansion,        //inout: tensor network expansion
+                         double norm);                       //in: desired 2-norm
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

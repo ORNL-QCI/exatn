@@ -1,10 +1,13 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2019/11/01
+REVISION: 2021/01/11
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
+ (a) Builds a matrix product state tensor network:
+     Parameters:
+     * max_bond_dim: Maximal internal bond dimension;
 **/
 
 #ifndef EXATN_NUMERICS_NETWORK_BUILDER_MPS_HPP_
@@ -39,8 +42,10 @@ public:
  /** Sets a specific parameter of the tensor network builder. **/
  virtual bool setParameter(const std::string & name, long long value) override;
 
- /** Builds a tensor network of a specific kind. **/
- virtual void build(TensorNetwork & network) override;
+ /** Builds a tensor network of a specific kind. On entrance, the passed
+     tensor network must only have the output tensor. On exit, it will be
+     the fully constructed tensor network of a specific kind. **/
+ virtual void build(TensorNetwork & network) override; //inout: tensor network
 
  static std::unique_ptr<NetworkBuilder> createNew();
 

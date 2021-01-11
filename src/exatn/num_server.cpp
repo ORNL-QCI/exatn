@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/06
+REVISION: 2021/01/11
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_range.hpp"
 #include "timers.hpp"
 
+#include <complex>
 #include <vector>
 #include <stack>
 #include <list>
@@ -2112,6 +2113,57 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetworkSync): Invalid tensor network: " << network << std::endl;
  }
  return parsed;
+}
+
+bool NumServer::normalize2NormSync(TensorExpansion & expansion,
+                                   double norm)
+{
+ return normalize2NormSync(getDefaultProcessGroup(),expansion,norm);
+}
+
+bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
+                                   TensorExpansion & expansion,
+                                   double norm)
+{
+ //Determine parallel execution configuration:
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+ //Perform normalization:
+ bool success = false;
+ if(expansion.getNumComponents() > 0){
+  auto inner_prod_tensor = exatn::makeSharedTensor("_InnerProd");
+  success = createTensor(inner_prod_tensor,expansion.cbegin()->network_->getTensorElementType());
+  if(success){
+   success = initTensor("_InnerProd",0.0);
+   if(success){
+    TensorExpansion conjugate(expansion);
+    conjugate.conjugate();
+    conjugate.rename(expansion.getName()+"Conj");
+    TensorExpansion inner_product(conjugate,expansion);
+    inner_product.rename("InnerProduct");
+    success = sync("_InnerProd"); assert(success);
+    success = submit(process_group,inner_product,inner_prod_tensor);
+    if(success){
+     success = sync("_InnerProd"); assert(success);
+     double original_norm2;
+     success = computeNorm1Sync("_InnerProd",original_norm2);
+     if(success){
+      success = destroyTensorSync("_InnerProd");
+      expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
+     }else{
+      std::cout << "#ERROR(exatn::normalize2Norm): Unable to compute the norm!" << std::endl;
+     }
+    }else{
+     std::cout << "#ERROR(exatn::normalize2Norm): Unable to evaluate the inner product tensor expansion!" << std::endl;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::normalize2Norm): Unable to zero out the scalar tensor!" << std::endl;
+   }
+  }else{
+   std::cout << "#ERROR(exatn::normalize2Norm): Unable to create the scalar tensor!" << std::endl;
+  }
+ }
+ return success;
 }
 
 std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)

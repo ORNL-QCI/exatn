@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/06
+REVISION: 2021/01/11
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -297,6 +297,12 @@ unsigned int TensorNetwork::getMaxTensorId()
   for(const auto & kv: tensors_) max_tensor_id_ = std::max(max_tensor_id_,kv.first);
  }
  return max_tensor_id_;
+}
+
+
+TensorElementType TensorNetwork::getTensorElementType() const
+{
+ return getTensor(0)->getElementType();
 }
 
 
