@@ -2659,11 +2659,11 @@ TEST(NumServerTester, Reconstructor) {
  bool success = true;
 
  //Create tensors:
- const int bond_dim = 2;
- success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{4,2}); assert(success);
- success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{4,2}); assert(success);
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,4}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,2}); assert(success);
+ const int bond_dim = 100;
+ success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{200,100}); assert(success);
+ success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{200,100}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,200}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{bond_dim,100}); assert(success);
 
  //Init tensors:
  success = exatn::initTensorRnd("T"); assert(success);
@@ -2671,7 +2671,10 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::initTensorRnd("A"); assert(success);
  success = exatn::initTensorRnd("B"); assert(success);
 
- //Construct necessary tensor networks expansions:
+ //Compute tensor factors based on the input tensor decomposition:
+ success = exatn::decomposeTensorSVDLR("T(i,j)=A(k,i)*B(k,j)"); assert(success);
+
+ //Construct the approximant tensor network expansion A(k,i)*B(k,j):
  auto approx_net = exatn::makeTensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)");
  approx_net->markOptimizableTensors([](const Tensor & tensor){return true;});
  auto approximant = exatn::makeSharedTensorExpansion();
@@ -2680,6 +2683,7 @@ TEST(NumServerTester, Reconstructor) {
  approximant->rename("Approximant");
  approximant->printIt();
 
+ //Construct the target tensor network expansion T(i,j):
  auto target_net = exatn::makeSharedTensorNetwork("TargetNet");
  target_net->appendTensor(1,exatn::getTensor("T"),{});
  auto target = exatn::makeSharedTensorExpansion();
@@ -2687,16 +2691,22 @@ TEST(NumServerTester, Reconstructor) {
  target->rename("Target");
  target->printIt();
 
+ //Normalize tensor network expansions to 1.0:
+ success = exatn::normalize2NormSync(*target,1.0); assert(success);
+ success = exatn::normalize2NormSync(*approximant,1.0); assert(success);
+
  //Construct the reconstructor (solver):
- exatn::TensorNetworkReconstructor reconstructor(target,approximant);
+ exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-4);
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
- double residual_norm2,fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm2,&fidelity);
+ reconstructor.resetLearningRate(1.0);
+ double residual_norm, fidelity;
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
-  std::cout << "Reconstruction succeeded: Residual norm^2 = " << residual_norm2
+  std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
                                     << "; Fidelity = " << fidelity << std::endl;
  }else{
   std::cout << "Reconstruction failed!" << std::endl;

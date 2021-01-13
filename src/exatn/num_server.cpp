@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/11
+REVISION: 2021/01/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -895,10 +895,15 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  assert(tensor);
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
- op->setTensorOperand(tensor);
- std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
- auto submitted = submit(op);
+ bool submitted = false;
+ if(element_type != TensorElementType::VOID){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+  submitted = submit(op);
+ }else{
+  std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
+ }
  return submitted;
 }
 
@@ -908,11 +913,16 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  assert(tensor);
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
- op->setTensorOperand(tensor);
- std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
- auto submitted = submit(op);
- if(submitted) submitted = sync(*op);
+ bool submitted = false;
+ if(element_type != TensorElementType::VOID){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand(tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+  submitted = submit(op);
+  if(submitted) submitted = sync(*op);
+ }else{
+  std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
+ }
  return submitted;
 }
 
@@ -2132,6 +2142,7 @@ bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
  bool success = false;
  if(expansion.getNumComponents() > 0){
   auto inner_prod_tensor = exatn::makeSharedTensor("_InnerProd");
+  assert(expansion.cbegin()->network_->getTensorElementType() != TensorElementType::VOID);
   success = createTensor(inner_prod_tensor,expansion.cbegin()->network_->getTensorElementType());
   if(success){
    success = initTensor("_InnerProd",0.0);
@@ -2148,7 +2159,6 @@ bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
      double original_norm2;
      success = computeNorm1Sync("_InnerProd",original_norm2);
      if(success){
-      success = destroyTensorSync("_InnerProd");
       expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
      }else{
       std::cout << "#ERROR(exatn::normalize2Norm): Unable to compute the norm!" << std::endl;
@@ -2159,6 +2169,8 @@ bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
    }else{
     std::cout << "#ERROR(exatn::normalize2Norm): Unable to zero out the scalar tensor!" << std::endl;
    }
+   bool done = destroyTensorSync("_InnerProd"); success = (success && done);
+   if(!done) std::cout << "#ERROR(exatn::normalize2Norm): Unable to destroy the scalar tensor!" << std::endl;
   }else{
    std::cout << "#ERROR(exatn::normalize2Norm): Unable to create the scalar tensor!" << std::endl;
   }

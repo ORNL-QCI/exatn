@@ -102,9 +102,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  bool success = lagrangian.appendExpansion(normalization,{1.0,0.0}); assert(success);
  success = lagrangian.appendExpansion(overlap,{-1.0,0.0}); assert(success);
  lagrangian.rename("Lagrangian");
-
- std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Lagrangian:" << std::endl; //debug
- lagrangian.printIt(); //debug
+ if(TensorNetworkReconstructor::debug){
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Lagrangian:" << std::endl;
+  lagrangian.printIt();
+ }
 
  //Construct the residual functional (real scalar cost function):
  // <expansion|expansion> + <approximant|approximant> - <approximant|expansion> - <expansion|approximant>
@@ -120,9 +121,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  success = residual.appendExpansion(overlap,{-1.0,0.0}); assert(success);
  success = residual.appendExpansion(overlap_conj,{-1.0,0.0}); assert(success);
  residual.rename("Residual");
-
- std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Residual:" << std::endl; //debug
- residual.printIt(); //debug
+ if(TensorNetworkReconstructor::debug){
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Residual:" << std::endl;
+  residual.printIt();
+ }
 
  //Prepare derivative environments for all optimizable tensors in the approximant:
  std::unordered_set<std::string> tensor_names;
@@ -143,11 +145,12 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    }
   }
  }
-
- std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Derivatives:" << std::endl; //debug
- for(const auto & environment: environments_){ //debug
-  std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
-  environment.gradient_expansion.printIt();
+ if(TensorNetworkReconstructor::debug){
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Derivatives:" << std::endl;
+  for(const auto & environment: environments_){
+   std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
+   environment.gradient_expansion.printIt();
+  }
  }
 
  //Tensor optimization procedure:
@@ -160,11 +163,15 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   done = evaluateSync(process_group,input_norm,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",input_norm_); assert(done);
   input_norm_ = std::sqrt(input_norm_);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the input tensor network expansion = "
-            << std::scientific << input_norm_ << std::endl; //debug
+  if(TensorNetworkReconstructor::debug){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the input tensor network expansion = "
+             << std::scientific << input_norm_ << std::endl;
+  }
   unsigned int iteration = 0;
-  while(!converged){
-   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << ++iteration << std::endl; //debug
+  while((!converged) && (iteration < max_iterations_)){
+   if(TensorNetworkReconstructor::debug){
+    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << iteration << std::endl;
+   }
    double max_grad_maxabs = 0.0;
    for(auto & environment: environments_){
     //Create the gradient tensor:
@@ -177,8 +184,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
     double grad_maxabs = 0.0;
     done = computeMaxAbsSync(environment.gradient->getName(),grad_maxabs); assert(done);
     if(grad_maxabs > max_grad_maxabs) max_grad_maxabs = grad_maxabs;
-    std::cout << " Gradient w.r.t. " << environment.tensor->getName()
-              << " = " << grad_maxabs << std::endl; //debug
+    if(TensorNetworkReconstructor::debug){
+     std::cout << " Gradient w.r.t. " << environment.tensor->getName()
+               << " = " << grad_maxabs << std::endl;
+    }
     //Update the optimizable tensor using the computed gradient:
     if(grad_maxabs > tolerance_){
      std::string add_pattern;
@@ -194,35 +203,46 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    done = evaluateSync(process_group,residual,scalar_norm); assert(done);
    done = computeNorm1Sync("_scalar_norm",residual_norm_); assert(done);
    residual_norm_ = std::sqrt(residual_norm_);
-   std::cout << " Residual norm = " << residual_norm_ << std::endl; //debug
+   if(TensorNetworkReconstructor::debug){
+    std::cout << " Residual norm = " << residual_norm_ << std::endl;
+   }
    converged = (max_grad_maxabs <= tolerance_);
+   ++iteration;
   }
   /*//Inspect the residual norm contributions (debug):
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Individual components of residual:";
-  for(auto net_iter = residual.cbegin(); net_iter != residual.cend(); ++net_iter){
-   auto output_tensor = exatn::getLocalTensor(net_iter->network_->getTensor(0)->getName());
-   auto view = output_tensor->getSliceView<float>();
-   std::cout << " " << view[std::initializer_list<int>{}];
-  }
-  std::cout << std::endl;*/
+  if(TensorNetworkReconstructor::debug){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Individual components of residual:";
+   for(auto net_iter = residual.cbegin(); net_iter != residual.cend(); ++net_iter){
+    auto output_tensor = exatn::getLocalTensor(net_iter->network_->getTensor(0)->getName());
+    auto view = output_tensor->getSliceView<float>();
+    std::cout << " " << view[std::initializer_list<int>{}];
+   }
+   std::cout << std::endl;
+  }*/
   //Compute the approximant norm:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
   output_norm_ = 0.0;
   done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
   output_norm_ = std::sqrt(output_norm_);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
-            << output_norm_ << std::endl; //debug
+  if(TensorNetworkReconstructor::debug){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
+             << output_norm_ << std::endl;
+  }
   //Compute approximation fidelity:
   double overlap_abs = 0.0;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap_conj,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated absolute overlap = " << overlap_abs << std::endl;
+  if(TensorNetworkReconstructor::debug){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated absolute overlap = " << overlap_abs << std::endl;
+  }
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct absolute overlap = " << overlap_abs << std::endl;
+  if(TensorNetworkReconstructor::debug){
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct absolute overlap = " << overlap_abs << std::endl;
+  }
   fidelity_ = std::pow(overlap_abs / (input_norm_ * output_norm_), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
  }
@@ -230,6 +250,13 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  *residual_norm = residual_norm_;
  *fidelity = fidelity_;
  return true;
+}
+
+
+void TensorNetworkReconstructor::resetDebugLevel(unsigned int level)
+{
+ TensorNetworkReconstructor::debug = level;
+ return;
 }
 
 } //namespace exatn

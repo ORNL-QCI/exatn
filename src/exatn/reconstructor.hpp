@@ -69,6 +69,8 @@ public:
  std::shared_ptr<TensorExpansion> getSolution(double * residual_norm, //out: 2-norm of the residual tensor (error)
                                               double * fidelity);     //out: squared overlap
 
+ static void resetDebugLevel(unsigned int level = 0);
+
 private:
 
  struct Environment{

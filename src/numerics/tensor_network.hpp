@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/11
+REVISION: 2021/01/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -155,8 +155,7 @@ public:
  /** Returns the maximal tensor id value used in the tensor network. **/
  unsigned int getMaxTensorId();
 
- /** Returns the tensor element type based on the element type of the output tensor.
-     If the output tensor has not been allocated storage yet, returns VOID type. **/
+ /** Returns the tensor element type based on the element type of an input tensor. **/
  TensorElementType getTensorElementType() const;
 
  /** Returns the name of the tensor network. **/

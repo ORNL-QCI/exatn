@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/11
+REVISION: 2021/01/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -740,10 +740,15 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
                              Args&&... args)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
- op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
- std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
- auto submitted = submit(op);
+ bool submitted = false;
+ if(element_type != TensorElementType::VOID){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+  submitted = submit(op);
+ }else{
+  std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
+ }
  return submitted;
 }
 
@@ -754,11 +759,16 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
                                  Args&&... args)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
- op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
- std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
- auto submitted = submit(op);
- if(submitted) submitted = sync(*op);
+ bool submitted = false;
+ if(element_type != TensorElementType::VOID){
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+  op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
+  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+  submitted = submit(op);
+  if(submitted) submitted = sync(*op);
+ }else{
+  std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
+ }
  return submitted;
 }
 
