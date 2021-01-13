@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/11
+REVISION: 2021/01/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,6 +31,8 @@ class TensorNetworkReconstructor{
 
 public:
 
+ static unsigned int debug;
+
  static constexpr const double DEFAULT_TOLERANCE = 1e-5;
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
@@ -46,23 +48,26 @@ public:
  ~TensorNetworkReconstructor() = default;
 
  /** Resets the reconstruction tolerance. **/
- void resetTolerance(double tolerance);
+ void resetTolerance(double tolerance = DEFAULT_TOLERANCE);
+
+ /** Resets the learning rate. **/
+ void resetLearningRate(double learn_rate = DEFAULT_LEARN_RATE);
 
  /** Resets the max number of macro-iterations (sweeping epochs). **/
- void resetMaxIterations(unsigned int max_iterations);
+ void resetMaxIterations(unsigned int max_iterations = DEFAULT_MAX_ITERATIONS);
 
  /** Approximately reconstructs a tensor network expansion via another tensor network
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
      that is, the squared overlap between the two tensor network expansions: [0..1]. **/
- bool reconstruct(double * residual_norm2, //out: squared 2-norm of the residual tensor
+ bool reconstruct(double * residual_norm,  //out: 2-norm of the residual tensor (error)
                   double * fidelity);      //out: squared overlap
  bool reconstruct(const ProcessGroup & process_group, //in: executing process group
-                  double * residual_norm2,            //out: squared 2-norm of the residual tensor
+                  double * residual_norm,             //out: 2-norm of the residual tensor (error)
                   double * fidelity);                 //out: squared overlap
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
- std::shared_ptr<TensorExpansion> getSolution(double * residual_norm2, //out: squared 2-norm of the residual tensor
-                                              double * fidelity);      //out: squared overlap
+ std::shared_ptr<TensorExpansion> getSolution(double * residual_norm, //out: 2-norm of the residual tensor (error)
+                                              double * fidelity);     //out: squared overlap
 
 private:
 
@@ -75,9 +80,12 @@ private:
  std::shared_ptr<TensorExpansion> expansion_;   //tensor network expansion to reconstruct
  std::shared_ptr<TensorExpansion> approximant_; //reconstructing tensor network expansion
  unsigned int max_iterations_;                  //max number of macro-iterations
- double epsilon_;                               //epsilon value for the gradient descent based tensor update
- double tolerance_;                             //numerical reconstruction convergence tolerance
- double residual_norm2_;                        //squared 2-norm of the residual tensor
+ double epsilon_;                               //learning rate for the gradient descent based tensor update
+ double tolerance_;                             //numerical reconstruction convergence tolerance (for the gradient)
+
+ double input_norm_;                            //2-norm of the input tensor expansion
+ double output_norm_;                           //2-norm of the approximant tensor expansion
+ double residual_norm_;                         //2-norm of the residual tensor after optimization (error)
  double fidelity_;                              //achieved reconstruction fidelity (squared overlap)
  std::vector<Environment> environments_;        //optimization environments for each optimizable tensor
 };

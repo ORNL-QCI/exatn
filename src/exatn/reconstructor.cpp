@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/11
+REVISION: 2021/01/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,11 +13,15 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+unsigned int TensorNetworkReconstructor::debug{0};
+
+
 TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,
                                                        std::shared_ptr<TensorExpansion> approximant,
                                                        double tolerance):
- expansion_(expansion), approximant_(approximant), max_iterations_(DEFAULT_MAX_ITERATIONS),
- epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), residual_norm2_(0.0), fidelity_(0.0)
+ expansion_(expansion), approximant_(approximant),
+ max_iterations_(DEFAULT_MAX_ITERATIONS), epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance),
+ input_norm_(0.0), output_norm_(0.0), residual_norm_(0.0), fidelity_(0.0)
 {
  if(!expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkReconstructor): The reconstructed tensor network expansion must be a ket!"
@@ -44,6 +48,13 @@ void TensorNetworkReconstructor::resetTolerance(double tolerance)
 }
 
 
+void TensorNetworkReconstructor::resetLearningRate(double learn_rate)
+{
+ epsilon_ = learn_rate;
+ return;
+}
+
+
 void TensorNetworkReconstructor::resetMaxIterations(unsigned int max_iterations)
 {
  max_iterations_ = max_iterations;
@@ -51,30 +62,32 @@ void TensorNetworkReconstructor::resetMaxIterations(unsigned int max_iterations)
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkReconstructor::getSolution(double * residual_norm2, double * fidelity)
+std::shared_ptr<TensorExpansion> TensorNetworkReconstructor::getSolution(double * residual_norm, double * fidelity)
 {
  if(fidelity_ == 0.0) return std::shared_ptr<TensorExpansion>(nullptr);
- *residual_norm2 = residual_norm2_;
+ *residual_norm = residual_norm_;
  *fidelity = fidelity_;
  return approximant_;
 }
 
 
-bool TensorNetworkReconstructor::reconstruct(double * residual_norm2, double * fidelity)
+bool TensorNetworkReconstructor::reconstruct(double * residual_norm, double * fidelity)
 {
- return reconstruct(exatn::getDefaultProcessGroup(), residual_norm2, fidelity);
+ return reconstruct(exatn::getDefaultProcessGroup(), residual_norm, fidelity);
 }
 
 
-bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group, double * residual_norm2, double * fidelity)
+bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group, double * residual_norm, double * fidelity)
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
 
- assert(residual_norm2 != nullptr);
+ assert(residual_norm != nullptr);
  assert(fidelity != nullptr);
 
- residual_norm2_ = 0.0;
+ input_norm_ = 0.0;
+ output_norm_ = 0.0;
+ residual_norm_ = 0.0;
  fidelity_ = 0.0;
 
  //Construct the Lagrangian optimization functional (scalar):
@@ -145,11 +158,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   bool done = createTensorSync(scalar_norm,environments_[0].tensor->getElementType()); assert(done);
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,input_norm,scalar_norm); assert(done);
-  double input_expansion_norm = 0.0;
-  done = computeNorm1Sync("_scalar_norm",input_expansion_norm); assert(done);
-  input_expansion_norm = std::sqrt(input_expansion_norm);
+  done = computeNorm1Sync("_scalar_norm",input_norm_); assert(done);
+  input_norm_ = std::sqrt(input_norm_);
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the input tensor network expansion = "
-            << std::scientific << input_expansion_norm << std::endl; //debug
+            << std::scientific << input_norm_ << std::endl; //debug
   unsigned int iteration = 0;
   while(!converged){
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << ++iteration << std::endl; //debug
@@ -180,8 +192,9 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    //Compute the residual norm and check convergence:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
    done = evaluateSync(process_group,residual,scalar_norm); assert(done);
-   done = computeNorm1Sync("_scalar_norm",residual_norm2_); assert(done);
-   std::cout << " Residual norm = " << std::sqrt(residual_norm2_) << std::endl; //debug
+   done = computeNorm1Sync("_scalar_norm",residual_norm_); assert(done);
+   residual_norm_ = std::sqrt(residual_norm_);
+   std::cout << " Residual norm = " << residual_norm_ << std::endl; //debug
    converged = (max_grad_maxabs <= tolerance_);
   }
   /*//Inspect the residual norm contributions (debug):
@@ -195,26 +208,26 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   //Compute the approximant norm:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
-  double output_expansion_norm = 0.0;
-  done = computeNorm1Sync("_scalar_norm",output_expansion_norm); assert(done);
-  output_expansion_norm = std::sqrt(output_expansion_norm);
+  output_norm_ = 0.0;
+  done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
+  output_norm_ = std::sqrt(output_norm_);
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
-            << output_expansion_norm << std::endl; //debug
+            << output_norm_ << std::endl; //debug
   //Compute approximation fidelity:
   double overlap_abs = 0.0;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap_conj,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated overlap = " << overlap_abs << std::endl;
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated absolute overlap = " << overlap_abs << std::endl;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
-  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct overlap = " << overlap_abs << std::endl;
-  fidelity_ = std::pow(overlap_abs / (input_expansion_norm * output_expansion_norm), 2.0);
+  std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct absolute overlap = " << overlap_abs << std::endl;
+  fidelity_ = std::pow(overlap_abs / (input_norm_ * output_norm_), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
  }
 
- *residual_norm2 = residual_norm2_;
+ *residual_norm = residual_norm_;
  *fidelity = fidelity_;
  return true;
 }
