@@ -185,8 +185,11 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
     done = computeMaxAbsSync(environment.gradient->getName(),grad_maxabs); assert(done);
     if(grad_maxabs > max_grad_maxabs) max_grad_maxabs = grad_maxabs;
     if(TensorNetworkReconstructor::debug){
-     std::cout << " Gradient w.r.t. " << environment.tensor->getName()
-               << " = " << grad_maxabs << std::endl;
+     std::cout << " Gradient MaxAbs w.r.t. " << environment.tensor->getName()
+               << " = " << grad_maxabs;
+     double tens_maxabs = 0.0;
+     done = computeMaxAbsSync(environment.tensor->getName(),tens_maxabs); assert(done);
+     std::cout << ": Tensor MaxAbs =  " << tens_maxabs << std::endl;
     }
     //Update the optimizable tensor using the computed gradient:
     if(grad_maxabs > tolerance_){

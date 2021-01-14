@@ -2671,8 +2671,8 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::initTensorRnd("A"); assert(success);
  success = exatn::initTensorRnd("B"); assert(success);
 
- //Compute tensor factors based on the input tensor decomposition:
- success = exatn::decomposeTensorSVDLR("T(i,j)=A(k,i)*B(k,j)"); assert(success);
+ //Compute tensor factors based on the input tensor decomposition (debug):
+ //success = exatn::decomposeTensorSVDLR("T(i,j)=A(k,i)*B(k,j)"); assert(success);
 
  //Construct the approximant tensor network expansion A(k,i)*B(k,j):
  auto approx_net = exatn::makeTensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)");
@@ -2694,6 +2694,13 @@ TEST(NumServerTester, Reconstructor) {
  //Normalize tensor network expansions to 1.0:
  success = exatn::normalize2NormSync(*target,1.0); assert(success);
  success = exatn::normalize2NormSync(*approximant,1.0); assert(success);
+ double maxabs = 0.0;
+ success = exatn::computeMaxAbsSync("T",maxabs);
+ std::cout << "Tensor T MaxAbs = " << maxabs << std::endl;
+ success = exatn::computeMaxAbsSync("A",maxabs);
+ std::cout << "Tensor A MaxAbs = " << maxabs << std::endl;
+ success = exatn::computeMaxAbsSync("B",maxabs);
+ std::cout << "Tensor B MaxAbs = " << maxabs << std::endl;
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
