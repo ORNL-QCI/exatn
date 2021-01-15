@@ -2709,7 +2709,7 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
-                                    << "; Fidelity = " << fidelity << std::endl;
+            << "; Fidelity = " << fidelity << std::endl;
  }else{
   std::cout << "Reconstruction failed!" << std::endl;
  }

@@ -269,6 +269,9 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct absolute overlap = " << overlap_abs << std::endl;
   fidelity_ = std::pow(overlap_abs / (input_norm_ * output_norm_), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
+  //Balance the approximant:
+  done = balanceNorm2Sync(process_group,*approximant_,1.0); assert(done);
+  done = normalizeNorm2Sync(process_group,*approximant_,output_norm_); assert(done);
  }
 
  *residual_norm = residual_norm_;
