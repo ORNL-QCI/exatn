@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/06
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -103,6 +103,11 @@ public:
  TensorExpansion(const TensorExpansion & expansion, //in: original tensor expansion
                  const std::string & tensor_name,   //in: the name of the tensor which the derivative is taken against
                  bool conjugated = false);          //in: whether or not to differentiate with respect to conjugated tensors with the given name
+
+ /** Produces a new tensor expansion by replacing a given tensor with another one. **/
+ TensorExpansion(const TensorExpansion & expansion,       //in: original tensor expansion
+                 std::shared_ptr<Tensor> original_tensor, //in: original tensor
+                 std::shared_ptr<Tensor> new_tensor);     //in: new tensor
 
  /** Clones the given tensor network expansion. If reset_output_tensors is TRUE,
      the output tensor in each tensor network component of the newly created

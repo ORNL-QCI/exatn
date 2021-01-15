@@ -79,6 +79,7 @@ private:
   std::shared_ptr<Tensor> gradient;     //gradient w.r.t. the tensor being optimized
   std::shared_ptr<Tensor> gradient_aux; //auxiliary gradient (e.g., previous iteration)
   TensorExpansion gradient_expansion;   //gradient tensor network expansion
+  TensorExpansion hessian_expansion;    //hessian-gradient tensor network expansion
  };
 
  std::shared_ptr<TensorExpansion> expansion_;   //tensor network expansion to reconstruct

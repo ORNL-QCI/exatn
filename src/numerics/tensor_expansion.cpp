@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/06
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,6 +74,21 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
    auto differentiated = derivnet->differentiateTensor(id); assert(differentiated);
    appendComponent(derivnet,iter->coefficient_);
   }
+ }
+}
+
+
+TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
+                                 std::shared_ptr<Tensor> original_tensor,
+                                 std::shared_ptr<Tensor> new_tensor):
+ ket_(expansion.isKet())
+{
+ assert(original_tensor);
+ assert(new_tensor);
+ for(auto iter = expansion.cbegin(); iter != expansion.cend(); ++iter){
+  auto network = makeSharedTensorNetwork(*(iter->network_));
+  auto success = network->substituteTensor(original_tensor,new_tensor); assert(success);
+  appendComponent(network,iter->coefficient_);
  }
 }
 

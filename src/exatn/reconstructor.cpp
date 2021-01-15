@@ -143,18 +143,18 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the approximant tensor expansion
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
+     auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
      environments_.emplace_back(Environment{tensor.getTensor(),                             //optimizable tensor
                                             std::make_shared<Tensor>("_a"+tensor.getName(), //auxiliary tensor
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
-                                            std::make_shared<Tensor>("_g"+tensor.getName(), //gradient tensor
-                                                                     tensor.getShape(),
-                                                                     tensor.getSignature()),
+                                            gradient_tensor,                                //gradient tensor
                                             std::make_shared<Tensor>("_h"+tensor.getName(), //auxiliary gradient
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
-                                            TensorExpansion(lagrangian,tensor.getName(),true)}); //derivative tensor network expansion
-    }                                                                                            //w.r.t. conjugated (bra) tensor
+                                            TensorExpansion(lagrangian,tensor.getName(),true), //derivative tensor network expansion w.r.t. conjugated (bra) tensor
+                                            TensorExpansion(normalization,tensor.getTensor(),gradient_tensor)});
+    }
    }
   }
  }
@@ -207,7 +207,16 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
     //Update the optimizable tensor using the computed gradient:
     if(relative_grad_norm > tolerance_){
      //Compute the optimal learning rate:
-     
+     done = initTensorSync("_scalar_norm",0.0); assert(done);
+     done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm); assert(done);
+     double hess_grad = 0.0;
+     done = computeNorm1Sync("_scalar_norm",hess_grad); assert(done);
+     if(hess_grad > 0.0){
+      epsilon_ = grad_norm * grad_norm / hess_grad;
+     }else{
+      epsilon_ = DEFAULT_LEARN_RATE;
+     }
+     if(TensorNetworkReconstructor::debug) std::cout << " Optimal step size = " << epsilon_ << std::endl;
      //Perform update:
      std::string add_pattern;
      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true, //`Do I need conjugation here?

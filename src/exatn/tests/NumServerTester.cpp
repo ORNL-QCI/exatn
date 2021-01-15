@@ -2704,7 +2704,6 @@ TEST(NumServerTester, Reconstructor) {
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
- reconstructor.resetLearningRate(1.0);
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);

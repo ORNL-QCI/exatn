@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/13
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1641,6 +1641,18 @@ bool TensorNetwork::substituteTensor(const std::string & name, std::shared_ptr<T
  }
  if(tensor_id < 0) return false; //tensor name not found
  return substituteTensor(tensor_id,tensor);
+}
+
+
+bool TensorNetwork::substituteTensor(std::shared_ptr<Tensor> original,
+                                     std::shared_ptr<Tensor> tensor)
+{
+ if(!(original->isCongruentTo(*tensor))) return false;
+ for(auto & tens: tensors_){
+  auto net_tensor = tens.second.getTensor();
+  if(net_tensor == original) tens.second.replaceStoredTensor(tensor);
+ }
+ return true;
 }
 
 
