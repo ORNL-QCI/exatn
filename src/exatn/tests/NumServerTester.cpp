@@ -2676,7 +2676,10 @@ TEST(NumServerTester, Reconstructor) {
 
  //Construct the approximant tensor network expansion A(k,i)*B(k,j):
  auto approx_net = exatn::makeTensorNetwork("ApproxNet","Z(i,j)=A(k,i)*B(k,j)");
- approx_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ approx_net->markOptimizableTensors(
+             [](const Tensor & tensor){
+              return true; //(tensor.getName() == "A");
+             });
  auto approximant = exatn::makeSharedTensorExpansion();
  approximant->appendComponent(approx_net,{1.0,0.0});
  approximant->conjugate();
@@ -2691,16 +2694,9 @@ TEST(NumServerTester, Reconstructor) {
  target->rename("Target");
  target->printIt();
 
- //Normalize tensor network expansions to 1.0:
- success = exatn::normalize2NormSync(*target,1.0); assert(success);
- success = exatn::normalize2NormSync(*approximant,1.0); assert(success);
- double maxabs = 0.0;
- success = exatn::computeMaxAbsSync("T",maxabs);
- std::cout << "Tensor T MaxAbs = " << maxabs << std::endl;
- success = exatn::computeMaxAbsSync("A",maxabs);
- std::cout << "Tensor A MaxAbs = " << maxabs << std::endl;
- success = exatn::computeMaxAbsSync("B",maxabs);
- std::cout << "Tensor B MaxAbs = " << maxabs << std::endl;
+ //Normalize input tensors in the tensor network expansions to 1.0:
+ success = exatn::balanceNorm2Sync(*target,1.0); assert(success);
+ success = exatn::balanceNorm2Sync(*approximant,1.0); assert(success);
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug

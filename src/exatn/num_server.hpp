@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/13
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -649,12 +649,28 @@ public:
  /** Normalizes a tensor network expansion to a given 2-norm by rescaling
      all tensor network components by the same factor: Only the tensor
      network expansion coefficients are affected. **/
- bool normalize2NormSync(TensorExpansion & expansion, //inout: tensor network expansion
+ bool normalizeNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
                          double norm);                //in: desired 2-norm
 
- bool normalize2NormSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+ bool normalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                          TensorExpansion & expansion,        //inout: tensor network expansion
                          double norm);                       //in: desired 2-norm
+
+ /** Normalizes all input tensors in a tensor network to a given 2-norm. **/
+ bool balanceNorm2Sync(TensorNetwork & network, //inout: tensor network
+                       double norm);            //in: desired 2-norm
+
+ bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                       TensorNetwork & network,            //inout: tensor network
+                       double norm);                       //in: desired 2-norm
+
+ /** Normalizes all input tensors in a tensor network expansion to a given 2-norm. **/
+ bool balanceNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
+                       double norm);                //in: desired 2-norm
+
+ bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                       TensorExpansion & expansion,        //inout: tensor network expansion
+                       double norm);                       //in: desired 2-norm
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

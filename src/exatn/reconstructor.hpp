@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/13
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,9 +74,11 @@ public:
 private:
 
  struct Environment{
-  std::shared_ptr<Tensor> tensor;     //tensor being optimized
-  std::shared_ptr<Tensor> gradient;   //gradient w.r.t. the tensor being optimized
-  TensorExpansion gradient_expansion; //gradient tensor network expansion
+  std::shared_ptr<Tensor> tensor;       //tensor being optimized
+  std::shared_ptr<Tensor> tensor_aux;   //auxiliary tensor (e.g., previous iteration)
+  std::shared_ptr<Tensor> gradient;     //gradient w.r.t. the tensor being optimized
+  std::shared_ptr<Tensor> gradient_aux; //auxiliary gradient (e.g., previous iteration)
+  TensorExpansion gradient_expansion;   //gradient tensor network expansion
  };
 
  std::shared_ptr<TensorExpansion> expansion_;   //tensor network expansion to reconstruct

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/13
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2125,13 +2125,13 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
  return parsed;
 }
 
-bool NumServer::normalize2NormSync(TensorExpansion & expansion,
+bool NumServer::normalizeNorm2Sync(TensorExpansion & expansion,
                                    double norm)
 {
- return normalize2NormSync(getDefaultProcessGroup(),expansion,norm);
+ return normalizeNorm2Sync(getDefaultProcessGroup(),expansion,norm);
 }
 
-bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
+bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
                                    TensorExpansion & expansion,
                                    double norm)
 {
@@ -2159,21 +2159,85 @@ bool NumServer::normalize2NormSync(const ProcessGroup & process_group,
      double original_norm2;
      success = computeNorm1Sync("_InnerProd",original_norm2);
      if(success){
-      expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
+      if(original_norm2 > 0.0){
+       expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
+      }else{
+       std::cout << "#WARNING(exatn::normalizeNorm2): Tensor expansion has zero norm, thus cannot be renormalized!" << std::endl;
+       success = false;
+      }
      }else{
-      std::cout << "#ERROR(exatn::normalize2Norm): Unable to compute the norm!" << std::endl;
+      std::cout << "#ERROR(exatn::normalizeNorm2): Unable to compute the norm!" << std::endl;
      }
     }else{
-     std::cout << "#ERROR(exatn::normalize2Norm): Unable to evaluate the inner product tensor expansion!" << std::endl;
+     std::cout << "#ERROR(exatn::normalizeNorm2): Unable to evaluate the inner product tensor expansion!" << std::endl;
     }
    }else{
-    std::cout << "#ERROR(exatn::normalize2Norm): Unable to zero out the scalar tensor!" << std::endl;
+    std::cout << "#ERROR(exatn::normalizeNorm2): Unable to zero out the scalar tensor!" << std::endl;
    }
    bool done = destroyTensorSync("_InnerProd"); success = (success && done);
-   if(!done) std::cout << "#ERROR(exatn::normalize2Norm): Unable to destroy the scalar tensor!" << std::endl;
+   if(!done) std::cout << "#ERROR(exatn::normalizeNorm2): Unable to destroy the scalar tensor!" << std::endl;
   }else{
-   std::cout << "#ERROR(exatn::normalize2Norm): Unable to create the scalar tensor!" << std::endl;
+   std::cout << "#ERROR(exatn::normalizeNorm2): Unable to create the scalar tensor!" << std::endl;
   }
+ }
+ return success;
+}
+
+bool NumServer::balanceNorm2Sync(TensorNetwork & network,
+                                 double norm)
+{
+ return balanceNorm2Sync(getDefaultProcessGroup(),network,norm);
+}
+
+bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
+                                 TensorNetwork & network,
+                                 double norm)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto tens = network.begin(); tens != network.end(); ++tens){
+  if(tens->first != 0){ //output tensor is ignored
+   double tens_norm;
+   success = computeNorm2Sync(tens->second.getName(),tens_norm);
+   if(success){
+    if(tens_norm > 0.0){
+     success = scaleTensorSync(tens->second.getName(),norm/tens_norm);
+     if(!success){
+      std::cout << "#ERROR(exatn::balanceNorm2): Unable to rescale input tensor "
+                << tens->second.getName() << std::endl;
+      break;
+     }
+    }else{
+     std::cout << "#WARNING(exatn::balanceNorm2): Tensor has zero norm, thus cannot be renormalized!" << std::endl;
+     success = false;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "
+              << tens->second.getName() << std::endl;
+    break;
+   }
+  }
+ }
+ return success;
+}
+
+bool NumServer::balanceNorm2Sync(TensorExpansion & expansion,
+                                 double norm)
+{
+ return balanceNorm2Sync(getDefaultProcessGroup(),expansion,norm);
+}
+
+bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
+                                 TensorExpansion & expansion,
+                                 double norm)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto net = expansion.begin(); net != expansion.end(); ++net){
+  success = balanceNorm2Sync(*(net->network_),norm);
+  if(!success) break;
  }
  return success;
 }

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/01/11
+REVISION: 2021/01/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -717,15 +717,36 @@ inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI 
 
 /** Normalizes a tensor network expansion to a given 2-norm by rescaling
     all tensor network components by the same factor: Only the tensor
-    network expansion coeffcients are affected. **/
-inline bool normalize2NormSync(TensorExpansion & expansion, //inout: tensor network expansion
+    network expansion coeffcients are affected, not tensors. **/
+inline bool normalizeNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
                                double norm)                 //in: desired 2-norm
- {return numericalServer->normalize2NormSync(expansion,norm);}
+ {return numericalServer->normalizeNorm2Sync(expansion,norm);}
 
-inline bool normalize2NormSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+inline bool normalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                TensorExpansion & expansion,        //inout: tensor network expansion
                                double norm)                        //in: desired 2-norm
- {return numericalServer->normalize2NormSync(process_group,expansion,norm);}
+ {return numericalServer->normalizeNorm2Sync(process_group,expansion,norm);}
+
+
+/** Normalizes all input tensors in a tensor network to a given 2-norm. **/
+inline bool balanceNorm2Sync(TensorNetwork & network, //inout: tensor network
+                             double norm)             //in: desired 2-norm
+ {return numericalServer->balanceNorm2Sync(network,norm);}
+
+inline bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                             TensorNetwork & network,            //inout: tensor network
+                             double norm)                        //in: desired 2-norm
+ {return numericalServer->balanceNorm2Sync(process_group,network,norm);}
+
+/** Normalizes all input tensors in a tensor network expansion to a given 2-norm. **/
+inline bool balanceNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
+                             double norm)                 //in: desired 2-norm
+ {return numericalServer->balanceNorm2Sync(expansion,norm);}
+
+inline bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                             TensorExpansion & expansion,        //inout: tensor network expansion
+                             double norm)                        //in: desired 2-norm
+ {return numericalServer->balanceNorm2Sync(process_group,expansion,norm);}
 
 
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
