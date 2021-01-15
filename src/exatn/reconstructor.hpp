@@ -60,10 +60,12 @@ public:
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
      that is, the squared overlap between the two tensor network expansions: [0..1]. **/
  bool reconstruct(double * residual_norm,  //out: 2-norm of the residual tensor (error)
-                  double * fidelity);      //out: squared overlap
+                  double * fidelity,       //out: squared overlap
+                  bool nesterov = false);  //in: Nesterov acceleration
  bool reconstruct(const ProcessGroup & process_group, //in: executing process group
                   double * residual_norm,             //out: 2-norm of the residual tensor (error)
-                  double * fidelity);                 //out: squared overlap
+                  double * fidelity,                  //out: squared overlap
+                  bool nesterov = false);             //in: Nesterov acceleration
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
  std::shared_ptr<TensorExpansion> getSolution(double * residual_norm, //out: 2-norm of the residual tensor (error)

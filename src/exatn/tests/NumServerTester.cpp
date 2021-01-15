@@ -2659,7 +2659,7 @@ TEST(NumServerTester, Reconstructor) {
  bool success = true;
 
  //Create tensors:
- const int bond_dim = 100;
+ const int bond_dim = 10;
  success = exatn::createTensor("T",TENS_ELEM_TYPE,TensorShape{200,100}); assert(success);
  success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{200,100}); assert(success);
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{bond_dim,200}); assert(success);
