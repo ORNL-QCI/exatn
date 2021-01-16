@@ -1,8 +1,8 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2020/01/26
+REVISION: 2021/01/16
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) Given a closed symmetric tensor network expansion functional, composed
@@ -17,7 +17,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_numerics.hpp"
 
-#include <memory>
+#include <vector>
+#include <complex>
 
 #include "errors.hpp"
 
@@ -27,9 +28,15 @@ class TensorNetworkOptimizer{
 
 public:
 
+ static unsigned int debug;
+
+ static constexpr const double DEFAULT_TOLERANCE = 1e-5;
+ static constexpr const double DEFAULT_LEARN_RATE = 0.5;
+ static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
+
  TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,   //in: hermitian tensor network operator
                         std::shared_ptr<TensorExpansion> vector_expansion, //inout: tensor network expansion forming the bra/ket vectors
-                        double tolerance);                                 //in: desired numerical convergence tolerance
+                        double tolerance = DEFAULT_TOLERANCE)     ;        //in: desired numerical convergence tolerance
 
  TensorNetworkOptimizer(const TensorNetworkOptimizer &) = default;
  TensorNetworkOptimizer & operator=(const TensorNetworkOptimizer &) = default;
@@ -37,17 +44,31 @@ public:
  TensorNetworkOptimizer & operator=(TensorNetworkOptimizer &&) noexcept = default;
  ~TensorNetworkOptimizer() = default;
 
+ /** Resets the numerical tolerance. **/
+ void resetTolerance(double tolerance = DEFAULT_TOLERANCE);
+
+ /** Resets the learning rate. **/
+ void resetLearningRate(double learn_rate = DEFAULT_LEARN_RATE);
+
+ /** Resets the max number of macro-iterations. **/
+ void resetMaxIterations(unsigned int max_iterations = DEFAULT_MAX_ITERATIONS);
+
  /** Optimizes the given closed symmetric tensor network expansion functional. **/
  bool optimize();
+ bool optimize(const ProcessGroup & process_group); //in: executing process group
 
  /** Returns the optimized tensor network expansion forming the optimal bra/ket vectors. **/
- std::shared_ptr<TensorExpansion> getSolution();
+ std::shared_ptr<TensorExpansion> getSolution() const;
+
+ static void resetDebugLevel(unsigned int level = 0);
 
 private:
 
  std::shared_ptr<TensorOperator> tensor_operator_;   //tensor operator
  std::shared_ptr<TensorExpansion> vector_expansion_; //tensor network expansion to optimize (bra/ket vector)
- double tolerance_;                                  //desired numerical optimization convergence tolerance
+ unsigned int max_iterations_;                       //max number of macro-iterations
+ double epsilon_;                                    //learning rate for the gradient descent based tensor update
+ double tolerance_;                                  //numerical convergence tolerance (for the gradient)
 };
 
 } //namespace exatn

@@ -8,7 +8,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  (A) Given a tensor network expansion of some form, the tensor network reconstructor
      optimizes its tensor factors to maximize the overlap with another given constant
      tensor network expansion, thus providing an approximation to it. The reconstruction
-     fidelity is the squared overlap between the two tensor network expansions.
+     fidelity is the normalized squared overlap between the two tensor network expansions.
      The reconstruction tolerance is a numerical tolerance used for checking convergence
      of the underlying linear algebra procedures.
  (B) The reconstructed tensor network expansion must be a Ket (primary space) and
@@ -20,8 +20,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_numerics.hpp"
 
-#include <memory>
 #include <vector>
+#include <complex>
 
 #include "errors.hpp"
 
@@ -68,8 +68,8 @@ public:
                   bool nesterov = false);             //in: Nesterov acceleration
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
- std::shared_ptr<TensorExpansion> getSolution(double * residual_norm, //out: 2-norm of the residual tensor (error)
-                                              double * fidelity);     //out: squared overlap
+ std::shared_ptr<TensorExpansion> getSolution(double * residual_norm,   //out: 2-norm of the residual tensor (error)
+                                              double * fidelity) const; //out: squared overlap
 
  static void resetDebugLevel(unsigned int level = 0);
 

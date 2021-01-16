@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/15
+REVISION: 2021/01/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -63,7 +63,7 @@ void TensorNetworkReconstructor::resetMaxIterations(unsigned int max_iterations)
 
 
 std::shared_ptr<TensorExpansion> TensorNetworkReconstructor::getSolution(double * residual_norm,
-                                                                         double * fidelity)
+                                                                         double * fidelity) const
 {
  if(fidelity_ == 0.0) return std::shared_ptr<TensorExpansion>(nullptr);
  *residual_norm = residual_norm_;
