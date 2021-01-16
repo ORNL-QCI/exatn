@@ -64,6 +64,17 @@ public:
 
 private:
 
+ struct Environment{
+  std::shared_ptr<Tensor> tensor;       //tensor being optimized: x
+  std::shared_ptr<Tensor> gradient;     //gradient w.r.t. the tensor being optimized: g
+  std::shared_ptr<Tensor> gradient_aux; //partial gradient tensor (intermediate)
+  TensorExpansion gradient_expansion;   //gradient tensor network expansion: H|x> - E*S|x> = g
+  TensorExpansion operator_gradient;    //operator gradient tensor network expansion: H|x>
+  TensorExpansion metrics_gradient;     //metrics gradient tensor network expansion: S|x>
+  TensorExpansion operator_residual;    //operator residual tensor network expansion: <g|H|g>
+  TensorExpansion metrics_residual;     //metrics residual tensor network expansion: <g|S|g>
+ };
+
  std::shared_ptr<TensorOperator> tensor_operator_;   //tensor operator
  std::shared_ptr<TensorExpansion> vector_expansion_; //tensor network expansion to optimize (bra/ket vector)
  unsigned int max_iterations_;                       //max number of macro-iterations

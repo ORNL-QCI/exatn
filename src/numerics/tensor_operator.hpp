@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2020/03/14
+REVISION: 2021/01/16
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network vector is a vector in a given tensor space with
@@ -78,6 +78,20 @@ public:
      If the expansion is empty, returns -1. **/
  inline int getRank() const{
   if(!(components_.empty())) return components_[0].network->getRank();
+  return -1;
+ }
+
+ /** Returns the ket-rank of the tensor operator (number of ket legs per component).
+     If the expansion is empty, returns -1. **/
+ inline int getKetRank() const{
+  if(!(components_.empty())) return components_[0].ket_legs.size();
+  return -1;
+ }
+
+ /** Returns the bra-rank of the tensor operator (number of bra legs per component).
+     If the expansion is empty, returns -1. **/
+ inline int getBraRank() const{
+  if(!(components_.empty())) return components_[0].bra_legs.size();
   return -1;
  }
 
