@@ -2705,7 +2705,7 @@ TEST(NumServerTester, Reconstructor) {
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
