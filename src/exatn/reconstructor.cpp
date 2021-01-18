@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/16
+REVISION: 2021/01/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -145,7 +145,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  for(auto network = approximant_->cbegin(); network != approximant_->cend(); ++network){
   // Loop over the optimizable tensors inside the current tensor network:
   for(auto tensor_conn = network->network_->begin(); tensor_conn != network->network_->end(); ++tensor_conn){
-   auto tensor = tensor_conn->second;
+   const auto & tensor = tensor_conn->second;
    if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the approximant tensor expansion
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
@@ -155,7 +155,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
                                             gradient_tensor,                                //gradient tensor
-                                            std::make_shared<Tensor>("_h"+tensor.getName(), //auxiliary gradient
+                                            std::make_shared<Tensor>("_h"+tensor.getName(), //auxiliary gradient tensor
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
                                             TensorExpansion(lagrangian,tensor.getName(),true), //derivative tensor network expansion w.r.t. conjugated (bra) tensor
@@ -193,9 +193,8 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   //Iterate:
   unsigned int iteration = 0;
   while((!converged) && (iteration < max_iterations_)){
-   if(TensorNetworkReconstructor::debug){
+   if(TensorNetworkReconstructor::debug)
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << iteration << std::endl;
-   }
    double max_grad_norm = 0.0;
    for(auto & environment: environments_){
     //Nesterov extrapolation:

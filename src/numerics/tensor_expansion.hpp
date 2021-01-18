@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/15
+REVISION: 2021/01/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -136,6 +136,11 @@ public:
  inline Iterator end() {return components_.end();}
  inline ConstIterator cbegin() const {return components_.cbegin();}
  inline ConstIterator cend() const {return components_.cend();}
+
+ inline ExpansionComponent & operator[](std::size_t component_num){
+  assert(component_num < components_.size());
+  return components_[component_num];
+ }
 
  /** Returns whether the tensor network expansion is ket or not. **/
  inline bool isKet() const{
