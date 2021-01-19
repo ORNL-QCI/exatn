@@ -39,8 +39,9 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25*/
-#define EXATN_TEST26
+#define EXATN_TEST25
+#define EXATN_TEST26*/
+#define EXATN_TEST27
 
 
 #ifdef EXATN_TEST0
@@ -2719,6 +2720,83 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::destroyTensor("A"); assert(success);
  success = exatn::destroyTensor("Z"); assert(success);
  success = exatn::destroyTensor("T"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST27
+TEST(NumServerTester, OptimizerGroundState) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Define, create and initialize Pauli tensors:
+ auto pauli_x = exatn::makeSharedTensor("PauliX",TensorShape{2,2});
+ auto pauli_z = exatn::makeSharedTensor("PauliZ",TensorShape{2,2});
+ success = exatn::createTensor(pauli_x,TENS_ELEM_TYPE); assert(success);
+ success = exatn::createTensor(pauli_z,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorData("PauliX",std::vector<float>{
+                                           0.0f,  1.0f,
+                                           1.0f,  0.0f}); assert(success);
+ success = exatn::initTensorData("PauliZ",std::vector<float>{
+                                           1.0f,  0.0f,
+                                           0.0f, -1.0f}); assert(success);
+
+ //Define the tensor network operator:
+ auto ising_zz = exatn::makeSharedTensorNetwork("IsingZZ");
+ success = ising_zz->appendTensor(1,pauli_z,{}); assert(success);
+ success = ising_zz->appendTensor(2,pauli_z,{}); assert(success);
+ ising_zz->printIt();
+ auto ising_x = exatn::makeSharedTensorNetwork("IsingX");
+ success = ising_x->appendTensor(1,pauli_x,{}); assert(success);
+ ising_x->printIt();
+ TensorOperator ising("IsingHamiltonian");
+ double g_factor = 2.0; // >0.0, 1.0 is critical state
+ success = ising.appendComponent(ising_zz, {{0,0},{1,2}}, {{0,1},{1,3}}, {-1.0,0.0}); assert(success);
+ success = ising.appendComponent(ising_zz, {{1,0},{2,2}}, {{1,1},{2,3}}, {-1.0,0.0}); assert(success);
+ success = ising.appendComponent(ising_zz, {{2,0},{3,2}}, {{2,1},{3,3}}, {-1.0,0.0}); assert(success);
+ success = ising.appendComponent(ising_x, {{0,0}}, {{0,1}}, {-1.0*g_factor,0.0}); assert(success);
+ success = ising.appendComponent(ising_x, {{1,0}}, {{1,1}}, {-1.0*g_factor,0.0}); assert(success);
+ success = ising.appendComponent(ising_x, {{2,0}}, {{2,1}}, {-1.0*g_factor,0.0}); assert(success);
+ success = ising.appendComponent(ising_x, {{3,0}}, {{3,1}}, {-1.0*g_factor,0.0}); assert(success);
+ ising.printIt();
+
+ //Create tensor network ansatz:
+ int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
+ auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ ansatz_net->printIt();
+
+ //Allocate/initialize tensors in the tensor network ansatz:
+ for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
+  if(tens_conn->first != 0){ //input tensors only
+   success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRnd(tens_conn->second.getTensor()->getName()); assert(success);
+  }
+ }
+
+ success = exatn::sync(); assert(success);
+
+ //Destroy tensors:
+ success = exatn::destroyTensors(*ansatz_net); assert(success);
+ success = exatn::destroyTensor("PauliZ"); assert(success);
+ success = exatn::destroyTensor("PauliX"); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

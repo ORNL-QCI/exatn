@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/15
+REVISION: 2021/01/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -128,6 +128,20 @@ public:
  TensorNetwork & operator=(TensorNetwork &&) noexcept = default;
  virtual ~TensorNetwork() = default;
 
+ /** Begin iterator **/
+ inline Iterator begin() {return tensors_.begin();}
+ /** End iterator **/
+ inline Iterator end() {return tensors_.end();}
+ /** Begin constant iterator **/
+ inline ConstIterator cbegin() const {return tensors_.cbegin();}
+ /** End constant iterator **/
+ inline ConstIterator cend() const {return tensors_.cend();}
+
+ /** Returns a const reference to a connected tensor with the given id. **/
+ inline const TensorConn & operator[](std::size_t tensor_id){
+  return tensors_.at(tensor_id);
+ }
+
  /** Prints **/
  void printIt(bool with_tensor_hash = false) const;
  void printItFile(std::ofstream & output_file,
@@ -174,15 +188,6 @@ public:
 
  /** Returns a list of the tensors adjacent to a given tensor by their Ids. **/
  std::list<unsigned int> getAdjacentTensors(unsigned int tensor_id) const;
-
- /** Begin iterator **/
- inline Iterator begin() {return tensors_.begin();}
- /** End iterator **/
- inline Iterator end() {return tensors_.end();}
- /** Begin constant iterator **/
- inline ConstIterator cbegin() const {return tensors_.cbegin();}
- /** End constant iterator **/
- inline ConstIterator cend() const {return tensors_.cend();}
 
  /** Finalizes the explicit construction of the tensor network (construction with advance knowledge).
      The tensor network cannot be empty. **/

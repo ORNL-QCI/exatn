@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/01/16
+REVISION: 2021/01/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -68,6 +68,11 @@ public:
  inline Iterator end() {return components_.end();}
  inline ConstIterator cbegin() const {return components_.cbegin();}
  inline ConstIterator cend() const {return components_.cend();}
+
+ inline OperatorComponent & operator[](std::size_t component_num){
+  assert(component_num < components_.size());
+  return components_[component_num];
+ }
 
  /** Returns the name of the tensor network operator. **/
  inline const std::string & getName() const{
