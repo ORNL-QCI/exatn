@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/01/18
+REVISION: 2021/01/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,11 +28,6 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
  }
  if(tensor_operator_->getKetRank() != tensor_operator_->getBraRank()){
   std::cout << "#ERROR(exatn:TensorNetworkOptimizer): Tensor operator is not rank-symmetric!"
-            << std::endl << std::flush;
-  assert(false);
- }
- if(tensor_operator_->getKetRank() != vector_expansion_->getRank()){
-  std::cout << "#ERROR(exatn:TensorNetworkOptimizer): Rank mismatch between the tensor operator and the vector!"
             << std::endl << std::flush;
   assert(false);
  }
