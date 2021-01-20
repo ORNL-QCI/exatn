@@ -2742,6 +2742,8 @@ TEST(NumServerTester, OptimizerGroundState) {
 
  //exatn::resetLoggingLevel(2,2); //debug
 
+ const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
+ double g_factor = 2.0; // >0.0, 1.0 is critical state
  bool success = true;
 
  //Define, create and initialize Pauli tensors:
@@ -2764,34 +2766,45 @@ TEST(NumServerTester, OptimizerGroundState) {
  auto ising_x = exatn::makeSharedTensorNetwork("IsingX");
  success = ising_x->appendTensor(1,pauli_x,{}); assert(success);
  ising_x->printIt();
- TensorOperator ising("IsingHamiltonian");
- double g_factor = 2.0; // >0.0, 1.0 is critical state
- success = ising.appendComponent(ising_zz, {{0,0},{1,2}}, {{0,1},{1,3}}, {-1.0,0.0}); assert(success);
- success = ising.appendComponent(ising_zz, {{1,0},{2,2}}, {{1,1},{2,3}}, {-1.0,0.0}); assert(success);
- success = ising.appendComponent(ising_zz, {{2,0},{3,2}}, {{2,1},{3,3}}, {-1.0,0.0}); assert(success);
- success = ising.appendComponent(ising_x, {{0,0}}, {{0,1}}, {-1.0*g_factor,0.0}); assert(success);
- success = ising.appendComponent(ising_x, {{1,0}}, {{1,1}}, {-1.0*g_factor,0.0}); assert(success);
- success = ising.appendComponent(ising_x, {{2,0}}, {{2,1}}, {-1.0*g_factor,0.0}); assert(success);
- success = ising.appendComponent(ising_x, {{3,0}}, {{3,1}}, {-1.0*g_factor,0.0}); assert(success);
- ising.printIt();
+ auto ising = exatn::makeSharedTensorOperator("IsingHamiltonian");
+ for(int i = 0; i < (num_sites - 1); ++i){
+  success = ising->appendComponent(ising_zz, {{i,0},{i+1,2}}, {{i,1},{i+1,3}}, {-1.0,0.0}); assert(success);
+ }
+ for(int i = 0; i < num_sites; ++i){
+  success = ising->appendComponent(ising_x, {{i,0}}, {{i,1}}, {-1.0*g_factor,0.0}); assert(success);
+ }
+ ising->printIt();
 
  //Create tensor network ansatz:
- int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
  auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
  success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
- ansatz_net->printIt();
+ ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto ansatz = exatn::makeSharedTensorExpansion();
+ ansatz->rename("Ansatz");
+ success = ansatz->appendComponent(ansatz_net,{1.0,0.0}); assert(success);
+ ansatz->printIt();
 
  //Allocate/initialize tensors in the tensor network ansatz:
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
   if(tens_conn->first != 0){ //input tensors only
    success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
-   success = exatn::initTensorRnd(tens_conn->second.getTensor()->getName()); assert(success);
+   success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
   }
  }
 
+ //Perform optimization:
+ exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+ exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
  success = exatn::sync(); assert(success);
+ bool converged = optimizer.optimize();
+ success = exatn::sync(); assert(success);
+ if(converged){
+  std::cout << "Optimization succeeded" << std::endl;
+ }else{
+  std::cout << "Optimization failed!" << std::endl;
+ }
 
  //Destroy tensors:
  success = exatn::destroyTensors(*ansatz_net); assert(success);

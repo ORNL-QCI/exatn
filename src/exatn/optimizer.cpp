@@ -168,7 +168,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
     double tens_norm = 0.0;
     done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
     tens_norm = std::sqrt(tens_norm);
-    done = scaleTensor(environment.tensor->getName(),1.0/tens_norm);
+    done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
     //Compute the operator expectation value w.r.t. the optimized tensor:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
     done = evaluateSync(process_group,operator_expectation,scalar_norm); assert(done);
@@ -254,9 +254,10 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      tens_norm = 0.0;
      done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
      tens_norm = std::sqrt(tens_norm);
-     done = scaleTensor(environment.tensor->getName(),1.0/tens_norm);
+     done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
     }
-    //Destroy the gradient tensor:
+    //Destroy the gradient tensors:
+    done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
    ++iteration;
