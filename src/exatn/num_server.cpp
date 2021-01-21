@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/15
+REVISION: 2021/01/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2239,6 +2239,23 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
   success = balanceNorm2Sync(*(net->network_),norm);
   if(!success) break;
  }
+ return success;
+}
+
+bool NumServer::balanceNormalizeNorm2Sync(TensorExpansion & expansion,
+                                          double tensor_norm,
+                                          double expansion_norm)
+{
+ return balanceNormalizeNorm2Sync(getDefaultProcessGroup(),expansion,tensor_norm,expansion_norm);
+}
+
+bool NumServer::balanceNormalizeNorm2Sync(const ProcessGroup & process_group,
+                                          TensorExpansion & expansion,
+                                          double tensor_norm,
+                                          double expansion_norm)
+{
+ bool success = balanceNorm2Sync(process_group,expansion,tensor_norm);
+ if(success) success = normalizeNorm2Sync(process_group,expansion,expansion_norm);
  return success;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/15
+REVISION: 2021/01/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -671,6 +671,18 @@ public:
  bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                        TensorExpansion & expansion,        //inout: tensor network expansion
                        double norm);                       //in: desired 2-norm
+
+ /** Normalizes all input tensors in a tensor network expansion to a given 2-norm
+     and rescales tensor network expansion coefficients to normalize the entire
+     tensor network expansion to another given 2-norm. **/
+ bool balanceNormalizeNorm2Sync(TensorExpansion & expansion,  //inout: tensor network expansion
+                                double tensor_norm = 1.0,     //in: desired 2-norm of each input tensor
+                                double expansion_norm = 1.0); //in: desired 2-norm of the tensor network expansion
+
+ bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                TensorExpansion & expansion,        //inout: tensor network expansion
+                                double tensor_norm = 1.0,           //in: desired 2-norm of each input tensor
+                                double expansion_norm = 1.0);       //in: desired 2-norm of the tensor network expansion
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
