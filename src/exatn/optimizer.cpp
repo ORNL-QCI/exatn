@@ -71,7 +71,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
 
- bool success = true;
+ //Balance-normalize the tensor network vector expansion:
+ //bool success = balanceNormalizeNorm2Sync(*vector_expansion_,1.0,1.0); assert(success);
+ bool success = balanceNorm2Sync(*vector_expansion_,1.0); assert(success);
 
  if(TensorNetworkOptimizer::debug){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network operator:" << std::endl;
@@ -131,7 +133,10 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
                                             TensorExpansion(residual_expectation,tensor.getName(),true), // |operator|tensor> - |metrics|tensor>
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(metrics_expectation,tensor.getName(),true),  // |metrics|tensor>
-                                            TensorExpansion(residual_expectation,tensor.getTensor(),gradient_tensor)}); // <gradient|operator|gradient> - <gradient|metrics|gradient>
+                                            TensorExpansion(residual_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient> - <gradient|metrics|gradient>
+                                            {0.0,0.0},{0.0,0.0}});
+     environments_.back().gradient_metric_coef_ = environments_.back().gradient_expansion[1].coefficient_;
+     environments_.back().hessian_metric_coef_ = environments_.back().hessian_expansion[1].coefficient_;
     }
    }
   }
@@ -156,6 +161,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
    if(TensorNetworkOptimizer::debug)
     std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Iteration " << iteration << std::endl;
    converged = true;
+   double max_convergence = 0.0;
    for(auto & environment: environments_){
     //Normalize the optimized tensor w.r.t. metrics:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
@@ -187,7 +193,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
     if(TensorNetworkOptimizer::debug) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                 << " = " << expect_val << std::endl;
     //Update the expectation value in the gradient expansion:
-    environment.gradient_expansion[1].coefficient_ = -expect_val;
+    environment.gradient_expansion[1].coefficient_ = environment.gradient_metric_coef_ * expect_val;
     //Create the gradient tensor:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
     //Initialize the gradient tensor to zero:
@@ -214,11 +220,12 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
     denom += std::abs(expect_val) * tens_norm;
     if(TensorNetworkOptimizer::debug) std::cout << " Convergence w.r.t. " << environment.tensor->getName()
                                                 << " = " << (grad_norm / denom) << std::endl;
+    max_convergence = std::max(max_convergence,grad_norm/denom);
     if(grad_norm / denom > tolerance_){
      converged = false;
      //Compute the optimal step size:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
-     environment.hessian_expansion[1].coefficient_ = -expect_val;
+     environment.hessian_expansion[1].coefficient_ = environment.hessian_metric_coef_ * expect_val;
      done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm); assert(done);
      denom = 0.0;
      switch(scalar_norm->getElementType()){
@@ -237,7 +244,8 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
       default:
        assert(false);
      }
-     epsilon_ = grad_norm * grad_norm / denom;
+     //epsilon_ = grad_norm * grad_norm / denom;
+     epsilon_ = DEFAULT_LEARN_RATE; //debug
      if(TensorNetworkOptimizer::debug) std::cout << " Optimal step size = " << epsilon_ << std::endl;
      //Update the optimized tensor:
      std::string add_pattern;
@@ -245,17 +253,21 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
      //Normalize the optimized tensor w.r.t. metrics:
-     done = initTensorSync("_scalar_norm",0.0); assert(done);
-     done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
+     //done = initTensorSync("_scalar_norm",0.0); assert(done);
+     //done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
+     //tens_norm = 0.0;
+     //done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
+     //tens_norm = std::sqrt(tens_norm);
+     //done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
      tens_norm = 0.0;
-     done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-     tens_norm = std::sqrt(tens_norm);
+     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
     }
     //Destroy the gradient tensors:
     done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
+   if(TensorNetworkOptimizer::debug) std::cout << " Max convergence residual = " << max_convergence << std::endl;
    ++iteration;
   }
   //Destroy the scalar tensor:

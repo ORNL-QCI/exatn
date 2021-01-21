@@ -2797,6 +2797,7 @@ TEST(NumServerTester, OptimizerGroundState) {
  //Perform optimization:
  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
  exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
+ optimizer.resetMaxIterations(100);
  success = exatn::sync(); assert(success);
  bool converged = optimizer.optimize();
  success = exatn::sync(); assert(success);
