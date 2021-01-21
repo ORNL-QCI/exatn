@@ -2794,17 +2794,47 @@ TEST(NumServerTester, OptimizerGroundState) {
   }
  }
 
- //Perform optimization:
- exatn::TensorNetworkOptimizer::resetDebugLevel(1);
- exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
- optimizer.resetMaxIterations(100);
- success = exatn::sync(); assert(success);
- bool converged = optimizer.optimize();
- success = exatn::sync(); assert(success);
- if(converged){
-  std::cout << "Optimization succeeded" << std::endl;
- }else{
-  std::cout << "Optimization failed!" << std::endl;
+ //Create the full tensor ansatz:
+ success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorRnd(ansatz_tensor->getName()); assert(success);
+ auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
+ success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
+ ansatz_full_net->markOptimizableAllTensors();
+ auto ansatz_full = exatn::makeSharedTensorExpansion();
+ ansatz_full->rename("AnsatzFull");
+ success = ansatz_full->appendComponent(ansatz_full_net,{1.0,0.0}); assert(success);
+ ansatz_full->printIt();
+
+ //Perform ground state optimization in a complete tensor space:
+ {
+  std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(ising,ansatz_full,1e-4);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl;
+  }
+ }
+ success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+
+ //Perform ground state optimization on a tensor network manifold:
+ {
+  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
+  //optimizer.resetMaxIterations(100);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl;
+  }
  }
 
  //Destroy tensors:

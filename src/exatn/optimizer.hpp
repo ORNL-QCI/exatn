@@ -72,8 +72,7 @@ private:
   TensorExpansion operator_gradient;    //operator gradient tensor network expansion: H|x>
   TensorExpansion metrics_gradient;     //metrics gradient tensor network expansion: S|x>
   TensorExpansion hessian_expansion;    //hessian-gradient tensor network expansion: <g|H|g> - E*<g|S|g>
-  std::complex<double> gradient_metric_coef_;
-  std::complex<double> hessian_metric_coef_;
+  std::complex<double> expect_value;    //current expectation value
  };
 
  std::shared_ptr<TensorOperator> tensor_operator_;   //tensor operator
