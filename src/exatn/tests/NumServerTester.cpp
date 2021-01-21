@@ -2826,7 +2826,7 @@ TEST(NumServerTester, OptimizerGroundState) {
   std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1);
   exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
-  //optimizer.resetMaxIterations(100);
+  optimizer.resetMicroIterations(10);
   success = exatn::sync(); assert(success);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);

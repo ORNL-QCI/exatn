@@ -33,6 +33,7 @@ public:
  static constexpr const double DEFAULT_TOLERANCE = 1e-5;
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
+ static constexpr const unsigned int DEFAULT_MICRO_ITERATIONS = 1;
 
  TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,   //in: hermitian tensor network operator
                         std::shared_ptr<TensorExpansion> vector_expansion, //inout: tensor network expansion forming the bra/ket vectors
@@ -52,6 +53,9 @@ public:
 
  /** Resets the max number of macro-iterations. **/
  void resetMaxIterations(unsigned int max_iterations = DEFAULT_MAX_ITERATIONS);
+
+ /** Resets the number of micro-iterations. **/
+ void resetMicroIterations(unsigned int micro_iterations = DEFAULT_MICRO_ITERATIONS);
 
  /** Optimizes the given closed symmetric tensor network expansion functional. **/
  bool optimize();
@@ -78,6 +82,7 @@ private:
  std::shared_ptr<TensorOperator> tensor_operator_;   //tensor operator
  std::shared_ptr<TensorExpansion> vector_expansion_; //tensor network expansion to optimize (bra/ket vector)
  unsigned int max_iterations_;                       //max number of macro-iterations
+ unsigned int micro_iterations_;                     //number of microiterations per optimized tensor
  double epsilon_;                                    //learning rate for the gradient descent based tensor update
  double tolerance_;                                  //numerical convergence tolerance (for the gradient)
 
