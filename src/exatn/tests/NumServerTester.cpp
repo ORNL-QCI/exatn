@@ -2020,7 +2020,7 @@ TEST(NumServerTester, testGarbage) {
 
  // Create qubit tensors:
  auto success = true;
- const int NB_QUBITS = 25;
+ const int NB_QUBITS = 24;
 
  for (int i = 0; i < NB_QUBITS; ++i) {
   success = exatn::createTensor("Q" + std::to_string(i), TensorElementType::COMPLEX64, TensorShape{2});

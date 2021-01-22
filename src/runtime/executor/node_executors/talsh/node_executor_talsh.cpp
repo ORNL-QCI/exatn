@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/12/08
+REVISION: 2021/01/22
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_talsh.hpp"
@@ -1148,8 +1148,10 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
  }else{
   slice.reset();
   std::cout << "#WARNING(exatn::runtime::TalshNodeExecutor::getLocalTensor): "
-            << "Unable to allocate a local slice for tensor:" << std::endl;
+            << "Unable to allocate a local slice for tensor " << tensor.getName()
+            << ":" << std::endl;
   tensor.printIt();
+  std::cout << std::endl;
  }
  return slice;
 }
