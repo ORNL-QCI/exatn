@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/01/21
+REVISION: 2021/01/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,7 +84,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  //bool success = balanceNormalizeNorm2Sync(*vector_expansion_,1.0,1.0); assert(success);
  bool success = balanceNorm2Sync(*vector_expansion_,1.0); assert(success);
 
- if(TensorNetworkOptimizer::debug){
+ if(TensorNetworkOptimizer::debug > 0){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network operator:" << std::endl;
   tensor_operator_->printIt();
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network vector:" << std::endl;
@@ -98,7 +98,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  bra_vector_expansion.rename(vector_expansion_->getName()+"Bra");
  TensorExpansion operator_expectation(bra_vector_expansion,*vector_expansion_,*tensor_operator_);
  operator_expectation.rename("OperatorExpectation");
- if(TensorNetworkOptimizer::debug){
+ if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
   operator_expectation.printIt();
  }
@@ -107,7 +107,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  // <vector|vector>
  TensorExpansion metrics_expectation(bra_vector_expansion,*vector_expansion_);
  metrics_expectation.rename("MetricsExpectation");
- if(TensorNetworkOptimizer::debug){
+ if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Metrics expectation expansion:" << std::endl;
   metrics_expectation.printIt();
  }
@@ -118,7 +118,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  success = residual_expectation.appendExpansion(operator_expectation,{1.0,0.0}); assert(success);
  success = residual_expectation.appendExpansion(metrics_expectation,{-1.0,0.0}); assert(success);
  residual_expectation.rename("ResidualExpectation");
- if(TensorNetworkOptimizer::debug){
+ if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Residual expectation expansion:" << std::endl;
   residual_expectation.printIt();
  }
@@ -148,7 +148,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
    }
   }
  }
- if(TensorNetworkOptimizer::debug){
+ if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Derivatives:" << std::endl;
   for(const auto & environment: environments_){
    std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
@@ -176,10 +176,11 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
   //Iterate:
   unsigned int iteration = 0;
   while((!converged) && (iteration < max_iterations_)){
-   if(TensorNetworkOptimizer::debug)
+   if(TensorNetworkOptimizer::debug > 0)
     std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Iteration " << iteration << std::endl;
    converged = true;
    double max_convergence = 0.0;
+   std::complex<double> average_expect_val{0.0,0.0};
    for(auto & environment: environments_){
     //Create the gradient tensors:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
@@ -214,8 +215,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
       default:
        assert(false);
      }
-     if(TensorNetworkOptimizer::debug) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
-                                                 << " = " << expect_val << std::endl;
+     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val += expect_val;
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
+                                                     << " = " << expect_val << std::endl;
      //Update the expectation value in the gradient expansion:
      scale_metrics(environment.gradient_expansion,environment.expect_value,expect_val);
      //Initialize the gradient tensor to zero:
@@ -225,8 +227,8 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      //Compute the norm of the gradient tensor:
      double grad_norm = 0.0;
      done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
-     if(TensorNetworkOptimizer::debug) std::cout << " Gradient norm w.r.t. " << environment.tensor->getName()
-                                                 << " = " << grad_norm << std::endl;
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Gradient norm w.r.t. " << environment.tensor->getName()
+                                                     << " = " << grad_norm << std::endl;
      //Compute the convergence criterion:
      double denom = 0.0;
      done = initTensorSync(environment.gradient_aux->getName(),0.0); assert(done);
@@ -240,11 +242,11 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      done = computeNorm2Sync(environment.gradient_aux->getName(),tens_norm); assert(done);
      denom += std::abs(expect_val) * tens_norm;
      local_convergence = grad_norm / denom;
-     if(TensorNetworkOptimizer::debug) std::cout << " Convergence w.r.t. " << environment.tensor->getName()
-                                                 << " = " << local_convergence
-                                                 << ": Denominator = " << denom << std::endl;
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Convergence w.r.t. " << environment.tensor->getName()
+                                                     << " = " << local_convergence
+                                                     << ": Denominator = " << denom << std::endl;
      if(local_convergence > tolerance_){
-      converged = false;
+      if(micro_iteration == (micro_iterations_ - 1)) converged = false;
       //Compute the optimal step size:
       done = initTensorSync("_scalar_norm",0.0); assert(done);
       scale_metrics(environment.hessian_expansion,environment.expect_value,expect_val);
@@ -267,8 +269,8 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
         assert(false);
       }
       epsilon_ = grad_norm * grad_norm / denom;
-      if(TensorNetworkOptimizer::debug) std::cout << " Optimal step size = " << epsilon_
-                                                  << ": Denominator = " << denom << std::endl;
+      if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
+                                                      << ": Denominator = " << denom << std::endl;
       //Update the optimized tensor:
       std::string add_pattern;
       done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true, //`Do I need conjugation here?
@@ -284,19 +286,24 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
       //Normalize the optimized tensor:
       tens_norm = 0.0;
       done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
-      if(TensorNetworkOptimizer::debug) std::cout << " Updated tensor norm before normalization = " << tens_norm << std::endl;
+      if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated tensor norm before normalization = " << tens_norm << std::endl;
       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
      }
      //Update the old expectation value:
      environment.expect_value = expect_val;
-    }
+     if(local_convergence <= tolerance_) break;
+    } //micro-iterations
     //Update the convergence residual:
     max_convergence = std::max(max_convergence,local_convergence);
     //Destroy the gradient tensors:
     done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
-   if(TensorNetworkOptimizer::debug) std::cout << " Max convergence residual = " << max_convergence << std::endl;
+   average_expect_val /= static_cast<double>(environments_.size());
+   if(TensorNetworkOptimizer::debug > 0){
+    std::cout << "Average expectation value = " << average_expect_val
+              << "; Max convergence residual = " << max_convergence << std::endl;
+   }
    ++iteration;
   }
   //Destroy the scalar tensor:

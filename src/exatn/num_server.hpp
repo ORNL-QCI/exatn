@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/21
+REVISION: 2021/01/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -645,6 +645,10 @@ public:
  bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                 const std::string & name,           //in: tensor network name
                                 const std::string & network);       //in: symbolic tensor network specification
+
+ /** Normalizes a tensor to a given 2-norm. **/
+ bool normalizeNorm2Sync(const std::string & name, //in: tensor name
+                         double norm);             //in: desired 2-norm
 
  /** Normalizes a tensor network expansion to a given 2-norm by rescaling
      all tensor network components by the same factor: Only the tensor

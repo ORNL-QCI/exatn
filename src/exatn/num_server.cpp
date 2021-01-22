@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/21
+REVISION: 2021/01/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2123,6 +2123,14 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetworkSync): Invalid tensor network: " << network << std::endl;
  }
  return parsed;
+}
+
+bool NumServer::normalizeNorm2Sync(const std::string & name, double norm)
+{
+ double old_norm = 0.0;
+ bool success = computeNorm2Sync(name,old_norm);
+ if(success) success = scaleTensorSync(name,norm/old_norm);
+ return success;
 }
 
 bool NumServer::normalizeNorm2Sync(TensorExpansion & expansion,

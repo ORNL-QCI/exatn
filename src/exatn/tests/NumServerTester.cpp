@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -40,7 +40,7 @@
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-#define EXATN_TEST26*/
+#define EXATN_TEST26
 #define EXATN_TEST27
 
 
@@ -2685,7 +2685,7 @@ TEST(NumServerTester, Reconstructor) {
  approximant->appendComponent(approx_net,{1.0,0.0});
  approximant->conjugate();
  approximant->rename("Approximant");
- approximant->printIt();
+ //approximant->printIt(); //debug
 
  //Construct the target tensor network expansion T(i,j):
  auto target_net = exatn::makeSharedTensorNetwork("TargetNet");
@@ -2693,7 +2693,7 @@ TEST(NumServerTester, Reconstructor) {
  auto target = exatn::makeSharedTensorExpansion();
  target->appendComponent(target_net,{1.0,0.0});
  target->rename("Target");
- target->printIt();
+ //target->printIt(); //debug
 
  //Normalize input tensors in the tensor network expansions to 1.0:
  success = exatn::balanceNorm2Sync(*target,1.0); assert(success);
@@ -2712,7 +2712,7 @@ TEST(NumServerTester, Reconstructor) {
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
             << "; Fidelity = " << fidelity << std::endl;
  }else{
-  std::cout << "Reconstruction failed!" << std::endl;
+  std::cout << "Reconstruction failed!" << std::endl; assert(false);
  }
 
  //Destroy tensors:
@@ -2743,7 +2743,7 @@ TEST(NumServerTester, OptimizerGroundState) {
  //exatn::resetLoggingLevel(2,2); //debug
 
  const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
- double g_factor = 2.0; // >0.0, 1.0 is critical state
+ double g_factor = 1e-1; // >0.0, 1e0 is critical state
  bool success = true;
 
  //Define, create and initialize Pauli tensors:
@@ -2762,10 +2762,10 @@ TEST(NumServerTester, OptimizerGroundState) {
  auto ising_zz = exatn::makeSharedTensorNetwork("IsingZZ");
  success = ising_zz->appendTensor(1,pauli_z,{}); assert(success);
  success = ising_zz->appendTensor(2,pauli_z,{}); assert(success);
- ising_zz->printIt();
+ //ising_zz->printIt(); //debug
  auto ising_x = exatn::makeSharedTensorNetwork("IsingX");
  success = ising_x->appendTensor(1,pauli_x,{}); assert(success);
- ising_x->printIt();
+ //ising_x->printIt(); //debug
  auto ising = exatn::makeSharedTensorOperator("IsingHamiltonian");
  for(int i = 0; i < (num_sites - 1); ++i){
   success = ising->appendComponent(ising_zz, {{i,0},{i+1,2}}, {{i,1},{i+1,3}}, {-1.0,0.0}); assert(success);
@@ -2773,7 +2773,7 @@ TEST(NumServerTester, OptimizerGroundState) {
  for(int i = 0; i < num_sites; ++i){
   success = ising->appendComponent(ising_x, {{i,0}}, {{i,1}}, {-1.0*g_factor,0.0}); assert(success);
  }
- ising->printIt();
+ //ising->printIt(); //debug
 
  //Create tensor network ansatz:
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
@@ -2784,7 +2784,7 @@ TEST(NumServerTester, OptimizerGroundState) {
  auto ansatz = exatn::makeSharedTensorExpansion();
  ansatz->rename("Ansatz");
  success = ansatz->appendComponent(ansatz_net,{1.0,0.0}); assert(success);
- ansatz->printIt();
+ //ansatz->printIt(); //debug
 
  //Allocate/initialize tensors in the tensor network ansatz:
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
@@ -2793,6 +2793,7 @@ TEST(NumServerTester, OptimizerGroundState) {
    success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
   }
  }
+ success = exatn::balanceNorm2Sync(*ansatz,1.0); assert(success);
 
  //Create the full tensor ansatz:
  success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
@@ -2803,7 +2804,7 @@ TEST(NumServerTester, OptimizerGroundState) {
  auto ansatz_full = exatn::makeSharedTensorExpansion();
  ansatz_full->rename("AnsatzFull");
  success = ansatz_full->appendComponent(ansatz_full_net,{1.0,0.0}); assert(success);
- ansatz_full->printIt();
+ //ansatz_full->printIt(); //debug
 
  //Perform ground state optimization in a complete tensor space:
  {
@@ -2815,29 +2816,48 @@ TEST(NumServerTester, OptimizerGroundState) {
   success = exatn::sync(); assert(success);
   if(converged){
    std::cout << "Optimization succeeded!" << std::endl;
+   /*std::cout << "Reconstructing ground state on a tensor network manifold:" << std::endl;
+   ansatz->conjugate();
+   exatn::TensorNetworkReconstructor::resetDebugLevel(1);
+   exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-4);
+   double residual_norm, fidelity;
+   bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+   success = exatn::sync(); assert(success);
+   ansatz->conjugate();
+   if(reconstructed){
+    std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
+              << "; Fidelity = " << fidelity << std::endl;
+   }else{
+    std::cout << "Reconstruction failed!" << std::endl; assert(false);
+   }*/
   }else{
-   std::cout << "Optimization failed!" << std::endl;
+   std::cout << "Optimization failed!" << std::endl; assert(false);
   }
  }
- success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
+ success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::initTensorSync(ansatz_tensor->getName(),0.0); assert(success);
 
  //Perform ground state optimization on a tensor network manifold:
  {
   std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1);
   exatn::TensorNetworkOptimizer optimizer(ising,ansatz,1e-4);
-  optimizer.resetMicroIterations(10);
-  success = exatn::sync(); assert(success);
+  optimizer.resetMicroIterations(1);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);
   if(converged){
    std::cout << "Optimization succeeded!" << std::endl;
+   success = exatn::evaluateSync(*((*ansatz)[0].network_)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network_->getTensor(0)->getName(),1.0); assert(success);
+   success = exatn::printTensor((*ansatz)[0].network_->getTensor(0)->getName()); assert(success);
   }else{
-   std::cout << "Optimization failed!" << std::endl;
+   std::cout << "Optimization failed!" << std::endl; assert(false);
   }
  }
 
  //Destroy tensors:
+ success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);
  success = exatn::destroyTensor("PauliZ"); assert(success);
  success = exatn::destroyTensor("PauliX"); assert(success);
