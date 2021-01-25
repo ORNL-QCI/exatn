@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/21
+REVISION: 2021/01/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1000,6 +1000,129 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
    new_tensor_legs[unpaired_leg_id].resetDimensionId(output_tensor_leg_id);
    new_tensor_legs[unpaired_leg_id].resetDirection(reverseLegDirection(output_tensor_leg.getDirection()));
    ++paired_leg_id; ++unpaired_leg_id;
+  }
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,new_tensor_legs,conjugated);
+  if(!res){
+   std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
+   return false;
+  }
+ }else{ //scalar tensor
+  auto res = emplaceTensorConnDirect(true,
+                                     tensor_id,
+                                     tensor,tensor_id,std::vector<TensorLeg>{},conjugated);
+  if(!res){
+   std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+    "A tensor with id " << tensor_id << " already exists in the tensor network!" << std::endl;
+   return false;
+  }
+ }
+ invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+ finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
+ return true;
+}
+
+
+bool TensorNetwork::appendTensorGateGeneral(unsigned int tensor_id,
+                                            std::shared_ptr<Tensor> tensor,
+                                            const std::vector<std::pair<unsigned int,
+                                                                        std::pair<unsigned int,
+                                                                                  unsigned int>>> & pairing,
+                                            bool conjugated)
+{
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+   "Appending a tensor gate to an unfinalized tensor network is forbidden!" << std::endl;
+  return false;
+ }
+ if(tensor_id == 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid request: " <<
+   "Tensor 0 (output tensor) must already be present in the tensor network!" << std::endl;
+  return false;
+ }
+ //Reset the output tensor to a new one:
+ this->resetOutputTensor();
+ //Check validity of leg pairing:
+ auto * output_tensor = this->getTensorConn(0);
+ assert(output_tensor != nullptr); //output tensor must be present
+ auto output_rank = output_tensor->getNumLegs();
+ auto tensor_rank = tensor->getRank();
+ if((tensor_rank % 2) != 0){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Odd-rank tensors are not allowed as gates!" << std::endl;
+  return false;
+ }
+ if(tensor_rank != pairing.size() * 2){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Wrong size of the leg pairing vector!" << std::endl;
+  return false;
+ }
+ if(tensor_rank > output_rank * 2){
+  std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Tensor network does not have enough open legs!" << std::endl;
+  return false;
+ }
+ if(output_rank > 0){
+  char inds[output_rank] = {0};
+  for(const auto & leg_match: pairing){
+   if(leg_match.first >= output_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+   if(inds[leg_match.first]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+  }
+ }
+ if(tensor_rank > 0){
+  char inds[tensor_rank] = {0};
+  for(const auto & leg_match: pairing){
+   if(leg_match.second.first >= tensor_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+   if(inds[leg_match.second.first]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+   if(leg_match.second.second >= tensor_rank){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+   if(inds[leg_match.second.second]++ != 0){
+    std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
+    return false;
+   }
+  }
+ }
+ //Pair legs of the new tensor with the input tensors of the tensor network:
+ if(tensor_rank > 0){
+  std::vector<TensorLeg> new_tensor_legs(tensor_rank,TensorLeg(0,0)); //placeholders for legs
+  for(const auto & tensor_leg_match: pairing){
+   unsigned int output_tensor_leg_id = tensor_leg_match.first;
+   auto output_tensor_leg = output_tensor->getTensorLeg(output_tensor_leg_id);
+   unsigned int paired_leg_id = tensor_leg_match.second.first;
+   unsigned int unpaired_leg_id = tensor_leg_match.second.second;
+   if(conjugated) std::swap(paired_leg_id,unpaired_leg_id);
+   //Relink the input tensor with the new tensor:
+   const auto input_tensor_id = output_tensor_leg.getTensorId();
+   const auto input_tensor_leg_id = output_tensor_leg.getDimensionId();
+   auto * input_tensor = this->getTensorConn(input_tensor_id);
+   assert(input_tensor != nullptr);
+   auto input_tensor_leg = input_tensor->getTensorLeg(input_tensor_leg_id);
+   input_tensor_leg.resetTensorId(tensor_id);
+   input_tensor_leg.resetDimensionId(paired_leg_id);
+   input_tensor->resetLeg(input_tensor_leg_id,input_tensor_leg);
+   new_tensor_legs[paired_leg_id].resetTensorId(input_tensor_id);
+   new_tensor_legs[paired_leg_id].resetDimensionId(input_tensor_leg_id);
+   new_tensor_legs[paired_leg_id].resetDirection(reverseLegDirection(input_tensor_leg.getDirection()));
+   //Relink the output tensor leg with the new tensor:
+   output_tensor_leg.resetTensorId(tensor_id);
+   output_tensor_leg.resetDimensionId(unpaired_leg_id);
+   output_tensor->resetLeg(output_tensor_leg_id,output_tensor_leg);
+   new_tensor_legs[unpaired_leg_id].resetTensorId(0);
+   new_tensor_legs[unpaired_leg_id].resetDimensionId(output_tensor_leg_id);
+   new_tensor_legs[unpaired_leg_id].resetDirection(reverseLegDirection(output_tensor_leg.getDirection()));
   }
   auto res = emplaceTensorConnDirect(true,
                                      tensor_id,
