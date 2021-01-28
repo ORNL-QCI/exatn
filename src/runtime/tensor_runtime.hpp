@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/12/08
+REVISION: 2021/01/28
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) The execution space consists of one or more DAGs in which nodes
@@ -93,6 +93,9 @@ public:
 
   /** Returns the Host memory buffer size in bytes provided by the executor. **/
   std::size_t getMemoryBufferSize() const;
+
+  /** Returns the current value of the total Flop count executed by the executor. **/
+  double getTotalFlopCount() const;
 
   /** Opens a new scope represented by a new execution graph (DAG). **/
   void openScope(const std::string & scope_name);

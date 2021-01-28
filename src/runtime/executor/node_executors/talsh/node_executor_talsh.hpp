@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2020/12/08
+REVISION: 2021/01/28
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -43,6 +43,8 @@ public:
   void activateFastMath() override;
 
   std::size_t getMemoryBufferSize() const override;
+
+  double getTotalFlopCount() const override;
 
   int execute(numerics::TensorOpCreate & op,
               TensorOpExecHandle * exec_handle) override;

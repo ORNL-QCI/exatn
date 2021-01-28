@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2020/12/08
+REVISION: 2021/01/28
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph executor traverses the tensor graph (DAG) and
@@ -101,6 +101,12 @@ public:
   std::size_t getMemoryBufferSize() const {
     while(!node_executor_);
     return node_executor_->getMemoryBufferSize();
+  }
+
+  /** Returns the current value of the total Flop count executed by the node executor. **/
+  double getTotalFlopCount() const {
+    while(!node_executor_);
+    return node_executor_->getTotalFlopCount();
   }
 
   /** Traverses the DAG and executes all its nodes (operations).

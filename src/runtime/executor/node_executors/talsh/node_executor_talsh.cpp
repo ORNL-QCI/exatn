@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/01/22
+REVISION: 2021/01/28
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -93,6 +93,12 @@ std::size_t TalshNodeExecutor::getMemoryBufferSize() const
  std::size_t buf_size = 0;
  while(buf_size == 0) buf_size = talsh_host_mem_buffer_size_.load();
  return buf_size;
+}
+
+
+double TalshNodeExecutor::getTotalFlopCount() const
+{
+ return talsh::getTotalFlopCount();
 }
 
 

@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2020/12/08
+REVISION: 2021/01/28
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "tensor_runtime.hpp"
@@ -152,6 +152,13 @@ std::size_t TensorRuntime::getMemoryBufferSize() const
 {
  while(!graph_executor_);
  return graph_executor_->getMemoryBufferSize();
+}
+
+
+double TensorRuntime::getTotalFlopCount() const
+{
+ while(!graph_executor_);
+ return graph_executor_->getTotalFlopCount();
 }
 
 

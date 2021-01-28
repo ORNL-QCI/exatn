@@ -2205,7 +2205,7 @@ TEST(NumServerTester, neurIPS) {
  //3:1 1D MERA:
  {
   std::cout << "Evaluating a 3:1 MERA 1D diagram: ";
-  const exatn::DimExtent chi = 18;
+  const exatn::DimExtent chi = 18; //Laptop: 18; Summit (4 nodes): 64
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
@@ -2246,7 +2246,7 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 4;
+  const exatn::DimExtent chi1 = 4; //Laptop: 4; Summit (4 nodes): 8
   const auto chi2 = chi1*chi1;
   const auto chi3 = chi2*chi1;
   const auto chi4 = chi3*chi1;
@@ -2311,9 +2311,9 @@ TEST(NumServerTester, neurIPS) {
  //ML MERA:
  {
   std::cout << "Evaluating an ML MERA diagram: ";
-  const exatn::DimExtent chi1 = 3;
+  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit: 8
   const auto chi2 = chi1*chi1;
-  const auto chi4 = chi2*chi2;
+  const auto chi4 = chi2*chi1;
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1,chi1}); assert(success);

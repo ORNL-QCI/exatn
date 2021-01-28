@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/22
+REVISION: 2021/01/28
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -175,6 +175,12 @@ std::size_t NumServer::getMemoryBufferSize() const
 {
  while(!tensor_rt_);
  return tensor_rt_->getMemoryBufferSize();
+}
+
+double NumServer::getTotalFlopCount() const
+{
+ while(!tensor_rt_);
+ return tensor_rt_->getTotalFlopCount();
 }
 
 const ProcessGroup & NumServer::getDefaultProcessGroup() const

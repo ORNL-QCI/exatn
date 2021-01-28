@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2020/12/08
+REVISION: 2021/01/28
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_exatensor.hpp"
@@ -30,6 +30,13 @@ std::size_t ExatensorNodeExecutor::getMemoryBufferSize() const
  std::size_t buf_size = 0;
  while(buf_size == 0) buf_size = exatensor_host_mem_buffer_size_.load();
  return buf_size;
+}
+
+
+double ExatensorNodeExecutor::getTotalFlopCount() const
+{
+ //`Implement
+ return 0.0;
 }
 
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/01/22
+REVISION: 2021/01/28
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -868,6 +868,11 @@ inline void activateFastMath()
 /** Returns the Host memory buffer size in bytes provided by the runtime. **/
 inline std::size_t getMemoryBufferSize()
  {return numericalServer->getMemoryBufferSize();}
+
+
+/** Returns the current value of the Flop counter. **/
+inline double getTotalFlopCount()
+ {return numericalServer->getTotalFlopCount();}
 
 
 /** Returns the default process group comprising all MPI processes and their communicator. **/

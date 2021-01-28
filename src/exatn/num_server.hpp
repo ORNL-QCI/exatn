@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/22
+REVISION: 2021/01/28
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -170,6 +170,9 @@ public:
 
  /** Returns the Host memory buffer size in bytes provided by the runtime. **/
  std::size_t getMemoryBufferSize() const;
+
+ /** Returns the current value of the Flop counter. **/
+ double getTotalFlopCount() const;
 
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;
