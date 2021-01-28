@@ -2141,7 +2141,7 @@ TEST(NumServerTester, testHyper) {
  const auto ltens_val = std::complex<double>{0.001,-0.0001};
  const auto rtens_val = std::complex<double>{0.002,-0.0002};
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -2180,10 +2180,34 @@ TEST(NumServerTester, testHyper) {
   success = exatn::destroyTensor("R"); assert(success);
   success = exatn::destroyTensor("L"); assert(success);
   success = exatn::destroyTensor("D"); assert(success);
+
+  //Synchronize:
+  success = exatn::sync(); assert(success);
  }
 
- //Synchronize:
- success = exatn::sync(); assert(success);
+ //Open new scope:
+ {
+  //Create tensors:
+  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{2,2,2}); assert(success);
+  success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{2,2,2}); assert(success);
+  success = exatn::createTensor("R",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
+
+  //Initialize tensors:
+  success = exatn::initTensor("D",std::complex<double>{0.0,0.0}); assert(success);
+  success = exatn::initTensor("L",ltens_val); assert(success);
+  success = exatn::initTensor("R",rtens_val); assert(success);
+
+  //Contract tensors:
+  success = exatn::contractTensorsSync("D(b,c,d)+=L(a,b,c)*R(a,b,c,d)",1.0); assert(success);
+
+  //Destroy tensors:
+  success = exatn::destroyTensor("R"); assert(success);
+  success = exatn::destroyTensor("L"); assert(success);
+  success = exatn::destroyTensor("D"); assert(success);
+
+  //Synchronize:
+  success = exatn::sync(); assert(success);
+ }
  //Grab a beer!
 }
 #endif
