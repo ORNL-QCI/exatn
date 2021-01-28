@@ -2249,12 +2249,14 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("G"); assert(success);
   success = exatn::sync(); assert(success);
 
+  auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
   success = exatn::evaluateTensorNetwork("MERA1d","Z(z0,z1,z2,z3)+=A(a0,a1,a2,z2)*B(b0,b1,b2,z3)*C(c0,c1,a2,b0)*D(d0,d1,a1,c0)*E(e2,e3,d1,c1)*F(a0,d0,e2,z0)*G(e3,b1,b2,z1)");
   assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
-  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
 
   success = exatn::destroyTensor("G"); assert(success);
   success = exatn::destroyTensor("F"); assert(success);
@@ -2307,12 +2309,14 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("N"); assert(success);
   success = exatn::sync(); assert(success);
 
+  auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
   success = exatn::evaluateTensorNetwork("AIEM_TTN","Z(z0,z1,z2)+=A(a0,a1)*B(b0,b1,a0)*C(c0,z1,a1)*D(d0,d1,b1)*E(e0,e1,c0)*F(f0,f1,d1)*G(g0,g1,e0)*H(h0,h1,f1,g0)*I(f0,h0,i2)*J(h1,g1,j2)*K(d0,i2,k2)*L(j2,e1,z0)*M(b0,k2,m2)*N(m2,z2)");
   assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
-  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
 
   success = exatn::destroyTensor("N"); assert(success);
   success = exatn::destroyTensor("M"); assert(success);
@@ -2365,12 +2369,14 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("K"); assert(success);
   success = exatn::sync(); assert(success);
 
+  auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
   success = exatn::evaluateTensorNetwork("ML_MERA","Z(z0,z1,z2)+=A(z0,a1,a2)*B(z1,z2,b2,b3)*C(a1,c1)*D(a2,b2,d2)*E(b3,e1)*F(c1,f1,f2)*G(d2,e1,g2,g3)*H(f1,h1)*I(f2,g2,i2)*J(g3,j1)*K(h1,i2,j1)");
   assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
-  std::cout << "Time (s) = " << duration << std::endl << std::flush;
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
 
   success = exatn::destroyTensor("K"); assert(success);
   success = exatn::destroyTensor("J"); assert(success);
