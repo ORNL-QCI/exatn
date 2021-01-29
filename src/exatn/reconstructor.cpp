@@ -247,7 +247,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
      if(TensorNetworkReconstructor::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
      //Perform update:
      std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true, //`Do I need conjugation here?
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
     }

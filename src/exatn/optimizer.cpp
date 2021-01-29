@@ -277,7 +277,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
                                                       << ": Denominator = " << denom << std::endl;
       //Update the optimized tensor:
       std::string add_pattern;
-      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true, //`Do I need conjugation here?
+      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                        environment.tensor->getName(),environment.gradient->getName()); assert(done);
       done = addTensorsSync(add_pattern,-epsilon_); assert(done);
       /*//Normalize the optimized tensor w.r.t. metrics:
