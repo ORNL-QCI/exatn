@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -41,7 +41,8 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-#define EXATN_TEST27
+#define EXATN_TEST27*/
+#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -2759,7 +2760,7 @@ TEST(NumServerTester, Reconstructor) {
 #endif
 
 #ifdef EXATN_TEST27
-TEST(NumServerTester, OptimizerGroundState) {
+TEST(NumServerTester, OptimizerTransverseIsing) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
  using exatn::Tensor;
@@ -2890,6 +2891,182 @@ TEST(NumServerTester, OptimizerGroundState) {
  success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);
  success = exatn::destroyTensor("PauliZ"); assert(success);
+ success = exatn::destroyTensor("PauliX"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST28
+TEST(NumServerTester, OptimizerHubbard) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
+
+ //Define, create and initialize Pauli tensors:
+ auto pauli_x = exatn::makeSharedTensor("PauliX",TensorShape{2,2});
+ auto pauli_y = exatn::makeSharedTensor("PauliY",TensorShape{2,2});
+ auto pauli_z = exatn::makeSharedTensor("PauliZ",TensorShape{2,2});
+ auto pauli_e = exatn::makeSharedTensor("PauliE",TensorShape{2,2});
+ success = exatn::createTensor(pauli_x,TENS_ELEM_TYPE); assert(success);
+ success = exatn::createTensor(pauli_y,TENS_ELEM_TYPE); assert(success);
+ success = exatn::createTensor(pauli_z,TENS_ELEM_TYPE); assert(success);
+ success = exatn::createTensor(pauli_e,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorData("PauliX",std::vector<std::complex<float>>{
+                                           {0.0f,0.0f}, {1.0f,0.0f},
+                                           {1.0f,0.0f}, {0.0f,0.0f}}); assert(success);
+ success = exatn::initTensorData("PauliY",std::vector<std::complex<float>>{
+                                           {0.0f,0.0f}, {0.0f,-1.0f},
+                                           {0.0f,1.0f}, {0.0f,0.0f}}); assert(success);
+ success = exatn::initTensorData("PauliZ",std::vector<std::complex<float>>{
+                                           {1.0f,0.0f}, {0.0f,0.0f},
+                                           {0.0f,0.0f}, {-1.0f,0.0f}}); assert(success);
+ success = exatn::initTensorData("PauliE",std::vector<std::complex<float>>{
+                                           {1.0f,0.0f}, {0.0f,0.0f},
+                                           {0.0f,0.0f}, {1.0f,0.0f}}); assert(success);
+
+ //Define the tensor network operator:
+ auto hubbard = exatn::makeSharedTensorOperator("HubbardHamiltonian");
+ auto eeee = exatn::makeSharedTensorNetwork("EEEE");
+ success = eeee->appendTensor(1,pauli_e,{}); assert(success);
+ success = eeee->appendTensor(2,pauli_e,{}); assert(success);
+ success = eeee->appendTensor(3,pauli_e,{}); assert(success);
+ success = eeee->appendTensor(4,pauli_e,{}); assert(success);
+ success = hubbard->appendComponent(eeee, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {-1.5,0.0}); assert(success);
+ auto xzxe = exatn::makeSharedTensorNetwork("XZXE");
+ success = xzxe->appendTensor(1,pauli_x,{}); assert(success);
+ success = xzxe->appendTensor(2,pauli_z,{}); assert(success);
+ success = xzxe->appendTensor(3,pauli_x,{}); assert(success);
+ success = xzxe->appendTensor(4,pauli_e,{}); assert(success);
+ success = hubbard->appendComponent(xzxe, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {-0.5,0.0}); assert(success);
+ auto yzye = exatn::makeSharedTensorNetwork("YZYE");
+ success = yzye->appendTensor(1,pauli_y,{}); assert(success);
+ success = yzye->appendTensor(2,pauli_z,{}); assert(success);
+ success = yzye->appendTensor(3,pauli_y,{}); assert(success);
+ success = yzye->appendTensor(4,pauli_e,{}); assert(success);
+ success = hubbard->appendComponent(yzye, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {-0.5,0.0}); assert(success);
+ auto zzee = exatn::makeSharedTensorNetwork("ZZEE");
+ success = zzee->appendTensor(1,pauli_z,{}); assert(success);
+ success = zzee->appendTensor(2,pauli_z,{}); assert(success);
+ success = zzee->appendTensor(3,pauli_e,{}); assert(success);
+ success = zzee->appendTensor(4,pauli_e,{}); assert(success);
+ success = hubbard->appendComponent(zzee, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {0.75,0.0}); assert(success);
+ auto exzx = exatn::makeSharedTensorNetwork("EXZX");
+ success = exzx->appendTensor(1,pauli_e,{}); assert(success);
+ success = exzx->appendTensor(2,pauli_x,{}); assert(success);
+ success = exzx->appendTensor(3,pauli_z,{}); assert(success);
+ success = exzx->appendTensor(4,pauli_x,{}); assert(success);
+ success = hubbard->appendComponent(exzx, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {-0.5,0.0}); assert(success);
+ auto eyzy = exatn::makeSharedTensorNetwork("EYZY");
+ success = eyzy->appendTensor(1,pauli_e,{}); assert(success);
+ success = eyzy->appendTensor(2,pauli_y,{}); assert(success);
+ success = eyzy->appendTensor(3,pauli_z,{}); assert(success);
+ success = eyzy->appendTensor(4,pauli_y,{}); assert(success);
+ success = hubbard->appendComponent(eyzy, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {-0.5,0.0}); assert(success);
+ auto eezz = exatn::makeSharedTensorNetwork("EEZZ");
+ success = eezz->appendTensor(1,pauli_e,{}); assert(success);
+ success = eezz->appendTensor(2,pauli_e,{}); assert(success);
+ success = eezz->appendTensor(3,pauli_z,{}); assert(success);
+ success = eezz->appendTensor(4,pauli_z,{}); assert(success);
+ success = hubbard->appendComponent(eezz, {{0,0},{1,2}, {2,4}, {3,6}},
+                                          {{0,1},{1,3}, {2,5}, {3,7}}, {0.75,0.0}); assert(success);
+ //hubbard->printIt(); //debug
+
+ //Create tensor network ansatz:
+ auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto ansatz = exatn::makeSharedTensorExpansion();
+ ansatz->rename("Ansatz");
+ success = ansatz->appendComponent(ansatz_net,{1.0,0.0}); assert(success);
+ //ansatz->printIt(); //debug
+
+ //Allocate/initialize tensors in the tensor network ansatz:
+ for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
+  if(tens_conn->first != 0){ //input tensors only
+   success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
+   //success = exatn::initTensor(tens_conn->second.getName(),1e-3f); assert(success);
+  }
+ }
+ success = exatn::balanceNorm2Sync(*ansatz,1.0); assert(success);
+
+ //Create the full tensor ansatz:
+ success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorRnd(ansatz_tensor->getName()); assert(success);
+ auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
+ success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
+ ansatz_full_net->markOptimizableAllTensors();
+ auto ansatz_full = exatn::makeSharedTensorExpansion();
+ ansatz_full->rename("AnsatzFull");
+ success = ansatz_full->appendComponent(ansatz_full_net,{1.0,0.0}); assert(success);
+ //ansatz_full->printIt(); //debug
+
+ //Perform ground state optimization in a complete tensor space:
+ {
+  std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard,ansatz_full,1e-4);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+ success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
+ success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::initTensorSync(ansatz_tensor->getName(),0.0); assert(success);
+
+ //Perform ground state optimization on a tensor network manifold:
+ {
+  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard,ansatz,1e-4);
+  optimizer.resetMicroIterations(1);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+   success = exatn::evaluateSync(*((*ansatz)[0].network_)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network_->getTensor(0)->getName(),1.0); assert(success);
+   success = exatn::printTensor((*ansatz)[0].network_->getTensor(0)->getName()); assert(success);
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+
+ //Destroy tensors:
+ success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::destroyTensors(*ansatz_net); assert(success);
+ success = exatn::destroyTensor("PauliE"); assert(success);
+ success = exatn::destroyTensor("PauliZ"); assert(success);
+ success = exatn::destroyTensor("PauliY"); assert(success);
  success = exatn::destroyTensor("PauliX"); assert(success);
 
  //Synchronize:
