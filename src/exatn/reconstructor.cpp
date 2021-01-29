@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/22
+REVISION: 2021/01/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -102,6 +102,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Approximant tensor expansion:" << std::endl;
   approximant_->printIt();
  }
+
+ //Activate caching of optimal tensor contraction sequences:
+ bool con_seq_caching = queryContrSeqCaching();
+ if(!con_seq_caching) activateContrSeqCaching();
 
  //Construct the Lagrangian optimization functional (scalar):
  // <approximant|approximant> - <approximant|expansion>
@@ -304,6 +308,9 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    bool done = destroyTensorSync(environment.tensor_aux->getName()); assert(done);
   }
  }
+
+ //Deactivate caching of optimal tensor contraction sequences:
+ if(!con_seq_caching) deactivateContrSeqCaching();
 
  *residual_norm = residual_norm_;
  *fidelity = fidelity_;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/28
+REVISION: 2021/01/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -138,6 +138,11 @@ void NumServer::deactivateContrSeqCaching()
 {
  contr_seq_caching_ = false;
  return;
+}
+
+bool NumServer::queryContrSeqCaching() const
+{
+ return contr_seq_caching_;
 }
 
 void NumServer::resetClientLoggingLevel(int level){

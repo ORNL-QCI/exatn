@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/01/22
+REVISION: 2021/01/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -90,6 +90,10 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network vector:" << std::endl;
   vector_expansion_->printIt();
  }
+
+ //Activate caching of optimal tensor contraction sequences:
+ bool con_seq_caching = queryContrSeqCaching();
+ if(!con_seq_caching) activateContrSeqCaching();
 
  //Construct the operator expectation expansion:
  // <vector|operator|vector>
@@ -309,6 +313,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
   //Destroy the scalar tensor:
   done = destroyTensorSync("_scalar_norm"); assert(done);
  }
+
+ //Deactivate caching of optimal tensor contraction sequences:
+ if(!con_seq_caching) deactivateContrSeqCaching();
 
  return converged;
 }

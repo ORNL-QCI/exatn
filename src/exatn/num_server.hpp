@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/28
+REVISION: 2021/01/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -158,6 +158,9 @@ public:
 
  /** Deactivates optimized tensor contraction sequence caching. **/
  void deactivateContrSeqCaching();
+
+ /** Queries the status of optimized tensor contraction sequence caching. **/
+ bool queryContrSeqCaching() const;
 
  /** Resets the client logging level (0:none). **/
  void resetClientLoggingLevel(int level = 0);
