@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/01/29
+REVISION: 2021/02/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2078,7 +2078,6 @@ bool NumServer::evaluateTensorNetwork(const ProcessGroup & process_group,
     break;
    }
    auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
-   parsed = res.second; if(!parsed) break;
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
@@ -2123,7 +2122,6 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
     break;
    }
    auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
-   parsed = res.second; if(!parsed) break;
   }
   if(parsed){
    TensorNetwork tensnet(name,network,tensor_map);
