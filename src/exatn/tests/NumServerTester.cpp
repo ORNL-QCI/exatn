@@ -15,7 +15,7 @@
 
 //Test activation:
 #define EXATN_TEST0
-#define EXATN_TEST1
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -34,15 +34,15 @@
 #define EXATN_TEST17
 //#define EXATN_TEST18 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST19
-//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)
+//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)*/
 #define EXATN_TEST21
-#define EXATN_TEST22
+/*#define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
 #define EXATN_TEST27
-#define EXATN_TEST28
+#define EXATN_TEST28*/
 
 
 #ifdef EXATN_TEST0
@@ -2223,14 +2223,14 @@ TEST(NumServerTester, neurIPS) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
  //3:1 1D MERA:
  {
   std::cout << "Evaluating a 3:1 MERA 1D diagram: ";
-  const exatn::DimExtent chi = 18; //Laptop: 18; Summit (4 nodes): 64
+  const exatn::DimExtent chi = 18; //Laptop: 18; Summit (4-8 nodes): 64
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
@@ -2273,10 +2273,10 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 4; //Laptop: 4; Summit (4 nodes): 8
-  const auto chi2 = chi1*chi1;
-  const auto chi3 = chi2*chi1;
-  const auto chi4 = chi3*chi1;
+  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit: 4
+  const auto chi2 = std::min(chi1*chi1,512ULL);
+  const auto chi3 = std::min(chi2*chi2,1024ULL);
+  const auto chi4 = std::min(chi3*chi3,2048ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
@@ -2285,7 +2285,8 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
   success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
   success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
-  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1,chi1}); assert(success);
+  success = exatn::createTensor("H1",TENS_ELEM_TYPE,TensorShape{chi1,chi1}); assert(success);
+  success = exatn::createTensor("H2",TENS_ELEM_TYPE,TensorShape{chi1,chi1}); assert(success);
   success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
   success = exatn::createTensor("J",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
   success = exatn::createTensor("K",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
@@ -2301,7 +2302,8 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("E"); assert(success);
   success = exatn::initTensorRnd("F"); assert(success);
   success = exatn::initTensorRnd("G"); assert(success);
-  success = exatn::initTensorRnd("H"); assert(success);
+  success = exatn::initTensorRnd("H1"); assert(success);
+  success = exatn::initTensorRnd("H2"); assert(success);
   success = exatn::initTensorRnd("I"); assert(success);
   success = exatn::initTensorRnd("J"); assert(success);
   success = exatn::initTensorRnd("K"); assert(success);
@@ -2312,7 +2314,7 @@ TEST(NumServerTester, neurIPS) {
 
   auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluateTensorNetwork("AIEM_TTN","Z(z0,z1,z2)+=A(a0,a1)*B(b0,b1,a0)*C(c0,z1,a1)*D(d0,d1,b1)*E(e0,e1,c0)*F(f0,f1,d1)*G(g0,g1,e0)*H(h0,h1,f1,g0)*I(f0,h0,i2)*J(h1,g1,j2)*K(d0,i2,k2)*L(j2,e1,z0)*M(b0,k2,m2)*N(m2,z2)");
+  success = exatn::evaluateTensorNetwork("AIEM_TTN","Z(z0,z1,z2)+=A(a0,a1)*B(b0,b1,a0)*C(c0,z1,a1)*D(d0,d1,b1)*E(e0,e1,c0)*F(f0,f1,d1)*G(g0,g1,e0)*H1(h0,f1)*H2(h1,g0)*I(f0,h0,i2)*J(h1,g1,j2)*K(d0,i2,k2)*L(j2,e1,z0)*M(b0,k2,m2)*N(m2,z2)");
   assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
@@ -2325,7 +2327,8 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::destroyTensor("K"); assert(success);
   success = exatn::destroyTensor("J"); assert(success);
   success = exatn::destroyTensor("I"); assert(success);
-  success = exatn::destroyTensor("H"); assert(success);
+  success = exatn::destroyTensor("H2"); assert(success);
+  success = exatn::destroyTensor("H1"); assert(success);
   success = exatn::destroyTensor("G"); assert(success);
   success = exatn::destroyTensor("F"); assert(success);
   success = exatn::destroyTensor("E"); assert(success);
@@ -2340,9 +2343,9 @@ TEST(NumServerTester, neurIPS) {
  //ML MERA:
  {
   std::cout << "Evaluating an ML MERA diagram: ";
-  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit: 8
-  const auto chi2 = chi1*chi1;
-  const auto chi4 = chi2*chi1;
+  const exatn::DimExtent chi1 = 5; //Laptop: 5; Summit: 8
+  const auto chi2 = std::min(chi1*chi1,128ULL);
+  const auto chi4 = std::min(chi2*chi2,1024ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1,chi1}); assert(success);
