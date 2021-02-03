@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/01/28
+REVISION: 2021/02/03
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -962,7 +962,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
   auto mpi_data_kind = get_mpi_tensor_element_kind(tens_elem_type);
   auto communicator = *(op.getMPICommunicator().get<MPI_Comm>());
   std::size_t tens_volume = tens.getVolume();
-  int chunk = std::numeric_limits<int>::max();
+  //int chunk = std::numeric_limits<int>::max();
+  int chunk = ALLREDUCE_CHUNK_SIZE;
   for(std::size_t base = 0; base < tens_volume; base += chunk){
    int count = std::min(chunk,static_cast<int>(tens_volume-base));
    switch(tens_elem_type){

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/01/28
+REVISION: 2021/02/03
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -28,6 +28,7 @@ class TalshNodeExecutor : public TensorNodeExecutor {
 public:
 
   static constexpr const std::size_t DEFAULT_MEM_BUFFER_SIZE = 2UL * 1024UL * 1024UL * 1024UL; //bytes
+  static constexpr const int ALLREDUCE_CHUNK_SIZE = 64 * 1024 * 1024; //elements
 
   TalshNodeExecutor(): max_tensor_rank_(-1), prefetch_enabled_(true) {}
 

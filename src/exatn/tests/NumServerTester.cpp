@@ -2223,7 +2223,7 @@ TEST(NumServerTester, neurIPS) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
