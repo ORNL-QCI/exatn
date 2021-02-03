@@ -52,17 +52,19 @@ Main ExaTN C++ objects:
    tensor dimensions as specified by a directed multi-graph in which each vertex represents a
    tensor with each attached (directed) edge being a tensor dimension. Each directed edge
    connects two dimensions coming from two different tensors. Graph vertices may also have
-   open edges (edges with an open end) which correspond to uncontrcacted tensor dimensions.
+   open edges (edges with an open end) which correspond to uncontracted tensor dimensions.
    The tensors constituting a tensor network are called *input* tensors. Each tensor network
    is also automatically equipped with the *output* tensor which collects all uncontracted
    tensor dimensions, thus representing the tensor-result of a full contraction of the
    tensor network.
  * `exatn::TensorOperator` (`src/numerics/tensor_operator.hpp`): A tensor network operator
-   is a tensor network in which open edges are distinguished by their belonging to either
-   the ket or bra (dual) tensor space.
+   is a linear combination of tensor networks in which their open edges are distinguished
+   by belonging to either the ket or bra tensor spaces (which do not have to be dual to each other).
  * `exatn::TensorExpansion` (`src/numerics/tensor_expansion.hpp`): A tensor network expansion
-   is a linear combination of tensor networks with complex coefficients. All tensor networks
-   in a tensor network expansion must have their output tensors possess the same shape.
+   is a linear combination of tensor networks with complex coefficients in which all open edges
+   of all constituent tensor networks belong to either the ket or bra tensor space. By default,
+   all open edges belong to the ket tensor space. All tensor networks in a tensor network expansion
+   must have their output tensors possess the same shape (be congruent).
 
 
 ## Quick Start
@@ -248,7 +250,7 @@ the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
 To link the C++ ExaTN library with your application, use the following command which
 will show which libraries will need to be linked:
 ```
-$ ~/.exatn/bin/exatn-config --ldflags --libs
+$ ~/.exatn/bin/exatn-config --libs
 ```
 
 To use python capabilities after compilation, export the library to your `PYTHONPATH`:
