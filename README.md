@@ -147,7 +147,13 @@ $ make install
 Note that simply typing `make` will be insufficient and running `make install` is
 mandatory, which will install all headers and libraries in the ExaTN install directory
 which defaults to ~/.exatn. The install directory is the one to refer to when linking
-your application with ExaTN.
+your application with ExaTN. If you redefine the install directory via CMAKE_INSTALL_PREFIX,
+note that the install directory must reside outside the ExaTN source directory.
+If you want to link and use ExaTN as part of your application, the helper script
+located inside the ExaTN install directory `bin/exatn-config` can be used to
+retrieve the necessary C++ compiler flags (`bin/exatn-config --cxxflags`),
+C++ include flags (`bin/exatn-config --includes`), and C++ library linking
+flags (`bin/exatn-config --libs`).
 
 In order to fully clean the build, you will need to do the following:
 ``` bash
