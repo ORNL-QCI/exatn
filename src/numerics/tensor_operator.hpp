@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/01/19
+REVISION: 2021/02/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,16 +9,20 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      its expansion (tensor) coefficients factorized as a tensor network.
      A ket tensor network vector produces its corresponding dual bra
      tensor network vector upon complex conjugation of all constituting
-     tensor factors and reversing the direction of the all tensor legs.
- (b) A tensor operator is an ordered linear combination of tensors and
-     tensor networks in which the output tensor legs are distinguished
+     tensor factors and reversing the direction of all tensor legs.
+ (b) A tensor network operator is an ordered linear combination of tensors
+     and tensor networks in which the output tensor legs are distinguished
      as bra and ket tensor legs: The bra tensor legs contract with legs
      of a bra tensor network vector, the ket tensor legs contract with
      legs of a ket tensor network vector.
- (c) The first component of the tensor operator is applied first when
-     acting on a ket vector. The last component of the tensor operator
-     is applied first when acting on a bra vector.
- (d) The order of components of a tensor operator is reversed upon conjugation.
+ (c) Different components of a tensor network operator do not have to have
+     the same number of ket or bra legs, but the corresponding tensor space
+     where the tensor network operator is used must have sufficiently large
+     rank to accomodate the action of the ket and bra legs.
+ (d) The first component of the tensor network operator is applied first
+     when acting on a ket vector; the last component of the tensor network
+     operator is applied first when acting on a bra vector.
+ (e) The order of components of a tensor network operator is reversed upon conjugation.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OPERATOR_HPP_
@@ -86,6 +90,7 @@ public:
   return -1;
  }
 
+#if 0
  /** Returns the ket-rank of the tensor operator (number of ket legs per component).
      If the expansion is empty, returns -1. **/
  inline int getKetRank() const{
@@ -99,6 +104,7 @@ public:
   if(!(components_.empty())) return components_[0].bra_legs.size();
   return -1;
  }
+#endif
 
  /** Returns the total number of components in the tensor operator. **/
  inline std::size_t getNumComponents() const{

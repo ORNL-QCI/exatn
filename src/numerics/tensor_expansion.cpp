@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/15
+REVISION: 2021/02/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -107,6 +107,14 @@ TensorExpansion::TensorExpansion(const TensorExpansion & another,
  }else{
   this->rename(another.getName());
  }
+}
+
+
+TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator):
+ ket_(true)
+{
+ //`Implement
+ assert(false);
 }
 
 

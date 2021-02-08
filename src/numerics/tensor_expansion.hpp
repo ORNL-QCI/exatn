@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/01/18
+REVISION: 2021/02/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -117,6 +117,9 @@ public:
  TensorExpansion(const TensorExpansion & another,    //in: another tensor expansion to clone
                  bool reset_output_tensors,          //in: whether or not to replace output tensors in all cloned tensor networks
                  const std::string & new_name = ""); //in: new name for the cloned tensor network expansion
+
+ /** Generates a tensor network expansion from a tensor network operator. **/
+ TensorExpansion(const TensorOperator & tensor_operator);
 
  TensorExpansion(const TensorExpansion &) = default;
  TensorExpansion & operator=(const TensorExpansion &) = default;
