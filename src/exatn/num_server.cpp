@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/02/02
+REVISION: 2021/02/10
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -440,7 +440,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
                            << "]: Submitting tensor network <" << network.getName() << "> (" << network.getTensor(0)->getName()
                            << ") for execution by " << num_procs << " processes with memory limit "
                            << process_group.getMemoryLimitPerProcess() << " bytes" << std::endl << std::flush;
- if(logging_ > 1) network.printItFile(logfile_);
+ if(logging_ > 0) network.printItFile(logfile_);
 
  //Determine the pseudo-optimal tensor contraction sequence:
  const auto num_input_tensors = network.getNumTensors();
