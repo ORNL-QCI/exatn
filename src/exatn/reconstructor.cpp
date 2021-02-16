@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/01/29
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -148,7 +148,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  // Loop over the tensor networks constituting the approximant tensor expansion:
  for(auto network = approximant_->cbegin(); network != approximant_->cend(); ++network){
   // Loop over the optimizable tensors inside the current tensor network:
-  for(auto tensor_conn = network->network_->begin(); tensor_conn != network->network_->end(); ++tensor_conn){
+  for(auto tensor_conn = network->network->begin(); tensor_conn != network->network->end(); ++tensor_conn){
    const auto & tensor = tensor_conn->second;
    if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the approximant tensor expansion
     auto res = tensor_names.emplace(tensor.getName());
@@ -268,7 +268,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   if(TensorNetworkReconstructor::debug > 1){
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Individual components of residual:";
    for(auto net_iter = residual.cbegin(); net_iter != residual.cend(); ++net_iter){
-    auto output_tensor = exatn::getLocalTensor(net_iter->network_->getTensor(0)->getName());
+    auto output_tensor = exatn::getLocalTensor(net_iter->network->getTensor(0)->getName());
     auto view = output_tensor->getSliceView<float>();
     std::cout << " " << view[std::initializer_list<int>{}];
    }

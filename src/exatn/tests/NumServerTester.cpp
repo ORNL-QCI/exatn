@@ -1720,10 +1720,10 @@ TEST(NumServerTester, HamiltonianNumServer)
 
   //Retrieve the expectation values:
   for(auto component = closed_prod.begin(); component != closed_prod.end(); ++component){
-   auto talsh_tensor = exatn::getLocalTensor(component->network_->getTensor(0)->getName());
+   auto talsh_tensor = exatn::getLocalTensor(component->network->getTensor(0)->getName());
    const std::complex<double> * body_ptr;
    auto access_granted = talsh_tensor->getDataAccessHostConst(&body_ptr); assert(access_granted);
-   std::cout << "Component " << component->network_->getTensor(0)->getName() << " expectation value = "
+   std::cout << "Component " << component->network->getTensor(0)->getName() << " expectation value = "
              << *body_ptr << " VS correct value of " << 16.384*(1e-15) << std::endl;
    body_ptr = nullptr;
   }
@@ -2879,9 +2879,9 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
   success = exatn::sync(); assert(success);
   if(converged){
    std::cout << "Optimization succeeded!" << std::endl;
-   success = exatn::evaluateSync(*((*ansatz)[0].network_)); assert(success);
-   success = exatn::normalizeNorm2Sync((*ansatz)[0].network_->getTensor(0)->getName(),1.0); assert(success);
-   success = exatn::printTensor((*ansatz)[0].network_->getTensor(0)->getName()); assert(success);
+   success = exatn::evaluateSync(*((*ansatz)[0].network)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network->getTensor(0)->getName(),1.0); assert(success);
+   success = exatn::printTensor((*ansatz)[0].network->getTensor(0)->getName()); assert(success);
   }else{
    std::cout << "Optimization failed!" << std::endl; assert(false);
   }
@@ -3053,9 +3053,9 @@ TEST(NumServerTester, OptimizerHubbard) {
   success = exatn::sync(); assert(success);
   if(converged){
    std::cout << "Optimization succeeded!" << std::endl;
-   success = exatn::evaluateSync(*((*ansatz)[0].network_)); assert(success);
-   success = exatn::normalizeNorm2Sync((*ansatz)[0].network_->getTensor(0)->getName(),1.0); assert(success);
-   success = exatn::printTensor((*ansatz)[0].network_->getTensor(0)->getName()); assert(success);
+   success = exatn::evaluateSync(*((*ansatz)[0].network)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network->getTensor(0)->getName(),1.0); assert(success);
+   success = exatn::printTensor((*ansatz)[0].network->getTensor(0)->getName()); assert(success);
   }else{
    std::cout << "Optimization failed!" << std::endl; assert(false);
   }

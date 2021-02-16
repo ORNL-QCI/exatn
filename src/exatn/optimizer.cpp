@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/02/08
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -134,7 +134,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  // Loop over the tensor networks constituting the tensor network vector expansion:
  for(auto network = vector_expansion_->cbegin(); network != vector_expansion_->cend(); ++network){
   // Loop over the optimizable tensors inside the current tensor network:
-  for(auto tensor_conn = network->network_->begin(); tensor_conn != network->network_->end(); ++tensor_conn){
+  for(auto tensor_conn = network->network->begin(); tensor_conn != network->network->end(); ++tensor_conn){
    const auto & tensor = tensor_conn->second;
    if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the tensor network vector expansion
     auto res = tensor_names.emplace(tensor.getName());
@@ -168,7 +168,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
                              std::complex<double> new_eigenvalue){
   const std::string metric_name = this->vector_expansion_->getName() + "*" + this->vector_expansion_->getName();
   for(auto component = expansion.begin(); component != expansion.end(); ++component){
-   if(component->network_->getName() == metric_name) component->coefficient_ *= (new_eigenvalue / old_eigenvalue);
+   if(component->network->getName() == metric_name) component->coefficient *= (new_eigenvalue / old_eigenvalue);
   }
   return;
  };

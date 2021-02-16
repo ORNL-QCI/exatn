@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/02/10
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -707,7 +707,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  std::list<std::shared_ptr<TensorOperation>> accumulations;
  for(auto component = expansion.begin(); component != expansion.end(); ++component){
   //Evaluate the tensor network component (compute its output tensor):
-  auto & network = *(component->network_);
+  auto & network = *(component->network);
   auto submitted = submit(process_group,network); if(!submitted) return false;
   //Create accumulation operation for the scaled computed output tensor:
   bool conjugated;
@@ -715,7 +715,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
   op->setTensorOperand(accumulator);
   op->setTensorOperand(output_tensor,conjugated);
-  op->setScalar(0,component->coefficient_);
+  op->setScalar(0,component->coefficient);
   std::string add_pattern;
   auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern,false,
                                              accumulator->getName(),output_tensor->getName());
@@ -2159,8 +2159,8 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
  bool success = false;
  if(expansion.getNumComponents() > 0){
   auto inner_prod_tensor = exatn::makeSharedTensor("_InnerProd");
-  assert(expansion.cbegin()->network_->getTensorElementType() != TensorElementType::VOID);
-  success = createTensor(inner_prod_tensor,expansion.cbegin()->network_->getTensorElementType());
+  assert(expansion.cbegin()->network->getTensorElementType() != TensorElementType::VOID);
+  success = createTensor(inner_prod_tensor,expansion.cbegin()->network->getTensorElementType());
   if(success){
    success = initTensor("_InnerProd",0.0);
    if(success){
@@ -2253,7 +2253,7 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  bool success = true;
  for(auto net = expansion.begin(); net != expansion.end(); ++net){
-  success = balanceNorm2Sync(*(net->network_),norm);
+  success = balanceNorm2Sync(*(net->network),norm);
   if(!success) break;
  }
  return success;

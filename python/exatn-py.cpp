@@ -25,7 +25,7 @@ void create_exatn_py_module(py::module &m) {
       .def("getRank", &exatn::numerics::Tensor::getRank, "");
 
   py::class_<TensorExpansion::ExpansionComponent, std::shared_ptr<TensorExpansion::ExpansionComponent>>(m, "ExpansionComponent", "")
-     .def_readonly("network", &TensorExpansion::ExpansionComponent::network_,"");
+     .def_readonly("network", &TensorExpansion::ExpansionComponent::network,"");
 
   py::class_<exatn::numerics::TensorOperator,
              std::shared_ptr<exatn::numerics::TensorOperator>>(

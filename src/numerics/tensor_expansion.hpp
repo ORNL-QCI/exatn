@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/08
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,23 +47,23 @@ public:
  //Tensor network expansion component:
  struct ExpansionComponent{
   //Tensor network:
-  std::shared_ptr<TensorNetwork> network_;
+  std::shared_ptr<TensorNetwork> network;
   //Expansion coefficient:
-  std::complex<double> coefficient_;
+  std::complex<double> coefficient;
 
   ExpansionComponent(std::shared_ptr<TensorNetwork> network,
                      std::complex<double> coefficient):
-   network_(network), coefficient_(coefficient)
+   network(network), coefficient(coefficient)
   {}
 
   ExpansionComponent(const ExpansionComponent & another){
-   network_ = makeSharedTensorNetwork(*(another.network_));
-   coefficient_ = another.coefficient_;
+   network = makeSharedTensorNetwork(*(another.network));
+   coefficient = another.coefficient;
   }
 
   ExpansionComponent & operator=(const ExpansionComponent & another){
-   network_ = makeSharedTensorNetwork(*(another.network_));
-   coefficient_ = another.coefficient_;
+   network = makeSharedTensorNetwork(*(another.network));
+   coefficient = another.coefficient;
    return *this;
   }
 
@@ -166,7 +166,7 @@ public:
  /** Returns the rank of the tensor expansion (number of legs per component).
      If the expansion is empty, returns -1. **/
  inline int getRank() const{
-  if(!(components_.empty())) return components_[0].network_->getRank();
+  if(!(components_.empty())) return components_[0].network->getRank();
   return -1;
  }
 

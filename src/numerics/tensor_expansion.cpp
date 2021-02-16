@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/08
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,7 +19,7 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,       //in: 
  bool appended;
  for(auto term = expansion.cbegin(); term != expansion.cend(); ++term){
   for(auto oper = tensor_operator.cbegin(); oper != tensor_operator.cend(); ++oper){
-   auto product = std::make_shared<TensorNetwork>(*(term->network_));
+   auto product = std::make_shared<TensorNetwork>(*(term->network));
    if(ket_){
     appended = product->appendTensorNetwork(TensorNetwork(*(oper->network)),oper->ket_legs);
     assert(appended);
@@ -31,8 +31,8 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,       //in: 
     appended = reorderProductLegs(*product,oper->ket_legs);
     assert(appended);
    }
-   product->rename(oper->network->getName() + "*" + term->network_->getName());
-   appended = this->appendComponent(product,(oper->coefficient)*(term->coefficient_));
+   product->rename(oper->network->getName() + "*" + term->network->getName());
+   appended = this->appendComponent(product,(oper->coefficient)*(term->coefficient));
    assert(appended);
   }
  }
@@ -68,11 +68,11 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
 {
  assert(tensor_name.length() > 0);
  for(auto iter = expansion.cbegin(); iter != expansion.cend(); ++iter){
-  auto ids = iter->network_->getTensorIdsInNetwork(tensor_name,conjugated);
+  auto ids = iter->network->getTensorIdsInNetwork(tensor_name,conjugated);
   for(const auto & id: ids){
-   auto derivnet = makeSharedTensorNetwork(*(iter->network_));
+   auto derivnet = makeSharedTensorNetwork(*(iter->network));
    auto differentiated = derivnet->differentiateTensor(id); assert(differentiated);
-   appendComponent(derivnet,iter->coefficient_);
+   appendComponent(derivnet,iter->coefficient);
   }
  }
 }
@@ -86,9 +86,9 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
  assert(original_tensor);
  assert(new_tensor);
  for(auto iter = expansion.cbegin(); iter != expansion.cend(); ++iter){
-  auto network = makeSharedTensorNetwork(*(iter->network_));
+  auto network = makeSharedTensorNetwork(*(iter->network));
   auto success = network->substituteTensor(original_tensor,new_tensor); assert(success);
-  appendComponent(network,iter->coefficient_);
+  appendComponent(network,iter->coefficient);
  }
 }
 
@@ -99,8 +99,8 @@ TensorExpansion::TensorExpansion(const TensorExpansion & another,
  ket_(another.isKet())
 {
  for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
-  this->appendComponent(std::make_shared<TensorNetwork>(*(iter->network_),reset_output_tensors),
-                        iter->coefficient_);
+  this->appendComponent(std::make_shared<TensorNetwork>(*(iter->network),reset_output_tensors),
+                        iter->coefficient);
  }
  if(new_name.length() > 0){
   this->rename(new_name);
@@ -123,8 +123,8 @@ TensorExpansion TensorExpansion::clone(bool reset_output_tensors,
 {
  TensorExpansion clon(this->isKet());
  for(auto iter = this->cbegin(); iter != this->cend(); ++iter){
-  clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network_),reset_output_tensors),
-                       iter->coefficient_);
+  clon.appendComponent(std::make_shared<TensorNetwork>(*(iter->network),reset_output_tensors),
+                       iter->coefficient);
  }
  if(new_name.length() > 0){
   clon.rename(new_name);
@@ -142,7 +142,7 @@ bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network,
  const auto output_tensor_rank = output_tensor->getRank();
  //Check validity:
  if(!(components_.empty())){
-  auto first_tensor = components_[0].network_->getTensor(0);
+  auto first_tensor = components_[0].network->getTensor(0);
   const auto first_tensor_rank = first_tensor->getRank();
   if(first_tensor_rank != output_tensor_rank){
    std::cout << "#ERROR(exatn::numerics::TensorExpansion::appendComponent): Tensor rank mismatch: "
@@ -155,7 +155,7 @@ bool TensorExpansion::appendComponent(std::shared_ptr<TensorNetwork> network,
    assert(false);
   }
   const auto * output_legs = network->getTensorConnections(0);
-  const auto * first_legs = components_[0].network_->getTensorConnections(0);
+  const auto * first_legs = components_[0].network->getTensorConnections(0);
   congruent = tensorLegsAreCongruent(output_legs,first_legs);
   if(!congruent){
    std::cout << "#ERROR(exatn::numerics::TensorExpansion::appendComponent): Tensor leg direction mismatch!" << std::endl;
@@ -186,7 +186,7 @@ bool TensorExpansion::appendExpansion(const TensorExpansion & another,
  }
  bool appended = true;
  for(auto iter = another.cbegin(); iter != another.cend(); ++iter){
-  appended = this->appendComponent(iter->network_,(iter->coefficient_)*coefficient);
+  appended = this->appendComponent(iter->network,(iter->coefficient)*coefficient);
   if(!appended) break;
  }
  return appended;
@@ -196,8 +196,8 @@ bool TensorExpansion::appendExpansion(const TensorExpansion & another,
 void TensorExpansion::conjugate()
 {
  for(auto & component: components_){
-  component.network_->conjugate();
-  component.coefficient_ = std::conj(component.coefficient_);
+  component.network->conjugate();
+  component.coefficient = std::conj(component.coefficient);
  }
  ket_ = !ket_;
  return;
@@ -206,7 +206,7 @@ void TensorExpansion::conjugate()
 
 void TensorExpansion::rescale(std::complex<double> scaling_factor)
 {
- for(auto & component: components_) component.coefficient_ *= scaling_factor;
+ for(auto & component: components_) component.coefficient *= scaling_factor;
  return;
 }
 
@@ -229,8 +229,8 @@ void TensorExpansion::printIt() const
  }
  std::size_t i = 0;
  for(const auto & component: components_){
-  std::cout << "Component " << i++ << ": " << component.coefficient_ << std::endl;
-  component.network_->printIt();
+  std::cout << "Component " << i++ << ": " << component.coefficient << std::endl;
+  component.network->printIt();
  }
  std::cout << "}" << std::endl;
  return;
@@ -240,7 +240,7 @@ void TensorExpansion::printIt() const
 void TensorExpansion::printOperationList(unsigned int component_id) const
 {
  assert(component_id < components_.size());
- components_[component_id].network_->printOperationList();
+ components_[component_id].network->printOperationList();
  return;
 }
 
@@ -264,11 +264,11 @@ void TensorExpansion::constructDirectProductTensorExpansion(const TensorExpansio
  std::vector<std::pair<unsigned int, unsigned int>> pairing;
  for(auto left = left_expansion.cbegin(); left != left_expansion.cend(); ++left){
   for(auto right = right_expansion.cbegin(); right != right_expansion.cend(); ++right){
-   auto product = std::make_shared<TensorNetwork>(*(left->network_));
-   appended = product->appendTensorNetwork(TensorNetwork(*(right->network_)),pairing);
+   auto product = std::make_shared<TensorNetwork>(*(left->network));
+   appended = product->appendTensorNetwork(TensorNetwork(*(right->network)),pairing);
    assert(appended);
-   product->rename(left->network_->getName() + "*" + right->network_->getName());
-   appended = this->appendComponent(product,(left->coefficient_)*(right->coefficient_));
+   product->rename(left->network->getName() + "*" + right->network->getName());
+   appended = this->appendComponent(product,(left->coefficient)*(right->coefficient));
    assert(appended);
   }
  }
@@ -284,19 +284,19 @@ void TensorExpansion::constructInnerProductTensorExpansion(const TensorExpansion
             << std::endl;
   assert(false);
  }
- auto rank = left_expansion.cbegin()->network_->getRank();
+ auto rank = left_expansion.cbegin()->network->getRank();
  assert(rank > 0);
  bool appended;
  std::vector<std::pair<unsigned int, unsigned int>> pairing(rank);
  for(unsigned int i = 0; i < rank; ++i) pairing[i] = {i,i};
  for(auto left = left_expansion.cbegin(); left != left_expansion.cend(); ++left){
   for(auto right = right_expansion.cbegin(); right != right_expansion.cend(); ++right){
-   assert(right->network_->getRank() == rank);
-   auto product = std::make_shared<TensorNetwork>(*(right->network_));
-   appended = product->appendTensorNetwork(TensorNetwork(*(left->network_)),pairing);
+   assert(right->network->getRank() == rank);
+   auto product = std::make_shared<TensorNetwork>(*(right->network));
+   appended = product->appendTensorNetwork(TensorNetwork(*(left->network)),pairing);
    assert(appended);
-   product->rename(left->network_->getName() + "*" + right->network_->getName());
-   appended = this->appendComponent(product,(left->coefficient_)*(right->coefficient_));
+   product->rename(left->network->getName() + "*" + right->network->getName());
+   appended = this->appendComponent(product,(left->coefficient)*(right->coefficient));
    assert(appended);
   }
  }
