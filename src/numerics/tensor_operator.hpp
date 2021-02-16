@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/02/08
+REVISION: 2021/02/16
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -136,9 +136,31 @@ public:
                       const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Tensor leg
                       const std::complex<double> coefficient);                                //in: expansion coefficient
 
+ /** Appends the given tensor network into the tensor operator expansion multiple times
+     by assigning the ket- and bra-legs of the output tensor to the global tensor space
+     modes in all possible uniquely permuted fully-ordered ways. **/
+ bool appendSymmetrizeComponent(std::shared_ptr<TensorNetwork> network,        //in: tensor network (or single tensor as a tensor network)
+                                const std::vector<unsigned int> & ket_pairing, //in: ket tensor legs (output tensor)
+                                const std::vector<unsigned int> & bra_pairing, //in: bra tensor legs (output tensor)
+                                unsigned int ket_space_rank,                   //in: rank of the global ket tensor space
+                                unsigned int bra_space_rank,                   //in: rank of the global bra tensor space
+                                const std::complex<double> coefficient,        //in: expansion coefficient
+                                bool antisymmetrize = false);                  //in: whether or not to negate the coefficient for odd permutations
+
+ /** Appends the given tensor into the tensor operator expansion multiple times
+     by assigning the ket- and bra-legs of the tensor to the global tensor space
+     modes in all possible uniquely permuted fully-ordered ways. **/
+ bool appendSymmetrizeComponent(std::shared_ptr<Tensor> tensor,                //in: tensor
+                                const std::vector<unsigned int> & ket_pairing, //in: ket tensor legs
+                                const std::vector<unsigned int> & bra_pairing, //in: bra tensor legs
+                                unsigned int ket_space_rank,                   //in: rank of the global ket tensor space
+                                unsigned int bra_space_rank,                   //in: rank of the global bra tensor space
+                                const std::complex<double> coefficient,        //in: expansion coefficient
+                                bool antisymmetrize = false);                  //in: whether or not to negate the coefficient for odd permutations
+
  /** Conjugates the tensor operator: All constituting tensors are complex conjugated,
      all tensor legs reverse their direction, bra legs and ket legs are swapped,
-     complex linear expansion coefficients are complex conjugated.  **/
+     complex linear expansion coefficients are complex conjugated. **/
  void conjugate();
 
  /** Prints. **/

@@ -83,6 +83,7 @@ public:
 
  /** Retrieves a specific index from the multi-index. **/
  inline DimOffset getIndex(unsigned int position) const;
+ inline DimOffset operator[](unsigned int position) const;
 
  /** Tests whether all indices in the current multi-index have the same value. **/
  inline bool onDiagonal() const;
@@ -267,6 +268,13 @@ inline const std::vector<DimOffset> & TensorRange::getMultiIndex() const
 
 
 inline DimOffset TensorRange::getIndex(unsigned int position) const
+{
+ assert(position < mlndx_.size());
+ return mlndx_[position];
+}
+
+
+inline DimOffset TensorRange::operator[](unsigned int position) const
 {
  assert(position < mlndx_.size());
  return mlndx_[position];

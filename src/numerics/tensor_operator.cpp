@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2019/12/06
+REVISION: 2021/02/16
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operator.hpp"
+#include "tensor_range.hpp"
 
 namespace exatn{
 
@@ -52,6 +53,110 @@ bool TensorOperator::appendComponent(std::shared_ptr<Tensor> tensor,         //i
             << std::endl;
  }
  return appended;
+}
+
+
+bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<TensorNetwork> network,
+     const std::vector<unsigned int> & ket_pairing,
+     const std::vector<unsigned int> & bra_pairing,
+     unsigned int ket_space_rank,
+     unsigned int bra_space_rank,
+     const std::complex<double> coefficient,
+     bool antisymmetrize)
+{
+ bool success = true;
+ auto ket_rank = ket_pairing.size();
+ auto bra_rank = bra_pairing.size();
+ assert(ket_rank + bra_rank == network->getRank());
+ assert(ket_rank <= ket_space_rank);
+ assert(bra_rank <= bra_space_rank);
+ std::vector<std::pair<unsigned int, unsigned int>> ket_pairs(ket_rank);
+ std::vector<std::pair<unsigned int, unsigned int>> bra_pairs(bra_rank);
+ std::vector<DimExtent> ket_range(ket_rank,static_cast<DimExtent>(ket_space_rank));
+ std::vector<DimExtent> bra_range(bra_rank,static_cast<DimExtent>(bra_space_rank));
+ TensorRange bra_legs(bra_range);
+ bool bra_not_over = true;
+ while(bra_not_over){
+  if(bra_legs.increasingOrder()){
+   for(int i = 0; i < bra_rank; ++i) bra_pairs[i] = {static_cast<unsigned int>(bra_legs[i]), bra_pairing[i]};
+   double phase_bra = 1.0;
+   if(antisymmetrize){
+    for(int i = 0; i < bra_rank; ++i){
+     if((bra_legs[i] - i) % 2 != 0) phase_bra = -phase_bra;
+    }
+   }
+   TensorRange ket_legs(ket_range);
+   bool ket_not_over = true;
+   while(ket_not_over){
+    if(ket_legs.increasingOrder()){
+     for(int i = 0; i < ket_rank; ++i) ket_pairs[i] = {static_cast<unsigned int>(ket_legs[i]), ket_pairing[i]};
+     double phase_ket = 1.0;
+     if(antisymmetrize){
+      for(int i = 0; i < ket_rank; ++i){
+       if((ket_legs[i] - i) % 2 != 0) phase_ket = -phase_ket;
+      }
+     }
+     success = appendComponent(network,ket_pairs,bra_pairs,coefficient*std::complex<double>{phase_bra*phase_ket,0.0});
+     if(!success) return success;
+    }
+    ket_not_over = ket_legs.next();
+   }
+  }
+  bra_not_over = bra_legs.next();
+ }
+ return success;
+}
+
+
+bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<Tensor> tensor,
+     const std::vector<unsigned int> & ket_pairing,
+     const std::vector<unsigned int> & bra_pairing,
+     unsigned int ket_space_rank,
+     unsigned int bra_space_rank,
+     const std::complex<double> coefficient,
+     bool antisymmetrize)
+{
+ bool success = true;
+ auto ket_rank = ket_pairing.size();
+ auto bra_rank = bra_pairing.size();
+ assert(ket_rank + bra_rank == tensor->getRank());
+ assert(ket_rank <= ket_space_rank);
+ assert(bra_rank <= bra_space_rank);
+ std::vector<std::pair<unsigned int, unsigned int>> ket_pairs(ket_rank);
+ std::vector<std::pair<unsigned int, unsigned int>> bra_pairs(bra_rank);
+ std::vector<DimExtent> ket_range(ket_rank,static_cast<DimExtent>(ket_space_rank));
+ std::vector<DimExtent> bra_range(bra_rank,static_cast<DimExtent>(bra_space_rank));
+ TensorRange bra_legs(bra_range);
+ bool bra_not_over = true;
+ while(bra_not_over){
+  if(bra_legs.increasingOrder()){
+   for(int i = 0; i < bra_rank; ++i) bra_pairs[i] = {static_cast<unsigned int>(bra_legs[i]), bra_pairing[i]};
+   double phase_bra = 1.0;
+   if(antisymmetrize){
+    for(int i = 0; i < bra_rank; ++i){
+     if((bra_legs[i] - i) % 2 != 0) phase_bra = -phase_bra;
+    }
+   }
+   TensorRange ket_legs(ket_range);
+   bool ket_not_over = true;
+   while(ket_not_over){
+    if(ket_legs.increasingOrder()){
+     for(int i = 0; i < ket_rank; ++i) ket_pairs[i] = {static_cast<unsigned int>(ket_legs[i]), ket_pairing[i]};
+     double phase_ket = 1.0;
+     if(antisymmetrize){
+      for(int i = 0; i < ket_rank; ++i){
+       if((ket_legs[i] - i) % 2 != 0) phase_ket = -phase_ket;
+      }
+     }
+     success = appendComponent(tensor,ket_pairs,bra_pairs,coefficient*std::complex<double>{phase_bra*phase_ket,0.0});
+     if(!success) return success;
+    }
+    ket_not_over = ket_legs.next();
+   }
+  }
+  bra_not_over = bra_legs.next();
+ }
+ return success;
 }
 
 
