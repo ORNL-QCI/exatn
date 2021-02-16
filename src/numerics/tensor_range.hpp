@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2020/12/29
+REVISION: 2021/02/16
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Tensor range is a Cartesian product of one or more ranges.
@@ -86,6 +86,26 @@ public:
 
  /** Tests whether all indices in the current multi-index have the same value. **/
  inline bool onDiagonal() const;
+
+ /** Tests whether the indices of the current multi-index are in a monotonically increasing order. **/
+ inline bool increasingOrder() const;
+
+ /** Tests whether the indices of the current multi-index are in a monotonically decreasing order. **/
+ inline bool decreasingOrder() const;
+
+ /** Tests whether the indices of the current multi-index are in a non-decreasing order. **/
+ inline bool nondecreasingOrder() const;
+
+ /** Tests whether the indices of the current multi-index are in a non-increasing order. **/
+ inline bool nonincreasingOrder() const;
+
+ /** Tests whether both halves of the indices of the current multi-index are the same and
+     each is in a monotonically increasing order. **/
+ inline bool increasingOrderDiag() const;
+
+ /** Tests whether both halves of the indices of the current multi-index are the same and
+     each is in a monotonically decreasing order. **/
+ inline bool decreasingOrderDiag() const;
 
  /** Returns the flat offset produced by the current multi-index value per se. **/
  inline DimOffset localOffset() const; //little endian
@@ -263,6 +283,94 @@ inline bool TensorRange::onDiagonal() const
   }
  }
  return diag;
+}
+
+
+inline bool TensorRange::increasingOrder() const
+{
+ bool indeed = true;
+ for(int i = 1; i < mlndx_.size(); ++i){
+  if((bases_[i] + mlndx_[i]) <= (bases_[i-1] + mlndx_[i-1])){
+   indeed = false;
+   break;
+  }
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::decreasingOrder() const
+{
+ bool indeed = true;
+ for(int i = 1; i < mlndx_.size(); ++i){
+  if((bases_[i] + mlndx_[i]) >= (bases_[i-1] + mlndx_[i-1])){
+   indeed = false;
+   break;
+  }
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::nondecreasingOrder() const
+{
+ bool indeed = true;
+ for(int i = 1; i < mlndx_.size(); ++i){
+  if((bases_[i] + mlndx_[i]) < (bases_[i-1] + mlndx_[i-1])){
+   indeed = false;
+   break;
+  }
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::nonincreasingOrder() const
+{
+ bool indeed = true;
+ for(int i = 1; i < mlndx_.size(); ++i){
+  if((bases_[i] + mlndx_[i]) > (bases_[i-1] + mlndx_[i-1])){
+   indeed = false;
+   break;
+  }
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::increasingOrderDiag() const
+{
+ bool indeed = (mlndx_.size() % 2 == 0);
+ int half_size = mlndx_.size() / 2;
+ if(indeed && half_size > 0){
+  for(int i = 1; i < half_size; ++i){
+   if(((bases_[i] + mlndx_[i]) <= (bases_[i-1] + mlndx_[i-1])) ||
+      ((bases_[i] + mlndx_[i]) == (bases_[half_size+i] + mlndx_[half_size+i]))){
+    indeed = false;
+    break;
+   }
+  }
+  indeed = indeed && ((bases_[0] + mlndx_[0]) == (bases_[half_size] + mlndx_[half_size]));
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::decreasingOrderDiag() const
+{
+ bool indeed = (mlndx_.size() % 2 == 0);
+ int half_size = mlndx_.size() / 2;
+ if(indeed && half_size > 0){
+  for(int i = 1; i < half_size; ++i){
+   if(((bases_[i] + mlndx_[i]) >= (bases_[i-1] + mlndx_[i-1])) ||
+      ((bases_[i] + mlndx_[i]) == (bases_[half_size+i] + mlndx_[half_size+i]))){
+    indeed = false;
+    break;
+   }
+  }
+  indeed = indeed && ((bases_[0] + mlndx_[0]) == (bases_[half_size] + mlndx_[half_size]));
+ }
+ return indeed;
 }
 
 
