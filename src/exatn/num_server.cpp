@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/02/16
+REVISION: 2021/02/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -49,6 +49,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
  initBytePacket(&byte_packet_);
  space_register_ = getSpaceRegister(); assert(space_register_);
  tensor_op_factory_ = TensorOpFactory::get();
+ mpi_error = MPI_Barrier(*(communicator.get<MPI_Comm>())); assert(mpi_error == MPI_SUCCESS);
  time_start_ = exatn::Timer::timeInSecHR();
  tensor_rt_ = std::move(std::make_shared<runtime::TensorRuntime>(communicator,parameters,graph_executor_name,node_executor_name));
  scopes_.push(std::pair<std::string,ScopeId>{"GLOBAL",0}); //GLOBAL scope 0 is automatically open (top scope)
@@ -455,6 +456,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(new_contr_seq){
   double flops = network.determineContractionSequence(contr_seq_optimizer_);
  }
+ if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                           << "]: Found a contraction sequence candidate locally (caching = " << contr_seq_caching_
+                           << ")" << std::endl;
 
 #ifdef MPI_ENABLED
  //Synchronize on the best tensor contraction sequence across processes:
@@ -477,6 +481,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
   assert(errc == MPI_SUCCESS);
   network.importContractionSequence(contr_seq_content,flops);
  }
+ if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                           << "]: Found the optimal contraction sequence across all processes" << std::endl;
 #endif
 
  //Generate the primitive tensor operation list:
