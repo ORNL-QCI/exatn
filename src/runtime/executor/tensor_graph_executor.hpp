@@ -44,10 +44,8 @@ public:
 
   TensorGraphExecutor():
    node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1), global_process_rank_(-1),
-   logging_(0), stopping_(false), active_(false), time_start_(exatn::Timer::timeInSecHR()),
-   last_sync_time_(0.0), last_flop_count_(0.0)
+   logging_(0), stopping_(false), active_(false), time_start_(exatn::Timer::timeInSecHR())
   {
-   last_sync_time_ = time_start_;
   }
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
@@ -154,8 +152,6 @@ protected:
   std::atomic<bool> stopping_;    //signal to pause the execution thread
   std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
   const double time_start_;       //start time stamp
-  double last_sync_time_;         //last time a tensor operation was synced
-  double last_flop_count_;        //last value of the total flop count executed
   std::ofstream logfile_;         //logging file stream (output)
 };
 

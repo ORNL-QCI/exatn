@@ -120,20 +120,15 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
           op->recordFinishTime();
           dag.setNodeExecuted(node,error_code);
           if(error_code == 0){
-            const auto current_flop_count = getTotalFlopCount();
-            const auto current_sync_time = exatn::Timer::timeInSecHR(getTimeStampStart());
             if(logging_.load() != 0){
               logfile_ << "Success [" << std::fixed << std::setprecision(6)
                        << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
-              logfile_ << "Performance on time interval [" << last_sync_time_ << ":" << current_sync_time << "]"
-                       << "in GFlop/s = " << (current_flop_count - last_flop_count_)/((current_sync_time - last_sync_time_)*1e9)
-                       << std::endl;
+              logfile_ << "[" << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]"
+                       << " Total Flop count = " << getTotalFlopCount() << std::endl;
 #ifdef DEBUG
               logfile_.flush();
 #endif
             }
-            last_flop_count_ = current_flop_count;
-            last_sync_time_ = current_sync_time;
             op->dissociateTensorOperands();
             progress.num_nodes = dag.getNumNodes();
             auto progressed = dag.progressFrontNode(node);
@@ -193,21 +188,16 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
         op->recordFinishTime();
         dag.setNodeExecuted(node,error_code);
         if(error_code == 0){
-          const auto current_flop_count = getTotalFlopCount();
-          const auto current_sync_time = exatn::Timer::timeInSecHR(getTimeStampStart());
           if(logging_.load() != 0){
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Synced tensor operation "
                      << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
-            logfile_ << "Performance on time interval [" << last_sync_time_ << ":" << current_sync_time << "]"
-                       << "in GFlop/s = " << (current_flop_count - last_flop_count_)/((current_sync_time - last_sync_time_)*1e9)
-                       << std::endl;
+            logfile_ << "[" << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]"
+                       << " Total Flop count = " << getTotalFlopCount() << std::endl;
 #ifdef DEBUG
             logfile_.flush();
 #endif
           }
-          last_flop_count_ = current_flop_count;
-          last_sync_time_ = current_sync_time;
           op->dissociateTensorOperands();
           progress.num_nodes = dag.getNumNodes();
           auto progressed = dag.progressFrontNode(node);
