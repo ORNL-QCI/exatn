@@ -2142,7 +2142,7 @@ TEST(NumServerTester, testHyper) {
  const auto ltens_val = std::complex<double>{0.001,-0.0001};
  const auto rtens_val = std::complex<double>{0.002,-0.0002};
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -2273,7 +2273,7 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit: 4
+  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit (4 nodes): 4
   const auto chi2 = std::min(chi1*chi1,512ULL);
   const auto chi3 = std::min(chi2*chi2,1024ULL);
   const auto chi4 = std::min(chi3*chi3,2048ULL);
@@ -2340,7 +2340,7 @@ TEST(NumServerTester, neurIPS) {
  //ML MERA:
  {
   std::cout << "Evaluating an ML MERA diagram: ";
-  const exatn::DimExtent chi1 = 5; //Laptop: 5; Summit: 8
+  const exatn::DimExtent chi1 = 5; //Laptop: 5; Summit (1 node): 10
   const auto chi2 = std::min(chi1*chi1,128ULL);
   const auto chi4 = std::min(chi2*chi2,1024ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
