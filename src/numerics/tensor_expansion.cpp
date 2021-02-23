@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/16
+REVISION: 2021/02/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -215,6 +215,32 @@ void TensorExpansion::rename(const std::string & name)
 {
  name_ = name;
  return;
+}
+
+
+bool TensorExpansion::appendTensorGateGeneral(std::shared_ptr<Tensor> tensor,
+                      const std::vector<std::pair<unsigned int, std::pair<unsigned int, unsigned int>>> & pairing,
+                      bool conjugated)
+{
+ bool success = true;
+ for(auto net = this->begin(); net != this->end(); ++net){
+  success = net->network->appendTensorGateGeneral(tensor,pairing,conjugated);
+  if(!success) break;
+ }
+ return success;
+}
+
+
+bool TensorExpansion::appendTensorGate(std::shared_ptr<Tensor> tensor,
+                      const std::vector<unsigned int> & pairing,
+                      bool conjugated)
+{
+ bool success = true;
+ for(auto net = this->begin(); net != this->end(); ++net){
+  success = net->network->appendTensorGate(tensor,pairing,conjugated);
+  if(!success) break;
+ }
+ return success;
 }
 
 

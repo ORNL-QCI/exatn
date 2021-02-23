@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/25
+REVISION: 2021/02/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -800,11 +800,11 @@ bool TensorNetwork::placeTensor(unsigned int tensor_id,                     //in
 }
 
 
-bool TensorNetwork::appendTensor(unsigned int tensor_id,                                             //in: tensor id (unique within the tensor network)
-                                 std::shared_ptr<Tensor> tensor,                                     //in: appended tensor
-                                 const std::vector<std::pair<unsigned int, unsigned int>> & pairing, //in: leg pairing: output tensor mode -> appended tensor mode
-                                 const std::vector<LegDirection> & leg_dir,                          //in: optional leg direction (for all tensor modes)
-                                 bool conjugated)                                                    //in: complex conjugation flag for the appended tensor
+bool TensorNetwork::appendTensor(unsigned int tensor_id,
+                                 std::shared_ptr<Tensor> tensor,
+                                 const std::vector<std::pair<unsigned int, unsigned int>> & pairing,
+                                 const std::vector<LegDirection> & leg_dir,
+                                 bool conjugated)
 {
  if(explicit_output_ != 0 && finalized_ == 0){
   std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid request: " <<
@@ -925,6 +925,15 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,                        
 }
 
 
+bool TensorNetwork::appendTensor(std::shared_ptr<Tensor> tensor,
+                                 const std::vector<std::pair<unsigned int, unsigned int>> & pairing,
+                                 const std::vector<LegDirection> & leg_dir,
+                                 bool conjugated)
+{
+ return appendTensor(getMaxTensorId()+1,tensor,pairing,leg_dir,conjugated);
+}
+
+
 bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
                                      std::shared_ptr<Tensor> tensor,
                                      const std::vector<unsigned int> & pairing,
@@ -1022,6 +1031,14 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
  return true;
+}
+
+
+bool TensorNetwork::appendTensorGate(std::shared_ptr<Tensor> tensor,
+                                     const std::vector<unsigned int> & pairing,
+                                     bool conjugated)
+{
+ return appendTensorGate(getMaxTensorId()+1,tensor,pairing,conjugated);
 }
 
 
@@ -1145,6 +1162,16 @@ bool TensorNetwork::appendTensorGateGeneral(unsigned int tensor_id,
  invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
  finalized_ = 1; //implicit leg pairing always keeps the tensor network in a finalized state
  return true;
+}
+
+
+bool TensorNetwork::appendTensorGateGeneral(std::shared_ptr<Tensor> tensor,
+                                            const std::vector<std::pair<unsigned int,
+                                                                        std::pair<unsigned int,
+                                                                                  unsigned int>>> & pairing,
+                                            bool conjugated)
+{
+ return appendTensorGateGeneral(getMaxTensorId()+1,tensor,pairing,conjugated);
 }
 
 

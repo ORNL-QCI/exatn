@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/01/25
+REVISION: 2021/02/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -218,6 +218,11 @@ public:
                    const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}, //in: optional leg directions (for all tensor modes)
                    bool conjugated = false);                                                //in: complex conjugation flag for the appended tensor
 
+ bool appendTensor(std::shared_ptr<Tensor> tensor,                                          //in: appended tensor
+                   const std::vector<std::pair<unsigned int, unsigned int>> & pairing,      //in: leg pairing: output tensor mode -> appended tensor mode
+                   const std::vector<LegDirection> & leg_dir = std::vector<LegDirection>{}, //in: optional leg directions (for all tensor modes)
+                   bool conjugated = false);                                                //in: complex conjugation flag for the appended tensor
+
  /** Appends a new even-rank tensor to the tensor network by matching the first half
      of the tensor legs with network's output legs provided in "pairing". The second half
      of the tensor legs will then replace the matched output legs in the output tensor.
@@ -227,12 +232,22 @@ public:
                        const std::vector<unsigned int> & pairing, //in: leg pairing: output tensor modes (half-rank)
                        bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
 
+ bool appendTensorGate(std::shared_ptr<Tensor> tensor,            //in: appended tensor gate (operator)
+                       const std::vector<unsigned int> & pairing, //in: leg pairing: output tensor modes (half-rank)
+                       bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
+
  /** Appends a new even-rank tensor to the tensor network by matching a half
      of selected tensor legs with network's output legs provided in "pairing"
      while replacing them in-place by another half of the tensor legs. Note
      that appending a conjugated tensor gate will swap the roles of the halves. **/
  bool appendTensorGateGeneral(unsigned int tensor_id,                          //in: appended tensor id (unique within the tensor network)
                               std::shared_ptr<Tensor> tensor,                  //in: appended tensor gate (operator)
+                              const std::vector<std::pair<unsigned int,        //in: leg pairing: Output tensor leg -->
+                                                          std::pair<unsigned int,              // --> Contracted leg of the appended tensor
+                                                                    unsigned int>>> & pairing, // --> Replacing leg of the appended tensor
+                              bool conjugated = false);                        //in: complex conjugation flag for the appended tensor gate
+
+ bool appendTensorGateGeneral(std::shared_ptr<Tensor> tensor,                  //in: appended tensor gate (operator)
                               const std::vector<std::pair<unsigned int,        //in: leg pairing: Output tensor leg -->
                                                           std::pair<unsigned int,              // --> Contracted leg of the appended tensor
                                                                     unsigned int>>> & pairing, // --> Replacing leg of the appended tensor

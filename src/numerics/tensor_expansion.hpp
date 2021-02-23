@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/16
+REVISION: 2021/02/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,7 +75,7 @@ public:
  using Iterator = typename std::vector<ExpansionComponent>::iterator;
  using ConstIterator = typename std::vector<ExpansionComponent>::const_iterator;
 
- /** Constructs an empty ket tensor expansion. **/
+ /** Constructs an empty tensor expansion (ket by default). **/
  TensorExpansion(bool ket = true): ket_(ket) {}
 
  /** Constructs a tensor expansion by applying a tensor network operator
@@ -104,7 +104,7 @@ public:
                  const std::string & tensor_name,   //in: the name of the tensor which the derivative is taken against
                  bool conjugated = false);          //in: whether or not to differentiate with respect to conjugated tensors with the given name
 
- /** Produces a new tensor expansion by replacing a given tensor with another one. **/
+ /** Produces a new tensor expansion by replacing a given tensor with another (congruent) one. **/
  TensorExpansion(const TensorExpansion & expansion,       //in: original tensor expansion
                  std::shared_ptr<Tensor> original_tensor, //in: original tensor
                  std::shared_ptr<Tensor> new_tensor);     //in: new tensor
@@ -196,6 +196,24 @@ public:
 
  /** Multiplies all components of the tensor network expansion by a given complex number. **/
  void rescale(std::complex<double> scaling_factor);
+
+ /** Appends a new even-rank tensor to each tensor network in the tensor network expansion
+     by matching a half of selected tensor legs with each network's output legs provided
+     in "pairing" while replacing them in-place by another half of the tensor legs. Note
+     that appending a conjugated tensor gate will swap the roles of the halves. **/
+ bool appendTensorGateGeneral(std::shared_ptr<Tensor> tensor,                  //in: appended tensor gate (operator)
+                              const std::vector<std::pair<unsigned int,        //in: leg pairing: Output tensor leg -->
+                                                          std::pair<unsigned int,              // --> Contracted leg of the appended tensor
+                                                                    unsigned int>>> & pairing, // --> Replacing leg of the appended tensor
+                              bool conjugated = false);                        //in: complex conjugation flag for the appended tensor gate
+
+ /** Appends a new even-rank tensor to each tensor network in the tensor network expansion by
+     matching the first half of the tensor legs with network's output legs provided in "pairing".
+     The second half of the tensor legs will then replace the matched output legs in the output tensor.
+     Note that appending a conjugated tensor gate will swap the roles of the halves. **/
+ bool appendTensorGate(std::shared_ptr<Tensor> tensor,            //in: appended tensor gate (operator)
+                       const std::vector<unsigned int> & pairing, //in: leg pairing: output tensor modes (half-rank)
+                       bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
 
  /** Prints. **/
  void printIt() const;
