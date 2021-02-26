@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2020/12/28
+REVISION: 2021/02/26
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** NOTES:
  Tensor specification requires:
@@ -213,7 +213,7 @@ public:
  /** Returns a unique integer hash for the tensor object. **/
  TensorHashType getTensorHash() const;
 
-private:
+protected:
 
  std::string name_;               //tensor name
  TensorShape shape_;              //tensor shape

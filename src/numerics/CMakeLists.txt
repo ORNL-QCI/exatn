@@ -12,6 +12,7 @@ add_library(${LIBRARY_NAME}
             tensor_signature.cpp
             tensor_leg.cpp
             tensor.cpp
+            tensor_composite.cpp
             tensor_connected.cpp
             tensor_operation.cpp
             tensor_op_create.cpp
