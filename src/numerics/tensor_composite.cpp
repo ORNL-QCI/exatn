@@ -10,7 +10,27 @@ namespace exatn{
 
 namespace numerics{
 
+void TensorComposite::pack(BytePacket & byte_packet) const
+{
+ Tensor::pack(byte_packet);
+ //`Pack derived class members
+ return;
+}
 
+
+void TensorComposite::unpack(BytePacket & byte_packet)
+{
+ Tensor::unpack(byte_packet);
+ //`Unpack derived class members
+ return;
+}
+
+
+void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate)
+{
+ //`Finish
+ return;
+}
 
 } //namespace numerics
 
