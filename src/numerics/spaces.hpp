@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/06/06
+REVISION: 2021/02/27
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) An abstract vector space is defined by its dimension, N, making it
@@ -24,6 +24,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <utility>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "errors.hpp"
 
@@ -79,7 +80,6 @@ private:
  SpaceBasis basis_;       //basis defining the vector space
  std::string space_name_; //optional space name
  SpaceId id_;             //registered space id (defaults to SOME_SPACE)
-
 };
 
 
@@ -131,6 +131,11 @@ public:
  /** Returns the registered subspace id. **/
  SubspaceId getRegisteredId() const;
 
+ /** Splits the subspace into a given number of smaller subspaces maximally uniformly.
+     If the extent of the parental subspace is smaller than the requested number of
+     segments, a vector of null pointers will be returned. **/
+ std::vector<std::shared_ptr<Subspace>> splitUniform(DimExtent num_segments) const;
+
  friend class SubspaceRegister;
 
 private:
@@ -143,7 +148,6 @@ private:
  DimOffset upper_bound_;            //upper bound defining the subspace of the vector space
  std::string subspace_name_;        //optional subspace name
  SubspaceId id_;                    //registered subspace id (defaults to UNREG_SUBSPACE)
-
 };
 
 } //namespace numerics

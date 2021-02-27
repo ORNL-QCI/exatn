@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2019/07/07
+REVISION: 2021/02/27
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "spaces.hpp"
 
@@ -157,6 +157,25 @@ void Subspace::resetRegisteredId(SubspaceId id)
 {
  id_ = id;
  return;
+}
+
+std::vector<std::shared_ptr<Subspace>> Subspace::splitUniform(DimExtent num_segments) const
+{
+ assert(num_segments > 0);
+ std::vector<std::shared_ptr<Subspace>> subspaces(num_segments,nullptr);
+ const auto subspace_extent = getDimension();
+ if(num_segments <= subspace_extent){
+  const auto segment_length = subspace_extent / num_segments;
+  const auto excess = subspace_extent - (num_segments * segment_length);
+  auto lower = lower_bound_;
+  for(DimExtent i = 0; i < num_segments; ++i){
+   DimOffset upper = lower + segment_length - 1; if(i < excess) ++upper;
+   subspaces[i].reset(new Subspace{vector_space_, lower, upper});
+   lower = upper + 1;
+  }
+  assert(lower == upper_bound_ + 1);
+ }
+ return subspaces;
 }
 
 } //namespace numerics

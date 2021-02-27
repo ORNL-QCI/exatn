@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/02/26
+REVISION: 2021/02/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,12 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      equal to the total number of bisections along all tensor dimensions,
      where each bit selects the left/right half in each bisection.
      The bits are additionally ordered by the bisection depth:
-      bits for depth 0, bits for depth 1, ..., bits for depth MAX.
+     {bits for depth 0, bits for depth 1, ..., bits for depth MAX}.
+     That is, the bit sequence identifying each subtensor looks like:
+     {dims split at depth 0; dims split at depth 1; ...; dims split at max depth},
+     where dimensions at each depth are ordered in the user-specified order.
+     In general, dimensions at depth d+1 form a subset of dimensions at depth d.
+     The produced subtensors are ordered with respect to their bit-strings.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_COMPOSITE_HPP_
@@ -44,8 +49,9 @@ public:
      up to the provided maximal depth (max depth of 0 means no bisection). Note that
      the order of tensor dimensions matters as the produced subtensors are ordered
      because their producing bisections are ordered. If the provided values of MaxDepth
-     are zero for all given tensor dimensions, no bisection will be done, resulting
-     in a composite tensor consisting of itself (a single subtensor = tensor). **/
+     are zero for all given tensor dimensions no bisection will be done, resulting
+     in a composite tensor consisting of itself (a single subtensor = tensor). Note
+     that in this case the corresponding base tensor will be stored as a clone. **/
  template<typename... Args>
  TensorComposite(std::function<bool (const Tensor &)> tensor_predicate,                 //in: tensor predicate deciding which subtensors will exist
                  const std::vector<std::pair<unsigned int, unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
@@ -54,6 +60,8 @@ public:
  template<typename... Args>
  TensorComposite(const std::vector<std::pair<unsigned int, unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
                  Args&&... args);                                                       //in: arguments for base Tensor ctor
+
+ TensorComposite(BytePacket & byte_packet);
 
  TensorComposite(const TensorComposite & tensor) = default;
  TensorComposite & operator=(const TensorComposite & tensor) = default;
@@ -64,7 +72,7 @@ public:
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;
 
- /** Returns a subtensor associated with a given integer id (bit-string),
+ /** Returns a subtensor associated with a given bit-string (integer id),
      or nullptr if no such subtensor exists. **/
  inline std::shared_ptr<Tensor> operator[](unsigned long long subtensor_bits);
 
@@ -79,21 +87,26 @@ public:
  inline unsigned int getNumBisections() const;
 
  /** Returns the position of the bit corresponding to a given tensor
-     dimension bisected at a given depth. **/
+     dimension bisected at a given depth. In case there is no such bit,
+     returns the total number of bisections (= end of container). **/
  inline unsigned int bitPosition(unsigned int tensor_dimension,
                                  unsigned int depth) const;
 
  /** Returns the tensor dimension and bisection depth corresponding
-     to a given bit position. **/
+     to a given bit position (= given bisection). **/
  inline std::pair<unsigned int, unsigned int> dimPositionAndDepth(unsigned int bit_position) const;
 
 protected:
 
- const std::vector<std::pair<unsigned int, unsigned int>> split_dims_; //split tensor dimensions: pair{Dimension,MaxDepth}
+ std::vector<std::pair<unsigned int, unsigned int>> split_dims_; //split tensor dimensions: pair{Dimension,MaxDepth}
  std::unordered_map<unsigned long long, std::shared_ptr<Tensor>> subtensors_; //subtensors identified by their bit-strings
 
 private:
 
+ void packTensorComposite(BytePacket & byte_packet) const;
+ void unpackTensorComposite(BytePacket & byte_packet);
+
+ /** Generates subtensors filtered by a given tensor existence predicate. **/
  void generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate); //in: tensor predicate deciding which subtensors will exist
 
  unsigned int num_bisections_;                                    //total number of bisections
@@ -110,20 +123,20 @@ TensorComposite::TensorComposite(std::function<bool (const Tensor &)> tensor_pre
  Tensor(std::forward<Args>(args)...), split_dims_(split_dims)
 {
  num_bisections_ = 0;
- auto tensor_rank = getRank();
+ auto tensor_rank = Tensor::getRank();
  for(const auto & split_dim: split_dims_){
   assert(split_dim.first < tensor_rank);
   num_bisections_ += split_dim.second;
  }
  bisect_bits_.resize(num_bisections_);
- if(num_bisections_ > 0){
+ if(num_bisections_ > 0){ //generate subtensors
   unsigned int n = 0;
   for(const auto & split_dim: split_dims_){
    for(unsigned int depth = 1; depth <= split_dim.second; ++depth){
     bisect_bits_[n++]={split_dim.first,depth};
    }
   }
-  if(num_bisections_ > 1){
+  if(num_bisections_ > 1){ //sort by depth
    std::stable_sort(bisect_bits_.begin(),bisect_bits_.end(),
                     [](const std::pair<unsigned int, unsigned int> & a,
                        const std::pair<unsigned int, unsigned int> & b){
@@ -131,8 +144,9 @@ TensorComposite::TensorComposite(std::function<bool (const Tensor &)> tensor_pre
                     });
   }
   generateSubtensors(tensor_predicate);
- }else{ //no bisections: Store itself as the base Tensor
-  //`How to do it right?
+ }else{ //no bisections: Store itself as a clone of the base Tensor
+  auto res = subtensors_.emplace(std::make_pair(0ULL,std::make_shared<Tensor>(static_cast<Tensor>(*this))));
+  assert(res.second);
  }
 }
 
@@ -156,7 +170,7 @@ inline std::shared_ptr<Tensor> TensorComposite::operator[](unsigned long long su
 
 inline unsigned long long TensorComposite::getNumSubtensorsComplete() const
 {
- return (1ULL << num_bisections_);
+ return (1ULL << num_bisections_); //2^num_bisections
 }
 
 
@@ -175,16 +189,48 @@ inline unsigned int TensorComposite::getNumBisections() const
 inline unsigned int TensorComposite::bitPosition(unsigned int tensor_dimension,
                                                  unsigned int depth) const
 {
- //`Finish
- return 0;
+ auto cmp_lt = [](const std::pair<unsigned int, unsigned int> & a,
+                  const std::pair<unsigned int, unsigned int> & b){
+                return (a.second < b.second || ((a.second == b.second) && (a.first < b.first)));
+               };
+
+ auto cmp_eq = [](const std::pair<unsigned int, unsigned int> & a,
+                  const std::pair<unsigned int, unsigned int> & b){
+                return ((a.second == b.second) && (a.first == b.first));
+               };
+
+ const auto target_pair = std::make_pair(tensor_dimension,depth);
+ unsigned int left = 0, right = (num_bisections_ - 1);
+ unsigned int pos = num_bisections_;
+ if(cmp_eq(bisect_bits_[left],target_pair)){
+  pos = left;
+ }else if(cmp_eq(bisect_bits_[right],target_pair)){
+  pos = right;
+ }else{
+  while(left < right){
+   pos = (left + right) / 2;
+   if(pos != left && pos != right){
+    if(cmp_lt(bisect_bits_[pos],target_pair)){
+     left = pos;
+    }else if(cmp_lt(target_pair,bisect_bits_[pos])){
+     right = pos;
+    }else{
+     break; //found
+    }
+   }else{
+    pos = num_bisections_; //not found
+    ++left; //done
+   }
+  }
+ }
+ return pos;
 }
 
 
 inline std::pair<unsigned int, unsigned int> TensorComposite::dimPositionAndDepth(unsigned int bit_position) const
 {
- unsigned int tensor_dim, dim_depth;
- //`Finish
- return std::make_pair(tensor_dim,dim_depth);
+ assert(bit_position < num_bisections_);
+ return bisect_bits_[bit_position];
 }
 
 } //namespace numerics
