@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/23
+REVISION: 2021/03/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -214,6 +214,13 @@ public:
  bool appendTensorGate(std::shared_ptr<Tensor> tensor,            //in: appended tensor gate (operator)
                        const std::vector<unsigned int> & pairing, //in: leg pairing: output tensor modes (half-rank)
                        bool conjugated = false);                  //in: complex conjugation flag for the appended tensor gate
+
+ /** Traverses all tensor networks and marks certain tensors as optimizable
+     based on the user-provided predicate function. If marked optimizable,
+     these specific tensors (in their specific positions within the tensor network)
+     will become subject to optimization when optimizing the tensor network. **/
+ void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
+ void markOptimizableAllTensors(); //marks all input tensors as optimizable
 
  /** Prints. **/
  void printIt() const;

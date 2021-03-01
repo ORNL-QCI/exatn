@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/02/23
+REVISION: 2021/03/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -241,6 +241,20 @@ bool TensorExpansion::appendTensorGate(std::shared_ptr<Tensor> tensor,
   if(!success) break;
  }
  return success;
+}
+
+
+void TensorExpansion::markOptimizableTensors(std::function<bool (const Tensor &)> predicate)
+{
+ for(auto net = begin(); net != end(); ++net) net->network->markOptimizableTensors(predicate);
+ return;
+}
+
+
+void TensorExpansion::markOptimizableAllTensors()
+{
+ for(auto net = begin(); net != end(); ++net) net->network->markOptimizableAllTensors();
+ return;
 }
 
 
