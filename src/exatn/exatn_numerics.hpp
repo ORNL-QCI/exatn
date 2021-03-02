@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/01/29
+REVISION: 2021/03/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -733,40 +733,49 @@ inline bool normalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen 
  {return numericalServer->normalizeNorm2Sync(process_group,expansion,norm);}
 
 
-/** Normalizes all input tensors in a tensor network to a given 2-norm. **/
-inline bool balanceNorm2Sync(TensorNetwork & network, //inout: tensor network
-                             double norm = 1.0)       //in: desired 2-norm
- {return numericalServer->balanceNorm2Sync(network,norm);}
+/** Normalizes all input tensors in a tensor network to a given 2-norm.
+    If only_optimizable is TRUE, only optimizable tensors will be normalized. **/
+inline bool balanceNorm2Sync(TensorNetwork & network,       //inout: tensor network
+                             double norm = 1.0,             //in: desired 2-norm
+                             bool only_optimizable = false) //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNorm2Sync(network,norm,only_optimizable);}
 
 inline bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                              TensorNetwork & network,            //inout: tensor network
-                             double norm = 1.0)                  //in: desired 2-norm
- {return numericalServer->balanceNorm2Sync(process_group,network,norm);}
+                             double norm = 1.0,                  //in: desired 2-norm
+                             bool only_optimizable = false)      //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNorm2Sync(process_group,network,norm,only_optimizable);}
 
-/** Normalizes all input tensors in a tensor network expansion to a given 2-norm. **/
-inline bool balanceNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
-                             double norm = 1.0)           //in: desired 2-norm
- {return numericalServer->balanceNorm2Sync(expansion,norm);}
+/** Normalizes all input tensors in a tensor network expansion to a given 2-norm.
+    If only_optimizable is TRUE, only optimizable tensors will be normalized. **/
+inline bool balanceNorm2Sync(TensorExpansion & expansion,   //inout: tensor network expansion
+                             double norm = 1.0,             //in: desired 2-norm
+                             bool only_optimizable = false) //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNorm2Sync(expansion,norm,only_optimizable);}
 
 inline bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                              TensorExpansion & expansion,        //inout: tensor network expansion
-                             double norm = 1.0)                  //in: desired 2-norm
- {return numericalServer->balanceNorm2Sync(process_group,expansion,norm);}
+                             double norm = 1.0,                  //in: desired 2-norm
+                             bool only_optimizable = false)      //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNorm2Sync(process_group,expansion,norm,only_optimizable);}
 
 
 /** Normalizes all input tensors in a tensor network expansion to a given 2-norm
     and rescales tensor network expansion coefficients to normalize the entire
-    tensor network expansion to another given 2-norm. **/
-inline bool balanceNormalizeNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
-                                      double tensor_norm = 1.0,    //in: desired 2-norm of each input tensor
-                                      double expansion_norm = 1.0) //in: desired 2-norm of the tensor network expansion
- {return numericalServer->balanceNormalizeNorm2Sync(expansion,tensor_norm,expansion_norm);}
+    tensor network expansion to another given 2-norm. If only_optimizable is TRUE,
+    only optimizable tensors will be normalized. **/
+inline bool balanceNormalizeNorm2Sync(TensorExpansion & expansion,   //inout: tensor network expansion
+                                      double tensor_norm = 1.0,      //in: desired 2-norm of each input tensor
+                                      double expansion_norm = 1.0,   //in: desired 2-norm of the tensor network expansion
+                                      bool only_optimizable = false) //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNormalizeNorm2Sync(expansion,tensor_norm,expansion_norm,only_optimizable);}
 
 inline bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                       TensorExpansion & expansion,        //inout: tensor network expansion
                                       double tensor_norm = 1.0,           //in: desired 2-norm of each input tensor
-                                      double expansion_norm = 1.0)        //in: desired 2-norm of the tensor network expansion
- {return numericalServer->balanceNormalizeNorm2Sync(process_group,expansion,tensor_norm,expansion_norm);}
+                                      double expansion_norm = 1.0,        //in: desired 2-norm of the tensor network expansion
+                                      bool only_optimizable = false)      //in: whether to normalize only optimizable tensors
+ {return numericalServer->balanceNormalizeNorm2Sync(process_group,expansion,tensor_norm,expansion_norm,only_optimizable);}
 
 
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.

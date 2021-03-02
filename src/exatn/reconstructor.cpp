@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/02/16
+REVISION: 2021/03/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -298,7 +298,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   fidelity_ = std::pow(overlap_abs / (input_norm_ * output_norm_), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Balance the approximant:
-  done = balanceNorm2Sync(process_group,*approximant_,1.0); assert(done);
+  done = balanceNorm2Sync(process_group,*approximant_,1.0,true); assert(done);
   done = normalizeNorm2Sync(process_group,*approximant_,output_norm_); assert(done);
  }
 

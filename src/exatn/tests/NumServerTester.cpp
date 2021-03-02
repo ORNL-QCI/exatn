@@ -2340,7 +2340,7 @@ TEST(NumServerTester, neurIPS) {
  //ML MERA:
  {
   std::cout << "Evaluating an ML MERA diagram: ";
-  const exatn::DimExtent chi1 = 5; //Laptop: 5; Summit (1 node): 10
+  const exatn::DimExtent chi1 = 4; //Laptop: 4; Summit (1 node): 10
   const auto chi2 = std::min(chi1*chi1,128ULL);
   const auto chi4 = std::min(chi2*chi2,1024ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
@@ -2727,8 +2727,8 @@ TEST(NumServerTester, Reconstructor) {
  //target->printIt(); //debug
 
  //Normalize input tensors in the tensor network expansions to 1.0:
- success = exatn::balanceNorm2Sync(*target,1.0); assert(success);
- success = exatn::balanceNorm2Sync(*approximant,1.0); assert(success);
+ success = exatn::balanceNorm2Sync(*target,1.0,false); assert(success);
+ success = exatn::balanceNorm2Sync(*approximant,1.0,true); assert(success);
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
@@ -2824,7 +2824,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
    success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
   }
  }
- success = exatn::balanceNorm2Sync(*ansatz,1.0); assert(success);
+ success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
 
  //Create the full tensor ansatz:
  success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
@@ -3012,7 +3012,7 @@ TEST(NumServerTester, OptimizerHubbard) {
    //success = exatn::initTensor(tens_conn->second.getName(),1e-3f); assert(success);
   }
  }
- success = exatn::balanceNorm2Sync(*ansatz,1.0); assert(success);
+ success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
 
  //Create the full tensor ansatz:
  success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);

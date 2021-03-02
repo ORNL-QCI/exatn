@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/02/16
+REVISION: 2021/03/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -28,13 +28,6 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
             << std::endl << std::flush;
   assert(false);
  }
- /*
- if(tensor_operator_->getKetRank() != tensor_operator_->getBraRank()){
-  std::cout << "#ERROR(exatn:TensorNetworkOptimizer): Tensor operator is not rank-symmetric!"
-            << std::endl << std::flush;
-  assert(false);
- }
- */
 }
 
 
@@ -77,14 +70,15 @@ bool TensorNetworkOptimizer::optimize()
  return optimize(exatn::getDefaultProcessGroup());
 }
 
+
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
 
  //Balance-normalize the tensor network vector expansion:
- //bool success = balanceNormalizeNorm2Sync(*vector_expansion_,1.0,1.0); assert(success);
- bool success = balanceNorm2Sync(*vector_expansion_,1.0); assert(success);
+ //bool success = balanceNormalizeNorm2Sync(*vector_expansion_,1.0,1.0,true); assert(success);
+ bool success = balanceNorm2Sync(*vector_expansion_,1.0,true); assert(success);
 
  if(TensorNetworkOptimizer::debug > 0){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network operator:" << std::endl;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/02/20
+REVISION: 2021/03/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2207,38 +2207,41 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
 }
 
 bool NumServer::balanceNorm2Sync(TensorNetwork & network,
-                                 double norm)
+                                 double norm,
+                                 bool only_optimizable)
 {
- return balanceNorm2Sync(getDefaultProcessGroup(),network,norm);
+ return balanceNorm2Sync(getDefaultProcessGroup(),network,norm,only_optimizable);
 }
 
 bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
                                  TensorNetwork & network,
-                                 double norm)
+                                 double norm,
+                                 bool only_optimizable)
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  bool success = true;
  for(auto tens = network.begin(); tens != network.end(); ++tens){
   if(tens->first != 0){ //output tensor is ignored
-   double tens_norm;
-   success = computeNorm2Sync(tens->second.getName(),tens_norm);
-   if(success){
-    if(tens_norm > 0.0){
-     success = scaleTensorSync(tens->second.getName(),norm/tens_norm);
-     if(!success){
-      std::cout << "#ERROR(exatn::balanceNorm2): Unable to rescale input tensor "
-                << tens->second.getName() << std::endl;
-      break;
+   if(!only_optimizable || tens->second.isOptimizable()){ //only optimizable tensors may be renormalized
+    double tens_norm;
+    success = computeNorm2Sync(tens->second.getName(),tens_norm);
+    if(success){
+     if(tens_norm > 0.0){
+      success = scaleTensorSync(tens->second.getName(),norm/tens_norm);
+      if(!success){
+       std::cout << "#ERROR(exatn::balanceNorm2): Unable to rescale input tensor "
+                 << tens->second.getName() << std::endl;
+       break;
+      }
+     }else{
+      std::cout << "#WARNING(exatn::balanceNorm2): Tensor has zero norm, thus cannot be renormalized!" << std::endl;
      }
     }else{
-     std::cout << "#WARNING(exatn::balanceNorm2): Tensor has zero norm, thus cannot be renormalized!" << std::endl;
-     success = false;
+     std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "
+               << tens->second.getName() << std::endl;
+     break;
     }
-   }else{
-    std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "
-              << tens->second.getName() << std::endl;
-    break;
    }
   }
  }
@@ -2246,20 +2249,22 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
 }
 
 bool NumServer::balanceNorm2Sync(TensorExpansion & expansion,
-                                 double norm)
+                                 double norm,
+                                 bool only_optimizable)
 {
- return balanceNorm2Sync(getDefaultProcessGroup(),expansion,norm);
+ return balanceNorm2Sync(getDefaultProcessGroup(),expansion,norm,only_optimizable);
 }
 
 bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
                                  TensorExpansion & expansion,
-                                 double norm)
+                                 double norm,
+                                 bool only_optimizable)
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  bool success = true;
  for(auto net = expansion.begin(); net != expansion.end(); ++net){
-  success = balanceNorm2Sync(*(net->network),norm);
+  success = balanceNorm2Sync(process_group,*(net->network),norm,only_optimizable);
   if(!success) break;
  }
  return success;
@@ -2267,17 +2272,19 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
 
 bool NumServer::balanceNormalizeNorm2Sync(TensorExpansion & expansion,
                                           double tensor_norm,
-                                          double expansion_norm)
+                                          double expansion_norm,
+                                          bool only_optimizable)
 {
- return balanceNormalizeNorm2Sync(getDefaultProcessGroup(),expansion,tensor_norm,expansion_norm);
+ return balanceNormalizeNorm2Sync(getDefaultProcessGroup(),expansion,tensor_norm,expansion_norm,only_optimizable);
 }
 
 bool NumServer::balanceNormalizeNorm2Sync(const ProcessGroup & process_group,
                                           TensorExpansion & expansion,
                                           double tensor_norm,
-                                          double expansion_norm)
+                                          double expansion_norm,
+                                          bool only_optimizable)
 {
- bool success = balanceNorm2Sync(process_group,expansion,tensor_norm);
+ bool success = balanceNorm2Sync(process_group,expansion,tensor_norm,only_optimizable);
  if(success) success = normalizeNorm2Sync(process_group,expansion,expansion_norm);
  return success;
 }
