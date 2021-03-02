@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/02/27
+REVISION: 2021/03/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -94,7 +94,10 @@ void TensorComposite::unpack(BytePacket & byte_packet)
 void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate)
 {
  auto space_reg = getSpaceRegister();
- //`Finish
+ //Split given subspaces to the requested depth (register child subspaces if needed):
+ //`
+ //Iterate over all child subspaces and generate subtensors:
+ //`
  return;
 }
 
