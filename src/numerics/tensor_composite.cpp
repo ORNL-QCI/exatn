@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/02
+REVISION: 2021/03/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -27,6 +27,12 @@ void TensorComposite::packTensorComposite(BytePacket & byte_packet) const
   appendToBytePacket(&byte_packet,split_dims_[i].first);
   appendToBytePacket(&byte_packet,split_dims_[i].second);
  }
+ //Member dim_depth_:
+ n = dim_depth_.size();
+ appendToBytePacket(&byte_packet,n);
+ for(unsigned int i = 0; i < n; ++i){
+  appendToBytePacket(&byte_packet,dim_depth_[i]);
+ }
  //Member num_bisections_ & bisect_bits_:
  appendToBytePacket(&byte_packet,num_bisections_);
  for(unsigned int i = 0; i < num_bisections_; ++i){
@@ -53,6 +59,12 @@ void TensorComposite::unpackTensorComposite(BytePacket & byte_packet)
  for(unsigned int i = 0; i < n; ++i){
   extractFromBytePacket(&byte_packet,split_dims_[i].first);
   extractFromBytePacket(&byte_packet,split_dims_[i].second);
+ }
+ //Member dim_depth_:
+ extractFromBytePacket(&byte_packet,n);
+ dim_depth_.resize(n);
+ for(unsigned int i = 0; i < n; ++i){
+  extractFromBytePacket(&byte_packet,dim_depth_[i]);
  }
  //Member num_bisections_ & bisect_bits_:
  extractFromBytePacket(&byte_packet,num_bisections_);
@@ -94,8 +106,26 @@ void TensorComposite::unpack(BytePacket & byte_packet)
 void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate)
 {
  auto space_reg = getSpaceRegister();
- //Split given subspaces to the requested depth (register child subspaces if needed):
- //`
+ const auto tensor_rank = getRank();
+ //Split given subspaces to the requested depth:
+ std::vector<std::pair<const Subspace *,                      //parental subspace
+                       std::vector<std::shared_ptr<Subspace>> //child subspaces
+                      >> subspaces(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  const auto subspace_attr = this->getDimSpaceAttr(i);
+  const auto * space = space_reg->getSpace(subspace_attr.first);
+  if(subspace_attr.first == SOME_SPACE){
+   subspaces[i].first = new Subspace(space,0,space->getDimension()-1);
+  }else{
+   subspaces[i].first = space_reg->getSubspace(subspace_attr.first,subspace_attr.second);
+  }
+  assert(subspaces[i].first);
+  DimExtent dim_depth = getDimDepth(i);
+  if(dim_depth > 0){
+   assert(subspaces[i].first->getDimension() > 1);
+   subspaces[i].second = subspaces[i].first->splitUniform(std::pow(static_cast<DimExtent>(2),dim_depth));
+  }
+ }
  //Iterate over all child subspaces and generate subtensors:
  //`
  return;

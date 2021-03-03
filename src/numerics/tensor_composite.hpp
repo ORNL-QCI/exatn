@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/02/27
+REVISION: 2021/03/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -86,6 +86,9 @@ public:
  /** Returns the total number of bisections. **/
  inline unsigned int getNumBisections() const;
 
+ /** Return the max depth of a given tensor dimension. **/
+ inline unsigned int getDimDepth(unsigned int dimensn) const;
+
  /** Returns the position of the bit corresponding to a given tensor
      dimension bisected at a given depth. In case there is no such bit,
      returns the total number of bisections (= end of container). **/
@@ -111,6 +114,7 @@ private:
 
  unsigned int num_bisections_;                                    //total number of bisections
  std::vector<std::pair<unsigned int, unsigned int>> bisect_bits_; //bisection bits: Bit position --> {Dimension,Depth}
+ std::vector<unsigned int> dim_depth_;
 };
 
 
@@ -124,9 +128,11 @@ TensorComposite::TensorComposite(std::function<bool (const Tensor &)> tensor_pre
 {
  num_bisections_ = 0;
  auto tensor_rank = Tensor::getRank();
+ dim_depth_.resize(tensor_rank,0);
  for(const auto & split_dim: split_dims_){
   assert(split_dim.first < tensor_rank);
   num_bisections_ += split_dim.second;
+  dim_depth_[split_dim.first] = split_dim.second;
  }
  bisect_bits_.resize(num_bisections_);
  if(num_bisections_ > 0){ //generate subtensors
@@ -183,6 +189,13 @@ inline unsigned long long TensorComposite::getNumSubtensors() const
 inline unsigned int TensorComposite::getNumBisections() const
 {
  return num_bisections_;
+}
+
+
+inline unsigned int TensorComposite::getDimDepth(unsigned int dimensn) const
+{
+ assert(dimensn < getRank());
+ return dim_depth_[dimensn];
 }
 
 
