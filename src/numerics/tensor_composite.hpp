@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/03
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,9 +15,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      equal to the total number of bisections along all tensor dimensions,
      where each bit selects the left/right half in each bisection.
      The bits are additionally ordered by the bisection depth:
-     {bits for depth 0, bits for depth 1, ..., bits for depth MAX}.
+     {bits for depth 1, bits for depth 2, ..., bits for depth MAX}.
      That is, the bit sequence identifying each subtensor looks like:
-     {dims split at depth 0; dims split at depth 1; ...; dims split at max depth},
+     {dims split at depth 1; dims split at depth 2; ...; dims split at max depth},
      where dimensions at each depth are ordered in the user-specified order.
      In general, dimensions at depth d+1 form a subset of dimensions at depth d.
      The produced subtensors are ordered with respect to their bit-strings.
@@ -45,6 +45,10 @@ namespace numerics{
 class TensorComposite : public Tensor{
 public:
 
+ /** For iterating over subtensors. **/
+ using Iterator = std::unordered_map<unsigned long long, std::shared_ptr<Tensor>>::iterator;
+ using ConstIterator = std::unordered_map<unsigned long long, std::shared_ptr<Tensor>>::const_iterator;
+
  /** Constructs a composite tensor by activating bisection on given tensor dimensions
      up to the provided maximal depth (max depth of 0 means no bisection). Note that
      the order of tensor dimensions matters as the produced subtensors are ordered
@@ -71,6 +75,11 @@ public:
 
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;
+
+ inline Iterator begin() {return subtensors_.begin();}
+ inline Iterator end() {return subtensors_.end();}
+ inline ConstIterator cbegin() {return subtensors_.cbegin();}
+ inline ConstIterator cend() {return subtensors_.cend();}
 
  /** Returns a subtensor associated with a given bit-string (integer id),
      or nullptr if no such subtensor exists. **/
@@ -114,7 +123,7 @@ private:
 
  unsigned int num_bisections_;                                    //total number of bisections
  std::vector<std::pair<unsigned int, unsigned int>> bisect_bits_; //bisection bits: Bit position --> {Dimension,Depth}
- std::vector<unsigned int> dim_depth_;
+ std::vector<unsigned int> dim_depth_;                            //tensor dimension depth (number of bisections): [0..max]
 };
 
 

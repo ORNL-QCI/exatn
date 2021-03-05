@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/02
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -39,6 +39,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "space_register.hpp"
 #include "tensor_range.hpp"
 #include "tensor.hpp"
+#include "tensor_composite.hpp"
 #include "tensor_operation.hpp"
 #include "tensor_op_factory.hpp"
 #include "tensor_symbol.hpp"
@@ -88,6 +89,7 @@ using numerics::TensorShape;
 using numerics::TensorSignature;
 using numerics::TensorLeg;
 using numerics::Tensor;
+using numerics::TensorComposite;
 using numerics::TensorOperation;
 using numerics::TensorOpFactory;
 using numerics::TensorNetwork;

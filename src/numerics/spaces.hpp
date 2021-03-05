@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Spaces/Subspaces
-REVISION: 2021/02/27
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -133,7 +133,8 @@ public:
 
  /** Splits the subspace into a given number of smaller subspaces maximally uniformly.
      If the extent of the parental subspace is smaller than the requested number of
-     segments, a vector of null pointers will be returned. **/
+     segments, a vector of null pointers will be returned. The produced child subspaces
+     are named as {"_" + ParentSubspaceName + "_" + SegmentNumber}. **/
  std::vector<std::shared_ptr<Subspace>> splitUniform(DimExtent num_segments) const;
 
  friend class SubspaceRegister;

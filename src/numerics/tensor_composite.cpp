@@ -1,11 +1,13 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/03
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_composite.hpp"
 #include "space_register.hpp"
+
+#include <algorithm>
 
 namespace exatn{
 
@@ -44,7 +46,7 @@ void TensorComposite::packTensorComposite(BytePacket & byte_packet) const
  appendToBytePacket(&byte_packet,num_subtensors);
  for(const auto & subtensor: subtensors_){
   appendToBytePacket(&byte_packet,subtensor.first);
-  subtensor.second->pack(byte_packet); //works correctly for both base Tensor and its derived classes
+  subtensor.second->pack(byte_packet); //works correctly for both base Tensor and its derived classes (unpack does not, see below)
  }
  return;
 }
@@ -105,29 +107,80 @@ void TensorComposite::unpack(BytePacket & byte_packet)
 
 void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate)
 {
+ subtensors_.clear();
  auto space_reg = getSpaceRegister();
  const auto tensor_rank = getRank();
- //Split given subspaces to the requested depth:
- std::vector<std::pair<const Subspace *,                      //parental subspace
-                       std::vector<std::shared_ptr<Subspace>> //child subspaces
-                      >> subspaces(tensor_rank);
- for(unsigned int i = 0; i < tensor_rank; ++i){
-  const auto subspace_attr = this->getDimSpaceAttr(i);
-  const auto * space = space_reg->getSpace(subspace_attr.first);
-  if(subspace_attr.first == SOME_SPACE){
-   subspaces[i].first = new Subspace(space,0,space->getDimension()-1);
-  }else{
-   subspaces[i].first = space_reg->getSubspace(subspace_attr.first,subspace_attr.second);
+ if(tensor_rank > 0){
+  //Split given subspaces to the requested depth:
+  std::vector<std::pair<const Subspace *,                      //parental subspace
+                        std::vector<std::shared_ptr<Subspace>> //child subspaces
+                       >> subspaces(tensor_rank);
+  for(unsigned int i = 0; i < tensor_rank; ++i){
+   //Associate parental subspace:
+   const auto subspace_attr = this->getDimSpaceAttr(i);
+   if(subspace_attr.first == SOME_SPACE){
+    const auto * some_space = space_reg->getSpace(SOME_SPACE);
+    subspaces[i].first = new Subspace(some_space,0,some_space->getDimension()-1); //owning
+   }else{
+    subspaces[i].first = space_reg->getSubspace(subspace_attr.first,subspace_attr.second); //non-owning
+   }
+   assert(subspaces[i].first != nullptr);
+   //Generate child subspaces:
+   DimExtent dim_depth = getDimDepth(i);
+   if(dim_depth > 0){
+    const DimExtent num_subspaces = std::pow(2,dim_depth);
+    assert(subspaces[i].first->getDimension() >= num_subspaces);
+    subspaces[i].second = subspaces[i].first->splitUniform(num_subspaces);
+    if(subspace_attr.first != SOME_SPACE){ //register named child subspaces
+     for(auto subspace: subspaces[i].second) space_reg->registerSubspace(subspace);
+    }
+   }
   }
-  assert(subspaces[i].first);
-  DimExtent dim_depth = getDimDepth(i);
-  if(dim_depth > 0){
-   assert(subspaces[i].first->getDimension() > 1);
-   subspaces[i].second = subspaces[i].first->splitUniform(std::pow(static_cast<DimExtent>(2),dim_depth));
+  //Iterate over all child subspaces and generate subtensors:
+  std::vector<SubspaceId> subspace_signature(tensor_rank);
+  std::vector<DimExtent> dim_extents(tensor_rank);
+  std::vector<unsigned long long> subspace_id(tensor_rank,0ULL);
+  const unsigned long long num_subtensors = getNumSubtensorsComplete();
+  for(unsigned long long subtensor_id = 0; subtensor_id < num_subtensors; ++subtensor_id){
+   std::fill(subspace_id.begin(),subspace_id.end(),0ULL);
+   //Pick necessary subspaces:
+   for(unsigned int i = 0; i < num_bisections_; ++i){ //bit position in bisect_bits_
+    unsigned int bit_pos = ((num_bisections_ - 1) - i); //bit position in subtensor_id
+    const auto bit = subtensor_id & (1ULL << bit_pos);
+    const auto dim = bisect_bits_[i].first;
+    subspace_id[dim] <<= 1;
+    if(bit != 0) subspace_id[dim]++;
+   }
+   //Create and store the corresponding subtensor:
+   for(unsigned int i = 0; i < tensor_rank; ++i){
+    const auto subspace_attr = this->getDimSpaceAttr(i);
+    if(getDimDepth(i) > 0){
+     const auto & child_subspace = *(subspaces[i].second[subspace_id[i]]);
+     if(subspace_attr.first == SOME_SPACE){
+      subspace_signature[i] = child_subspace.getLowerBound();
+      dim_extents[i] = child_subspace.getDimension();
+     }else{
+      subspace_signature[i] = child_subspace.getRegisteredId();
+      dim_extents[i] = child_subspace.getDimension();
+     }
+    }else{
+     subspace_signature[i] = subspace_attr.second;
+     dim_extents[i] = getDimExtent(i);
+    }
+   }
+   auto subtensor = createSubtensor(subspace_signature,dim_extents);
+   if(tensor_predicate(*subtensor)){
+    auto res = subtensors_.emplace(std::make_pair(subtensor_id,subtensor)); assert(res.second);
+   }
   }
+  //Clean:
+  for(unsigned int i = 0; i < tensor_rank; ++i){
+   if(this->getDimSpaceAttr(i).first == SOME_SPACE) delete subspaces[i].first;
+   subspaces[i].first = nullptr;
+  }
+ }else{ //scalar tensor: Register itself as a subtensor
+  auto res = subtensors_.emplace(std::make_pair(0ULL,createSubtensor({},{}))); assert(res.second);
  }
- //Iterate over all child subspaces and generate subtensors:
- //`
  return;
 }
 
