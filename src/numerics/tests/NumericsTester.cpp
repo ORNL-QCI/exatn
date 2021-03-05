@@ -219,7 +219,9 @@ TEST(NumericsTester, checkTensorComposite)
  auto composite = std::dynamic_pointer_cast<exatn::TensorComposite>(tensor);
  if(composite){
   for(auto subtensor = composite->cbegin(); subtensor != composite->cend(); ++subtensor){
+   std::cout << subtensor->first << ": ";
    subtensor->second->printIt(); //prints a subtensor of the composite tensor
+   std::cout << std::endl;
   }
  }
 }

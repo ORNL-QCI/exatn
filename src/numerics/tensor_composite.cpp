@@ -120,7 +120,7 @@ void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> te
    const auto subspace_attr = this->getDimSpaceAttr(i);
    if(subspace_attr.first == SOME_SPACE){
     const auto * some_space = space_reg->getSpace(SOME_SPACE);
-    subspaces[i].first = new Subspace(some_space,0,some_space->getDimension()-1); //owning
+    subspaces[i].first = new Subspace(some_space,0,getDimExtent(i)-1); //owning
    }else{
     subspaces[i].first = space_reg->getSubspace(subspace_attr.first,subspace_attr.second); //non-owning
    }
