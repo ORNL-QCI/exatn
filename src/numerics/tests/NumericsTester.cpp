@@ -195,6 +195,20 @@ TEST(NumericsTester, checkTensorExpansion)
 }
 
 
+TEST(NumericsTester, checkTensorOperator)
+{
+ auto ham_operator = exatn::makeSharedTensorOperator("Two-body");
+ //Create a 1-body Hamiltonian tensor with orbital space of dimension 8:
+ auto ham1_tensor = exatn::makeSharedTensor("1e",exatn::TensorShape{8,8});
+ //Create a 2-body Hamiltonian tensor with orbital space of dimension 8:
+ auto ham2_tensor = exatn::makeSharedTensor("2e",exatn::TensorShape{8,8,8,8});
+ //Create an antisymmetrized Hamiltonian operator in many-body space of dimension 8^4 (4 particles):
+ bool success = ham_operator->appendSymmetrizeComponent(ham1_tensor,{0},{1},4,4,{1.0,0.0},true); assert(success);
+ success = ham_operator->appendSymmetrizeComponent(ham2_tensor,{0,1},{2,3},4,4,{1.0,0.0},true); assert(success);
+ ham_operator->printIt();
+}
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

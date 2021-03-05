@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/02/16
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -83,29 +83,6 @@ public:
   return name_;
  }
 
- /** Returns the rank of the tensor operator (number of legs per component).
-     If the expansion is empty, returns -1. **/
- inline int getRank() const{
-  if(!(components_.empty())) return components_[0].network->getRank();
-  return -1;
- }
-
-#if 0
- /** Returns the ket-rank of the tensor operator (number of ket legs per component).
-     If the expansion is empty, returns -1. **/
- inline int getKetRank() const{
-  if(!(components_.empty())) return components_[0].ket_legs.size();
-  return -1;
- }
-
- /** Returns the bra-rank of the tensor operator (number of bra legs per component).
-     If the expansion is empty, returns -1. **/
- inline int getBraRank() const{
-  if(!(components_.empty())) return components_[0].bra_legs.size();
-  return -1;
- }
-#endif
-
  /** Returns the total number of components in the tensor operator. **/
  inline std::size_t getNumComponents() const{
   return components_.size();
@@ -136,9 +113,9 @@ public:
                       const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Tensor leg
                       const std::complex<double> coefficient);                                //in: expansion coefficient
 
- /** Appends the given tensor network into the tensor operator expansion multiple times
-     by assigning the ket- and bra-legs of the output tensor to the global tensor space
-     modes in all possible uniquely permuted fully-ordered ways. **/
+ /** Appends the given tensor network into the tensor network operator multiple times
+     by assigning the ket and bra legs of the output tensor of the appended network
+     to the global tensor space modes in all possible uniquely permuted fully-ordered ways. **/
  bool appendSymmetrizeComponent(std::shared_ptr<TensorNetwork> network,        //in: tensor network (or single tensor as a tensor network)
                                 const std::vector<unsigned int> & ket_pairing, //in: ket tensor legs (output tensor)
                                 const std::vector<unsigned int> & bra_pairing, //in: bra tensor legs (output tensor)
@@ -147,8 +124,8 @@ public:
                                 const std::complex<double> coefficient,        //in: expansion coefficient
                                 bool antisymmetrize = false);                  //in: whether or not to negate the coefficient for odd permutations
 
- /** Appends the given tensor into the tensor operator expansion multiple times
-     by assigning the ket- and bra-legs of the tensor to the global tensor space
+ /** Appends the given tensor into the tensor network operator multiple times
+     by assigning the ket and bra legs of the tensor to the global tensor space
      modes in all possible uniquely permuted fully-ordered ways. **/
  bool appendSymmetrizeComponent(std::shared_ptr<Tensor> tensor,                //in: tensor
                                 const std::vector<unsigned int> & ket_pairing, //in: ket tensor legs

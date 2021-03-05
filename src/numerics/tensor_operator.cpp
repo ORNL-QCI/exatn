@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/02/16
+REVISION: 2021/03/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -82,7 +82,7 @@ bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<TensorNetwork> ne
    double phase_bra = 1.0;
    if(antisymmetrize){
     for(int i = 0; i < bra_rank; ++i){
-     if((bra_legs[i] - i) % 2 != 0) phase_bra = -phase_bra;
+     if(((bra_legs[i] - i) % 2) != 0) phase_bra = -phase_bra;
     }
    }
    TensorRange ket_legs(ket_range);
@@ -93,7 +93,7 @@ bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<TensorNetwork> ne
      double phase_ket = 1.0;
      if(antisymmetrize){
       for(int i = 0; i < ket_rank; ++i){
-       if((ket_legs[i] - i) % 2 != 0) phase_ket = -phase_ket;
+       if(((ket_legs[i] - i) % 2) != 0) phase_ket = -phase_ket;
       }
      }
      success = appendComponent(network,ket_pairs,bra_pairs,coefficient*std::complex<double>{phase_bra*phase_ket,0.0});
@@ -134,7 +134,7 @@ bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<Tensor> tensor,
    double phase_bra = 1.0;
    if(antisymmetrize){
     for(int i = 0; i < bra_rank; ++i){
-     if((bra_legs[i] - i) % 2 != 0) phase_bra = -phase_bra;
+     if(((bra_legs[i] - i) % 2) != 0) phase_bra = -phase_bra;
     }
    }
    TensorRange ket_legs(ket_range);
@@ -145,7 +145,7 @@ bool TensorOperator::appendSymmetrizeComponent(std::shared_ptr<Tensor> tensor,
      double phase_ket = 1.0;
      if(antisymmetrize){
       for(int i = 0; i < ket_rank; ++i){
-       if((ket_legs[i] - i) % 2 != 0) phase_ket = -phase_ket;
+       if(((ket_legs[i] - i) % 2) != 0) phase_ket = -phase_ket;
       }
      }
      success = appendComponent(tensor,ket_pairs,bra_pairs,coefficient*std::complex<double>{phase_bra*phase_ket,0.0});
@@ -174,8 +174,7 @@ void TensorOperator::conjugate()
 void TensorOperator::printIt() const
 {
  std::cout << "TensorNetworkOperator(" << this->getName()
-           << ")[rank = " << this->getRank()
-           << ", size = " << this->getNumComponents() << "]{" << std::endl;
+           << ")[size = " << this->getNumComponents() << "]{" << std::endl;
  std::size_t i = 0;
  for(const auto & component: components_){
   std::cout << "Component " << i++ << ": " << component.coefficient << std::endl;
