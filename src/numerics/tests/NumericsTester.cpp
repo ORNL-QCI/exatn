@@ -215,8 +215,20 @@ TEST(NumericsTester, checkTensorComposite)
  auto tensor = exatn::makeSharedTensorComposite(
                 std::vector<std::pair<unsigned int, unsigned int>>{{2,1},{3,2}},
                 "T2",exatn::TensorShape{10,10,10,10});
+ std::cout << "Splitting tensor ";
+ tensor->printIt();
+ std::cout << " in two over dimension 3:" << std::endl;
+ const auto subtensors = tensor->createSubtensors(3);
+ for(auto & subtensor: subtensors){
+  subtensor->printIt();
+  std::cout << std::endl;
+ }
+
+ std::cout << "Splitting tensor ";
+ tensor->printIt();
+ std::cout << " per its composition:" << std::endl;
  //Get access to the composite tensor:
- auto composite = std::dynamic_pointer_cast<exatn::TensorComposite>(tensor);
+ auto composite = exatn::castTensorComposite(tensor);
  if(composite){
   for(auto subtensor = composite->cbegin(); subtensor != composite->cend(); ++subtensor){
    std::cout << subtensor->first << ": ";

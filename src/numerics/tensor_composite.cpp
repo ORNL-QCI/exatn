@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/05
+REVISION: 2021/03/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -105,6 +105,12 @@ void TensorComposite::unpack(BytePacket & byte_packet)
 }
 
 
+bool TensorComposite::isComposite() const
+{
+ return true;
+}
+
+
 void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> tensor_predicate)
 {
  subtensors_.clear();
@@ -169,6 +175,7 @@ void TensorComposite::generateSubtensors(std::function<bool (const Tensor &)> te
     }
    }
    auto subtensor = createSubtensor(subspace_signature,dim_extents);
+   subtensor->rename();
    if(tensor_predicate(*subtensor)){
     auto res = subtensors_.emplace(std::make_pair(subtensor_id,subtensor)); assert(res.second);
    }

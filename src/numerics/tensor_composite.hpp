@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/05
+REVISION: 2021/03/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -75,6 +75,8 @@ public:
 
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;
+
+ virtual bool isComposite() const override;
 
  inline Iterator begin() {return subtensors_.begin();}
  inline Iterator end() {return subtensors_.end();}
@@ -263,6 +265,13 @@ template<typename... Args>
 inline std::shared_ptr<numerics::Tensor> makeSharedTensorComposite(Args&&... args)
 {
  return std::shared_ptr<numerics::Tensor>{new numerics::TensorComposite(std::forward<Args>(args)...)};
+}
+
+
+/** Downcasts a Tensor as TensorComposite if it is TensorComposite, otherwise returns nullptr. **/
+inline std::shared_ptr<numerics::TensorComposite> castTensorComposite(std::shared_ptr<numerics::Tensor> tensor)
+{
+ return std::dynamic_pointer_cast<numerics::TensorComposite>(tensor);
 }
 
 } //namespace exatn

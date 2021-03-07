@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2021/02/26
+REVISION: 2021/03/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -120,6 +120,8 @@ public:
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;
 
+ virtual bool isComposite() const;
+
  /** Print. **/
  void printIt(bool with_hash = false) const;
  void printItFile(std::ofstream & output_file,
@@ -193,6 +195,10 @@ public:
  /** Creates a related tensor from a given tensor by updating its subspaces and dimension extents. **/
  std::shared_ptr<Tensor> createSubtensor(const std::vector<SubspaceId> & subspaces,         //in: new defining subspaces
                                          const std::vector<DimExtent> & dim_extents) const; //in: new dimension extents
+
+ /** Generates subtensors from a given tensor by splitting one of its dimensions. **/
+ std::vector<std::shared_ptr<Tensor>> createSubtensors(unsigned int dim_id,
+                                                       DimExtent num_segments = 2) const;
 
  /** Sets the tensor element type. **/
  void setElementType(TensorElementType element_type);

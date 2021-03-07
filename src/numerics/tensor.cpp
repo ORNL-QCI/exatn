@@ -1,11 +1,12 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2020/12/28
+REVISION: 2021/03/07
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
 #include "tensor_symbol.hpp"
+#include "space_register.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -155,6 +156,11 @@ void Tensor::unpack(BytePacket & byte_packet)
   for(auto & vertex_id: isometry) extractFromBytePacket(&byte_packet,vertex_id);
  }
  return;
+}
+
+bool Tensor::isComposite() const
+{
+ return false;
 }
 
 void Tensor::printIt(bool with_hash) const
@@ -327,6 +333,43 @@ std::shared_ptr<Tensor> Tensor::createSubtensor(const std::vector<SubspaceId> & 
   subtensor->replaceDimension(i,std::make_pair(this->getDimSpaceId(i),subspaces[i]),dim_extents[i]);
  }
  return subtensor;
+}
+
+std::vector<std::shared_ptr<Tensor>> Tensor::createSubtensors(unsigned int dim_id,
+                                                              DimExtent num_segments) const
+{
+ const auto tensor_rank = getRank();
+ assert(tensor_rank > 0);
+ assert(dim_id < tensor_rank);
+ assert(num_segments <= getDimExtent(dim_id));
+ std::vector<std::shared_ptr<Tensor>> subtensors(num_segments);
+ std::vector<SubspaceId> subspace_ids(tensor_rank);
+ std::vector<DimExtent> dim_extents(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i) subspace_ids[i] = getDimSubspaceId(i);
+ for(unsigned int i = 0; i < tensor_rank; ++i) dim_extents[i] = getDimExtent(i);
+ auto space_reg = getSpaceRegister();
+ const auto space_attr = getDimSpaceAttr(dim_id);
+ if(space_attr.first == SOME_SPACE){
+  const auto * some_space = space_reg->getSpace(SOME_SPACE);
+  Subspace parental_subspace(some_space,0,getDimExtent(dim_id)-1);
+  auto subspaces = parental_subspace.splitUniform(num_segments);
+  for(unsigned int i = 0; i < num_segments; ++i){
+   subspace_ids[dim_id] = subspaces[i]->getLowerBound();
+   dim_extents[dim_id] = subspaces[i]->getDimension();
+   subtensors[i] = createSubtensor(subspace_ids,dim_extents);
+   subtensors[i]->rename();
+  }
+ }else{
+  const auto * parental_subspace = space_reg->getSubspace(space_attr.first,space_attr.second);
+  auto subspaces = parental_subspace->splitUniform(num_segments);
+  for(unsigned int i = 0; i < num_segments; ++i){
+   subspace_ids[dim_id] = space_reg->registerSubspace(subspaces[i]);
+   dim_extents[dim_id] = subspaces[i]->getDimension();
+   subtensors[i] = createSubtensor(subspace_ids,dim_extents);
+   subtensors[i]->rename();
+  }
+ }
+ return subtensors;
 }
 
 void Tensor::setElementType(TensorElementType element_type)
