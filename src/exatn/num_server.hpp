@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/05
+REVISION: 2021/03/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -338,25 +338,25 @@ public:
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
      See numerics::Tensor constructors for different creation options. **/
- bool createTensor(const std::string & name,          //in: tensor name
-                   const TensorSignature & signature, //in: tensor signature with registered spaces/subspaces
-                   TensorElementType element_type);   //in: tensor element type
-
  template <typename... Args>
  bool createTensor(const std::string & name,       //in: tensor name
                    TensorElementType element_type, //in: tensor element type
                    Args&&... args);                //in: other arguments for Tensor ctor
-
- bool createTensor(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor
-                   TensorElementType element_type); //in: tensor element type
 
  template <typename... Args>
  bool createTensorSync(const std::string & name,       //in: tensor name
                        TensorElementType element_type, //in: tensor element type
                        Args&&... args);                //in: other arguments for Tensor ctor
 
- bool createTensorSync(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor
+ bool createTensor(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor (can be composite)
+                   TensorElementType element_type); //in: tensor element type
+
+ bool createTensorSync(std::shared_ptr<Tensor> tensor,  //in: existing declared tensor (can be composite)
                        TensorElementType element_type); //in: tensor element type
+
+ bool createTensor(const std::string & name,          //in: tensor name
+                   const TensorSignature & signature, //in: tensor signature with registered spaces/subspaces
+                   TensorElementType element_type);   //in: tensor element type
 
  template <typename... Args>
  bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
@@ -364,19 +364,37 @@ public:
                    TensorElementType element_type,     //in: tensor element type
                    Args&&... args);                    //in: other arguments for Tensor ctor
 
- bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                   std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
-                   TensorElementType element_type);    //in: tensor element type
-
  template <typename... Args>
  bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                        const std::string & name,           //in: tensor name
                        TensorElementType element_type,     //in: tensor element type
                        Args&&... args);                    //in: other arguments for Tensor ctor
 
+ bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                   std::shared_ptr<Tensor> tensor,     //in: existing declared tensor (can be composite)
+                   TensorElementType element_type);    //in: tensor element type
+
  bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                       std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
+                       std::shared_ptr<Tensor> tensor,     //in: existing declared tensor (can be composite)
                        TensorElementType element_type);    //in: tensor element type
+
+ /** Creates and allocates storage for a composite tensor distributed over a given process group.
+     The distribution of tensor blocks is dictated by its split dimensions. **/
+ template <typename... Args>
+ bool createTensor(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                   const std::string & name,                                //in: tensor name
+                   const std::vector<std::pair<unsigned int,
+                                               unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                   TensorElementType element_type,                          //in: tensor element type
+                   Args&&... args);                                         //in: other arguments for Tensor ctor
+
+ template <typename... Args>
+ bool createTensorSync(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                       const std::string & name,                                //in: tensor name
+                       const std::vector<std::pair<unsigned int,
+                                                   unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                       TensorElementType element_type,                          //in: tensor element type
+                       Args&&... args);                                         //in: other arguments for Tensor ctor
 
  /** Creates all tensors in a given tensor network that are still unallocated. **/
  bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
@@ -767,6 +785,7 @@ private:
 /** Numerical service singleton (numerical server) **/
 extern std::shared_ptr<NumServer> numericalServer;
 
+
 //TEMPLATE DEFINITIONS:
 template <typename... Args>
 bool NumServer::createTensor(const std::string & name,
@@ -821,6 +840,28 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
  }
  return submitted;
+}
+
+template <typename... Args>
+bool NumServer::createTensor(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                             const std::string & name,                                //in: tensor name
+                             const std::vector<std::pair<unsigned int,
+                                                         unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                             TensorElementType element_type,                          //in: tensor element type
+                             Args&&... args)                                          //in: other arguments for Tensor ctor
+{
+ return createTensor(process_group,makeSharedTensorComposite(split_dims,name,std::forward<Args>(args)...),element_type);
+}
+
+template <typename... Args>
+bool NumServer::createTensorSync(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                                 const std::string & name,                                //in: tensor name
+                                 const std::vector<std::pair<unsigned int,
+                                                             unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                                 TensorElementType element_type,                          //in: tensor element type
+                                 Args&&... args)                                          //in: other arguments for Tensor ctor
+{
+ return createTensorSync(process_group,makeSharedTensorComposite(split_dims,name,std::forward<Args>(args)...),element_type);
 }
 
 template<typename NumericType>

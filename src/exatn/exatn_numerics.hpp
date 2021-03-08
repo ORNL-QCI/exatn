@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/03/02
+REVISION: 2021/03/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -89,6 +89,10 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+////////////////////////
+// TAProL SCOPING API //
+////////////////////////
+
 /** Opens a new (child) TAProL scope and returns its id. **/
 inline ScopeId openScope(const std::string & scope_name) //new scope name
  {return numericalServer->openScope(scope_name);}
@@ -98,6 +102,10 @@ inline ScopeId openScope(const std::string & scope_name) //new scope name
 inline ScopeId closeScope()
  {return numericalServer->closeScope();}
 
+
+/////////////////////////////////////
+// SPACE/SUBSPACE REGISTRATION API //
+/////////////////////////////////////
 
 /** Creates a named vector space, returns its registered id, and,
     optionally, a non-owning pointer to it. **/
@@ -138,6 +146,10 @@ inline const Subspace * getSubspace(const std::string & subspace_name) //in: nam
  {return numericalServer->getSubspace(subspace_name);}
 
 
+///////////////////////////////////////////
+// EXTERNAL METHOD/DATA REGISTRATION API //
+///////////////////////////////////////////
+
 /** Registers an external tensor method. **/
 inline void registerTensorMethod(const std::string & tag,
                                  std::shared_ptr<TensorMethod> method)
@@ -160,22 +172,54 @@ inline std::shared_ptr<BytePacket> getExternalData(const std::string & tag)
  {return numericalServer->getExternalData(tag);}
 
 
+///////////////////////
+// TENSOR HELPER API //
+///////////////////////
+
+/** Checks whether a given tensor has been allocated storage (created). **/
+inline bool tensorAllocated(const std::string & name) //in: tensor name
+ {return numericalServer->tensorAllocated(name);}
+
+
+/** Returns a shared pointer to the actual tensor object. **/
+inline std::shared_ptr<Tensor> getTensor(const std::string & name) //in: tensor name
+ {return numericalServer->getTensor(name);}
+
+
+/** Returns the reference to the actual tensor object. **/
+inline Tensor & getTensorRef(const std::string & name) //in: tensor name
+ {return numericalServer->getTensorRef(name);}
+
+
+/** Returns the tensor element type (if allocated storage). **/
+inline TensorElementType getTensorElementType(const std::string & name) //in: tensor name
+ {return numericalServer->getTensorElementType(name);}
+
+
+/** Registers a group of tensor dimensions which form an isometry when
+    contracted over with the conjugated tensor (see exatn::numerics::Tensor).
+    Returns TRUE on success, FALSE on failure. **/
+inline bool registerTensorIsometry(const std::string & name,                   //in: tensor name
+                                   const std::vector<unsigned int> & iso_dims) //in: tensor dimensions forming the isometry
+ {return numericalServer->registerTensorIsometry(name,iso_dims);}
+
+inline bool registerTensorIsometry(const std::string & name,                    //in: tensor name
+                                   const std::vector<unsigned int> & iso_dims0, //in: tensor dimensions forming the isometry (group 0)
+                                   const std::vector<unsigned int> & iso_dims1) //in: tensor dimensions forming the isometry (group 1)
+ {return numericalServer->registerTensorIsometry(name,iso_dims0,iso_dims1);}
+
+
+//////////////////////////
+// TENSOR OPERATION API //
+//////////////////////////
+
 /** Declares, registers and actually creates a tensor via the processing backend.
     See numerics::Tensor constructors for different creation options. **/
-inline bool createTensor(const std::string & name,          //in: tensor name
-                         const TensorSignature & signature, //in: tensor signature with registered spaces/subspaces
-                         TensorElementType element_type)    //in: tensor element type
- {return numericalServer->createTensor(name,signature,element_type);}
-
 template <typename... Args>
 inline bool createTensor(const std::string & name,       //in: tensor name
                          TensorElementType element_type, //in: tensor element type
                          Args&&... args)                 //in: other arguments for Tensor ctor
  {return numericalServer->createTensor(name,element_type,std::forward<Args>(args)...);}
-
-inline bool createTensor(std::shared_ptr<Tensor> tensor, //in: existing declared tensor
-                         TensorElementType element_type) //in: tensor element type
- {return numericalServer->createTensor(tensor,element_type);}
 
 template <typename... Args>
 inline bool createTensorSync(const std::string & name,       //in: tensor name
@@ -183,9 +227,18 @@ inline bool createTensorSync(const std::string & name,       //in: tensor name
                              Args&&... args)                 //in: other arguments for Tensor ctor
  {return numericalServer->createTensorSync(name,element_type,std::forward<Args>(args)...);}
 
-inline bool createTensorSync(std::shared_ptr<Tensor> tensor, //in: existing declared tensor
+inline bool createTensor(std::shared_ptr<Tensor> tensor, //in: existing declared tensor (can be composite)
+                         TensorElementType element_type) //in: tensor element type
+ {return numericalServer->createTensor(tensor,element_type);}
+
+inline bool createTensorSync(std::shared_ptr<Tensor> tensor, //in: existing declared tensor (can be composite)
                              TensorElementType element_type) //in: tensor element type
  {return numericalServer->createTensorSync(tensor,element_type);}
+
+inline bool createTensor(const std::string & name,          //in: tensor name
+                         const TensorSignature & signature, //in: tensor signature with registered spaces/subspaces
+                         TensorElementType element_type)    //in: tensor element type
+ {return numericalServer->createTensor(name,signature,element_type);}
 
 template <typename... Args>
 inline bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
@@ -194,11 +247,6 @@ inline bool createTensor(const ProcessGroup & process_group, //in: chosen group 
                          Args&&... args)                     //in: other arguments for Tensor ctor
  {return numericalServer->createTensor(process_group,name,element_type,std::forward<Args>(args)...);}
 
-inline bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                         std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
-                         TensorElementType element_type)     //in: tensor element type
- {return numericalServer->createTensor(process_group,tensor,element_type);}
-
 template <typename... Args>
 inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                              const std::string & name,           //in: tensor name
@@ -206,10 +254,36 @@ inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen gr
                              Args&&... args)                     //in: other arguments for Tensor ctor
  {return numericalServer->createTensorSync(process_group,name,element_type,std::forward<Args>(args)...);}
 
+inline bool createTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                         std::shared_ptr<Tensor> tensor,     //in: existing declared tensor (can be composite)
+                         TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensor(process_group,tensor,element_type);}
+
 inline bool createTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                             std::shared_ptr<Tensor> tensor,     //in: existing declared tensor
+                             std::shared_ptr<Tensor> tensor,     //in: existing declared tensor (can be composite)
                              TensorElementType element_type)     //in: tensor element type
  {return numericalServer->createTensorSync(process_group,tensor,element_type);}
+
+
+/** Creates and allocates storage for a composite tensor distributed over a given process group.
+    The distribution of tensor blocks is dictated by its split dimensions. **/
+template <typename... Args>
+inline bool createTensor(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                         const std::string & name,                                //in: tensor name
+                         const std::vector<std::pair<unsigned int,
+                                                     unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                         TensorElementType element_type,                          //in: tensor element type
+                         Args&&... args)                                          //in: other arguments for Tensor ctor
+ {return numericalServer->createTensor(process_group,name,split_dims,element_type,std::forward<Args>(args)...);}
+
+template <typename... Args>
+inline bool createTensorSync(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
+                             const std::string & name,                                //in: tensor name
+                             const std::vector<std::pair<unsigned int,
+                                                         unsigned int>> & split_dims, //in: split tensor dimensions: pair{Dimension,MaxDepth}
+                             TensorElementType element_type,                          //in: tensor element type
+                             Args&&... args)                                          //in: other arguments for Tensor ctor
+ {return numericalServer->createTensorSync(process_group,name,split_dims,element_type,std::forward<Args>(args)...);}
 
 
 /** Creates all tensors in a given tensor network that are still unallocated storage. **/
@@ -230,39 +304,6 @@ inline bool createTensorsSync(const ProcessGroup & process_group, //in: chosen g
                               TensorNetwork & tensor_network,     //inout: tensor network
                               TensorElementType element_type)     //in: tensor element type
  {return numericalServer->createTensorsSync(process_group,tensor_network,element_type);}
-
-
-/** Checks whether a given tensor has been allocated storage (created). **/
-inline bool tensorAllocated(const std::string & name) //in: tensor name
- {return numericalServer->tensorAllocated(name);}
-
-
-/** Returns a shared pointer to the actual tensor object. **/
-inline std::shared_ptr<Tensor> getTensor(const std::string & name) //in: tensor name
- {return numericalServer->getTensor(name);}
-
-
-/** Returns the reference to the actual tensor object. **/
-inline Tensor & getTensorRef(const std::string & name) //in: tensor name
- {return numericalServer->getTensorRef(name);}
-
-
-/** Returns the tensor element type. **/
-inline TensorElementType getTensorElementType(const std::string & name) //in: tensor name
- {return numericalServer->getTensorElementType(name);}
-
-
-/** Registers a group of tensor dimensions which form an isometry when
-    contracted over with the conjugated tensor (see exatn::numerics::Tensor).
-    Returns TRUE on success, FALSE on failure. **/
-inline bool registerTensorIsometry(const std::string & name,                   //in: tensor name
-                                   const std::vector<unsigned int> & iso_dims) //in: tensor dimensions forming the isometry
- {return numericalServer->registerTensorIsometry(name,iso_dims);}
-
-inline bool registerTensorIsometry(const std::string & name,                    //in: tensor name
-                                   const std::vector<unsigned int> & iso_dims0, //in: tensor dimensions forming the isometry (group 0)
-                                   const std::vector<unsigned int> & iso_dims1) //in: tensor dimensions forming the isometry (group 1)
- {return numericalServer->registerTensorIsometry(name,iso_dims0,iso_dims1);}
 
 
 /** Destroys a tensor, including its backend representation. **/
@@ -623,18 +664,6 @@ inline bool evaluateTensorNetworkSync(const ProcessGroup & process_group, //in: 
  {return numericalServer->evaluateTensorNetworkSync(process_group,name,network);}
 
 
-/** Synchronizes all outstanding update operations on a given tensor specified by
-    its symbolic name. If ProcessGroup is not provided, defaults to the local process.**/
-inline bool sync(const std::string & name, //in: tensor name
-                 bool wait = true)         //in: wait versus test for completion
- {return numericalServer->sync(name,wait);}
-
-inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                 const std::string & name,           //in: tensor name
-                 bool wait = true)                   //in: wait versus test for completion
- {return numericalServer->sync(process_group,name,wait);}
-
-
 /** Evaluates a tensor network object (computes the output tensor). **/
 inline bool evaluate(TensorNetwork & network) //in: finalized tensor network
  {return numericalServer->submit(network);}
@@ -653,18 +682,6 @@ inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group 
  {bool success = numericalServer->submit(process_group,network);
   if(success) success = numericalServer->sync(process_group,network);
   return success;}
-
-
-/** Synchronizes all outstanding operations on a given tensor network object.
-    If ProcessGroup is not provided, defaults to the local process. **/
-inline bool sync(TensorNetwork & network, //in: finalized tensor network
-                 bool wait = true)        //in: wait versus test for completion
- {return numericalServer->sync(network,wait);}
-
-inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
-                 TensorNetwork & network,            //in: finalized tensor network
-                 bool wait = true)                   //in: wait versus test for completion
- {return numericalServer->sync(process_group,network,wait);}
 
 
 /** Evaluates a tensor network expansion into the explicitly provided tensor accumulator. **/
@@ -693,6 +710,18 @@ inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group
   return success;}
 
 
+/** Synchronizes all outstanding update operations on a given tensor specified by
+    its symbolic name. If ProcessGroup is not provided, defaults to the local process.**/
+inline bool sync(const std::string & name, //in: tensor name
+                 bool wait = true)         //in: wait versus test for completion
+ {return numericalServer->sync(name,wait);}
+
+inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                 const std::string & name,           //in: tensor name
+                 bool wait = true)                   //in: wait versus test for completion
+ {return numericalServer->sync(process_group,name,wait);}
+
+
 /** Synchronizes all outstanding operations on a given tensor.
     If ProcessGroup is not provided, defaults to the local process. **/
 inline bool sync(const Tensor & tensor, //in: tensor
@@ -703,6 +732,18 @@ inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI 
                  const Tensor & tensor,               //in: tensor
                  bool wait = true)                    //in: wait versus test for completion
  {return numericalServer->sync(process_group,tensor,wait);}
+
+
+/** Synchronizes all outstanding operations on a given tensor network object.
+    If ProcessGroup is not provided, defaults to the local process. **/
+inline bool sync(TensorNetwork & network, //in: finalized tensor network
+                 bool wait = true)        //in: wait versus test for completion
+ {return numericalServer->sync(network,wait);}
+
+inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                 TensorNetwork & network,            //in: finalized tensor network
+                 bool wait = true)                   //in: wait versus test for completion
+ {return numericalServer->sync(process_group,network,wait);}
 
 
 /** Synchronizes all outstanding tensor operations in the current scope (barrier).
@@ -719,6 +760,7 @@ inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI 
 inline bool normalizeNorm2Sync(const std::string & name, //in: tensor name
                                double norm = 1.0)        //in: desired 2-norm
  {return numericalServer->normalizeNorm2Sync(name,norm);}
+
 
 /** Normalizes a tensor network expansion to a given 2-norm by rescaling
     all tensor network components by the same factor: Only the tensor
@@ -745,6 +787,7 @@ inline bool balanceNorm2Sync(const ProcessGroup & process_group, //in: chosen gr
                              double norm = 1.0,                  //in: desired 2-norm
                              bool only_optimizable = false)      //in: whether to normalize only optimizable tensors
  {return numericalServer->balanceNorm2Sync(process_group,network,norm,only_optimizable);}
+
 
 /** Normalizes all input tensors in a tensor network expansion to a given 2-norm.
     If only_optimizable is TRUE, only optimizable tensors will be normalized. **/
@@ -778,6 +821,10 @@ inline bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: 
  {return numericalServer->balanceNormalizeNorm2Sync(process_group,expansion,tensor_norm,expansion_norm,only_optimizable);}
 
 
+///////////////////////
+// TENSOR ACCESS API //
+///////////////////////
+
 /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
     This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.
     The returned future becomes ready once the execution thread has retrieved the slice copy. **/
@@ -792,6 +839,10 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
 
+
+//////////////////////////////
+// MISCELLENEOUS HELPER API //
+//////////////////////////////
 
 /** Prints a tensor contraction sequence. **/
 inline void printContractionSequence(const std::list<numerics::ContrTriple> & contr_seq) //in: tensor contraction sequence
@@ -833,6 +884,10 @@ inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string
   return std::make_shared<TensorNetwork>(name,symbolic,tensors);
  }
 
+
+//////////////////////////
+// INTERNAL CONTROL API //
+//////////////////////////
 
 /** Resets the tensor contraction sequence optimizer that is invoked
     when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
