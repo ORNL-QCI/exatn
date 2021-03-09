@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -42,7 +42,8 @@
 #define EXATN_TEST25
 #define EXATN_TEST26
 #define EXATN_TEST27
-#define EXATN_TEST28
+#define EXATN_TEST28*/
+#define EXATN_TEST29
 
 
 #ifdef EXATN_TEST0
@@ -3068,6 +3069,37 @@ TEST(NumServerTester, OptimizerHubbard) {
  success = exatn::destroyTensor("PauliZ"); assert(success);
  success = exatn::destroyTensor("PauliY"); assert(success);
  success = exatn::destroyTensor("PauliX"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST29
+TEST(NumServerTester, TensorComposite) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+
+ exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Create composite tensors:
+ const auto & all_processes = exatn::getDefaultProcessGroup();
+ std::cout << "Number of MPI processes = " << all_processes.getSize() << std::endl;
+ success = exatn::createTensor(all_processes,"A",
+                               std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
+                               TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);
