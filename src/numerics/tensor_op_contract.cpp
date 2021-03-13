@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2020/08/11
+REVISION: 2021/03/13
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_service.hpp"
 
@@ -17,7 +17,8 @@ namespace exatn{
 namespace numerics{
 
 TensorOpContract::TensorOpContract():
- TensorOperation(TensorOpCode::CONTRACT,3,2,1+0*2+0*4,{0,1,2})
+ TensorOperation(TensorOpCode::CONTRACT,3,2,1+0*2+0*4,{0,1,2}),
+ accumulative_(true)
 {
  this->setScalar(0,std::complex<double>{1.0,0.0}); //default alpha prefactor
  this->setScalar(1,std::complex<double>{1.0,0.0}); //default beta prefactor (accumulative)
@@ -48,6 +49,12 @@ double TensorOpContract::getFlopEstimate() const
 std::unique_ptr<TensorOperation> TensorOpContract::createNew()
 {
  return std::unique_ptr<TensorOperation>(new TensorOpContract());
+}
+
+void TensorOpContract::resetAccumulative(bool accum)
+{
+ accumulative_ = accum;
+ return;
 }
 
 } //namespace numerics

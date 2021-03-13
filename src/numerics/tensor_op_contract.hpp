@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2020/06/06
+REVISION: 2021/03/13
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Contracts two tensors and accumulates the result into another tensor
@@ -48,8 +48,17 @@ public:
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
 
+ /** Resets the accumulative attribute. **/
+ void resetAccumulative(bool accum);
+
+ /** Queries the accumulative attribute. **/
+ inline bool isAccumulative() const {
+  return accumulative_;
+ }
+
 private:
 
+ bool accumulative_; //accumulative (default) or not
 };
 
 } //namespace numerics

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/02/23
+REVISION: 2021/03/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -97,6 +97,8 @@ class TensorNetwork{
  friend class TensorExpansion;
 
 public:
+
+ static constexpr bool ACCUMULATIVE_CONTRACTIONS = true;
 
  using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
  using ConstIterator = typename std::unordered_map<unsigned int, TensorConn>::const_iterator; //constant iterator

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/02/03
+REVISION: 2021/03/13
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -611,7 +611,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                             op.getIndexPatternReduced(),
                                             tens1,tens2,
                                             DEV_DEFAULT,DEV_DEFAULT,
-                                            op.getScalar(0));
+                                            op.getScalar(0),
+                                            op.isAccumulative());
  if(error_code == DEVICE_UNABLE){ //use out-of-core version if tensor contraction does not fit in GPU
   //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CONTRACT: Redirected to XL\n" << std::flush; //debug
   (task_res.first)->second->clean();
@@ -625,13 +626,15 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                            op.getIndexPatternReduced(),
                                            tens1,tens2,
                                            DEV_DEFAULT,DEV_DEFAULT,
-                                           op.getScalar(0));
+                                           op.getScalar(0),
+                                           op.isAccumulative());
   }else{
    error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                          op.getIndexPatternReduced(),
                                          tens1,tens2,
                                          DEV_HOST,0,
-                                         op.getScalar(0));
+                                         op.getScalar(0),
+                                         op.isAccumulative());
   }
  }else if(error_code == TALSH_NOT_AVAILABLE || error_code == TALSH_NOT_IMPLEMENTED){
   (task_res.first)->second->clean();
@@ -639,7 +642,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
                                          op.getIndexPatternReduced(),
                                          tens1,tens2,
                                          DEV_HOST,0,
-                                         op.getScalar(0));
+                                         op.getScalar(0),
+                                         op.isAccumulative());
  }else if(error_code == TRY_LATER){
   std::size_t total_tensor_size = tensor0.getSize() + tensor1.getSize() + tensor2.getSize();
   bool evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1,tens2),total_tensor_size);

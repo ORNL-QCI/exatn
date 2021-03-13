@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/02/23
+REVISION: 2021/03/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2190,21 +2190,24 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
       std::dynamic_pointer_cast<TensorOpCreate>(op_create)->resetTensorElementType(tensor0->getElementType());
      operations_.emplace_back(op_create);
      intermediates.emplace_back(contr->result_id);
-     std::shared_ptr<TensorOperation> op_init(std::move(tensor_op_factory.createTensorOp(TensorOpCode::TRANSFORM))); //init intermediate to zero
-     op_init->setTensorOperand(tensor0);
-     std::dynamic_pointer_cast<TensorOpTransform>(op_init)->
-          resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>>(new FunctorInitVal(0.0)));
-     operations_.emplace_back(op_init);
+     if(ACCUMULATIVE_CONTRACTIONS){
+      std::shared_ptr<TensorOperation> op_init(std::move(tensor_op_factory.createTensorOp(TensorOpCode::TRANSFORM))); //init intermediate to zero
+      op_init->setTensorOperand(tensor0);
+      std::dynamic_pointer_cast<TensorOpTransform>(op_init)->
+           resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>>(new FunctorInitVal(0.0)));
+      operations_.emplace_back(op_init);
+     }
     }else{ //make sure the output tensor has its type set
      if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(tensor1->getElementType());
     }
-    auto op = tensor_op_factory.createTensorOp(TensorOpCode::CONTRACT);
+    auto op = tensor_op_factory.createTensorOpShared(TensorOpCode::CONTRACT);
     op->setTensorOperand(tensor0);
     op->setTensorOperand(tensor1,conj1);
     op->setTensorOperand(tensor2,conj2);
     op->setIndexPattern(contr_pattern);
+    if(!ACCUMULATIVE_CONTRACTIONS) std::dynamic_pointer_cast<TensorOpContract>(op)->resetAccumulative(false);
     assert(op->isSet());
-    operations_.emplace_back(std::shared_ptr<TensorOperation>(std::move(op)));
+    operations_.emplace_back(op);
     auto left_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->left_id);
     if(left_intermediate != intermediates.end()){
      intermediates_vol -= tensor1->getVolume();
