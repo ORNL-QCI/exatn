@@ -3097,9 +3097,11 @@ TEST(NumServerTester, TensorComposite) {
  //Create composite tensors:
  const auto & all_processes = exatn::getDefaultProcessGroup();
  std::cout << "Number of MPI processes = " << all_processes.getSize() << std::endl;
- success = exatn::createTensor(all_processes,"A",
-                               std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
-                               TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+ success = exatn::createTensorSync(all_processes,"A",
+                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
+                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+
+ success = exatn::destroyTensorSync("A"); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

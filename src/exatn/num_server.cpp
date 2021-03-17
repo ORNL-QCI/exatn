@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/09
+REVISION: 2021/03/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -943,6 +943,12 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
       submitted = submit(op);
      }
     }
+    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
+    if(!(res.second)){
+     std::cout << "#ERROR(exatn::createTensor): Attempt to CREATE an already existing tensor "
+               << tensor->getName() << std::endl;
+     submitted = false;
+    }
    }else{
     std::cout << "#ERROR(exatn::createTensor): For composite tensors, the size of the process group must be power of 2, but it is "
               << num_processes << std::endl;
@@ -963,17 +969,60 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
                                  std::shared_ptr<Tensor> tensor,
                                  TensorElementType element_type)
 {
- if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ unsigned int local_rank;
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  assert(tensor);
  bool submitted = false;
  if(element_type != TensorElementType::VOID){
-  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-  op->setTensorOperand(tensor);
-  std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submitted = submit(op);
-  if(submitted) submitted = sync(*op);
+  if(tensor->isComposite()){ //distributed storage
+   auto tensor_composite = castTensorComposite(tensor); assert(tensor_composite);
+   const auto num_subtensors = tensor_composite->getNumSubtensors(); assert(num_subtensors > 0);
+   const auto num_processes = process_group.getSize(); assert(num_processes > 0);
+   unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
+   if((num_processes & (num_processes - 1U)) == 0){ //power of 2 check
+    if(num_subtensors <= num_processes){ //subtensors may be partially replicated among processes
+     unsigned long long subtensor_id = static_cast<unsigned long long>(local_rank) % num_subtensors;
+     std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
+     std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+     op->setTensorOperand((*tensor_composite)[subtensor_id]);
+     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+     submitted = submit(op);
+     if(submitted) submitted = sync(*op);
+    }else{ //processes may get more than one subtensor
+     assert((num_subtensors_per_process >= 2) && (num_subtensors % num_processes == 0));
+     auto nspp = num_subtensors_per_process;
+     unsigned long long num_minor_bits = 0;
+     while(nspp >>= 1) ++num_minor_bits; assert(num_minor_bits > 0);
+     unsigned long long subtensor_begin = static_cast<unsigned long long>(local_rank) << num_minor_bits;
+     unsigned long long subtensor_end = subtensor_begin | ((1ULL << num_minor_bits) - 1);
+     for(auto subtensor_id = subtensor_begin; subtensor_id <= subtensor_end; ++subtensor_id){
+      std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
+      std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+      op->setTensorOperand((*tensor_composite)[subtensor_id]);
+      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+      submitted = submit(op);
+      if(submitted) submitted = sync(*op);
+     }
+    }
+    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
+    if(!(res.second)){
+     std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
+               << tensor->getName() << std::endl;
+     submitted = false;
+    }
+   }else{
+    std::cout << "#ERROR(exatn::createTensorSync): For composite tensors, the size of the process group must be power of 2, but it is "
+              << num_processes << std::endl;
+   }
+  }else{ //replicated storage
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+   op->setTensorOperand(tensor);
+   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+   submitted = submit(op);
+   if(submitted) submitted = sync(*op);
+  }
  }else{
-  std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
+  std::cout << "#ERROR(exatn::createTensorSync): Missing data type!" << std::endl;
  }
  return submitted;
 }
@@ -1022,31 +1071,67 @@ bool NumServer::createTensorsSync(const ProcessGroup & process_group,
 
 bool NumServer::destroyTensor(const std::string & name) //always synchronous
 {
+ bool submitted = false;
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#WARNING(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
-  return false;
+  return submitted;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
- op->setTensorOperand(iter->second);
- auto submitted = submit(op);
- if(submitted) submitted = sync(*op); //`Do I need to always sync Destroy?
+ if(iter->second->isComposite()){
+  auto tensor_composite = castTensorComposite(iter->second); assert(tensor_composite);
+  for(auto tens = tensor_composite->begin(); tens != tensor_composite->end(); ++tens){
+   auto it = tensors_.find(tens->second->getName());
+   if(it != tensors_.end()){
+    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+    op->setTensorOperand(it->second);
+    submitted = submit(op);
+    if(!submitted) break;
+   }
+  }
+  if(submitted){
+   auto num_deleted = tensors_.erase(iter->second->getName());
+   assert(num_deleted == 1);
+  }
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+  op->setTensorOperand(iter->second);
+  submitted = submit(op);
+ }
  return submitted;
 }
 
 bool NumServer::destroyTensorSync(const std::string & name)
 {
+ bool submitted = false;
  destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#WARNING(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
-  return false;
+  return submitted;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
- op->setTensorOperand(iter->second);
- auto submitted = submit(op);
- if(submitted) submitted = sync(*op);
+ if(iter->second->isComposite()){
+  auto tensor_composite = castTensorComposite(iter->second); assert(tensor_composite);
+  for(auto tens = tensor_composite->begin(); tens != tensor_composite->end(); ++tens){
+   auto it = tensors_.find(tens->second->getName());
+   if(it != tensors_.end()){
+    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+    op->setTensorOperand(it->second);
+    submitted = submit(op);
+    if(submitted) submitted = sync(*op);
+    if(!submitted) break;
+   }
+  }
+  if(submitted){
+   auto num_deleted = tensors_.erase(iter->second->getName());
+   assert(num_deleted == 1);
+  }
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+  op->setTensorOperand(iter->second);
+  submitted = submit(op);
+  if(submitted) submitted = sync(*op);
+ }
  return submitted;
 }
 
