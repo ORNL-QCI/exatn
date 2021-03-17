@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor signature
-REVISION: 2020/06/25
+REVISION: 2021/03/17
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Tensor signature is an ordered set of tensor dimension specifiers,
@@ -34,6 +34,30 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+struct DimRange {
+ DimOffset lower_bound;
+ DimOffset upper_bound;
+};
+
+inline DimRange dimRangeIntersection(DimRange range1, DimRange range2){
+ return DimRange{std::max(range1.lower_bound,range2.lower_bound),
+                 std::min(range1.upper_bound,range2.upper_bound)};
+}
+
+inline DimRange dimRangeUnion(DimRange range1, DimRange range2){
+ return DimRange{std::min(range1.lower_bound,range2.lower_bound),
+                 std::max(range1.upper_bound,range2.upper_bound)};
+}
+
+inline bool dimRangeIsEmpty(DimRange range1){
+ return (range1.lower_bound > range1.upper_bound);
+}
+
+inline DimExtent dimRangeExtent(DimRange range1){
+ return dimRangeIsEmpty(range1) ? 0ULL : (range1.upper_bound - range1.lower_bound + 1ULL);
+}
+
 
 class TensorSignature: public Packable {
 public:

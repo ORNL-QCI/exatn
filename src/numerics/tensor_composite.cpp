@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/07
+REVISION: 2021/03/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,6 +10,50 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <algorithm>
 
 namespace exatn{
+
+std::shared_ptr<numerics::Tensor> makeSharedTensorIntersection(const std::string & name,
+                                                               const numerics::Tensor & tensor1,
+                                                               const numerics::Tensor & tensor2)
+{
+ const auto tensor_rank = tensor1.getRank();
+ if(tensor_rank != tensor2.getRank()) return std::shared_ptr<numerics::Tensor>{nullptr};
+ if(tensor_rank == 0) return makeSharedTensor(name);
+
+ auto space_reg = getSpaceRegister();
+
+ std::vector<SubspaceId> subspaces(tensor_rank);
+ std::vector<DimExtent> extents(tensor_rank);
+ for(unsigned int i = 0; i < tensor_rank; ++i){
+  const auto subspace1 = tensor1.getDimSpaceAttr(i);
+  const auto subspace2 = tensor2.getDimSpaceAttr(i);
+  if(subspace1.first != subspace2.first) return std::shared_ptr<numerics::Tensor>{nullptr};
+  if(subspace1.first == SOME_SPACE){
+   numerics::DimRange dim_range1{subspace1.second,
+                                 subspace1.second + tensor1.getDimExtent(i) - 1ULL};
+   numerics::DimRange dim_range2{subspace2.second,
+                                 subspace2.second + tensor2.getDimExtent(i) - 1ULL};
+   const auto dim_inter = numerics::dimRangeIntersection(dim_range1,dim_range2);
+   if(numerics::dimRangeIsEmpty(dim_inter)) return std::shared_ptr<numerics::Tensor>{nullptr};
+   subspaces[i] = dim_inter.lower_bound;
+   extents[i] = numerics::dimRangeExtent(dim_inter);
+  }else{
+   const auto * subsp1 = space_reg->getSubspace(subspace1.first,subspace1.second);
+   const auto * subsp2 = space_reg->getSubspace(subspace2.first,subspace2.second);
+   numerics::DimRange dim_range1{subsp1->getLowerBound(),subsp1->getUpperBound()};
+   numerics::DimRange dim_range2{subsp2->getLowerBound(),subsp2->getUpperBound()};
+   const auto dim_inter = numerics::dimRangeIntersection(dim_range1,dim_range2);
+   if(numerics::dimRangeIsEmpty(dim_inter)) return std::shared_ptr<numerics::Tensor>{nullptr};
+   subspaces[i] = dim_inter.lower_bound;
+   extents[i] = numerics::dimRangeExtent(dim_inter);
+   space_reg->registerSubspace(std::make_shared<numerics::Subspace>(space_reg->getSpace(subspace1.first),
+                                                                    dim_inter.lower_bound,dim_inter.upper_bound));
+  }
+ }
+ auto tensor = tensor1.createSubtensor(subspaces,extents);
+ tensor->rename(name);
+ return tensor;
+}
+
 
 namespace numerics{
 
