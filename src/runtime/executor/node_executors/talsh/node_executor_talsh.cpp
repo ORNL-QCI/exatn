@@ -538,9 +538,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
   assert(false);
  }
 
- double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
- talsh_submitted_flops_.store(flop_count);
-
  auto error_code = tens0.accumulate((task_res.first)->second.get(),
                                     op.getIndexPatternReduced(),
                                     tens1,
@@ -558,6 +555,10 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
   auto evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1),total_tensor_size);
  }else if(error_code == TALSH_SUCCESS){
   prefetch_enabled_ = true;
+ }
+ if(error_code == TALSH_SUCCESS){
+  double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
+  talsh_submitted_flops_.store(flop_count);
  }
  return error_code;
 }
@@ -611,9 +612,6 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   assert(false);
  }
 
- double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
- talsh_submitted_flops_.store(flop_count);
-
  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor contraction " << op.getIndexPattern() << std::endl; //debug
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                             op.getIndexPatternReduced(),
@@ -657,6 +655,10 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   bool evicting = evictMovedTensors(talsh::determineOptimalDevice(tens0,tens1,tens2),total_tensor_size);
  }else if(error_code == TALSH_SUCCESS){
   prefetch_enabled_ = true;
+ }
+ if(error_code == TALSH_SUCCESS){
+  double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
+  talsh_submitted_flops_.store(flop_count);
  }
  return error_code;
 }
