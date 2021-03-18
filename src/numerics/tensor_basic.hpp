@@ -1,8 +1,8 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2020/06/25
+REVISION: 2021/03/18
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef EXATN_NUMERICS_TENSOR_BASIC_HPP_
 #define EXATN_NUMERICS_TENSOR_BASIC_HPP_
@@ -73,6 +73,28 @@ template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::REAL6
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX16>(){return 4;} //4 bytes
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX32>(){return 8;} //8 bytes
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX64>(){return 16;} //16 bytes
+
+//TensorElementTypeOpFactor<enum TensorElementType>() --> Multiplication factor:
+template <TensorElementType> constexpr double TensorElementTypeOpFactor();
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::VOID>(){return 0.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::REAL16>(){return 2.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::REAL32>(){return 2.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::REAL64>(){return 2.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::COMPLEX16>(){return 8.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::COMPLEX32>(){return 8.0;}
+template <> constexpr double TensorElementTypeOpFactor<TensorElementType::COMPLEX64>(){return 8.0;}
+
+inline double tensorElementTypeOpFactor(const TensorElementType element_type){
+ switch(element_type){
+  case TensorElementType::REAL16: return 2.0;
+  case TensorElementType::REAL32: return 2.0;
+  case TensorElementType::REAL64: return 2.0;
+  case TensorElementType::COMPLEX16: return 8.0;
+  case TensorElementType::COMPLEX32: return 8.0;
+  case TensorElementType::COMPLEX64: return 8.0;
+ }
+ return 0.0;
+}
 
 //TensorDataType<enum TensorElementType>::value --> C++ type:
 template <TensorElementType> struct TensorDataType{

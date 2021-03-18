@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/02/03
+REVISION: 2021/03/18
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -157,6 +157,8 @@ protected:
   bool prefetch_enabled_;
   /** TAL-SH Host memory buffer size (bytes) **/
   static std::atomic<std::size_t> talsh_host_mem_buffer_size_;
+  /** TAL-SH submitted Flop count **/
+  static std::atomic<double> talsh_submitted_flops_;
   /** TAL-SH initialization status **/
   static bool talsh_initialized_;
   /** Number of instances of TAL-SH node executors **/

@@ -14,7 +14,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -42,7 +42,7 @@
 #define EXATN_TEST25
 #define EXATN_TEST26
 #define EXATN_TEST27
-#define EXATN_TEST28*/
+#define EXATN_TEST28
 #define EXATN_TEST29
 
 
@@ -2274,10 +2274,10 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit (4 nodes): 4
+  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit (1 node): 4
   const auto chi2 = std::min(chi1*chi1,512ULL);
   const auto chi3 = std::min(chi2*chi2,1024ULL);
-  const auto chi4 = std::min(chi3*chi3,2048ULL);
+  const auto chi4 = std::min(chi3*chi3,4096ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);

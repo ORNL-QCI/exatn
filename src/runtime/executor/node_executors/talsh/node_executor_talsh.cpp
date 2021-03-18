@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/03/13
+REVISION: 2021/03/18
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -27,6 +27,7 @@ namespace runtime {
 bool TalshNodeExecutor::talsh_initialized_{false};
 int TalshNodeExecutor::talsh_node_exec_count_{0};
 std::atomic<std::size_t> TalshNodeExecutor::talsh_host_mem_buffer_size_{0};
+std::atomic<double> TalshNodeExecutor::talsh_submitted_flops_{0.0};
 
 std::mutex talsh_init_lock;
 
@@ -98,7 +99,8 @@ std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 
 double TalshNodeExecutor::getTotalFlopCount() const
 {
- return talsh::getTotalFlopCount();
+ //return talsh::getTotalFlopCount();
+ return talsh_submitted_flops_.load();
 }
 
 
@@ -536,6 +538,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpAdd & op,
   assert(false);
  }
 
+ double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
+ talsh_submitted_flops_.store(flop_count);
+
  auto error_code = tens0.accumulate((task_res.first)->second.get(),
                                     op.getIndexPatternReduced(),
                                     tens1,
@@ -605,6 +610,9 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   op.printIt();
   assert(false);
  }
+
+ double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
+ talsh_submitted_flops_.store(flop_count);
 
  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor contraction " << op.getIndexPattern() << std::endl; //debug
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
