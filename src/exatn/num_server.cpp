@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/17
+REVISION: 2021/03/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -484,6 +484,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                            << "]: Found the optimal contraction sequence across all processes" << std::endl;
 #endif
+ if(logging_ > 0) network.printContractionSequence(logfile_);
 
  //Generate the primitive tensor operation list:
  auto & op_list = network.getOperationList(contr_seq_optimizer_,(num_procs > 1));

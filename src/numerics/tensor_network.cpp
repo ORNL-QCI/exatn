@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/03/13
+REVISION: 2021/03/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,6 +62,60 @@ bool tensorNameIsIntermediate(const Tensor & tensor,
  }
  if(network_output != nullptr) *network_output = out;
  return res;
+}
+
+
+double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn & right_tensor,
+                                double * total_volume, double * diff_volume,
+                                double * arithm_intensity, bool adjust_cost)
+{
+ double flops = 0.0, left_vol = 1.0, right_vol = 1.0, contr_vol = 1.0;
+ const auto left_id = left_tensor.getTensorId();
+ const auto left_rank = left_tensor.getNumLegs();
+ const auto right_id = right_tensor.getTensorId();
+ const auto right_rank = right_tensor.getNumLegs();
+ const auto & right_legs = right_tensor.getTensorLegs();
+ for(unsigned int i = 0; i < left_rank; ++i){
+  left_vol *= static_cast<double>(left_tensor.getDimExtent(i));
+ }
+ for(unsigned int i = 0; i < right_rank; ++i){
+  double dim_ext = static_cast<double>(right_tensor.getDimExtent(i));
+  if(right_legs[i].getTensorId() == left_id) contr_vol *= dim_ext; //contracted dimension
+  right_vol *= dim_ext;
+ }
+ flops = left_vol * right_vol / contr_vol; //FMA flops (no FMA prefactor)
+ double tot_vol = left_vol + right_vol + (flops / contr_vol); //total volume of tensors
+ if(total_volume != nullptr) *total_volume = tot_vol;
+ if(diff_volume != nullptr) *diff_volume = (flops / contr_vol) - (left_vol + right_vol);
+ if(arithm_intensity != nullptr) *arithm_intensity = flops / tot_vol;
+ if(adjust_cost){ //increase the "effective" flop count if arithmetic intensity is low
+  //`Finish: flops *= f(arithm_intensity): [max --> 1]
+ }
+ return flops;
+}
+
+
+void printContractionSequence(const std::list<numerics::ContrTriple> & contr_seq)
+{
+ unsigned int i = 0;
+ for(const auto & contr: contr_seq){
+  std::cout << "{" << contr.result_id << ":" << contr.left_id << "," << contr.right_id << "}";
+  if(++i == 10){std::cout << std::endl; i = 0;}
+ }
+ if(i != 0) std::cout << std::endl;
+ return;
+}
+
+
+void printContractionSequence(std::ofstream & output_file, const std::list<numerics::ContrTriple> & contr_seq)
+{
+ unsigned int i = 0;
+ for(const auto & contr: contr_seq){
+  output_file << "{" << contr.result_id << ":" << contr.left_id << "," << contr.right_id << "}";
+  if(++i == 10){output_file << std::endl; i = 0;}
+ }
+ if(i != 0) output_file << std::endl;
+ return;
 }
 
 
@@ -2086,36 +2140,6 @@ void TensorNetwork::markOptimizableAllTensors()
 }
 
 
-double getTensorContractionCost(const TensorConn & left_tensor, const TensorConn & right_tensor,
-                                double * total_volume, double * diff_volume,
-                                double * arithm_intensity, bool adjust_cost)
-{
- double flops = 0.0, left_vol = 1.0, right_vol = 1.0, contr_vol = 1.0;
- const auto left_id = left_tensor.getTensorId();
- const auto left_rank = left_tensor.getNumLegs();
- const auto right_id = right_tensor.getTensorId();
- const auto right_rank = right_tensor.getNumLegs();
- const auto & right_legs = right_tensor.getTensorLegs();
- for(unsigned int i = 0; i < left_rank; ++i){
-  left_vol *= static_cast<double>(left_tensor.getDimExtent(i));
- }
- for(unsigned int i = 0; i < right_rank; ++i){
-  double dim_ext = static_cast<double>(right_tensor.getDimExtent(i));
-  if(right_legs[i].getTensorId() == left_id) contr_vol *= dim_ext; //contracted dimension
-  right_vol *= dim_ext;
- }
- flops = left_vol * right_vol / contr_vol; //FMA flops (no FMA prefactor)
- double tot_vol = left_vol + right_vol + (flops / contr_vol); //total volume of tensors
- if(total_volume != nullptr) *total_volume = tot_vol;
- if(diff_volume != nullptr) *diff_volume = (flops / contr_vol) - (left_vol + right_vol);
- if(arithm_intensity != nullptr) *arithm_intensity = flops / tot_vol;
- if(adjust_cost){ //increase the "effective" flop count if arithmetic intensity is low
-  //`Finish: flops *= f(arithm_intensity): [max --> 1]
- }
- return flops;
-}
-
-
 double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int right_id,
                                          double * total_volume, double * diff_volume,
                                          double * arithm_intensity, bool adjust_cost)
@@ -2603,6 +2627,20 @@ void TensorNetwork::printSplitIndexInfo(std::ofstream & output_file, bool with_a
  }
  output_file << "#END INFO\n";
  return;
+}
+
+
+void TensorNetwork::printContractionSequence() const
+{
+ std::cout << "TensorNetwork " << name_ << ": Contraction sequence:" << std::endl;
+ return exatn::numerics::printContractionSequence(contraction_seq_);
+}
+
+
+void TensorNetwork::printContractionSequence(std::ofstream & output_file) const
+{
+ output_file << "TensorNetwork " << name_ << ": Contraction sequence:" << std::endl;
+ return exatn::numerics::printContractionSequence(output_file,contraction_seq_);
 }
 
 

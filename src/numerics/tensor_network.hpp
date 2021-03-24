@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/03/13
+REVISION: 2021/03/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -81,7 +81,7 @@ using IndexSplit = std::vector<std::pair<SubspaceId, DimExtent>>; //Segment = [s
 
 //Tests whether a given tensor has a name referring to an intermediate tensor of a tensor network:
 bool tensorNameIsIntermediate(const Tensor & tensor,            //in: tensor
-                              bool * network_output = nullptr); //out: TRUE if the tensor is an intermediate output tensor of the tensor network
+                              bool * network_output = nullptr); //out: TRUE if the tensor is an intermediate tensor of the tensor network
 
 //Free function analogue of TensorNetwork::getContractionCost:
 double getTensorContractionCost(const TensorConn & left_tensor,
@@ -90,6 +90,11 @@ double getTensorContractionCost(const TensorConn & left_tensor,
                                 double * diff_volume = nullptr,
                                 double * arithm_intensity = nullptr,
                                 bool adjust_cost = false);
+
+/** Prints a tensor contraction sequence. **/
+void printContractionSequence(const std::list<numerics::ContrTriple> & contr_seq); //in: tensor contraction sequence
+void printContractionSequence(std::ofstream & output_file,                         //in: output file stream
+                              const std::list<numerics::ContrTriple> & contr_seq); //in: tensor contraction sequence
 
 
 class TensorNetwork{
@@ -408,12 +413,12 @@ public:
                                 double fma_flops = 0.0); //in: FMA flop count for the imported tensor contraction sequence
 
  /** Returns the currently stored tensor contraction sequence, if any. **/
- const std::list<ContrTriple> & exportContractionSequence(double * fma_flops = nullptr) const; //out: FMA flop count for the imported tensor contraction sequence
+ const std::list<ContrTriple> & exportContractionSequence(double * fma_flops = nullptr) const; //out: FMA flop count for the exported tensor contraction sequence
 
  /** Returns the list of tensor operations required for evaluating the tensor network.
      Parameter universal_indices set to TRUE will activate the universal index numeration
      such that a specific index appearing in different tensor operations will always
-     designate the same edge in the tensor network, and all tensors will carry real names. **/
+     designate the same edge in the tensor network, and all tensors will carry their real names. **/
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "metis",
                                                                 bool universal_indices = false);
 
@@ -434,19 +439,6 @@ public:
  const std::vector<std::pair<unsigned int, unsigned int>> *
  getSplitTensorInfo(const std::pair<TensorHashType,TensorHashType> & key) const;
 
- /** Prints information on index splitting within the tensor operation list. **/
- void printSplitIndexInfo(bool with_affected_tensors = false) const;
- void printSplitIndexInfo(std::ofstream & output_file,
-                          bool with_affected_tensors = false) const;
-
- /** Prints the currently cached tensor operation list. **/
- void printOperationList() const;
-
- /** Returns the FMA flop count estimate required for evaluating the tensor network,
-     if available (if getOperationList has already been invoked). The FMA flop count estimate
-     neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
- double getFMAFlops() const;
-
  /** Returns the maximal cumulative volume of intermediate tensors present
      at a time (if getOperationList has already been invoked). **/
  double getMaxIntermediatePresenceVolume() const;
@@ -455,11 +447,28 @@ public:
      the tensor network (if getOperationList has already been invoked). **/
  double getMaxIntermediateVolume(unsigned int * intermediate_rank = nullptr) const;
 
+ /** Returns the FMA flop count estimate required for evaluating the tensor network,
+     if available (if getOperationList has already been invoked). The FMA flop count estimate
+     neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
+ double getFMAFlops() const;
+
+ /** Prints information on index splitting within the tensor operation list. **/
+ void printSplitIndexInfo(bool with_affected_tensors = false) const;
+ void printSplitIndexInfo(std::ofstream & output_file,
+                          bool with_affected_tensors = false) const;
+
+ /** Prints the cached tensor contraction sequence. **/
+ void printContractionSequence() const;
+ void printContractionSequence(std::ofstream & output_file) const;
+
+ /** Prints the currently cached tensor operation list. **/
+ void printOperationList() const;
+
  /** Returns the entire tensor network printed in a symbolic form.
      The tensor network must already have its operation list generated. **/
  bool printTensorNetwork(std::string & network);
 
- /** Returns a non-owning pointer to a given tensor of the tensor network
+ /** PROTECTED: Returns a non-owning pointer to a given tensor of the tensor network
      together with its connections (legs). If not found, returns nullptr. **/
  TensorConn * getTensorConn(unsigned int tensor_id);
 
