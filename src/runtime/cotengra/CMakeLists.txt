@@ -24,7 +24,7 @@ if(Python_FOUND)
     ${LIBRARY_NAME} PUBLIC . ${Python_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/tpls/pybind11/include)
 
-  target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics Python::Python)
+  target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn exatn-utils exatn-numerics Python::Python)
 
   set(_bundle_name exatn_cotengra_optimizer)
   set_target_properties(
@@ -36,6 +36,11 @@ if(Python_FOUND)
                            ${CMAKE_CURRENT_SOURCE_DIR} FILES manifest.json)
                     
   exatn_configure_plugin_rpath(${LIBRARY_NAME})
+  install(TARGETS ${LIBRARY_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
+
+  if(EXATN_BUILD_TESTS)
+    add_subdirectory(tests)
+  endif()
 else()
   message(STATUS "${BoldYellow} Python Interpreter or Libs not found, skipping Cotengra Plugin Build.${ColorReset}")
 endif()
