@@ -1,6 +1,7 @@
 add_subdirectory(graph)
 add_subdirectory(optimizer)
 add_subdirectory(executor)
+add_subdirectory(cotengra)
 
 set(LIBRARY_NAME exatn-runtime)
 
