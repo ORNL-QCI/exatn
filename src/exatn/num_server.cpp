@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/29
+REVISION: 2021/03/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -347,7 +347,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
 {
  bool submitted = false;
  if(operation){
-  if(logging_ > 1){
+  if(logging_ > 1 || (validation_tracing_ && logging_ > 0)){
    logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
             << "]: Submitting tensor operation:" << std::endl;
    operation->printItFile(logfile_);
@@ -379,6 +379,28 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    }
   }
   if(submitted) tensor_rt_->submit(operation);
+  if(validation_tracing_ && submitted){
+   const auto opcode = operation->getOpcode();
+   if(opcode != TensorOpCode::NOOP && opcode != TensorOpCode::CREATE && opcode != TensorOpCode::DESTROY){
+    const auto num_out_operands = operation->getNumOperandsOut();
+    if(logging_ > 0 && num_out_operands > 0) logfile_ << "#Validation stamp";
+    for(unsigned int oper = 0; oper < num_out_operands; ++oper){
+     auto functor_norm1 = std::shared_ptr<TensorMethod>(new numerics::FunctorNorm1());
+     std::shared_ptr<TensorOperation> op_trace = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+     op_trace->setTensorOperand(operation->getTensorOperand(oper));
+     std::dynamic_pointer_cast<numerics::TensorOpTransform>(op_trace)->resetFunctor(functor_norm1);
+     submitted = tensor_rt_->submit(op_trace);
+     if(submitted){
+      submitted = tensor_rt_->sync(*op_trace);
+      if(logging_ > 0 && submitted){
+       double norm = std::dynamic_pointer_cast<numerics::FunctorNorm1>(functor_norm1)->getNorm();
+       logfile_ << " " << norm;
+      }
+     }
+    }
+    if(logging_ > 0 && num_out_operands > 0) logfile_ << std::endl << std::flush;
+   }
+  }
  }
  return submitted;
 }

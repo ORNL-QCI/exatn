@@ -15,7 +15,7 @@
 
 //Test activation:
 #define EXATN_TEST0
-#define EXATN_TEST1
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -34,16 +34,16 @@
 #define EXATN_TEST17
 //#define EXATN_TEST18 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST19
-//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)
+//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)*/
 #define EXATN_TEST21
-#define EXATN_TEST22
+/*#define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
 #define EXATN_TEST27
 #define EXATN_TEST28
-#define EXATN_TEST29
+#define EXATN_TEST29*/
 
 
 #ifdef EXATN_TEST0
@@ -62,6 +62,8 @@ TEST(NumServerTester, PerformanceExaTN)
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ //exatn::resetExecutionSerialization(true,true); //debug
 
  //exatn::activateFastMath(); //fast math (mixed-precision)
 
@@ -224,7 +226,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Synchronize ExaTN server:
  exatn::sync();
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
 }
 #endif
 
