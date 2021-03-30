@@ -5,6 +5,7 @@ Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "contraction_seq_optimizer_factory.hpp"
+#include "cotengra/contraction_seq_optimizer_cotengra.hpp"
 
 namespace exatn{
 
