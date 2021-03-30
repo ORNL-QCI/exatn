@@ -28,7 +28,7 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
   }
 
   const auto time_beg = std::chrono::high_resolution_clock::now();
-
+  // network.printIt();
   auto nx = py::module::import("networkx");
   auto oe = py::module::import("opt_einsum");
   auto ctg = py::module::import("cotengra");
@@ -42,7 +42,7 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
     // std::cout << "Tensor ID: " << tensorId << "\n";
     graph.attr("add_node")(tensorId);
     auto legs = tensor_conn.getTensorLegs();
-    tensor_rank_map[py::int_(tensorId)] = tensor_conn.getRank();
+    tensor_rank_map[py::int_(tensorId)] = tensor_conn.getDimExtents();
     if (tensorId > 0) {
       for (const auto &leg : legs) {
         graph.attr("add_edge")(tensorId, leg.getTensorId());
@@ -72,7 +72,7 @@ graph = globals()['network_gragh']
 rank_data = globals()['tensor_rank_data']
 shape_map = {}
 for tensor_id in rank_data:
-  shape_map[tensor_id] = ((2,) * rank_data[tensor_id])
+  shape_map[tensor_id] = tuple(rank_data[tensor_id])
 
 from opt_einsum.contract import Shaped
 inputs = []
@@ -99,10 +99,14 @@ views = list(map(Shaped, shapes))
   auto eq = locals["eq"];
   auto arrays = locals["views"];
   locals["target_size"] = target_slice_size;
+  // Cotengra number of iterations
+  const int max_repeats = 1000;
+  locals["max_repeats"] = max_repeats;
+
   // Create Cotengra HyperOptimizer:
   // Note: this config is for Sycamore circuits.
   py::exec(R"#(
-opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_size']},  max_repeats=1000, parallel='ray', progbar=True))#",
+opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_size']},  max_repeats=locals()['max_repeats'], parallel='auto', progbar=True))#",
            py::globals(), locals);
 
   // auto optimizer = ctg.attr("HyperOptimizer")();
@@ -166,6 +170,60 @@ opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_si
 
   auto slice_ids = tree.attr("sliced_inds");
   py::print(slice_ids);
+  auto iter = py::iter(slice_ids);
+  std::vector<std::pair<int, int>> slice_edges;
+  while (iter != py::iterator::sentinel()) {
+    locals["sliceIdx"] = *iter;
+    py::exec(
+        R"#(slice_edge = list(edge2ind.keys())[list(edge2ind.values()).index(locals()['sliceIdx'])])#",
+        py::globals(), locals);
+    const auto slice_edge = locals["slice_edge"].cast<std::pair<int, int>>();
+    std::cout << slice_edge.first << ":" << slice_edge.second << "\n";
+    slice_edges.emplace_back(slice_edge);
+    ++iter;
+  }
+
+  for (const auto &slice_edge : slice_edges) {
+    const int lhs_tensor_id = slice_edge.first;
+    const int rhs_tensor_id = slice_edge.second;
+    const auto lhsTensor = network.getTensor(lhs_tensor_id);
+    const auto rhsTensor = network.getTensor(rhs_tensor_id);
+    // lhsTensor->printIt();
+    // std::cout << "\n";
+    // rhsTensor->printIt();
+
+    const auto lhsTensorLegs = *(network.getTensorConnections(lhs_tensor_id));
+    const auto rhsTensorLegs = *(network.getTensorConnections(rhs_tensor_id));
+    bool foundLeg = false;
+    for (const auto &lhsTensorLeg : lhsTensorLegs) {
+      if (lhsTensorLeg.getTensorId() == rhs_tensor_id) {
+        foundLeg = true;
+        SliceIndex slice_index;
+        slice_index.tensor_id = lhsTensorLeg.getTensorId();
+        slice_index.leg_id = lhsTensorLeg.getDimensionId();
+        slice_inds.emplace_back(slice_index);
+        // std::cout << "Tensor ID: " << slice_index.tensor_id
+        //           << "; Leg: " << slice_index.leg_id << "\n";
+        break;
+      }
+    }
+    assert(foundLeg);
+    foundLeg = false;
+    for (const auto &rhsTensorLeg : rhsTensorLegs) {
+      if (rhsTensorLeg.getTensorId() == lhs_tensor_id) {
+        foundLeg = true;
+        SliceIndex slice_index;
+        slice_index.tensor_id = rhsTensorLeg.getTensorId();
+        slice_index.leg_id = rhsTensorLeg.getDimensionId();
+        slice_inds.emplace_back(slice_index);
+        // std::cout << "Tensor ID: " << slice_index.tensor_id
+        //           << "; Leg: " << slice_index.leg_id << "\n";
+        break;
+      }
+    }
+    assert(foundLeg);
+  }
+
   return flops;
 }
 
