@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/01/28
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -138,6 +138,13 @@ void TensorRuntime::resetLoggingLevel(int level)
  graph_executor_->resetLoggingLevel(level);
  logging_ = level;
  return;
+}
+
+
+void TensorRuntime::resetSerialization(bool serialize, bool validation_trace)
+{
+ while(!graph_executor_);
+ return graph_executor_->resetSerialization(serialize,validation_trace);
 }
 
 

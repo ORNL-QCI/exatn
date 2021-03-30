@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/02/20
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -115,7 +115,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
       if(logging_.load() != 0) logfile_ << ": Status = " << error_code;
       if(error_code == 0){ //tensor operation submitted for execution successfully
         if(logging_.load() != 0) logfile_ << ": Syncing ... ";
-        auto synced = this->node_executor_->sync(exec_handle,&error_code,false);
+        auto synced = this->node_executor_->sync(exec_handle,&error_code,serialize_.load());
         if(synced){ //tensor operation has completed immediately
           op->recordFinishTime();
           dag.setNodeExecuted(node,error_code);
@@ -179,7 +179,7 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
     while(executing_nodes != dag.executingNodesEnd()){
       int error_code;
       auto exec_handle = executing_nodes->second;
-      auto synced = this->node_executor_->sync(exec_handle,&error_code,false);
+      auto synced = this->node_executor_->sync(exec_handle,&error_code,serialize_.load());
       if(synced){ //tensor operation has completed
         VertexIdType node;
         executing_nodes = dag.extractExecutingNode(executing_nodes,&node);

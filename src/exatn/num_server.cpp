@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/24
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,7 +33,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), intra_comm_(communicator)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), intra_comm_(communicator), validation_tracing_(false)
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
@@ -59,7 +59,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
 NumServer::NumServer(const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), validation_tracing_(false)
 {
  num_processes_ = 1; process_rank_ = 0; global_process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
@@ -161,6 +161,22 @@ void NumServer::resetRuntimeLoggingLevel(int level)
  while(!tensor_rt_);
  bool synced = tensor_rt_->sync(); assert(synced);
  tensor_rt_->resetLoggingLevel(level);
+ return;
+}
+
+void NumServer::resetExecutionSerialization(bool serialize, bool validation_trace)
+{
+ while(!tensor_rt_);
+ bool synced = tensor_rt_->sync(); assert(synced);
+ validation_tracing_ = serialize && validation_trace;
+ tensor_rt_->resetSerialization(serialize,validation_tracing_);
+ if(logging_ > 0){
+  logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+           << "]: DAG execution serialization = " << serialize
+           << ": Validation tracing = " << validation_tracing_
+           << "; Tensor runtime synced" << std::endl << std::flush;
+ }
+ synced = tensor_rt_->sync(); assert(synced);
  return;
 }
 

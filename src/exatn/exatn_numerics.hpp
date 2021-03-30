@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/03/24
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -924,6 +924,12 @@ inline void resetLoggingLevel(int client_level = 0,
   resetRuntimeLoggingLevel(runtime_level);
   return;
  }
+
+
+/** Resets tensor operation execution serialization. **/
+inline void resetExecutionSerialization(bool serialize,
+                                        bool validation_trace = false)
+ {return numericalServer->resetExecutionSerialization(serialize,validation_trace);}
 
 
 /** Activates mixed-precision fast math operations on all devices (if available). **/

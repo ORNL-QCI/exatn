@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/01/28
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,6 +87,10 @@ public:
 
   /** Resets the logging level (0:none) [MAIN THREAD]. **/
   void resetLoggingLevel(int level = 0);
+
+  /** Enforces serialized (synchronized) execution of the DAG. **/
+  void resetSerialization(bool serialize,
+                          bool validation_trace = false);
 
   /** Activates mixed-precision fast math on all devices (if available). **/
   void activateFastMath();

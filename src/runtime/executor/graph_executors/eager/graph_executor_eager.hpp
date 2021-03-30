@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2020/06/22
+REVISION: 2021/03/29
 
-Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -20,13 +20,20 @@ class EagerGraphExecutor : public TensorGraphExecutor {
 
 public:
 
+  //EagerGraphExecutor(const EagerGraphExecutor &) = delete;
+  //EagerGraphExecutor & operator=(const EagerGraphExecutor &) = delete;
+  //EagerGraphExecutor(EagerGraphExecutor &&) = delete;
+  //EagerGraphExecutor & operator=(EagerGraphExecutor &&) = delete;
+
   virtual ~EagerGraphExecutor() = default;
 
   /** Traverses the DAG and executes all its nodes. **/
   virtual void execute(TensorGraph & dag) override;
 
   /** Regulates the tensor prefetch depth (0 turns prefetch off). **/
-  virtual void setPrefetchDepth(unsigned int depth) override {return;}
+  virtual void setPrefetchDepth(unsigned int depth) override {
+    return;
+  }
 
   const std::string name() const override {return "eager-dag-executor";}
   const std::string description() const override {return "Eager tensor graph executor";}

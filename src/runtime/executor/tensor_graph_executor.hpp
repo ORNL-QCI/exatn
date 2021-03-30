@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2021/02/20
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -44,14 +44,15 @@ public:
 
   TensorGraphExecutor():
    node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1), global_process_rank_(-1),
-   logging_(0), stopping_(false), active_(false), time_start_(exatn::Timer::timeInSecHR())
+   logging_(0), stopping_(false), active_(false), serialize_(false), validation_tracing_(false),
+   time_start_(exatn::Timer::timeInSecHR())
   {
   }
 
   TensorGraphExecutor(const TensorGraphExecutor &) = delete;
   TensorGraphExecutor & operator=(const TensorGraphExecutor &) = delete;
-  TensorGraphExecutor(TensorGraphExecutor &&) noexcept = delete;
-  TensorGraphExecutor & operator=(TensorGraphExecutor &&) noexcept = delete;
+  TensorGraphExecutor(TensorGraphExecutor &&) = delete;
+  TensorGraphExecutor & operator=(TensorGraphExecutor &&) = delete;
 
   virtual ~TensorGraphExecutor(){
     resetLoggingLevel();
@@ -89,6 +90,14 @@ public:
       if(level == 0) logfile_.close();
     }
     logging_.store(level);
+    return;
+  }
+
+  /** Enforces serialized (synchronized) execution of the DAG. **/
+  void resetSerialization(bool serialize,
+                          bool validation_trace = false) {
+    serialize_.store(serialize);
+    validation_tracing_.store(serialize && validation_trace);
     return;
   }
 
@@ -151,6 +160,8 @@ protected:
   std::atomic<int> logging_;      //logging level (0:none)
   std::atomic<bool> stopping_;    //signal to pause the execution thread
   std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
+  std::atomic<bool> serialize_;   //serialization of the DAG execution
+  std::atomic<bool> validation_tracing_; //validation tracing flag
   const double time_start_;       //start time stamp
   std::ofstream logfile_;         //logging file stream (output)
 };

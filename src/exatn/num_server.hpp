@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/08
+REVISION: 2021/03/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -171,6 +171,10 @@ public:
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
+
+ /** Resets tensor operation execution serialization. **/
+ void resetExecutionSerialization(bool serialize,
+                                  bool validation_trace = false);
 
  /** Activates mixed-precision fast math operations on all devices (if available). **/
  void activateFastMath();
@@ -780,6 +784,7 @@ private:
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
  BytePacket byte_packet_; //byte packet for exchanging tensor meta-data
  double time_start_; //time stamp of the Numerical Server start
+ bool validation_tracing_; //validation tracing flag
 };
 
 /** Numerical service singleton (numerical server) **/
