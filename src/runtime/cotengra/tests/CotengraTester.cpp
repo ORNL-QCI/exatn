@@ -55,11 +55,17 @@ TEST(CotengraTester, checkSimple) {
   }
 
   std::cout << "HOWDY\n";
+  circuit.printIt();
   auto cotengra =
       exatn::getService<exatn::numerics::ContractionSeqOptimizer>("cotengra");
   std::list<exatn::numerics::ContrTriple> results;
   cotengra->determineContractionSequence(
       circuit, results, [&]() -> unsigned int { return ++tensor_counter; });
+
+  for (const auto &ctrTrip : results) {
+    std::cout << "Contract: " << ctrTrip.left_id << " and " << ctrTrip.right_id << " --> "
+              << ctrTrip.result_id << "\n";
+  }
 }
 
 int main(int argc, char **argv) {

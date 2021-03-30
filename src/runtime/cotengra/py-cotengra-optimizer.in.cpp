@@ -105,7 +105,7 @@ views = list(map(Shaped, shapes))
         R"#(path_list, path_info = oe.contract_path(eq, *arrays, optimize=optimizer))#",
         py::globals(), locals);
     auto contract_path = locals["path_list"];
-    py::print(contract_path);
+    // py::print(contract_path);
     auto path_vec = contract_path.cast<std::vector<std::pair<int, int>>>();
     auto node_list = locals["node_list"].cast<std::vector<int>>();
 
@@ -125,18 +125,28 @@ views = list(map(Shaped, shapes))
       vector.resize(vector.size() - to_remove.size());
     };
 
+    contr_seq.clear();
     for (const auto &path_pair : path_vec) {
       const auto lhs_node = node_list[path_pair.first];
       const auto rhs_node = node_list[path_pair.second];
       // Remove these 2 nodes:
       remove_index(node_list, {path_pair.first, path_pair.second});
       const auto intermediate_tensor_id = intermediate_num_generator();
-      std::cout << "Contract: " << lhs_node << " and " << rhs_node << " --> "
-                << intermediate_tensor_id << "\n";
+      // std::cout << "Contract: " << lhs_node << " and " << rhs_node << " --> "
+      //           << intermediate_tensor_id << "\n";
       node_list.emplace_back(intermediate_tensor_id);
+      ContrTriple contrTriple;
+      contrTriple.result_id = intermediate_tensor_id;
+      contrTriple.left_id = lhs_node;
+      contrTriple.right_id = rhs_node;
+      contr_seq.emplace_back(contrTriple);
     }
 
-    return 0.0;
+    auto tree = optimizer.attr("best")["tree"];
+    // py::print(tree);
+    const double flops = tree.attr("contraction_cost")().cast<double>();
+    // std::cout << "Contraction cost: " << flops << "\n";
+    return flops;
   }
 
   virtual const std::string name() const override { return "cotengra"; }
