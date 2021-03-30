@@ -17,6 +17,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "contraction_seq_optimizer_heuro.hpp"
 #include "contraction_seq_optimizer_greed.hpp"
 #include "contraction_seq_optimizer_metis.hpp"
+#include "cotengra/contraction_seq_optimizer_cotengra.hpp"
 
 #include <string>
 #include <memory>

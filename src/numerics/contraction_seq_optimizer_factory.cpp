@@ -16,6 +16,7 @@ ContractionSeqOptimizerFactory::ContractionSeqOptimizerFactory()
  registerContractionSeqOptimizer("heuro",&ContractionSeqOptimizerHeuro::createNew);
  registerContractionSeqOptimizer("greed",&ContractionSeqOptimizerGreed::createNew);
  registerContractionSeqOptimizer("metis",&ContractionSeqOptimizerMetis::createNew);
+ registerContractionSeqOptimizer("cotengra",&ContractionSeqOptimizerCotengra::createNew);
 }
 
 void ContractionSeqOptimizerFactory::registerContractionSeqOptimizer(const std::string & name,

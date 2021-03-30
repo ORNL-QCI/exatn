@@ -7,9 +7,9 @@ if(Python_FOUND)
   get_filename_component(PYTHON_LIB_NAME ${Python_LIBRARIES} NAME)
   configure_file(
     py-cotengra-optimizer.in.cpp
-    ${CMAKE_BINARY_DIR}/src/runtime/cotengra/py-cotengra-optimizer.cpp)
+    ${CMAKE_BINARY_DIR}/src/numerics/cotengra/py-cotengra-optimizer.cpp)
   file(GLOB SRC
-       ${CMAKE_BINARY_DIR}/src/runtime/cotengra/py-cotengra-optimizer.cpp)
+       ${CMAKE_BINARY_DIR}/src/numerics/cotengra/py-cotengra-optimizer.cpp)
   
   set(CMAKE_CXX_FLAGS
        "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -O2 -g -pipe -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wformat -fexceptions --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=native -D_GNU_SOURCE -fPIC -fwrapv"
@@ -21,10 +21,11 @@ if(Python_FOUND)
   add_library(${LIBRARY_NAME} SHARED ${SRC})
 
   target_include_directories(
-    ${LIBRARY_NAME} PUBLIC . ${Python_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/tpls/pybind11/include)
+    ${LIBRARY_NAME} PUBLIC . .. ${Python_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/tpls/pybind11/include
+    ${CMAKE_SOURCE_DIR}/src/exatn)
 
-  target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn exatn-utils exatn-numerics Python::Python)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE CppMicroServices Python::Python exatn-utils)
 
   set(_bundle_name exatn_cotengra_optimizer)
   set_target_properties(
