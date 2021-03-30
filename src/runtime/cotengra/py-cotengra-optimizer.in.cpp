@@ -1,11 +1,11 @@
 #include "contraction_seq_optimizer.hpp"
 #include "cppmicroservices/BundleActivator.h"
 #include "cppmicroservices/BundleContext.h"
+#include "tensor_network.hpp"
 #include <dlfcn.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-#include "tensor_network.hpp"
 
 using namespace cppmicroservices;
 using namespace pybind11::literals;
@@ -15,7 +15,8 @@ namespace exatn {
 
 namespace numerics {
 
-class ContractionSeqOptimizerCotengra : public ContractionSeqOptimizer, public Identifiable {
+class ContractionSeqOptimizerCotengra : public ContractionSeqOptimizer,
+                                        public Identifiable {
 public:
   virtual double determineContractionSequence(
       const TensorNetwork &network, std::list<ContrTriple> &contr_seq,
@@ -29,10 +30,10 @@ public:
     auto nx = py::module::import("networkx");
     auto oe = py::module::import("opt_einsum");
     auto ctg = py::module::import("cotengra");
-    
+
     auto graph = nx.attr("Graph")();
     auto tensor_rank_map = py::dict();
- 
+
     for (auto it = network.cbegin(); it != network.cend(); ++it) {
       const auto tensorId = it->first;
       auto tensor_conn = it->second;
@@ -47,7 +48,7 @@ public:
       }
     }
     // py::print(tensor_rank_map);
-    
+
     auto globals = py::globals();
     globals["network_gragh"] = graph;
     globals["tensor_rank_data"] = tensor_rank_map;
@@ -63,7 +64,7 @@ edge2ind_map = {tuple(sorted(e)): oe.get_symbol(i) for i, e in enumerate(graph.e
       // py::print(locals["edge2ind_map"]);
       globals["edge2ind"] = locals["edge2ind_map"];
     }
-  auto py_src = R"#(
+    auto py_src = R"#(
 graph = globals()['network_gragh']
 rank_data = globals()['tensor_rank_data']
 shape_map = {}
@@ -79,7 +80,7 @@ for nd in graph.nodes:
     output = {edge2ind[tuple(sorted(e))] for e in graph.edges(nd)}
   else:
     inputs.append({edge2ind[tuple(sorted(e))] for e in graph.edges(nd)})
-    node_list.append(nd)
+    node_list.append(int(nd))
 
 eq = (",".join(["".join(i) for i in inputs]) + "->{}".format("".join(output)))
 shapes = []
@@ -89,23 +90,53 @@ for nd in graph.nodes:
 views = list(map(Shaped, shapes))
 )#";
 
-  // Execute and get the fixed expectation value.
-  auto locals = py::dict();
-  py::exec(py_src, py::globals(), locals);
-  auto eq = locals["eq"];
-  auto arrays = locals["views"];
-  auto opt_kwargs = pybind11::dict("max_repeats"_a = 16);
-  auto optimizer = ctg.attr("HyperOptimizer")(opt_kwargs);
-  // py::print(eq.attr("split")(",").attr("__len__")());
-  // py::print(arrays.attr("__len__")());
-  locals["optimizer"] = optimizer;
-  locals["arrays"] = arrays;
-  py::exec(
-      R"#(contract_path = oe.contract_path(eq, *arrays, optimize=optimizer))#",
-      py::globals(), locals);
-  auto contract_path = locals["contract_path"];
-  py::print(contract_path);
-  return 0.0;
+    // Execute and get the fixed expectation value.
+    auto locals = py::dict();
+    py::exec(py_src, py::globals(), locals);
+    auto eq = locals["eq"];
+    auto arrays = locals["views"];
+    auto opt_kwargs = pybind11::dict("max_repeats"_a = 16);
+    auto optimizer = ctg.attr("HyperOptimizer")();
+    // py::print(eq.attr("split")(",").attr("__len__")());
+    // py::print(arrays.attr("__len__")());
+    locals["optimizer"] = optimizer;
+    locals["arrays"] = arrays;
+    py::exec(
+        R"#(path_list, path_info = oe.contract_path(eq, *arrays, optimize=optimizer))#",
+        py::globals(), locals);
+    auto contract_path = locals["path_list"];
+    py::print(contract_path);
+    auto path_vec = contract_path.cast<std::vector<std::pair<int, int>>>();
+    auto node_list = locals["node_list"].cast<std::vector<int>>();
+
+    const auto remove_index = [](std::vector<int> &vector,
+                                 const std::vector<int> &to_remove) {
+      auto vector_base = vector.begin();
+      std::vector<int>::size_type down_by = 0;
+
+      for (auto iter = to_remove.cbegin(); iter < to_remove.cend();
+           iter++, down_by++) {
+        std::vector<int>::size_type next =
+            (iter + 1 == to_remove.cend() ? vector.size() : *(iter + 1));
+
+        std::move(vector_base + *iter + 1, vector_base + next,
+                  vector_base + *iter - down_by);
+      }
+      vector.resize(vector.size() - to_remove.size());
+    };
+
+    for (const auto &path_pair : path_vec) {
+      const auto lhs_node = node_list[path_pair.first];
+      const auto rhs_node = node_list[path_pair.second];
+      // Remove these 2 nodes:
+      remove_index(node_list, {path_pair.first, path_pair.second});
+      const auto intermediate_tensor_id = intermediate_num_generator();
+      std::cout << "Contract: " << lhs_node << " and " << rhs_node << " --> "
+                << intermediate_tensor_id << "\n";
+      node_list.emplace_back(intermediate_tensor_id);
+    }
+
+    return 0.0;
   }
 
   virtual const std::string name() const override { return "cotengra"; }
