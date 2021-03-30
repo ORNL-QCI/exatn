@@ -25,6 +25,8 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
     libpython_handle = dlopen("@PYTHON_LIB_NAME@", RTLD_LAZY | RTLD_GLOBAL);
     initialized = true;
   }
+  
+  const auto time_beg = std::chrono::high_resolution_clock::now();
 
   auto nx = py::module::import("networkx");
   auto oe = py::module::import("opt_einsum");
@@ -52,6 +54,7 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
   globals["network_gragh"] = graph;
   globals["tensor_rank_data"] = tensor_rank_map;
   globals["oe"] = oe;
+  globals["ctg"] = ctg;
   {
     auto py_src = R"#(
 graph = globals()['network_gragh']  
@@ -94,10 +97,14 @@ views = list(map(Shaped, shapes))
   py::exec(py_src, py::globals(), locals);
   auto eq = locals["eq"];
   auto arrays = locals["views"];
-  auto opt_kwargs = pybind11::dict("max_repeats"_a = 16);
-  auto optimizer = ctg.attr("HyperOptimizer")();
-  // py::print(eq.attr("split")(",").attr("__len__")());
-  // py::print(arrays.attr("__len__")());
+  // Create Cotengra HyperOptimizer:
+  // Note: this config is for Sycamore circuits.
+  py::exec(R"#(
+opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': 2**30},  max_repeats=1000, parallel='ray', progbar=True))#",
+           py::globals(), locals);
+
+  // auto optimizer = ctg.attr("HyperOptimizer")();
+  auto optimizer = locals["opt"];
   locals["optimizer"] = optimizer;
   locals["arrays"] = arrays;
   py::exec(
@@ -148,6 +155,11 @@ views = list(map(Shaped, shapes))
   // py::print(tree);
   const double flops = tree.attr("contraction_cost")().cast<double>();
   // std::cout << "Contraction cost: " << flops << "\n";
+  const auto time_end = std::chrono::high_resolution_clock::now();
+  const auto time_total = std::chrono::duration_cast<std::chrono::duration<double>>(time_end - time_beg);
+  std::cout << "#DEBUG(ContractionSeqOptimizerCotengra): Done ("
+            << time_total.count() << " sec)\n";
+
   return flops;
 }
 
