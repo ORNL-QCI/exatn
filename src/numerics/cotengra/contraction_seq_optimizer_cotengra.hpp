@@ -21,11 +21,6 @@ public:
   const std::string name() const override { return "cotengra"; }
   const std::string description() const override { return ""; }
   static std::unique_ptr<ContractionSeqOptimizer> createNew();
-
-private:
-  bool initialized = false;
-  std::shared_ptr<pybind11::scoped_interpreter> guard;
-  void *libpython_handle = nullptr;
 };
 } // namespace numerics
 } // namespace exatn

@@ -16,6 +16,10 @@ namespace numerics {
 double ContractionSeqOptimizerCotengra::determineContractionSequence(
     const TensorNetwork &network, std::list<ContrTriple> &contr_seq,
     std::function<unsigned int()> intermediate_num_generator) {
+  static bool initialized = false;
+  static std::shared_ptr<pybind11::scoped_interpreter> guard;
+  static void *libpython_handle = nullptr;
+
   if (!initialized) {
     guard = std::make_shared<py::scoped_interpreter>();
     libpython_handle = dlopen("@PYTHON_LIB_NAME@", RTLD_LAZY | RTLD_GLOBAL);
@@ -136,6 +140,9 @@ views = list(map(Shaped, shapes))
     contrTriple.right_id = rhs_node;
     contr_seq.emplace_back(contrTriple);
   }
+
+  auto &lastSeq = contr_seq.back();
+  lastSeq.result_id = 0;
 
   auto tree = optimizer.attr("best")["tree"];
   // py::print(tree);
