@@ -15,7 +15,8 @@ namespace exatn {
 namespace numerics {
 double ContractionSeqOptimizerCotengra::determineContractionSequence(
     const TensorNetwork &network, std::list<ContrTriple> &contr_seq,
-    std::function<unsigned int()> intermediate_num_generator) {
+    std::function<unsigned int()> intermediate_num_generator,
+    uint64_t target_slice_size, std::list<SliceIndex> &slice_inds) {
   static bool initialized = false;
   static std::shared_ptr<pybind11::scoped_interpreter> guard;
   static void *libpython_handle = nullptr;
@@ -25,7 +26,7 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
     libpython_handle = dlopen("@PYTHON_LIB_NAME@", RTLD_LAZY | RTLD_GLOBAL);
     initialized = true;
   }
-  
+
   const auto time_beg = std::chrono::high_resolution_clock::now();
 
   auto nx = py::module::import("networkx");
@@ -97,10 +98,11 @@ views = list(map(Shaped, shapes))
   py::exec(py_src, py::globals(), locals);
   auto eq = locals["eq"];
   auto arrays = locals["views"];
+  locals["target_size"] = target_slice_size;
   // Create Cotengra HyperOptimizer:
   // Note: this config is for Sycamore circuits.
   py::exec(R"#(
-opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': 2**30},  max_repeats=1000, parallel='ray', progbar=True))#",
+opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_size']},  max_repeats=1000, parallel='ray', progbar=True))#",
            py::globals(), locals);
 
   // auto optimizer = ctg.attr("HyperOptimizer")();
@@ -156,10 +158,14 @@ opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': 2**30},  max_repeat
   const double flops = tree.attr("contraction_cost")().cast<double>();
   // std::cout << "Contraction cost: " << flops << "\n";
   const auto time_end = std::chrono::high_resolution_clock::now();
-  const auto time_total = std::chrono::duration_cast<std::chrono::duration<double>>(time_end - time_beg);
+  const auto time_total =
+      std::chrono::duration_cast<std::chrono::duration<double>>(time_end -
+                                                                time_beg);
   std::cout << "#DEBUG(ContractionSeqOptimizerCotengra): Done ("
             << time_total.count() << " sec)\n";
 
+  auto slice_ids = tree.attr("sliced_inds");
+  py::print(slice_ids);
   return flops;
 }
 
