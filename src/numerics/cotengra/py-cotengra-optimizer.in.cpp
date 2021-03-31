@@ -169,7 +169,7 @@ opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_si
             << time_total.count() << " sec): " << flops << " flops.\n";
 
   auto slice_ids = tree.attr("sliced_inds");
-  py::print(slice_ids);
+  // py::print(slice_ids);
   auto iter = py::iter(slice_ids);
   std::vector<std::pair<int, int>> slice_edges;
   while (iter != py::iterator::sentinel()) {
@@ -178,7 +178,7 @@ opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_si
         R"#(slice_edge = list(edge2ind.keys())[list(edge2ind.values()).index(locals()['sliceIdx'])])#",
         py::globals(), locals);
     const auto slice_edge = locals["slice_edge"].cast<std::pair<int, int>>();
-    std::cout << slice_edge.first << ":" << slice_edge.second << "\n";
+    // std::cout << slice_edge.first << ":" << slice_edge.second << "\n";
     slice_edges.emplace_back(slice_edge);
     ++iter;
   }
