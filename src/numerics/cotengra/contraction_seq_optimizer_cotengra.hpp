@@ -4,10 +4,6 @@
 #include "contraction_seq_optimizer.hpp"
 #include "Identifiable.hpp"
 
-namespace pybind11 {
-class scoped_interpreter;
-}
-
 namespace exatn {
 namespace numerics {
 

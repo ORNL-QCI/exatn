@@ -166,7 +166,7 @@ opt = ctg.HyperOptimizer(slicing_reconf_opts={'target_size': locals()['target_si
       std::chrono::duration_cast<std::chrono::duration<double>>(time_end -
                                                                 time_beg);
   std::cout << "#DEBUG(ContractionSeqOptimizerCotengra): Done ("
-            << time_total.count() << " sec)\n";
+            << time_total.count() << " sec): " << flops << " flops.\n";
 
   auto slice_ids = tree.attr("sliced_inds");
   py::print(slice_ids);
