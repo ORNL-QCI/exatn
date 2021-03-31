@@ -63,6 +63,12 @@ target_include_directories(${LIBRARY_NAME}
                            ${CMAKE_SOURCE_DIR}/src/exatn)
 target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor exatn-utils metis GKlib)
 
+find_package(Python COMPONENTS Interpreter Development)
+if(Python_FOUND)
+# Link to Cotengra wrapper as well if it was built (Python Found)
+target_link_libraries(${LIBRARY_NAME} PRIVATE exatn-cotengra-optimizer)
+endif()
+
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
 add_dependencies(${LIBRARY_NAME} exatensor-build)
@@ -75,3 +81,5 @@ file (GLOB HEADERS *.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+
+add_subdirectory(cotengra)

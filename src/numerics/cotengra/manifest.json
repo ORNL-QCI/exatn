@@ -1,0 +1,6 @@
+{
+  "bundle.symbolic_name" : "exatn_cotengra_optimizer",
+  "bundle.activator" : true,
+  "bundle.name" : "ExaTN Runtime wrapper of cotengra library",
+  "bundle.description" : ""
+}
