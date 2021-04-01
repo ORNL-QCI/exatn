@@ -7,12 +7,14 @@
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
+
 using namespace cppmicroservices;
 using namespace pybind11::literals;
 namespace py = pybind11;
 
 namespace exatn {
 namespace numerics {
+
 double ContractionSeqOptimizerCotengra::determineContractionSequence(
     const TensorNetwork &network, std::list<ContrTriple> &contr_seq,
     std::function<unsigned int()> intermediate_num_generator,
@@ -58,7 +60,7 @@ double ContractionSeqOptimizerCotengra::determineContractionSequence(
   globals["ctg"] = ctg;
   {
     auto py_src = R"#(
-graph = globals()['network_gragh']  
+graph = globals()['network_gragh']
 edge2ind_map = {tuple(sorted(e)): oe.get_symbol(i) for i, e in enumerate(graph.edges)}
 )#";
 
@@ -89,7 +91,7 @@ eq = (",".join(["".join(i) for i in inputs]) + "->{}".format("".join(output)))
 shapes = []
 for nd in graph.nodes:
   if nd != 0:
-    shapes.append(shape_map[nd])    
+    shapes.append(shape_map[nd])
 views = list(map(Shaped, shapes))
 )#";
 
@@ -100,7 +102,7 @@ views = list(map(Shaped, shapes))
   auto arrays = locals["views"];
   locals["target_size"] = target_slice_size;
   // Cotengra number of iterations
-  const int max_repeats = 1000;
+  const int max_repeats = 100;
   locals["max_repeats"] = max_repeats;
 
   // Create Cotengra HyperOptimizer:

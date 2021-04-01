@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2020/08/11
+REVISION: 2021/04/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Thien Ngyuen, Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
 **/
@@ -33,8 +33,8 @@ struct ContrTriple{
 
 // Tensor Slice Info
 struct SliceIndex {
-  unsigned int tensor_id; // id of the tensor
-  unsigned int leg_id;    // leg id of the tensor which we should slice.
+ unsigned int tensor_id; // id of the tensor
+ unsigned int leg_id;    // leg id of the tensor which we should slice.
 };
 
 class TensorNetwork;
@@ -66,19 +66,19 @@ public:
                                              std::function<unsigned int ()> intermediate_num_generator) = 0;
 
  /** Determines the pseudo-optimal tensor contraction sequence required for
-     evaluating a given tensor network.
-     - target_slice_size (in bytes): slice until largest tensor is at maximum
-    this size
-     - slice_inds: list of slice indices (tensor Id and leg Id pairs)
+     evaluating a given tensor network:
+     - target_slice_size (in bytes): slice until largest tensor is at maximum this size;
+     - slice_inds: list of slice indices (tensor Id and leg Id pairs).
      If the ContractionSeqOptimizer sub-class doesn't explicitly implement this
-    method, will just fallback to the above non-slicing method.**/
- virtual double determineContractionSequence(
-     const TensorNetwork &network, std::list<ContrTriple> &contr_seq,
-     std::function<unsigned int()> intermediate_num_generator,
-     uint64_t target_slice_size, std::list<SliceIndex> &slice_inds) {
-   return determineContractionSequence(network, contr_seq,
-                                       intermediate_num_generator);
+     method, will just fallback to the above non-slicing method. **/
+ virtual double determineContractionSequence(const TensorNetwork & network,
+                                             std::list<ContrTriple> & contr_seq,
+                                             std::function<unsigned int()> intermediate_num_generator,
+                                             uint64_t target_slice_size,
+                                             std::list<SliceIndex> &slice_inds) {
+  return determineContractionSequence(network, contr_seq, intermediate_num_generator);
  }
+
  /** Caches the determined pseudo-optimal tensor contraction sequence for a given
      tensor network for a later retrieval for the same tensor networks. Returns TRUE
      on success, FALSE in case this tensor network has already been cached before. **/
