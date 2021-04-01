@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header
-REVISION: 2021/03/29
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -893,8 +893,8 @@ inline void resetContrSeqOptimizer(const std::string & optimizer_name)
 
 
 /** Activates optimized tensor contraction sequence caching for later reuse. **/
-inline void activateContrSeqCaching()
- {return numericalServer->activateContrSeqCaching();}
+inline void activateContrSeqCaching(bool persist = false)
+ {return numericalServer->activateContrSeqCaching(persist);}
 
 
 /** Deactivates optimized tensor contraction sequence caching. **/
@@ -930,6 +930,11 @@ inline void resetLoggingLevel(int client_level = 0,
 inline void resetExecutionSerialization(bool serialize,
                                         bool validation_trace = false)
  {return numericalServer->resetExecutionSerialization(serialize,validation_trace);}
+
+
+/** Activates/deactivates dry run (no actual computations). **/
+inline void activateDryRun(bool dry_run)
+ {return numericalServer->activateDryRun(dry_run);}
 
 
 /** Activates mixed-precision fast math operations on all devices (if available). **/

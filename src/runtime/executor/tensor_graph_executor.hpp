@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2021/03/29
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -99,6 +99,12 @@ public:
     serialize_.store(serialize);
     validation_tracing_.store(serialize && validation_trace);
     return;
+  }
+
+  /** Activates/deactivates dry run (no actual computations). **/
+  void activateDryRun(bool dry_run) {
+   while(!node_executor_);
+   return node_executor_->activateDryRun(dry_run);
   }
 
   /** Activates mixed-precision fast math on all devices (if available). **/

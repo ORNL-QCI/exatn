@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/30
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -129,14 +129,16 @@ void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool 
  return;
 }
 
-void NumServer::activateContrSeqCaching()
+void NumServer::activateContrSeqCaching(bool persist)
 {
+ numerics::ContractionSeqOptimizer::activatePersistentCaching(persist);
  contr_seq_caching_ = true;
  return;
 }
 
 void NumServer::deactivateContrSeqCaching()
 {
+ numerics::ContractionSeqOptimizer::activatePersistentCaching(false);
  contr_seq_caching_ = false;
  return;
 }
@@ -175,6 +177,19 @@ void NumServer::resetExecutionSerialization(bool serialize, bool validation_trac
            << "]: DAG execution serialization = " << serialize
            << ": Validation tracing = " << validation_tracing_
            << "; Tensor runtime synced" << std::endl << std::flush;
+ }
+ synced = tensor_rt_->sync(); assert(synced);
+ return;
+}
+
+void NumServer::activateDryRun(bool dry_run)
+{
+ while(!tensor_rt_);
+ bool synced = tensor_rt_->sync(); assert(synced);
+ tensor_rt_->activateDryRun(dry_run);
+ if(logging_ > 0){
+  logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+           << "]: Dry run activation status = " << dry_run << std::endl << std::flush;
  }
  synced = tensor_rt_->sync(); assert(synced);
  return;

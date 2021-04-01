@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/03/29
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -158,7 +158,7 @@ public:
                              bool caching = false);              //whether or not optimized tensor contraction sequence will be cached for later reuse
 
  /** Activates optimized tensor contraction sequence caching for later reuse. **/
- void activateContrSeqCaching();
+ void activateContrSeqCaching(bool persist = false);
 
  /** Deactivates optimized tensor contraction sequence caching. **/
  void deactivateContrSeqCaching();
@@ -175,6 +175,9 @@ public:
  /** Resets tensor operation execution serialization. **/
  void resetExecutionSerialization(bool serialize,
                                   bool validation_trace = false);
+
+ /** Activates/deactivates dry run (no actual computations). **/
+ void activateDryRun(bool dry_run);
 
  /** Activates mixed-precision fast math operations on all devices (if available). **/
  void activateFastMath();

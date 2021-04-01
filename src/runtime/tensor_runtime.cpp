@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/03/29
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -145,6 +145,13 @@ void TensorRuntime::resetSerialization(bool serialize, bool validation_trace)
 {
  while(!graph_executor_);
  return graph_executor_->resetSerialization(serialize,validation_trace);
+}
+
+
+void TensorRuntime::activateDryRun(bool dry_run)
+{
+ while(!graph_executor_);
+ return graph_executor_->activateDryRun(dry_run);
 }
 
 

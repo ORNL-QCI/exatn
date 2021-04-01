@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/07/06
+REVISION: 2021/04/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) METIS graph is a weighted undirectional simple graph where both
@@ -15,6 +15,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "metis.h"
 
 #include "tensor_basic.hpp"
+#include "packable.hpp"
 
 #include <vector>
 
@@ -27,7 +28,7 @@ namespace numerics{
 class TensorNetwork;
 
 
-class MetisGraph{
+class MetisGraph: public Packable {
 
 public:
 
@@ -59,11 +60,17 @@ public:
  MetisGraph(const MetisGraph & parent,                    //in: partitioned parental graph
             const std::vector<std::size_t> & partitions); //in: partitions of the parental graph
 
+ /** Unpacks a previously packed graph from a byte packet. **/
+ MetisGraph(BytePacket & byte_packet);
+
  MetisGraph(const MetisGraph &) = default;
  MetisGraph & operator=(const MetisGraph &) = default;
  MetisGraph(MetisGraph &&) noexcept = default;
  MetisGraph & operator=(MetisGraph &&) noexcept = default;
  ~MetisGraph() = default;
+
+ void pack(BytePacket & byte_packet) const override;
+ void unpack(BytePacket & byte_packet) override;
 
  /** Compares two METIS graphs for equality/inequality. **/
  friend bool operator==(const MetisGraph & lhs, const MetisGraph & rhs);
