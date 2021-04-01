@@ -75,7 +75,7 @@ public:
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int()> intermediate_num_generator,
                                              uint64_t target_slice_size,
-                                             std::list<SliceIndex> &slice_inds) {
+                                             std::list<SliceIndex> & slice_inds) {
   return determineContractionSequence(network, contr_seq, intermediate_num_generator);
  }
 
@@ -93,6 +93,9 @@ public:
      no previously cached tensor contraction sequence has been found. **/
  static std::pair<const std::list<ContrTriple> *, double> findContractionSequence(const TensorNetwork & network); //in: tensor network
 
+ /** Activates/deactivates disk caching of tensor contraction sequences. **/
+ static void activatePersistentCaching(bool persist);
+
 private:
 
  //Cached optimized tensor contraction sequence:
@@ -104,6 +107,7 @@ private:
 
  /** Cached tensor contraction sequences. **/
  static std::unordered_map<std::string,CachedContrSeq> cached_contr_seqs_; //tensor network name --> optimized tensor contraction sequence
+ static bool cache_to_disk_; //will additionally cache tensor contraction sequences to disk files
 };
 
 using createContractionSeqOptimizerFn = std::unique_ptr<ContractionSeqOptimizer> (*)(void);

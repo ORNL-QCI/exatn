@@ -2228,6 +2228,10 @@ TEST(NumServerTester, neurIPS) {
 
  //exatn::resetLoggingLevel(1,2); //debug
 
+ //exatn::activateContrSeqCaching(true);
+
+ //exatn::activateFastMath();
+
  bool success = true;
 
  //3:1 1D MERA:

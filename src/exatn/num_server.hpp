@@ -158,7 +158,7 @@ public:
                              bool caching = false);              //whether or not optimized tensor contraction sequence will be cached for later reuse
 
  /** Activates optimized tensor contraction sequence caching for later reuse. **/
- void activateContrSeqCaching();
+ void activateContrSeqCaching(bool persist = false);
 
  /** Deactivates optimized tensor contraction sequence caching. **/
  void deactivateContrSeqCaching();
