@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/03/31
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -77,6 +77,13 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
  }
  ++talsh_node_exec_count_;
  talsh_init_lock.unlock();
+ return;
+}
+
+
+void TalshNodeExecutor::activateDryRun(bool dry_run)
+{
+ dry_run_.store(dry_run);
  return;
 }
 
