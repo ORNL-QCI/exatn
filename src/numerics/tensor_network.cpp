@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/03/24
+REVISION: 2021/03/31
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2229,7 +2229,8 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
     op->setTensorOperand(tensor1,conj1);
     op->setTensorOperand(tensor2,conj2);
     op->setIndexPattern(contr_pattern);
-    if(!ACCUMULATIVE_CONTRACTIONS) std::dynamic_pointer_cast<TensorOpContract>(op)->resetAccumulative(false);
+    if(!ACCUMULATIVE_CONTRACTIONS && contr->result_id != 0) //no accumulation into intermediate tensors
+     std::dynamic_pointer_cast<TensorOpContract>(op)->resetAccumulative(false);
     assert(op->isSet());
     operations_.emplace_back(op);
     auto left_intermediate = std::find(intermediates.begin(),intermediates.end(),contr->left_id);
