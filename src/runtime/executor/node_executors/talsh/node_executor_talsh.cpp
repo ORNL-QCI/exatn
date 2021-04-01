@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/03/18
+REVISION: 2021/03/31
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -24,8 +24,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 namespace exatn {
 namespace runtime {
 
-bool TalshNodeExecutor::talsh_initialized_{false};
-int TalshNodeExecutor::talsh_node_exec_count_{0};
+std::atomic<bool> TalshNodeExecutor::talsh_initialized_{false};
+std::atomic<int> TalshNodeExecutor::talsh_node_exec_count_{0};
 std::atomic<std::size_t> TalshNodeExecutor::talsh_host_mem_buffer_size_{0};
 std::atomic<double> TalshNodeExecutor::talsh_submitted_flops_{0.0};
 
@@ -59,7 +59,7 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
   const bool debugging = false;
 #endif
  talsh_init_lock.lock();
- if(!talsh_initialized_){
+ if(!(talsh_initialized_.load())){
   std::size_t host_mem_buffer_size = DEFAULT_MEM_BUFFER_SIZE;
   int64_t provided_buf_size = 0;
   if(parameters.getParameter("host_memory_buffer_size",&provided_buf_size))
@@ -69,7 +69,7 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
    talsh_host_mem_buffer_size_.store(host_mem_buffer_size);
    if(debugging) std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): TAL-SH initialized with Host buffer size of " <<
     talsh_host_mem_buffer_size_.load() << " bytes" << std::endl << std::flush; //debug
-   talsh_initialized_ = true;
+   talsh_initialized_.store(true);
   }else{
    std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to initialize TAL-SH!" << std::endl << std::flush;
    assert(false);
@@ -83,6 +83,7 @@ void TalshNodeExecutor::initialize(const ParamConf & parameters)
 
 void TalshNodeExecutor::activateFastMath()
 {
+ while(!(talsh_initialized_.load()));
  auto activated = talsh::enableFastMath(DEV_HOST);
  activated = talsh::enableFastMath(DEV_NVIDIA_GPU);
  return;
@@ -91,6 +92,7 @@ void TalshNodeExecutor::activateFastMath()
 
 std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 {
+ while(!(talsh_initialized_.load()));
  std::size_t buf_size = 0;
  while(buf_size == 0) buf_size = talsh_host_mem_buffer_size_.load();
  return buf_size;
@@ -99,7 +101,6 @@ std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 
 double TalshNodeExecutor::getTotalFlopCount() const
 {
- //return talsh::getTotalFlopCount();
  return talsh_submitted_flops_.load();
 }
 
@@ -114,7 +115,7 @@ TalshNodeExecutor::~TalshNodeExecutor()
  auto synced = sync(); assert(synced);
  talsh_init_lock.lock();
  --talsh_node_exec_count_;
- if(talsh_initialized_ && talsh_node_exec_count_ == 0){
+ if(talsh_initialized_.load() && talsh_node_exec_count_.load() == 0){
   tasks_.clear();
   tensors_.clear();
   talsh::printStatistics();
@@ -125,7 +126,7 @@ TalshNodeExecutor::~TalshNodeExecutor()
     std::cout << "#DEBUG(exatn::runtime::TalshNodeExecutor): Max encountered actual (reduced) tensor rank = "
               << max_tensor_rank_ << std::endl << std::flush;
    }
-   talsh_initialized_ = false;
+   talsh_initialized_.store(false);
   }else{
    std::cerr << "#FATAL(exatn::runtime::TalshNodeExecutor): Unable to shut down TAL-SH!" << std::endl;
    assert(false);
