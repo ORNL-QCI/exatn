@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Graph k-way partitioning via METIS
-REVISION: 2020/07/06
+REVISION: 2021/04/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "metis_graph.hpp"
 
@@ -188,6 +188,70 @@ MetisGraph::MetisGraph(const MetisGraph & parent,                    //in: parti
  for(idx_t vert = 0; vert < parent.renumber_.size(); ++vert){
   if(is_contained(parent.partitions_[vert])) renumber_.emplace_back(parent.renumber_[vert]);
  }
+}
+
+
+MetisGraph::MetisGraph(BytePacket & byte_packet):
+ MetisGraph()
+{
+ unpack(byte_packet);
+}
+
+
+void MetisGraph::pack(BytePacket & byte_packet) const
+{
+ //num_vertices_:
+ appendToBytePacket(&byte_packet,num_vertices_);
+ //renumber_:
+ std::size_t length = renumber_.size();
+ appendToBytePacket(&byte_packet,length);
+ for(std::size_t i = 0; i < length; ++i) appendToBytePacket(&byte_packet,renumber_[i]);
+ //xadj_:
+ length = xadj_.size();
+ appendToBytePacket(&byte_packet,length);
+ for(std::size_t i = 0; i < length; ++i) appendToBytePacket(&byte_packet,xadj_[i]);
+ //adjncy_:
+ length = adjncy_.size();
+ appendToBytePacket(&byte_packet,length);
+ for(std::size_t i = 0; i < length; ++i) appendToBytePacket(&byte_packet,adjncy_[i]);
+ //vwgt_:
+ length = vwgt_.size();
+ appendToBytePacket(&byte_packet,length);
+ for(std::size_t i = 0; i < length; ++i) appendToBytePacket(&byte_packet,vwgt_[i]);
+ //adjwgt_:
+ length = adjwgt_.size();
+ appendToBytePacket(&byte_packet,length);
+ for(std::size_t i = 0; i < length; ++i) appendToBytePacket(&byte_packet,adjwgt_[i]);
+ return;
+}
+
+
+void MetisGraph::unpack(BytePacket & byte_packet)
+{
+ //num_vertices_:
+ extractFromBytePacket(&byte_packet,num_vertices_);
+ //renumber_:
+ std::size_t length = 0;
+ extractFromBytePacket(&byte_packet,length);
+ renumber_.resize(length);
+ for(std::size_t i = 0; i < length; ++i) extractFromBytePacket(&byte_packet,renumber_[i]);
+ //xadj_:
+ extractFromBytePacket(&byte_packet,length);
+ xadj_.resize(length);
+ for(std::size_t i = 0; i < length; ++i) extractFromBytePacket(&byte_packet,xadj_[i]);
+ //adjncy_:
+ extractFromBytePacket(&byte_packet,length);
+ adjncy_.resize(length);
+ for(std::size_t i = 0; i < length; ++i) extractFromBytePacket(&byte_packet,adjncy_[i]);
+ //vwgt_:
+ extractFromBytePacket(&byte_packet,length);
+ vwgt_.resize(length);
+ for(std::size_t i = 0; i < length; ++i) extractFromBytePacket(&byte_packet,vwgt_[i]);
+ //adjwgt_:
+ extractFromBytePacket(&byte_packet,length);
+ adjwgt_.resize(length);
+ for(std::size_t i = 0; i < length; ++i) extractFromBytePacket(&byte_packet,adjwgt_[i]);
+ return;
 }
 
 

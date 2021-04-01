@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2020/08/11
+REVISION: 2021/04/01
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
 **/
@@ -73,6 +73,9 @@ public:
      no previously cached tensor contraction sequence has been found. **/
  static std::pair<const std::list<ContrTriple> *, double> findContractionSequence(const TensorNetwork & network); //in: tensor network
 
+ /** Activates/deactivates disk caching of tensor contraction sequences. **/
+ static void activatePersistentCaching(bool persist);
+
 private:
 
  //Cached optimized tensor contraction sequence:
@@ -84,6 +87,7 @@ private:
 
  /** Cached tensor contraction sequences. **/
  static std::unordered_map<std::string,CachedContrSeq> cached_contr_seqs_; //tensor network name --> optimized tensor contraction sequence
+ static bool cache_to_disk_; //will additionally cache tensor contraction sequences to disk files
 };
 
 using createContractionSeqOptimizerFn = std::unique_ptr<ContractionSeqOptimizer> (*)(void);

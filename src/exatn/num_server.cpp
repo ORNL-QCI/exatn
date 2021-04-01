@@ -129,14 +129,16 @@ void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool 
  return;
 }
 
-void NumServer::activateContrSeqCaching()
+void NumServer::activateContrSeqCaching(bool persist)
 {
+ numerics::ContractionSeqOptimizer::activatePersistentCaching(persist);
  contr_seq_caching_ = true;
  return;
 }
 
 void NumServer::deactivateContrSeqCaching()
 {
+ numerics::ContractionSeqOptimizer::activatePersistentCaching(false);
  contr_seq_caching_ = false;
  return;
 }

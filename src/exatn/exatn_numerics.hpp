@@ -893,8 +893,8 @@ inline void resetContrSeqOptimizer(const std::string & optimizer_name)
 
 
 /** Activates optimized tensor contraction sequence caching for later reuse. **/
-inline void activateContrSeqCaching()
- {return numericalServer->activateContrSeqCaching();}
+inline void activateContrSeqCaching(bool persist = false)
+ {return numericalServer->activateContrSeqCaching(persist);}
 
 
 /** Deactivates optimized tensor contraction sequence caching. **/
