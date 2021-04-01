@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/03/18
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -30,7 +30,7 @@ public:
   static constexpr const std::size_t DEFAULT_MEM_BUFFER_SIZE = 2UL * 1024UL * 1024UL * 1024UL; //bytes
   static constexpr const int ALLREDUCE_CHUNK_SIZE = 64 * 1024 * 1024; //elements
 
-  TalshNodeExecutor(): max_tensor_rank_(-1), prefetch_enabled_(true) {}
+  TalshNodeExecutor(): max_tensor_rank_(-1), prefetch_enabled_(true), dry_run_(false) {}
 
   TalshNodeExecutor(const TalshNodeExecutor &) = delete;
   TalshNodeExecutor & operator=(const TalshNodeExecutor &) = delete;
@@ -40,6 +40,8 @@ public:
   virtual ~TalshNodeExecutor();
 
   void initialize(const ParamConf & parameters) override;
+
+  void activateDryRun(bool dry_run) override;
 
   void activateFastMath() override;
 
@@ -155,14 +157,16 @@ protected:
   int max_tensor_rank_;
   /** Prefetching enabled flag **/
   bool prefetch_enabled_;
+  /** Dry run (no actual computations) **/
+  std::atomic<bool> dry_run_;
   /** TAL-SH Host memory buffer size (bytes) **/
   static std::atomic<std::size_t> talsh_host_mem_buffer_size_;
   /** TAL-SH submitted Flop count **/
   static std::atomic<double> talsh_submitted_flops_;
   /** TAL-SH initialization status **/
-  static bool talsh_initialized_;
+  static std::atomic<bool> talsh_initialized_;
   /** Number of instances of TAL-SH node executors **/
-  static int talsh_node_exec_count_;
+  static std::atomic<int> talsh_node_exec_count_;
 };
 
 

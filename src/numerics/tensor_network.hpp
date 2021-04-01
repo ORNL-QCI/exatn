@@ -103,7 +103,7 @@ class TensorNetwork{
 
 public:
 
- static constexpr bool ACCUMULATIVE_CONTRACTIONS = true;
+ static constexpr bool ACCUMULATIVE_CONTRACTIONS = false;
 
  using Iterator = typename std::unordered_map<unsigned int, TensorConn>::iterator; //iterator
  using ConstIterator = typename std::unordered_map<unsigned int, TensorConn>::const_iterator; //constant iterator

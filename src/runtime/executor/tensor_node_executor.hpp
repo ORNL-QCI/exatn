@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2021/01/28
+REVISION: 2021/04/01
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -46,6 +46,9 @@ public:
 
   /** Explicitly initializes the underlying numerical service, if needed. **/
   virtual void initialize(const ParamConf & parameters) = 0;
+
+  /** Activates dry run (no actual computations). **/
+  virtual void activateDryRun(bool dry_run) = 0;
 
   /** Activates mixed-precision fast math on all devices (if available). **/
   virtual void activateFastMath() = 0;
