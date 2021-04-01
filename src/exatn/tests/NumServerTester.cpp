@@ -57,11 +57,11 @@ TEST(NumServerTester, PerformanceExaTN)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- const exatn::DimExtent DIM = 1024; //CPU: 1024 for low-end CPU, 2048 for high-end CPU
+ const exatn::DimExtent DIM = 4096; //CPU: 1024 for low-end CPU, 2048 for high-end CPU
                                     //3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,0); //debug
 
  //exatn::resetExecutionSerialization(true,true); //debug
 
@@ -166,7 +166,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  exatn::sync();
 
-/* REQUIRES at least 48 GB Host RAM:
+ //REQUIRES at least 48 GB Host RAM:
  //Create tensors:
  success = exatn::createTensor("A",TensorElementType::COMPLEX64,TensorShape{2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2}); assert(success);
  success = exatn::createTensor("B",TensorElementType::COMPLEX64,TensorShape{2,2,2,2,2,2,2,2,2,2,1,2,1,2,1,2,2,2,1,2,2,1,1,2,1,2,2,2,2,2,2,1,2,1,2,1,2,2,2,1}); assert(success);
@@ -193,7 +193,7 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
 
- exatn::sync(); */
+ exatn::sync();
 
  std::cout << "Tensor decomposition:" << std::endl;
  //Create tensors:
@@ -2226,14 +2226,14 @@ TEST(NumServerTester, neurIPS) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,0); //debug
 
  bool success = true;
 
  //3:1 1D MERA:
  {
   std::cout << "Evaluating a 3:1 MERA 1D diagram: ";
-  const exatn::DimExtent chi = 18; //Laptop: 18; Summit (4-8 nodes): 64
+  const exatn::DimExtent chi = 64; //Laptop: 18; Summit (4-8 nodes): 64
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
   success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi,chi,chi,chi}); assert(success);
@@ -2276,7 +2276,7 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit (1 node): 4
+  const exatn::DimExtent chi1 = 4; //Laptop: 3; Summit (1 node): 4
   const auto chi2 = std::min(chi1*chi1,512ULL);
   const auto chi3 = std::min(chi2*chi2,1024ULL);
   const auto chi4 = std::min(chi3*chi3,4096ULL);
@@ -2343,7 +2343,7 @@ TEST(NumServerTester, neurIPS) {
  //ML MERA:
  {
   std::cout << "Evaluating an ML MERA diagram: ";
-  const exatn::DimExtent chi1 = 4; //Laptop: 4; Summit (1 node): 10
+  const exatn::DimExtent chi1 = 10; //Laptop: 4; Summit (1 node): 10
   const auto chi2 = std::min(chi1*chi1,128ULL);
   const auto chi4 = std::min(chi2*chi2,1024ULL);
   success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi1}); assert(success);
@@ -3117,7 +3117,7 @@ int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
   //Set the available CPU Host RAM size to be used by ExaTN:
-  exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
+  exatn_parameters.setParameter("host_memory_buffer_size",48L*1024L*1024L*1024L);
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);
