@@ -50,7 +50,7 @@ protected:
 
  static constexpr const std::size_t PARTITION_FACTOR = 2;
  static constexpr const std::size_t PARTITION_MAX_SIZE = 3;
- static constexpr const std::size_t PARTITION_IMBALANCE_DEPTH = 16;
+ static constexpr const std::size_t PARTITION_IMBALANCE_DEPTH = 32;
  static constexpr const std::size_t PARTITION_GRANULARITY = PARTITION_IMBALANCE_DEPTH;
  static constexpr const double PARTITION_IMBALANCE = 1.3;
 
