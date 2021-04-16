@@ -130,6 +130,36 @@ TEST(NumericsTester, checkSharedTensorNetworkSymbolic)
 }
 
 
+TEST(NumericsTester, checkNetworkBuilders)
+{
+ //Get tensor network builders:
+ auto & network_build_factory = *(numerics::NetworkBuildFactory::get());
+ auto builder_mps = network_build_factory.createNetworkBuilderShared("MPS");
+ auto builder_ttn = network_build_factory.createNetworkBuilderShared("Tree");
+
+ //Building an MPS tensor network with 8 sites and max bond dimension of 6:
+ //  O-O-O-O-O-O-O-O
+ //  | | | | | | | |
+ auto success = builder_mps->setParameter("max_bond_dim",6); assert(success);
+ auto output_tensor_mps = makeSharedTensor("Z_MPS",std::vector<DimExtent>{2,2,2,2,2,2,2,2});
+ auto network_mps = makeSharedTensorNetwork("TensorTrain",output_tensor_mps,*builder_mps);
+ network_mps->printIt();
+
+ //Building a 3:1 Tree tensor network with 11 sites and max bond dimension of 24:
+ //          OOOOOOOOOOOO
+ //          |          |
+ //    OOOOOOOOOOOOO    O
+ //    |     |     |    |
+ //  OOOOO OOOOO OOOOO OOO
+ //  | | | | | | | | | | |
+ success = builder_ttn->setParameter("arity",3); assert(success);
+ success = builder_ttn->setParameter("max_bond_dim",24); assert(success);
+ auto output_tensor_ttn = makeSharedTensor("Z_TTN",std::vector<DimExtent>{2,2,2,2,2,2,2,2,2,2,2});
+ auto network_ttn = makeSharedTensorNetwork("TensorTree",output_tensor_ttn,*builder_ttn);
+ network_ttn->printIt();
+}
+
+
 TEST(NumericsTester, checkTensorExpansion)
 {
  //Building an MPS tensor network with 8 sites and max bond dimension of 6:
