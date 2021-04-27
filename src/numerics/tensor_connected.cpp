@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2020/12/28
+REVISION: 2021/04/27
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
 #include "tensor_symbol.hpp"
@@ -171,6 +171,17 @@ void TensorConn::conjugate()
 void TensorConn::conjugate(bool conjug)
 {
  if(conjugated_ != conjug) return conjugate();
+ return;
+}
+
+const Metadata & TensorConn::getMetadata() const
+{
+ return metadata_;
+}
+
+void TensorConn::attachMetadata(const Metadata & metadata)
+{
+ metadata_ = metadata;
  return;
 }
 

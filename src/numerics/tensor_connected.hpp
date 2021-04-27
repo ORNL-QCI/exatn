@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2020/12/28
+REVISION: 2021/04/27
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor inside a tensor network is generally connected
@@ -22,6 +22,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor_leg.hpp"
 #include "tensor.hpp"
+#include "metadata.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -117,6 +118,33 @@ public:
  void conjugate(); //changes the current conjugation status to the opposite
  void conjugate(bool conjug); //changes the conjugation status to the requested one
 
+ /** Retrieves metadata attached to the connected tensor. **/
+ const Metadata & getMetadata() const;
+
+ /** Attaches metadata to the connected tensor. **/
+ void attachMetadata(const Metadata & metadata);
+
+ /** Retrieves a specific key-value pair from metadata attached to the connected tensor:
+     Key is alphanumeric_ string, value is {integer/long, float/double, bool, string}.
+     If key is found, returns true, otherwise false. **/
+ template<typename ValueType>
+ bool retrieveMetaValue(const std::string & key,
+                        ValueType & value) const{
+  return metadata_.retrieveValue(key,value);
+ }
+
+ /** Stores a given key-value pair in metadata attached to the connected tensor. **/
+ template<typename ValueType>
+ void appendMetaValue(const std::string & key,
+                      const ValueType & value){
+  return metadata_.appendKeyValue(key,value);
+ }
+
+ /** Clears metadata attached to the connected tensor. **/
+ void clearMetadata(){
+  return metadata_.clear();
+ }
+
  /** Replaces the stored tensor with a new one (same shape and signature). **/
  void replaceStoredTensor(const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
  /** Replaces the stored tensor with a new one (permuted shape and signature). **/
@@ -151,6 +179,7 @@ private:
  std::shared_ptr<Tensor> tensor_; //co-owned pointer to the tensor
  unsigned int id_;                //tensor id in the tensor network
  std::vector<TensorLeg> legs_;    //tensor legs: Connections to other tensors
+ Metadata metadata_;              //tensor metadata
  bool conjugated_;                //complex conjugation flag
  bool optimizable_;               //whether or not the tensor is subject to optimization as part of the optimized tensor network
 };
