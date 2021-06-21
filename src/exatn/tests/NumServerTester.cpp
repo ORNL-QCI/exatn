@@ -2222,6 +2222,7 @@ TEST(NumServerTester, neurIPS) {
  using exatn::TensorSignature;
  using exatn::Tensor;
  using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
@@ -2233,6 +2234,8 @@ TEST(NumServerTester, neurIPS) {
  //exatn::activateFastMath();
 
  bool success = true;
+ auto builder_mps = exatn::getTensorNetworkBuilder("MPS");
+ auto builder_ttn = exatn::getTensorNetworkBuilder("Tree");
 
  //3:1 1D MERA:
  {
@@ -2280,67 +2283,44 @@ TEST(NumServerTester, neurIPS) {
  //AIEM 2:1 TTN:
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
-  const exatn::DimExtent chi1 = 3; //Laptop: 3; Summit (1 node): 4
-  const auto chi2 = std::min(chi1*chi1,512ULL);
-  const auto chi3 = std::min(chi2*chi2,1024ULL);
-  const auto chi4 = std::min(chi3*chi3,2048ULL);
-  success = exatn::createTensor("Z",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
-  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
-  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
-  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
-  success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
-  success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
-  success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
-  success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
-  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{chi1,chi1}); assert(success);
-  success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
-  success = exatn::createTensor("J",TENS_ELEM_TYPE,TensorShape{chi1,chi1,chi2}); assert(success);
-  success = exatn::createTensor("K",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
-  success = exatn::createTensor("L",TENS_ELEM_TYPE,TensorShape{chi2,chi2,chi3}); assert(success);
-  success = exatn::createTensor("M",TENS_ELEM_TYPE,TensorShape{chi3,chi3,chi4}); assert(success);
-  success = exatn::createTensor("N",TENS_ELEM_TYPE,TensorShape{chi4,chi4}); assert(success);
+  success = builder_ttn->setParameter("arity",2); assert(success);
+  success = builder_ttn->setParameter("max_bond_dim",16); assert(success);
+  auto output_tensor_ttn = exatn::makeSharedTensor("Z_TTN",std::vector<exatn::DimExtent>{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2});
+  auto network_ttn = exatn::makeSharedTensorNetwork("TensorTree",output_tensor_ttn,*builder_ttn);
+  auto network_ttn_conj = exatn::makeSharedTensorNetwork(*network_ttn,true);
+  network_ttn->appendTensorGate(exatn::makeSharedTensor("H1",std::vector<exatn::DimExtent>{2,2}),{5});
+  network_ttn->appendTensorGate(exatn::makeSharedTensor("H2",std::vector<exatn::DimExtent>{2,2}),{6});
+  TensorExpansion ket(true);
+  ket.appendComponent(network_ttn,{1.0,0.0});
+  ket.rename("ket");
+  TensorExpansion bra(false);
+  bra.appendComponent(network_ttn_conj,{1.0,0.0});
+  bra.rename("bra");
+  TensorExpansion braket(bra,ket);
 
-  success = exatn::initTensor("Z",std::complex<float>{0.0f,0.0f}); assert(success);
-  success = exatn::initTensorRnd("A"); assert(success);
-  success = exatn::initTensorRnd("B"); assert(success);
-  success = exatn::initTensorRnd("C"); assert(success);
-  success = exatn::initTensorRnd("D"); assert(success);
-  success = exatn::initTensorRnd("E"); assert(success);
-  success = exatn::initTensorRnd("F"); assert(success);
-  success = exatn::initTensorRnd("G"); assert(success);
-  success = exatn::initTensorRnd("H"); assert(success);
-  success = exatn::initTensorRnd("I"); assert(success);
-  success = exatn::initTensorRnd("J"); assert(success);
-  success = exatn::initTensorRnd("K"); assert(success);
-  success = exatn::initTensorRnd("L"); assert(success);
-  success = exatn::initTensorRnd("M"); assert(success);
-  success = exatn::initTensorRnd("N"); assert(success);
-  success = exatn::sync(); assert(success);
+  for(auto net = braket.begin(); net != braket.end(); ++net){
+   success = exatn::createTensorsSync(*(net->network),TENS_ELEM_TYPE); assert(success);
+  }
+
+  for(auto net = braket.begin(); net != braket.end(); ++net){
+   success = exatn::initTensorsRnd(*(net->network)); assert(success);
+  }
+
+  std::string deriv_tens_name;
+  for(auto tens = network_ttn_conj->cbegin(); tens != network_ttn_conj->cend(); ++tens){
+   if(tens->first != 0) deriv_tens_name = tens->second.getName();
+  }
+  TensorExpansion derivative(braket,deriv_tens_name,true);
 
   auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluateTensorNetwork("AIEM_TTN","Z(z0,z1,z2)+=A(a0,a1)*B(b0,b1,a0)*C(c0,z1,a1)*D(d0,d1,b1)*E(e0,e1,c0)*F(f0,f1,d1)*G(g0,g1,e0)*H(h0,f1)*H(h1,g0)*I(f0,h0,i2)*J(h1,g1,j2)*K(d0,i2,k2)*L(j2,e1,z0)*M(b0,k2,m2)*N(m2,z2)");
+  
   assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
   flops = exatn::getTotalFlopCount() - flops;
   std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
 
-  success = exatn::destroyTensor("N"); assert(success);
-  success = exatn::destroyTensor("M"); assert(success);
-  success = exatn::destroyTensor("L"); assert(success);
-  success = exatn::destroyTensor("K"); assert(success);
-  success = exatn::destroyTensor("J"); assert(success);
-  success = exatn::destroyTensor("I"); assert(success);
-  success = exatn::destroyTensor("H"); assert(success);
-  success = exatn::destroyTensor("G"); assert(success);
-  success = exatn::destroyTensor("F"); assert(success);
-  success = exatn::destroyTensor("E"); assert(success);
-  success = exatn::destroyTensor("D"); assert(success);
-  success = exatn::destroyTensor("C"); assert(success);
-  success = exatn::destroyTensor("B"); assert(success);
-  success = exatn::destroyTensor("A"); assert(success);
-  success = exatn::destroyTensor("Z"); assert(success);
   success = exatn::sync(); assert(success);
  }
 
