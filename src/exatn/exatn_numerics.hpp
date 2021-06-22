@@ -1,5 +1,5 @@
-/** ExaTN::Numerics: General client header
-REVISION: 2021/04/01
+/** ExaTN::Numerics: General client header (free function API)
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -304,6 +304,26 @@ inline bool createTensorsSync(const ProcessGroup & process_group, //in: chosen g
                               TensorNetwork & tensor_network,     //inout: tensor network
                               TensorElementType element_type)     //in: tensor element type
  {return numericalServer->createTensorsSync(process_group,tensor_network,element_type);}
+
+
+/** Creates all tensors in a given tensor network expansion that are still unallocated storage. **/
+inline bool createTensors(TensorExpansion & tensor_expansion,     //inout: tensor expansion
+                          TensorElementType element_type)         //in: tensor element type
+ {return numericalServer->createTensors(tensor_expansion,element_type);}
+
+inline bool createTensorsSync(TensorExpansion & tensor_expansion, //inout: tensor expansion
+                              TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensorsSync(tensor_expansion,element_type);}
+
+inline bool createTensors(const ProcessGroup & process_group,     //in: chosen group of MPI processes
+                          TensorExpansion & tensor_expansion,     //inout: tensor expansion
+                          TensorElementType element_type)         //in: tensor element type
+ {return numericalServer->createTensors(process_group,tensor_expansion,element_type);}
+
+inline bool createTensorsSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                              TensorExpansion & tensor_expansion, //inout: tensor expansion
+                              TensorElementType element_type)     //in: tensor element type
+ {return numericalServer->createTensorsSync(process_group,tensor_expansion,element_type);}
 
 
 /** Destroys a tensor, including its backend representation. **/

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/03/01
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -77,6 +77,16 @@ public:
 
  /** Constructs an empty tensor expansion (ket by default). **/
  TensorExpansion(bool ket = true): ket_(ket) {}
+
+ /** Constructs a named empty tensor expansion (ket by default). **/
+ TensorExpansion(const std::string & name,
+                 bool ket = true): ket_(ket), name_(name) {}
+
+ /** Constructs a named tensor expansion from a single tensor network (ket by default). **/
+ TensorExpansion(const std::string & name,               //in: tensor expansion name
+                 std::shared_ptr<TensorNetwork> network, //in: tensor network
+                 const std::complex<double> coefficient, //in: expansion coefficient
+                 bool ket = true);                       //in: ket/bra tensor expansion choice
 
  /** Constructs a tensor expansion by applying a tensor network operator
      to another tensor network expansion. **/

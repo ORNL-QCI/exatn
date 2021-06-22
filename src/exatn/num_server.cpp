@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/04/01
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1118,6 +1118,44 @@ bool NumServer::createTensorsSync(const ProcessGroup & process_group,
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(!tensorAllocated(tens_name)) success = createTensorSync(process_group,tensor,element_type);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::createTensors(TensorExpansion & tensor_expansion,
+                              TensorElementType element_type)
+{
+ return createTensors(getDefaultProcessGroup(),tensor_expansion,element_type);
+}
+
+bool NumServer::createTensorsSync(TensorExpansion & tensor_expansion,
+                                  TensorElementType element_type)
+{
+ return createTensorsSync(getDefaultProcessGroup(),tensor_expansion,element_type);
+}
+
+bool NumServer::createTensors(const ProcessGroup & process_group,
+                              TensorExpansion & tensor_expansion,
+                              TensorElementType element_type)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto net = tensor_expansion.begin(); net != tensor_expansion.end(); ++net){
+  success = createTensors(process_group,*(net->network),element_type);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::createTensorsSync(const ProcessGroup & process_group,
+                                  TensorExpansion & tensor_expansion,
+                                  TensorElementType element_type)
+{
+ if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
+ for(auto net = tensor_expansion.begin(); net != tensor_expansion.end(); ++net){
+  success = createTensorsSync(process_group,*(net->network),element_type);
   if(!success) break;
  }
  return success;
