@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/03/01
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -11,6 +11,16 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+TensorExpansion::TensorExpansion(const std::string & name,
+                                 std::shared_ptr<TensorNetwork> network,
+                                 const std::complex<double> coefficient,
+                                 bool ket):
+ ket_(ket), name_(name)
+{
+ auto success = appendComponent(network,coefficient); assert(success);
+}
+
 
 TensorExpansion::TensorExpansion(const TensorExpansion & expansion,       //in: tensor network expansion in some tensor space
                                  const TensorOperator & tensor_operator): //in: tensor network operator
@@ -72,6 +82,7 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
   for(const auto & id: ids){
    auto derivnet = makeSharedTensorNetwork(*(iter->network));
    auto differentiated = derivnet->differentiateTensor(id); assert(differentiated);
+   derivnet->rename(iter->network->getName() + "/" + tensor_name + "#" + std::to_string(id));
    appendComponent(derivnet,iter->coefficient);
   }
  }
@@ -88,6 +99,7 @@ TensorExpansion::TensorExpansion(const TensorExpansion & expansion,
  for(auto iter = expansion.cbegin(); iter != expansion.cend(); ++iter){
   auto network = makeSharedTensorNetwork(*(iter->network));
   auto success = network->substituteTensor(original_tensor,new_tensor); assert(success);
+  network->rename(iter->network->getName() + "-" + original_tensor->getName() + "+" + new_tensor->getName());
   appendComponent(network,iter->coefficient);
  }
 }

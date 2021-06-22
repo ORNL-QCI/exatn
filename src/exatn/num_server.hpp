@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/04/01
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -416,6 +416,21 @@ public:
 
  bool createTensorsSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                         TensorNetwork & tensor_network,     //inout: tensor network
+                        TensorElementType element_type);    //in: tensor element type
+
+ /** Creates all tensors in a given tensor network expansion that are still unallocated. **/
+ bool createTensors(TensorExpansion & tensor_expansion,     //inout: tensor expansion
+                    TensorElementType element_type);        //in: tensor element type
+
+ bool createTensorsSync(TensorExpansion & tensor_expansion, //inout: tensor expansion
+                        TensorElementType element_type);    //in: tensor element type
+
+ bool createTensors(const ProcessGroup & process_group,     //in: chosen group of MPI processes
+                    TensorExpansion & tensor_expansion,     //inout: tensor expansion
+                    TensorElementType element_type);        //in: tensor element type
+
+ bool createTensorsSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                        TensorExpansion & tensor_expansion, //inout: tensor expansion
                         TensorElementType element_type);    //in: tensor element type
 
  /** Destroys a tensor, including its backend representation. **/

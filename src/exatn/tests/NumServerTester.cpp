@@ -2284,43 +2284,52 @@ TEST(NumServerTester, neurIPS) {
  {
   std::cout << "Evaluating an AIEM 2:1 TTN diagram: ";
   success = builder_ttn->setParameter("arity",2); assert(success);
-  success = builder_ttn->setParameter("max_bond_dim",16); assert(success);
-  auto output_tensor_ttn = exatn::makeSharedTensor("Z_TTN",std::vector<exatn::DimExtent>{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2});
+  success = builder_ttn->setParameter("max_bond_dim",32); assert(success);
+  auto output_tensor_ttn = exatn::makeSharedTensor("Z_TTN",std::vector<exatn::DimExtent>(64,2));
   auto network_ttn = exatn::makeSharedTensorNetwork("TensorTree",output_tensor_ttn,*builder_ttn);
   auto network_ttn_conj = exatn::makeSharedTensorNetwork(*network_ttn,true);
+  success = network_ttn_conj->conjugate(); assert(success);
+  network_ttn_conj->rename("TensorTreeConj");
   network_ttn->appendTensorGate(exatn::makeSharedTensor("H1",std::vector<exatn::DimExtent>{2,2}),{5});
   network_ttn->appendTensorGate(exatn::makeSharedTensor("H2",std::vector<exatn::DimExtent>{2,2}),{6});
-  TensorExpansion ket(true);
-  ket.appendComponent(network_ttn,{1.0,0.0});
-  ket.rename("ket");
-  TensorExpansion bra(false);
-  bra.appendComponent(network_ttn_conj,{1.0,0.0});
-  bra.rename("bra");
+  TensorExpansion ket("ket",network_ttn,{1.0,0.0},true);
+  TensorExpansion bra("bra",network_ttn_conj,{1.0,0.0},false);
   TensorExpansion braket(bra,ket);
-
-  for(auto net = braket.begin(); net != braket.end(); ++net){
-   success = exatn::createTensorsSync(*(net->network),TENS_ELEM_TYPE); assert(success);
-  }
-
-  for(auto net = braket.begin(); net != braket.end(); ++net){
-   success = exatn::initTensorsRnd(*(net->network)); assert(success);
-  }
 
   std::string deriv_tens_name;
   for(auto tens = network_ttn_conj->cbegin(); tens != network_ttn_conj->cend(); ++tens){
-   if(tens->first != 0) deriv_tens_name = tens->second.getName();
+   if(tens->first != 0){
+    deriv_tens_name = tens->second.getName();
+    break;
+   }
   }
   TensorExpansion derivative(braket,deriv_tens_name,true);
+  //derivative.printIt(); //debug
+
+  for(auto net = derivative.begin(); net != derivative.end(); ++net){
+   success = exatn::createTensorsSync(*(net->network),TENS_ELEM_TYPE); assert(success);
+  }
+
+  for(auto net = derivative.begin(); net != derivative.end(); ++net){
+   success = exatn::initTensorsRnd(*(net->network)); assert(success);
+  }
+
+  auto deriv_output_tensor = derivative[0].network->getTensor(0);
+  success = exatn::createTensorSync("acc",TENS_ELEM_TYPE,deriv_output_tensor->getShape()); assert(success);
+  success = exatn::initTensor("acc",0.0); assert(success);
 
   auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
-  
-  assert(success);
+  success = exatn::evaluate(derivative,exatn::getTensor("acc")); assert(success);
   success = exatn::sync(); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
   flops = exatn::getTotalFlopCount() - flops;
   std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
 
+  success = exatn::destroyTensorSync("acc"); assert(success);
+  for(auto net = derivative.begin(); net != derivative.end(); ++net){
+   success = exatn::destroyTensorsSync(*(net->network)); assert(success);
+  }
   success = exatn::sync(); assert(success);
  }
 
