@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder factory
-REVISION: 2019/11/01
+REVISION: 2021/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Creates tensor network builders of desired kind.
@@ -14,7 +14,7 @@ Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "network_builder.hpp"
 #include "network_builder_mps.hpp"
-#include "network_builder_tree.hpp"
+#include "network_builder_ttn.hpp"
 
 #include <string>
 #include <memory>

@@ -2235,7 +2235,7 @@ TEST(NumServerTester, neurIPS) {
 
  bool success = true;
  auto builder_mps = exatn::getTensorNetworkBuilder("MPS");
- auto builder_ttn = exatn::getTensorNetworkBuilder("Tree");
+ auto builder_ttn = exatn::getTensorNetworkBuilder("TTN");
 
  //3:1 1D MERA:
  {

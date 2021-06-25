@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder factory
-REVISION: 2019/11/01
+REVISION: 2021/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "network_build_factory.hpp"
 
@@ -13,7 +13,7 @@ namespace numerics{
 NetworkBuildFactory::NetworkBuildFactory()
 {
  registerNetworkBuilder("MPS",&NetworkBuilderMPS::createNew);
- registerNetworkBuilder("Tree",&NetworkBuilderTree::createNew);
+ registerNetworkBuilder("TTN",&NetworkBuilderTTN::createNew);
 }
 
 void NetworkBuildFactory::registerNetworkBuilder(const std::string & name, createNetworkBuilderFn creator)
