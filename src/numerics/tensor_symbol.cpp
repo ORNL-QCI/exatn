@@ -1,12 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/06/25
+REVISION: 2021/06/28
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
-
-#include "tensor_symbol.hpp"
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
+
+#include "tensor_symbol.hpp"
 
 namespace exatn{
 
@@ -288,6 +288,37 @@ bool generate_addition_pattern(unsigned int tensor_rank,
  unsigned int dim = 0;
  for(auto & leg: pattern) leg = numerics::TensorLeg(0,dim++);
  return generate_addition_pattern(pattern,symb_pattern,conjugated,dest_name,left_name);
+}
+
+bool parse_pauli_string(const std::string & input,
+                        std::string & paulis,
+                        std::complex<double> & coefficient)
+{
+ bool success = true;
+ double coef_real, coef_imag;
+ auto left_par_pos = input.find("(");
+ if(left_par_pos != std::string::npos){
+  auto right_par_pos = input.find(")",left_par_pos);
+  if(right_par_pos != std::string::npos){
+   auto left_sq_pos = input.find("[",right_par_pos);
+   if(left_sq_pos != std::string::npos){
+    auto right_sq_pos = input.find("]",left_sq_pos);
+    if(right_sq_pos != std::string::npos){
+     paulis = input.substr(left_sq_pos,right_sq_pos-left_sq_pos+1);
+     //`Finish: Parse complex coefficient
+    }else{
+     success = false;
+    }
+   }else{
+    success = false;
+   }
+  }else{
+   success = false;
+  }
+ }else{
+  success = false;
+ }
+ return success;
 }
 
 } //namespace exatn

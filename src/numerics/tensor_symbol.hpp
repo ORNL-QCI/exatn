@@ -1,8 +1,8 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/06/25
+REVISION: 2021/06/28
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 (a) Valid symbolic tensor formats are (angle brackets mark placeholders for tokens):
@@ -38,6 +38,7 @@ Rationale:
 
 #include <string>
 #include <vector>
+#include <complex>
 
 #include "errors.hpp"
 
@@ -188,6 +189,11 @@ bool generate_addition_pattern(unsigned int tensor_rank,
                                bool conjugated = false,
                                const std::string & dest_name = "D",
                                const std::string & left_name = "L");
+
+/** Parses a Pauli string output from OpenFermion. **/
+bool parse_pauli_string(const std::string & input,           //in: input string
+                        std::string & paulis,                //out: output string with Pauli operators
+                        std::complex<double> & coefficient); //out: linear combination coefficient
 
 } //namespace exatn
 
