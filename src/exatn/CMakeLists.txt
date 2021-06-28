@@ -4,6 +4,7 @@ add_library(${LIBRARY_NAME}
             exatn.cpp
             exatn_service.cpp
             ServiceRegistry.cpp
+            quantum.cpp
             num_server.cpp
             reconstructor.cpp
             optimizer.cpp

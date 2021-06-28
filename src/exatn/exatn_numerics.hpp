@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/06/22
+REVISION: 2021/06/28
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -82,6 +82,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_NUMERICS_HPP_
 
 #include "num_server.hpp"
+#include "quantum.hpp"
 
 #include <utility>
 #include <memory>
