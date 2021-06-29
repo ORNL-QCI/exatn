@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/06/28
+REVISION: 2021/06/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -296,16 +296,30 @@ bool parse_pauli_string(const std::string & input,
 {
  bool success = true;
  double coef_real, coef_imag;
- auto left_par_pos = input.find("(");
+ const auto left_par_pos = input.find("(");
  if(left_par_pos != std::string::npos){
-  auto right_par_pos = input.find(")",left_par_pos);
+  const auto right_par_pos = input.find(")",left_par_pos);
   if(right_par_pos != std::string::npos){
-   auto left_sq_pos = input.find("[",right_par_pos);
+   const auto left_sq_pos = input.find("[",right_par_pos);
    if(left_sq_pos != std::string::npos){
-    auto right_sq_pos = input.find("]",left_sq_pos);
+    const auto right_sq_pos = input.find("]",left_sq_pos);
     if(right_sq_pos != std::string::npos){
      paulis = input.substr(left_sq_pos,right_sq_pos-left_sq_pos+1);
-     //`Finish: Parse complex coefficient
+     const auto plus_pos = input.find("+",left_par_pos);
+     if(plus_pos != std::string::npos){
+      const auto real_len = plus_pos - left_par_pos - 1;
+      if(real_len > 0) coef_real = std::stod(input.substr(left_par_pos+1,real_len));
+      const auto imag_end_pos = input.find("j",plus_pos);
+      if(imag_end_pos != std::string::npos){
+       const auto imag_len = imag_end_pos - plus_pos - 1;
+       if(imag_len > 0) coef_imag = std::stod(input.substr(plus_pos+1,imag_len));
+       coefficient = std::complex<double>{coef_real, coef_imag};
+      }else{
+       success = false;
+      }
+     }else{
+      success = false;
+     }
     }else{
      success = false;
     }
