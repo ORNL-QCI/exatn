@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/06/29
+REVISION: 2021/06/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -60,6 +60,10 @@ bool appendPauliComponent(exatn::numerics::TensorOperator & tens_operator,
 {
  bool success = true;
  std::shared_ptr<exatn::numerics::Tensor> gate_tensor;
+ auto pauli_product = std::make_shared<exatn::numerics::TensorNetwork>();
+ std::vector<std::pair<unsigned int, unsigned int>> ket_pairing;
+ std::vector<std::pair<unsigned int, unsigned int>> bra_pairing;
+ unsigned int pauli_id = 0;
  std::size_t pos = 1;
  while(paulis[pos] != ']'){
   auto gate_name = QuantumGate::gate_I;
@@ -101,10 +105,14 @@ bool appendPauliComponent(exatn::numerics::TensorOperator & tens_operator,
   const auto beg_pos = pos;
   while(is_number(paulis[pos])) ++pos;
   unsigned int qubit = static_cast<unsigned int>(std::stoi(paulis.substr(beg_pos,pos-beg_pos)));
-  success = tens_operator.appendComponent(gate_tensor,{{qubit,1}},{{qubit,0}},coef);
-  if(!success) break;
   while(paulis[pos] == ' ') ++pos;
+  success = pauli_product->appendTensor(gate_tensor,{}); if(!success) break;
+  ket_pairing.push_back({qubit,pauli_id*2+1});
+  bra_pairing.push_back({qubit,pauli_id*2+0});
+  ++pauli_id;
  }
+ pauli_product->rename("PauliProduct" + std::to_string(tens_operator.getNumComponents()));
+ success = tens_operator.appendComponent(pauli_product,ket_pairing,bra_pairing,coef);
  return success;
 }
 
