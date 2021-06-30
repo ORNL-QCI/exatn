@@ -3124,8 +3124,97 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  bool success = true;
 
+ const int num_sites = 8, max_bond_dim = std::pow(2,num_sites/2); //2x2 sites x dim(4) = 8 qubits (sites)
+
+ //Read 2x2 Hubbard Hamiltonian in spin representation:
  auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2.txt",TENS_ELEM_TYPE);
  hubbard_operator->printIt();
+
+ //Create tensor network ansatz:
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
+ //ansatz->printIt(); //debug
+
+ //Allocate/initialize tensors in the tensor network ansatz:
+ for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
+  if(tens_conn->first != 0){ //input tensors only
+   success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
+  }
+ }
+ success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
+
+ //Create the full tensor ansatz:
+ success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorRnd(ansatz_tensor->getName()); assert(success);
+ auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
+ success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
+ ansatz_full_net->markOptimizableAllTensors();
+ auto ansatz_full = exatn::makeSharedTensorExpansion("AnsatzFull",ansatz_full_net,std::complex<double>{1.0,0.0});
+ //ansatz_full->printIt(); //debug
+
+ //Perform ground state optimization in a complete tensor space:
+ {
+  std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz_full,1e-4);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+ success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
+ //success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
+
+ //Reconstruct the exact eigen-tensor as a tensor network:
+ ansatz->conjugate();
+ success = exatn::balanceNorm2Sync(*ansatz_full,1.0,false); assert(success);
+ success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
+ exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-4);
+ success = exatn::sync(); assert(success);
+ double residual_norm, fidelity;
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+ success = exatn::sync(); assert(success);
+ if(reconstructed){
+  std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
+            << "; Fidelity = " << fidelity << std::endl;
+ }else{
+  std::cout << "Reconstruction failed!" << std::endl; //assert(false);
+ }
+ ansatz->conjugate();
+
+ //success = exatn::initTensorSync(ansatz_tensor->getName(),0.0); assert(success);
+
+ //Perform ground state optimization on a tensor network manifold:
+ {
+  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz,1e-4);
+  optimizer.resetMicroIterations(1);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+   success = exatn::evaluateSync(*((*ansatz)[0].network)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network->getTensor(0)->getName(),1.0); assert(success);
+   //success = exatn::printTensor((*ansatz)[0].network->getTensor(0)->getName()); assert(success);
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+
+ //Destroy tensors:
+ success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::destroyTensors(*ansatz_net); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);
