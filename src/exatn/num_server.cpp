@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/06/22
+REVISION: 2021/07/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -995,13 +995,16 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
       op->setTensorOperand((*tensor_composite)[subtensor_id]);
       std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
       submitted = submit(op);
+      if(!submitted) break;
      }
     }
-    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
-    if(!(res.second)){
-     std::cout << "#ERROR(exatn::createTensor): Attempt to CREATE an already existing tensor "
-               << tensor->getName() << std::endl;
-     submitted = false;
+    if(submitted){
+     auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
+     if(!(res.second)){
+      std::cout << "#ERROR(exatn::createTensor): Attempt to CREATE an already existing tensor "
+                << tensor->getName() << std::endl;
+      submitted = false;
+     }
     }
    }else{
     std::cout << "#ERROR(exatn::createTensor): For composite tensors, the size of the process group must be power of 2, but it is "
@@ -1056,13 +1059,16 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
       std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
       submitted = submit(op);
       if(submitted) submitted = sync(*op);
+      if(!submitted) break;
      }
     }
-    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
-    if(!(res.second)){
-     std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
-               << tensor->getName() << std::endl;
-     submitted = false;
+    if(submitted){
+     auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
+     if(!(res.second)){
+      std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
+                << tensor->getName() << std::endl;
+      submitted = false;
+     }
     }
    }else{
     std::cout << "#ERROR(exatn::createTensorSync): For composite tensors, the size of the process group must be power of 2, but it is "
