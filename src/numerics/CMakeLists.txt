@@ -26,6 +26,8 @@ add_library(${LIBRARY_NAME}
             tensor_op_decompose_svd2.cpp
             tensor_op_orthogonalize_svd.cpp
             tensor_op_orthogonalize_mgs.cpp
+            tensor_op_fetch.cpp
+            tensor_op_upload.cpp
             tensor_op_broadcast.cpp
             tensor_op_allreduce.cpp
             tensor_op_factory.cpp
