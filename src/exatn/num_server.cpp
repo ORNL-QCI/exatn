@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/01
+REVISION: 2021/07/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -26,6 +26,46 @@ namespace exatn{
 
 /** Numerical server (singleton) **/
 std::shared_ptr<NumServer> numericalServer {nullptr}; //initialized by exatn::initialize()
+
+
+unsigned int subtensor_owner_id(unsigned int process_rank,
+                                unsigned int num_processes,
+                                unsigned long long subtensor_id,
+                                unsigned long long num_subtensors)
+{
+ unsigned int owner_id;
+ if(num_subtensors <= num_processes){
+  auto bin = static_cast<unsigned long long>(process_rank) / num_subtensors;
+  owner_id = bin * num_subtensors + subtensor_id; assert(owner_id < num_processes);
+ }else{
+  assert(num_subtensors % num_processes == 0);
+  unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
+  owner_id = subtensor_id / num_subtensors_per_process;
+ }
+ return owner_id;
+}
+
+
+std::pair<unsigned long long, unsigned long long> owned_subtensors(unsigned int process_rank,
+                                                                   unsigned int num_processes,
+                                                                   unsigned long long num_subtensors)
+{
+ std::pair<unsigned long long, unsigned long long> subtensor_range;
+ if(num_subtensors <= num_processes){
+  unsigned long long subtensor_id = static_cast<unsigned long long>(process_rank) % num_subtensors;
+  subtensor_range = std::make_pair(subtensor_id,subtensor_id);
+ }else{
+  assert(num_subtensors % num_processes == 0);
+  unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
+  auto nspp = num_subtensors_per_process;
+  unsigned long long num_minor_bits = 0;
+  while(nspp >>= 1) ++num_minor_bits; assert(num_minor_bits > 0);
+  unsigned long long subtensor_begin = static_cast<unsigned long long>(process_rank) << num_minor_bits;
+  unsigned long long subtensor_end = subtensor_begin | ((1ULL << num_minor_bits) - 1);
+  subtensor_range = std::make_pair(subtensor_begin,subtensor_end);
+ }
+ return subtensor_range;
+}
 
 
 #ifdef MPI_ENABLED
@@ -975,14 +1015,14 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
    const auto num_processes = process_group.getSize(); assert(num_processes > 0);
    unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
    if((num_processes & (num_processes - 1U)) == 0){ //power of 2 check
-    if(num_subtensors <= num_processes){ //subtensors may be partially replicated among processes
+    if(num_subtensors <= num_processes){ //one subtensor per process, subtensors may be partially replicated among processes
      unsigned long long subtensor_id = static_cast<unsigned long long>(local_rank) % num_subtensors;
      std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
      std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
      op->setTensorOperand((*tensor_composite)[subtensor_id]);
      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
      submitted = submit(op);
-    }else{ //processes may get more than one subtensor
+    }else{ //each process gets more than one subtensor
      assert((num_subtensors_per_process >= 2) && (num_subtensors % num_processes == 0));
      auto nspp = num_subtensors_per_process;
      unsigned long long num_minor_bits = 0;
@@ -1037,7 +1077,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
    const auto num_processes = process_group.getSize(); assert(num_processes > 0);
    unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
    if((num_processes & (num_processes - 1U)) == 0){ //power of 2 check
-    if(num_subtensors <= num_processes){ //subtensors may be partially replicated among processes
+    if(num_subtensors <= num_processes){ //one subtensor per process, subtensors may be partially replicated among processes
      unsigned long long subtensor_id = static_cast<unsigned long long>(local_rank) % num_subtensors;
      std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
      std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
@@ -1045,7 +1085,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
      submitted = submit(op);
      if(submitted) submitted = sync(*op);
-    }else{ //processes may get more than one subtensor
+    }else{ //each process gets more than one subtensor
      assert((num_subtensors_per_process >= 2) && (num_subtensors % num_processes == 0));
      auto nspp = num_subtensors_per_process;
      unsigned long long num_minor_bits = 0;

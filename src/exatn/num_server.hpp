@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/06/22
+REVISION: 2021/07/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -116,6 +116,19 @@ using numerics::FunctorDiagRank;
 using numerics::FunctorPrint;
 
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
+
+
+/** Returns the closest owner id for a given subtensor. **/
+unsigned int subtensor_owner_id(unsigned int process_rank,          //in: current process rank
+                                unsigned int num_processes,         //in: total number of processes
+                                unsigned long long subtensor_id,    //in: id of the required subtensor
+                                unsigned long long num_subtensors); //in: total number of subtensors
+
+/* Returns a range of subtensors [begin,end] owned by the specified process. */
+std::pair<unsigned long long, unsigned long long> owned_subtensors(
+                                                   unsigned int process_rank,          //in: current process rank
+                                                   unsigned int num_processes,         //in: total number of processes
+                                                   unsigned long long num_subtensors); //in: total number of subtensors
 
 
 //Numerical Server:
