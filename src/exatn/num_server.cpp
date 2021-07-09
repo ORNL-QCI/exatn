@@ -1799,6 +1799,74 @@ bool NumServer::insertTensorSliceSync(const std::string & tensor_name,
  return success;
 }
 
+bool NumServer::copyTensor(const std::string & output_name,
+                           const std::string & input_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(input_name);
+ if(iter != tensors_.end()){
+  auto tensor1 = iter->second;
+  iter = tensors_.find(output_name);
+  if(iter == tensors_.end()){
+   std::cout << "#FATAL(exatn::NumServer::copyTensor): Non-existing output tensor feature is not implemented yet!\n";
+   std:abort();
+  }
+  auto tensor0 = iter->second;
+  success = tensor0->isCongruentTo(*tensor1);
+  if(success){
+   success = initTensor(output_name,0.0);
+   if(success){
+    std::string add_pattern;
+    success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+    if(success){
+     success = addTensors(add_pattern,1.0);
+    }
+   }
+  }else{
+   std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensors " << output_name
+             << " and " << input_name << " are not congruent!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensor " << input_name << " not found!\n";
+ }
+ return success;
+}
+
+bool NumServer::copyTensorSync(const std::string & output_name,
+                               const std::string & input_name)
+{
+ bool success = false;
+ auto iter = tensors_.find(input_name);
+ if(iter != tensors_.end()){
+  auto tensor1 = iter->second;
+  iter = tensors_.find(output_name);
+  if(iter == tensors_.end()){
+   std::cout << "#FATAL(exatn::NumServer::copyTensorSync): Non-existing output tensor feature is not implemented yet!\n";
+   std:abort();
+  }
+  auto tensor0 = iter->second;
+  success = tensor0->isCongruentTo(*tensor1);
+  if(success){
+   success = initTensorSync(output_name,0.0);
+   if(success){
+    std::string add_pattern;
+    success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+    if(success){
+     success = addTensorsSync(add_pattern,1.0);
+    }
+   }
+  }else{
+   std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensors " << output_name
+             << " and " << input_name << " are not congruent!\n";
+  }
+ }else{
+  success = false;
+  std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensor " << input_name << " not found!\n";
+ }
+ return success;
+}
+
 bool NumServer::decomposeTensorSVD(const std::string & contraction)
 {
  std::vector<std::string> tensors;

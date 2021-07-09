@@ -88,7 +88,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         MPI processses are aware of the existence of the created tensor. Note that the concrete
         physical distribution of the tensor body among the MPI processes is hidden from the user
         (either fully replicated or fully distributed or a mix of the two).
-    (c) All tensor arguments of any non-unary tensor operation must have the same domain of existence.
+    (c) All tensor arguments of any non-unary tensor operation must have the same domain of existence,
+        otherwise the code is non-compliant, resulting in an undefined behavior.
     (d) By default, the tensor body is replicated across all MPI processes in its domain of existence.
         The user also has an option to create a distributed tensor by specifying which dimensions of
         this tensor to split into segments, thus inducing a block-wise decomposition of the tensor body.
@@ -578,6 +579,16 @@ inline bool insertTensorSlice(const std::string & tensor_name, //in: tensor name
 inline bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
                                   const std::string & slice_name)  //in: slice name
  {return numericalServer->insertTensorSliceSync(tensor_name,slice_name);}
+
+
+/** Assigns one tensor to another congruent one (makes a copy of a tensor). **/
+inline bool copyTensor(const std::string & output_name, //in: output tensor name
+                       const std::string & input_name)  //in: input tensor name
+ {return numericalServer->copyTensor(output_name,input_name);}
+
+inline bool copyTensorSync(const std::string & output_name, //in: output tensor name
+                           const std::string & input_name)  //in: input tensor name
+ {return numericalServer->copyTensorSync(output_name,input_name);}
 
 
 /** Performs tensor addition: tensor0 += tensor1 * alpha **/

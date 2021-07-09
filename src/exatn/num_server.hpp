@@ -613,6 +613,13 @@ public:
  bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
                             const std::string & slice_name); //in: slice name
 
+ /** Assigns one tensor to another congruent one (makes a copy of a tensor). **/
+ bool copyTensor(const std::string & output_name, //in: output tensor name
+                 const std::string & input_name); //in: input tensor name
+
+ bool copyTensorSync(const std::string & output_name, //in: output tensor name
+                     const std::string & input_name); //in: input tensor name
+
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
  bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
