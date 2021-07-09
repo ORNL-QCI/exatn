@@ -43,9 +43,9 @@
 #define EXATN_TEST25
 #define EXATN_TEST26
 #define EXATN_TEST27
-#define EXATN_TEST28*/
-#define EXATN_TEST29
-//#define EXATN_TEST30
+#define EXATN_TEST28
+#define EXATN_TEST29*/
+#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
@@ -3075,55 +3075,6 @@ TEST(NumServerTester, OptimizerHubbard) {
 #endif
 
 #ifdef EXATN_TEST29
-TEST(NumServerTester, TensorComposite) {
- using exatn::TensorShape;
- using exatn::TensorSignature;
- using exatn::Tensor;
- using exatn::TensorComposite;
- using exatn::TensorNetwork;
- using exatn::TensorExpansion;
- using exatn::TensorOperator;
- using exatn::TensorElementType;
-
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
-
- exatn::resetLoggingLevel(2,2); //debug
-
- bool success = true;
- const auto & all_processes = exatn::getDefaultProcessGroup();
- const auto my_process_rank = exatn::getProcessRank(all_processes);
- const auto total_ranks = exatn::getNumProcesses(all_processes);
- std::cout << "Process " << my_process_rank << " from total number of MPI processes = "
-           << total_ranks << std::endl;
-
- //Create composite tensors:
- success = exatn::createTensorSync(all_processes,"A",
-                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
-                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
- auto tensorA = exatn::castTensorComposite(exatn::getTensor("A")); assert(tensorA);
- const auto num_subtensors = tensorA->getNumSubtensors();
-
- for(unsigned int i = 0; i < num_subtensors; ++i){
-  std::cout << "Process " << my_process_rank << ": Subtensor " << i << ": Closest owner process is "
-            << exatn::subtensor_owner_id(my_process_rank,total_ranks,i,num_subtensors) << std::endl;
- }
-
- const auto owned = exatn::owned_subtensors(my_process_rank,total_ranks,num_subtensors);
- std::cout << "Process " << my_process_rank << " owns subtensors ["
-           << owned.first << ".." << owned.second << "]" << std::endl;
-
- //Destroy composite tensors:
- success = exatn::sync(); assert(success);
- success = exatn::destroyTensorSync("A"); assert(success);
-
- //Synchronize:
- success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
- //Grab a beer!
-}
-#endif
-
-#ifdef EXATN_TEST30
 TEST(NumServerTester, HubbardHamiltonian) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -3231,6 +3182,83 @@ TEST(NumServerTester, HubbardHamiltonian) {
  //Destroy tensors:
  success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST30
+TEST(NumServerTester, TensorComposite) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+
+ exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+ const auto & all_processes = exatn::getDefaultProcessGroup();
+ const auto my_process_rank = exatn::getProcessRank(all_processes);
+ const auto total_ranks = exatn::getNumProcesses(all_processes);
+ std::cout << "Process " << my_process_rank << " from total number of MPI processes = "
+           << total_ranks << std::endl;
+
+ //Create composite tensors:
+ success = exatn::createTensorSync(all_processes,"A",
+                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
+                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+ auto tensorA = exatn::castTensorComposite(exatn::getTensor("A")); assert(tensorA);
+
+ /*auto num_subtensors = tensorA->getNumSubtensors();
+ if(my_process_rank == 0){
+  for(unsigned long long i = 0; i < num_subtensors; ++i){
+   std::cout << "Process " << my_process_rank << ": Subtensor " << i << ": Closest owner process is "
+             << exatn::subtensor_owner_id(my_process_rank,total_ranks,i,num_subtensors)
+             << ": "; (*tensorA)[i]->printIt(); std::cout << std::endl;
+  }
+ }
+
+ auto owned = exatn::owned_subtensors(my_process_rank,total_ranks,num_subtensors);
+ std::cout << "Process " << my_process_rank << " owns subtensors ["
+           << owned.first << ".." << owned.second << "]" << std::endl;*/
+
+ success = exatn::createTensorSync(all_processes,"B",
+                                   std::vector<std::pair<unsigned int, unsigned int>>{{0,1},{1,1}},
+                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+ auto tensorB = exatn::castTensorComposite(exatn::getTensor("B")); assert(tensorB);
+
+ /*num_subtensors = tensorB->getNumSubtensors();
+ if(my_process_rank == 0){
+  for(unsigned long long i = 0; i < num_subtensors; ++i){
+   std::cout << "Process " << my_process_rank << ": Subtensor " << i << ": Closest owner process is "
+             << exatn::subtensor_owner_id(my_process_rank,total_ranks,i,num_subtensors)
+             << ": "; (*tensorB)[i]->printIt(); std::cout << std::endl;
+  }
+ }
+
+ owned = exatn::owned_subtensors(my_process_rank,total_ranks,num_subtensors);
+ std::cout << "Process " << my_process_rank << " owns subtensors ["
+           << owned.first << ".." << owned.second << "]" << std::endl;*/
+
+ success = exatn::createTensorSync(all_processes,"C",
+                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
+                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+ auto tensorC = exatn::castTensorComposite(exatn::getTensor("C")); assert(tensorC);
+
+
+ //Destroy composite tensors:
+ success = exatn::sync(); assert(success);
+ //success = exatn::destroyTensorSync("B"); assert(success); //Let garbage collector do it
+ success = exatn::destroyTensorSync("A"); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

@@ -123,15 +123,25 @@ NumServer::NumServer(const ParamConf & parameters,
 
 NumServer::~NumServer()
 {
- destroyOrphanedTensors(); //garbage collection
+ //Garbage collection:
+ destroyOrphanedTensors();
+ //Destroy composite tensors:
  auto iter = tensors_.begin();
  while(iter != tensors_.end()){
-  std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-  destroy_op->setTensorOperand(iter->second);
-  auto submitted = submit(destroy_op);
-  if(submitted) submitted = sync(*destroy_op);
+  if(iter->second->isComposite()){
+   auto success = destroyTensorSync(iter->first); assert(success);
+   iter = tensors_.begin();
+  }else{
+   ++iter;
+  }
+ }
+ //Destroy remaining simple tensors:
+ iter = tensors_.begin();
+ while(iter != tensors_.end()){
+  auto success = destroyTensorSync(iter->first); assert(success);
   iter = tensors_.begin();
  }
+ //Close scope and clean:
  tensor_rt_->closeScope(); //contains sync() inside
  scopes_.pop();
  destroyBytePacket(&byte_packet_);

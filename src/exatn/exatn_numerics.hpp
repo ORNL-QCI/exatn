@@ -82,7 +82,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         expansion (or both) forms another tensor network expansion.
  8. Tensor processing [exatn_numerics.hpp]:
     (a) A tensor can be allocated storage and processed at any time after its formal definition.
-    (b) Tensor storage allocation is called tensor creation. A tensor can be created across all
+    (b) Tensor storage allocation is called tensor creation. A tensor can either be created across all
         MPI processes or within a specified group of them. The subset of MPI processes participating
         in the tensor creation operation defines its domain of existence, meaning that only these
         MPI processses are aware of the existence of the created tensor. Note that the concrete
@@ -98,13 +98,16 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         the size of the domain of existence of the corresponding composite tensor must also be a power of 2.
         In general, the user is also allowed to provide a Lambda predicate to select which tensor blocks
         should be discarded during the creation of a composite tensor, resulting in a block-sparse storage.
-    (e) Tensor creation generally does not initialize a tensor to any value. Setting a tensor to some value
+    (e) An explicit call to the tensor destruction operation is needed for freeing the tensor storage space.
+        Without an explicit tensor destruction call, tensor storage will be freed automatically by the
+        internal garbage collector at some point before the program termination.
+    (f) Tensor creation generally does not initialize a tensor to any value. Setting a tensor to some value
         requires calling the tensor initialization operation.
-    (f) Any other unary tensor operation can be implemented as a tensor transformation operation with
+    (g) Any other unary tensor operation can be implemented as a tensor transformation operation with
         a specific tranformation functor.
-    (g) Tensor copy and tensor addition are the main binary tensor operations.
-    (h) Tensor contraction and tensor decomposition are the main ternary tensor operations.
-    (i) All higher-level tensor operations (evaluation of tensor networks and tensor network expansions)
+    (h) Tensor copy and tensor addition are the main binary tensor operations.
+    (i) Tensor contraction and tensor decomposition are the main ternary tensor operations.
+    (j) All higher-level tensor operations (evaluation of tensor networks and tensor network expansions)
         are decomposed into lists of elementary tensor operations.
 **/
 
