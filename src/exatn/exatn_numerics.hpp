@@ -105,10 +105,12 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         requires calling the tensor initialization operation.
     (g) Any other unary tensor operation can be implemented as a tensor transformation operation with
         a specific tranformation functor.
-    (h) Tensor copy and tensor addition are the main binary tensor operations.
-    (i) Tensor contraction and tensor decomposition are the main ternary tensor operations.
+    (h) Tensor addition is the main binary tensor operation which also implements tensor copy
+        when the output tensor operand is initialized to zero.
+    (i) Tensor contraction and tensor decomposition are the main ternary tensor operations, being
+        opposites of each other.
     (j) All higher-level tensor operations (evaluation of tensor networks and tensor network expansions)
-        are decomposed into lists of elementary tensor operations.
+        are decomposed into lists of elementary tensor operations which are subsequently executed.
 **/
 
 #ifndef EXATN_NUMERICS_HPP_
