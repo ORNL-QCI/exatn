@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/02
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -204,11 +204,17 @@ public:
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;
 
- /** Returns the current process group comprising solely the current MPI process and its own communicator. **/
+ /** Returns the current process group comprising solely the current MPI process and its own self-communicator. **/
  const ProcessGroup & getCurrentProcessGroup() const;
+
+ /** Returns the local rank of the MPI process in a given process group, or -1 if it does not belong to it. **/
+ int getProcessRank(const ProcessGroup & process_group) const;
 
  /** Returns the global rank of the current MPI process in the default process group. **/
  int getProcessRank() const;
+
+ /** Returns the number of MPI processes in a given process group. **/
+ int getNumProcesses(const ProcessGroup & process_group) const;
 
  /** Returns the total number of MPI processes in the default process group. **/
  int getNumProcesses() const;

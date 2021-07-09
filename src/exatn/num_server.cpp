@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/02
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -270,9 +270,23 @@ const ProcessGroup & NumServer::getCurrentProcessGroup() const
  return *process_self_;
 }
 
+int NumServer::getProcessRank(const ProcessGroup & process_group) const
+{
+ unsigned int local_rank;
+ auto rank_is_in = process_group.rankIsIn(getProcessRank(),&local_rank);
+ if(!rank_is_in) return -1;
+ assert(local_rank >= 0);
+ return static_cast<int>(local_rank);
+}
+
 int NumServer::getProcessRank() const
 {
  return process_rank_;
+}
+
+int NumServer::getNumProcesses(const ProcessGroup & process_group) const
+{
+ return static_cast<int>(process_group.getSize());
 }
 
 int NumServer::getNumProcesses() const

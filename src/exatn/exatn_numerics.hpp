@@ -1,11 +1,11 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/06/29
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- 1. Vector space and subspace registration:
+ 1. Vector space and subspace registration [spaces.hpp, space_register.hpp]:
     (a) Any unnamed vector space is automatically associated with a pre-registered
         anonymous vector space wtih id = SOME_SPACE = 0.
     (b) Any explicitly registered (named) vector space has id > 0.
@@ -19,56 +19,60 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  2. Index labels:
     (a) Any registered subspace can be assigned a symbolic index label serving as a placeholder for it;
         an index label can only refer to a single registered (named) subspace it is associated with.
- 3. Tensor:
+ 3. Tensor [tensor.hpp, tensor_composite.hpp]:
     (a) A tensor is defined by its name, shape and signature.
     (b) Tensor shape is an ordered tuple of tensor dimension extents.
     (c) Tensor signature is an ordered tuple of {space_id,subspace_id} pairs
         for each tensor dimension. In case space_id = SOME_SPACE, subspace_id
         is simply the base offset in the anonymous vector space (min = 0).
- 4. Tensor operation:
+    (d) Additionally, a subset of tensor dimensions can be assigned an isometry property;
+        any tensor may have no more than two disjoint isometric dimension groups.
+ 4. Tensor operation [tensor_operation.hpp]:
     (a) Tensor operation is a mathematical operation on one or more tensor arguments.
     (b) Evaluating a tensor operation means computing the value of all its output tensors,
         given all input tensors.
- 5. Tensor network:
+ 5. Tensor network [tensor_network.hpp]:
     (a) Tensor network is a graph of tensors in which vertices are the tensors
-        and (directed) edges show which dimensions of these tensors are contracted
-        with each other. By default, each edge connects two dimensions in two separate
-        tensors (vertices), although these tensors themselves may be identical.
-        Partial/full traces within a tensor are allowed in a tensor network although
-        they must be supported by the processing backend in order to be computed.
-    (b) The same tensor may be present in the given tensor network multiple times
+        and (directed) edges are uniquely associated with tensor dimensions, showing
+        which of them are contracted between any pair of tensors (vertices).
+        By default, each edge connects two dimensions in two separate tensors (vertices),
+        although these tensors themselves may be identical. Partial/full traces within
+        a tensor are allowed, although they must be supported by the processing backend
+        in order to be actually computed.
+    (b) The same tensor may be present in a given tensor network multiple times
         via different vertices, either normal or conjugated.
-    (c) Each tensor network has an implicit output tensor collecting all open
-        edges from all input tensors. Evaluating the tensor network means
-        computing the value of this output tensor, given all input tensors.
+    (c) Each tensor network has an implicit output tensor collecting all open edges from
+        all input tensors (uncontracted tensor dimensions). Evaluating the tensor network
+        means computing the value of this output tensor, given all input tensors.
     (d) The conjugation operation applied to a tensor network performs complex conjugation
         of all constituent input tensors, but does not apply to the output tensor per se
         because the output tensor is simply the result of the full contraction of the tensor
-        network. The conjugation operation also reverses the direction of all edges.
+        network. The conjugation operation also reverses the direction of all edges, unless
+        they are undirected.
     (e) An input tensor may be present in multiple tensor networks and its lifetime
         is not bound to the lifetime of any tensor network it belongs to.
- 6. Tensor network expansion:
+ 6. Tensor network expansion [tensor_expansion.hpp]:
     (a) Tensor network expansion is a linear combination of tensor networks
         with some complex coefficients. The output tensors of all constituent
-        tensor networks must be congruent. Evaluating the tensor network
-        expansion means computing the sum of all these output tensors scaled
-        by their respective (complex) coefficients.
-    (b) A tensor network expansion may either belong to the primary ket or dual bra space.
+        tensor networks must be congruent (same shape and signature). Evaluating
+        the tensor network expansion means computing the sum of all these output tensors
+        scaled by their respective (complex) coefficients.
+    (b) A tensor network expansion may either belong to the primary (ket) or dual (bra) space.
         The conjugation operation transitions the tensor network expansion between
-        the ket and bra spaces.
+        the ket and bra spaces (it applies to each constituent tensor network).
     (c) A single tensor network may enter multiple tensor network expansions and its
         lifetime is not bound by the lifetime of any tensor network expansion it belongs to.
- 7. Tensor network operator:
+ 7. Tensor network operator [tensor_operator.hpp]:
     (a) Tensor network operator is a linear combination of tensors and/or tensor networks
         where each tensor (or tensor network) component associates some of its open edges
-        to a primary ket space and some to a dual bra space, thus establishing a map
-        between the two generally distinct spaces. Therefore, a tensor network operator
-        has a ket shape and a bra shape. All components of a tensor network operator
-        must adhere to the same ket/bra shapes.
+        with a primary (ket) space and some with a dual (bra) space, thus establishing a
+        map between the two (generally unrelated) spaces. Therefore, a tensor network
+        operator has a ket shape and a bra shape. All components of a tensor network
+        operator must adhere to the same ket/bra shapes.
     (b) A tensor network operator may act on a ket tensor network expansion if its ket
-        shape matches the shape of that ket tensor network expansion.
+        shape matches the shape of that tensor network expansion.
         A tensor network operator may act on a bra tensor network expansion if its bra
-        shape matches the shape of that bra tensor network expansion.
+        shape matches the shape of that tensor network expansion.
     (c) A full contraction may be formed between a bra tensor network expansion,
         a tensor network operator, and a ket tensor network expansion if the bra shape
         of the tensor network operator matches the shape of the bra tensor network
@@ -76,6 +80,32 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         of the ket tensor network expansion.
     (d) Any contraction of a tensor network operator with a ket/bra tensor network
         expansion (or both) forms another tensor network expansion.
+ 8. Tensor processing [exatn_numerics.hpp]:
+    (a) A tensor can be allocated storage and processed at any time after its formal definition.
+    (b) Tensor storage allocation is called tensor creation. A tensor can be created across all
+        MPI processes or within a specified group of them. The subset of MPI processes participating
+        in the tensor creation operation defines its domain of existence, meaning that only these
+        MPI processses are aware of the existence of the created tensor. Note that the concrete
+        physical distribution of the tensor body among the MPI processes is hidden from the user
+        (either fully replicated or fully distributed or a mix of the two).
+    (c) All tensor arguments of any non-unary tensor operation must have the same domain of existence.
+    (d) By default, the tensor body is replicated across all MPI processes in its domain of existence.
+        The user also has an option to create a distributed tensor by specifying which dimensions of
+        this tensor to split into segments, thus inducing a block-wise decomposition of the tensor body.
+        Each tensor dimension chosen for splitting must be given its splitting depth, that is, the number
+        of recursive bisections applied to that dimension (a depth of D results in 2^D segments).
+        As a consequence, the total number of tensor blocks will be a power of 2. Because of this,
+        the size of the domain of existence of the corresponding composite tensor must also be a power of 2.
+        In general, the user is also allowed to provide a Lambda predicate to select which tensor blocks
+        should be discarded during the creation of a composite tensor, resulting in a block-sparse storage.
+    (e) Tensor creation generally does not initialize a tensor to any value. Setting a tensor to some value
+        requires calling the tensor initialization operation.
+    (f) Any other unary tensor operation can be implemented as a tensor transformation operation with
+        a specific tranformation functor.
+    (g) Tensor copy and tensor addition are the main binary tensor operations.
+    (h) Tensor contraction and tensor decomposition are the main ternary tensor operations.
+    (i) All higher-level tensor operations (evaluation of tensor networks and tensor network expansions)
+        are decomposed into lists of elementary tensor operations.
 **/
 
 #ifndef EXATN_NUMERICS_HPP_
@@ -977,14 +1007,24 @@ inline const ProcessGroup & getDefaultProcessGroup()
  {return numericalServer->getDefaultProcessGroup();}
 
 
-/** Returns the current process group comprising solely the current MPI process and its own communicator. **/
+/** Returns the current process group comprising solely the current MPI process and its own self-communicator. **/
 inline const ProcessGroup & getCurrentProcessGroup()
  {return numericalServer->getCurrentProcessGroup();}
+
+
+/** Returns the local rank of the MPI process in a given process group, or -1 if it does not belong to it. **/
+inline int getProcessRank(const ProcessGroup & process_group)
+ {return numericalServer->getProcessRank(process_group);}
 
 
 /** Returns the global rank of the current MPI process in the default process group. **/
 inline int getProcessRank()
  {return numericalServer->getProcessRank();}
+
+
+/** Returns the number of MPI processes in a given process group. **/
+inline int getNumProcesses(const ProcessGroup & process_group)
+ {return numericalServer->getNumProcesses(process_group);}
 
 
 /** Returns the total number of MPI processes in the default process group. **/
