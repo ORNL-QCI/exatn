@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2021/03/17
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -116,6 +116,8 @@ public:
  Tensor(Tensor && tensor) noexcept = default;
  Tensor & operator=(Tensor && tensor) noexcept = default;
  virtual ~Tensor() = default;
+
+ virtual std::shared_ptr<Tensor> clone() const;
 
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2021/03/07
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -116,6 +116,11 @@ Tensor::Tensor(const Tensor & another,
    for(auto & old_dim: iso_group) old_dim = o2n[old_dim];
   }
  }
+}
+
+std::shared_ptr<Tensor> Tensor::clone() const
+{
+ return makeSharedTensor(*this);
 }
 
 void Tensor::pack(BytePacket & byte_packet) const

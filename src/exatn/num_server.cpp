@@ -1803,32 +1803,39 @@ bool NumServer::copyTensor(const std::string & output_name,
                            const std::string & input_name)
 {
  bool success = false;
- auto iter = tensors_.find(input_name);
- if(iter != tensors_.end()){
-  auto tensor1 = iter->second;
-  iter = tensors_.find(output_name);
-  if(iter == tensors_.end()){
-   std::cout << "#FATAL(exatn::NumServer::copyTensor): Non-existing output tensor feature is not implemented yet!\n";
-   std:abort();
-  }
-  auto tensor0 = iter->second;
-  success = tensor0->isCongruentTo(*tensor1);
-  if(success){
-   success = initTensor(output_name,0.0);
+ if(output_name != input_name){
+  auto iter = tensors_.find(input_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   iter = tensors_.find(output_name);
+   if(iter == tensors_.end()){
+    auto output_tensor = getTensor(input_name)->clone();
+    output_tensor->rename(output_name);
+    success = createTensor(output_tensor,output_tensor->getElementType());
+    if(success) iter = tensors_.find(output_name);
+   }
    if(success){
-    std::string add_pattern;
-    success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+    auto tensor0 = iter->second;
+    success = tensor0->isCongruentTo(*tensor1);
     if(success){
-     success = addTensors(add_pattern,1.0);
+     success = initTensor(output_name,0.0);
+     if(success){
+      std::string add_pattern;
+      success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+      if(success){
+       success = addTensors(add_pattern,1.0);
+      }
+     }
+    }else{
+     std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensors " << output_name
+               << " and " << input_name << " are not congruent!\n";
     }
    }
   }else{
-   std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensors " << output_name
-             << " and " << input_name << " are not congruent!\n";
+   std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensor " << input_name << " not found!\n";
   }
  }else{
-  success = false;
-  std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensor " << input_name << " not found!\n";
+  std::cout << "#ERROR(exatn::NumServer::copyTensor): Cannot copy tensor " << input_name << " into itself!\n";
  }
  return success;
 }
@@ -1837,32 +1844,39 @@ bool NumServer::copyTensorSync(const std::string & output_name,
                                const std::string & input_name)
 {
  bool success = false;
- auto iter = tensors_.find(input_name);
- if(iter != tensors_.end()){
-  auto tensor1 = iter->second;
-  iter = tensors_.find(output_name);
-  if(iter == tensors_.end()){
-   std::cout << "#FATAL(exatn::NumServer::copyTensorSync): Non-existing output tensor feature is not implemented yet!\n";
-   std:abort();
-  }
-  auto tensor0 = iter->second;
-  success = tensor0->isCongruentTo(*tensor1);
-  if(success){
-   success = initTensorSync(output_name,0.0);
+ if(output_name != input_name){
+  auto iter = tensors_.find(input_name);
+  if(iter != tensors_.end()){
+   auto tensor1 = iter->second;
+   iter = tensors_.find(output_name);
+   if(iter == tensors_.end()){
+    auto output_tensor = getTensor(input_name)->clone();
+    output_tensor->rename(output_name);
+    success = createTensorSync(output_tensor,output_tensor->getElementType());
+    if(success) iter = tensors_.find(output_name);
+   }
    if(success){
-    std::string add_pattern;
-    success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+    auto tensor0 = iter->second;
+    success = tensor0->isCongruentTo(*tensor1);
     if(success){
-     success = addTensorsSync(add_pattern,1.0);
+     success = initTensorSync(output_name,0.0);
+     if(success){
+      std::string add_pattern;
+      success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
+      if(success){
+       success = addTensorsSync(add_pattern,1.0);
+      }
+     }
+    }else{
+     std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensors " << output_name
+               << " and " << input_name << " are not congruent!\n";
     }
    }
   }else{
-   std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensors " << output_name
-             << " and " << input_name << " are not congruent!\n";
+   std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensor " << input_name << " not found!\n";
   }
  }else{
-  success = false;
-  std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensor " << input_name << " not found!\n";
+  std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Cannot copy tensor " << input_name << " into itself!\n";
  }
  return success;
 }

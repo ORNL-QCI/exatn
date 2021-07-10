@@ -613,7 +613,8 @@ public:
  bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
                             const std::string & slice_name); //in: slice name
 
- /** Assigns one tensor to another congruent one (makes a copy of a tensor). **/
+ /** Assigns one tensor to another congruent one (makes a copy of a tensor).
+     If the output tensor with the given name does not exist, it will be created. **/
  bool copyTensor(const std::string & output_name, //in: output tensor name
                  const std::string & input_name); //in: input tensor name
 

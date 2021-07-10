@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/17
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -77,6 +77,8 @@ public:
  TensorComposite(TensorComposite && tensor) noexcept = default;
  TensorComposite & operator=(TensorComposite && tensor) noexcept = default;
  virtual ~TensorComposite() = default;
+
+ virtual std::shared_ptr<Tensor> clone() const override;
 
  virtual void pack(BytePacket & byte_packet) const override;
  virtual void unpack(BytePacket & byte_packet) override;
