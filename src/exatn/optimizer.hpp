@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/01/22
+REVISION: 2021/07/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -30,14 +30,14 @@ public:
 
  static unsigned int debug;
 
- static constexpr const double DEFAULT_TOLERANCE = 1e-4;
- static constexpr const double DEFAULT_LEARN_RATE = 0.5;
+ static constexpr const double DEFAULT_TOLERANCE = 1e-3;
+ static constexpr const double DEFAULT_LEARN_RATE = 0.25;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
  static constexpr const unsigned int DEFAULT_MICRO_ITERATIONS = 1;
 
  TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,   //in: hermitian tensor network operator
                         std::shared_ptr<TensorExpansion> vector_expansion, //inout: tensor network expansion forming the bra/ket vectors
-                        double tolerance = DEFAULT_TOLERANCE)     ;        //in: desired numerical convergence tolerance
+                        double tolerance = DEFAULT_TOLERANCE);             //in: desired numerical convergence tolerance
 
  TensorNetworkOptimizer(const TensorNetworkOptimizer &) = default;
  TensorNetworkOptimizer & operator=(const TensorNetworkOptimizer &) = default;

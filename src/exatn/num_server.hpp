@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/08
+REVISION: 2021/07/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -807,6 +807,7 @@ private:
 
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
  std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
+ std::unordered_map<std::string,void*> tensor_comms_; //MPI communicators associated with tensors
 
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
  bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/08
+REVISION: 2021/07/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1064,7 +1064,11 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
     }
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
-     if(!(res.second)){
+     if(res.second){
+      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),
+                                         process_group.getMPICommProxy().get<void>()));
+      assert(saved.second);
+     }else{
       std::cout << "#ERROR(exatn::createTensor): Attempt to CREATE an already existing tensor "
                 << tensor->getName() << std::endl;
       submitted = false;
@@ -1128,7 +1132,11 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
     }
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
-     if(!(res.second)){
+     if(res.second){
+      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),
+                                         process_group.getMPICommProxy().get<void>()));
+      assert(saved.second);
+     }else{
       std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
                 << tensor->getName() << std::endl;
       submitted = false;
@@ -1252,7 +1260,9 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
    }
   }
   if(submitted){
-   auto num_deleted = tensors_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   assert(num_deleted == 1);
+   num_deleted = tensors_.erase(iter->second->getName());
    assert(num_deleted == 1);
   }
  }else{
@@ -1285,7 +1295,9 @@ bool NumServer::destroyTensorSync(const std::string & name)
    }
   }
   if(submitted){
-   auto num_deleted = tensors_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   assert(num_deleted == 1);
+   num_deleted = tensors_.erase(iter->second->getName());
    assert(num_deleted == 1);
   }
  }else{
