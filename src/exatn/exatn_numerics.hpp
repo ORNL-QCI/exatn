@@ -88,7 +88,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         MPI processses are aware of the existence of the created tensor. Note that the concrete
         physical distribution of the tensor body among the MPI processes is hidden from the user
         (either fully replicated or fully distributed or a mix of the two).
-    (c) All tensor arguments of any non-unary tensor operation must have the same domain of existence,
+    (c) All tensor operands of any non-unary tensor operation must have the same domain of existence,
         otherwise the code is non-compliant, resulting in an undefined behavior.
     (d) By default, the tensor body is replicated across all MPI processes in its domain of existence.
         The user also has an option to create a distributed tensor by specifying which dimensions of
@@ -252,10 +252,12 @@ inline bool withinTensorExistenceDomain(Args&&... tensor_names) //in: tensor nam
  {return numericalServer->withinTensorExistenceDomain(std::forward<Args>(tensor_names)...);}
 
 
-/** Returns the process group associated with a given tensor.
-    The calling process must be within the tensor exsistence domain. **/
-inline const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) //in: tensor name
- {return numericalServer->getTensorProcessGroup(tensor_name);}
+/** Returns the process group associated with the given tensors.
+    The calling process must be within the tensor exsistence domain,
+    which must be the same for all tensors. **/
+template <typename... Args>
+inline const ProcessGroup & getTensorProcessGroup(Args&&... tensor_names) //in: tensor names
+ {return numericalServer->getTensorProcessGroup(std::forward<Args>(tensor_names)...);}
 
 
 //////////////////////////
@@ -595,7 +597,9 @@ inline bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor 
 
 
 /** Assigns one tensor to another congruent one (makes a copy of a tensor).
-    If the output tensor with the given name does not exist, it will be created. **/
+    If the output tensor with the given name does not exist, it will be created.
+    Note that the output tensor must either exist or not exist across all
+    participating processes, otherwise it will result in an undefined behavior! **/
 inline bool copyTensor(const std::string & output_name, //in: output tensor name
                        const std::string & input_name)  //in: input tensor name
  {return numericalServer->copyTensor(output_name,input_name);}

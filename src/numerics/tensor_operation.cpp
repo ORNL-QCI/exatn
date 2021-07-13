@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/01/07
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -24,6 +24,15 @@ TensorOperation::TensorOperation(TensorOpCode opcode,
  scalars_(num_scalars,std::complex<double>{0.0,0.0})
 {
  operands_.reserve(num_operands);
+}
+
+bool TensorOperation::isComposite() const
+{
+ bool is_composite = this->isSet();
+ assert(is_composite);
+ is_composite = false;
+ for(const auto & operand: operands_) is_composite = (is_composite || std::get<0>(operand)->isComposite());
+ return is_composite;
 }
 
 double TensorOperation::getFlopEstimate() const

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/01/07
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  (a) A tensor operation is a formal numerical operation on one or more tensors.
  (b) A tensor operation may have mutable (output) and immutable (input) tensor operands.
      The mutable tensor operands must always precede immutable tensor operands!
+ (c) A tensor operation may be either simple or composite. A tensor operation is
+     composite when at least one tensor operand is composite. A composite tensor
+     operation is decomposed into two or more simple tensor operations.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OPERATION_HPP_
@@ -68,6 +71,9 @@ public:
      error code (0:Success). **/
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) = 0;
+
+ /** Returns whether or not the tensor operation is composite. **/
+ bool isComposite() const;
 
  /** Returns the FMA flop estimate for the tensor operation, or zero if not available.
      The FMA flop estimate neither includes the FMA factor of 2.0 nor

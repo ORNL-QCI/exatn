@@ -372,9 +372,19 @@ public:
 
  bool withinTensorExistenceDomain(const std::string & tensor_name) const; //in: tensor name
 
- /** Returns the process group associated with a given tensor.
-     The calling process must be within the tensor exsistence domain. **/
- const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //in: tensor name
+ /** Returns the process group associated with the given tensors.
+     The calling process must be within the tensor exsistence domain,
+     which must be the same for all tensors. **/
+ template <typename... Args>
+ const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
+ {
+  const auto & tensor_domain = getTensorProcessGroup(tensor_name);
+  const auto & other_tensors_domain = getTensorProcessGroup(std::forward<Args>(tensor_names)...);
+  assert(other_tensors_domain == tensor_domain);
+  return tensor_domain;
+ }
+
+ const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //tensor name
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
      See numerics::Tensor constructors for different creation options. **/
@@ -628,7 +638,9 @@ public:
                             const std::string & slice_name); //in: slice name
 
  /** Assigns one tensor to another congruent one (makes a copy of a tensor).
-     If the output tensor with the given name does not exist, it will be created. **/
+     If the output tensor with the given name does not exist, it will be created.
+     Note that the output tensor must either exist or not exist across all
+     participating processes, otherwise it will result in an undefined behavior! **/
  bool copyTensor(const std::string & output_name, //in: output tensor name
                  const std::string & input_name); //in: input tensor name
 
@@ -1018,18 +1030,18 @@ bool NumServer::addTensors(const std::string & addition,
        op->setScalar(0,std::complex<double>(alpha));
        parsed = submit(op);
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-                 << addition << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+       //          << addition << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
                 << addition << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-               << addition << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+     //          << addition << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
@@ -1076,18 +1088,18 @@ bool NumServer::addTensorsSync(const std::string & addition,
        parsed = submit(op);
        if(parsed) parsed = sync(*op);
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-                 << addition << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+       //          << addition << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
                 << addition << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-               << addition << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+     //          << addition << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
