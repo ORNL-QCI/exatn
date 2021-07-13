@@ -433,6 +433,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    logfile_.flush(); //`Debug only
   }
   submitted = true;
+  //Register/unregister tensor existence:
   if(operation->getOpcode() == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
    auto tensor = operation->getTensorOperand(0);
    auto elem_type = std::dynamic_pointer_cast<numerics::TensorOpCreate>(operation)->getTensorElementType();
@@ -442,22 +443,24 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    }else{
     tensor->setElementType(elem_type);
    }
-   auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
+   auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor)); //registers the tensor
    if(!(res.second)){
     std::cout << "#ERROR(exatn::NumServer::submit): Attempt to CREATE an already existing tensor "
-              << tensor->getName() << std::endl;
+              << tensor->getName() << std::endl << std::flush;
     submitted = false;
    }
   }else if(operation->getOpcode() == TensorOpCode::DESTROY){
    auto tensor = operation->getTensorOperand(0);
-   auto num_deleted = tensors_.erase(tensor->getName());
+   auto num_deleted = tensors_.erase(tensor->getName()); //unregisters the tensor
    if(num_deleted != 1){
     std::cout << "#ERROR(exatn::NumServer::submit): Attempt to DESTROY a non-existing tensor "
               << tensor->getName() << std::endl << std::flush;
     submitted = false;
    }
   }
+  //Submit tensor operation to tensor runtime:
   if(submitted) tensor_rt_->submit(operation);
+  //Compute validation stamps for all output tensor operands, if needed (debug):
   if(validation_tracing_ && submitted){
    const auto opcode = operation->getOpcode();
    if(opcode != TensorOpCode::NOOP && opcode != TensorOpCode::CREATE && opcode != TensorOpCode::DESTROY){
@@ -487,6 +490,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
 bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
 {
  bool success = true;
+ //Determine tensor element type:
  const auto num_operands = operation->getNumOperands();
  auto elem_type = TensorElementType::VOID;
  for(unsigned int i = 0; i < num_operands; ++i){
@@ -494,6 +498,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
   elem_type = operand->getElementType();
   if(elem_type != TensorElementType::VOID) break;
  }
+ //Create and initialize implicit Kronecker Delta tensors:
  std::stack<unsigned int> deltas;
  for(unsigned int i = 0; i < num_operands; ++i){
   auto operand = operation->getTensorOperand(i);
@@ -518,8 +523,20 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation)
   if(!success) break;
  }
  if(success){
-  success = submitOp(operation);
+  //Submit the main tensor operation:
+  if(operation->isComposite()){
+   auto tensor_exists_locally = [this](const Tensor & tensor){
+    return (this->tensors_.find(tensor.getName()) != this->tensors_.cend());
+   };
+   const auto num_ops = operation->decompose(tensor_exists_locally);
+   for(std::size_t op_id = 0; op_id < num_ops; ++op_id){
+    success = submitOp((*operation)[op_id]); if(!success) break;
+   }
+  }else{
+   success = submitOp(operation);
+  }
   if(success){
+   //Destroy temporarily created Kronecker Delta tensors:
    while(!deltas.empty()){
     auto operand = operation->getTensorOperand(deltas.top());
     std::shared_ptr<TensorOperation> op2 = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -869,17 +886,28 @@ bool NumServer::sync(const Tensor & tensor, bool wait)
 
 bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, bool wait)
 {
- if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- auto success = tensor_rt_->sync(tensor,wait);
- if(success){
-  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-   << "]: Locally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+ bool success = true;
+ if(!process_group.rankIsIn(process_rank_)) return success; //process is not in the group: Do nothing
+ auto iter = tensors_.find(tensor.getName());
+ if(iter != tensors_.end()){
+  if(iter->second->isComposite()){
+   auto composite_tensor = castTensorComposite(iter->second); assert(composite_tensor);
+   for(auto subtens = composite_tensor->begin(); subtens != composite_tensor->end(); ++subtens){
+    success = tensor_rt_->sync(*(subtens->second),wait); if(!success) break;
+   }
+  }else{
+   success = tensor_rt_->sync(tensor,wait);
+  }
+  if(success){
+   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+    << "]: Locally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
 #ifdef MPI_ENABLED
-  auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
-  success = success && (errc == MPI_SUCCESS);
-  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-   << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+   success = success && (errc == MPI_SUCCESS);
+   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+    << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
 #endif
+  }
  }
  return success;
 }
@@ -931,10 +959,7 @@ bool NumServer::sync(const ProcessGroup & process_group, const std::string & nam
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  auto iter = tensors_.find(name);
- if(iter == tensors_.end()){
-  std::cout << "#ERROR(exatn::NumServer::sync): Tensor " << name << " not found!" << std::endl << std::flush;
-  assert(false);
- }
+ if(iter == tensors_.end()) return true; //tensor does not exist: Do nothing
  return sync(process_group,*(iter->second),wait);
 }
 

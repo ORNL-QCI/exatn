@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Fetches remote tensor data
-REVISION: 2021/07/02
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -41,6 +41,13 @@ public:
  /** Accepts tensor node executor which will execute this tensor operation. **/
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) override;
+
+ /** Decomposes a composite tensor operation into simple ones.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) override
+ {
+  return 0;
+ }
 
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();

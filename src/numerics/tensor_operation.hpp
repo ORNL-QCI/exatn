@@ -26,6 +26,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <complex>
+#include <functional>
 
 #include <iostream>
 #include <fstream>
@@ -72,8 +73,16 @@ public:
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) = 0;
 
+ /** Decomposes a composite tensor operation into simple ones.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) = 0;
+
  /** Returns whether or not the tensor operation is composite. **/
  bool isComposite() const;
+
+ /** Returns the requested simple tensor operation in case the current tensor
+     operation is composite and has been already decomposed into simple operations. **/
+ std::shared_ptr<TensorOperation> operator[](std::size_t operation_id);
 
  /** Returns the FMA flop estimate for the tensor operation, or zero if not available.
      The FMA flop estimate neither includes the FMA factor of 2.0 nor
@@ -197,6 +206,7 @@ private:
 
 protected:
 
+ std::vector<std::shared_ptr<TensorOperation>> simple_operations_; //container of simple tensor operations for composite operation decomposition
  std::string pattern_; //symbolic index pattern
  const std::vector<int> symb_pos_; //symb_pos_[operand_position] --> operand position in the symbolic index pattern;
  std::vector<std::tuple<std::shared_ptr<Tensor>,bool,bool>> operands_; //tensor operands <operand,conjugation,mutation>

@@ -35,6 +35,12 @@ bool TensorOperation::isComposite() const
  return is_composite;
 }
 
+std::shared_ptr<TensorOperation> TensorOperation::operator[](std::size_t operation_id)
+{
+ assert(operation_id < simple_operations_.size());
+ return simple_operations_[operation_id];
+}
+
 double TensorOperation::getFlopEstimate() const
 {
  return 0.0; //flop estimate is not available by default
