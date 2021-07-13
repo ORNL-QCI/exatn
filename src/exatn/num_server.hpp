@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/12
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -361,6 +361,20 @@ public:
  bool registerTensorIsometry(const std::string & name,                     //in: tensor name
                              const std::vector<unsigned int> & iso_dims0,  //in: tensor dimensions forming the isometry (group 0)
                              const std::vector<unsigned int> & iso_dims1); //in: tensor dimensions forming the isometry (group 1)
+
+ /** Returns TRUE if the calling process is within the existence domain of all given tensors, FALSE otherwise. **/
+ template <typename... Args>
+ bool withinTensorExistenceDomain(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
+ {
+  if(!withinTensorExistenceDomain(tensor_name)) return false;
+  return withinTensorExistenceDomain(std::forward<Args>(tensor_names)...);
+ }
+
+ bool withinTensorExistenceDomain(const std::string & tensor_name) const; //in: tensor name
+
+ /** Returns the process group associated with a given tensor.
+     The calling process must be within the tensor exsistence domain. **/
+ const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //in: tensor name
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
      See numerics::Tensor constructors for different creation options. **/
@@ -807,7 +821,7 @@ private:
 
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
  std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
- std::unordered_map<std::string,void*> tensor_comms_; //MPI communicators associated with tensors
+ std::unordered_map<std::string,ProcessGroup> tensor_comms_; //process group associated with each tensor
 
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
  bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse
@@ -867,6 +881,12 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submitted = submit(op);
+  if(submitted){
+   if(process_group != getDefaultProcessGroup()){
+    auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+    assert(saved.second);
+   }
+  }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
  }
@@ -886,7 +906,13 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submitted = submit(op);
-  if(submitted) submitted = sync(*op);
+  if(submitted){
+   if(process_group != getDefaultProcessGroup()){
+    auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+    assert(saved.second);
+   }
+   submitted = sync(*op);
+  }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
  }

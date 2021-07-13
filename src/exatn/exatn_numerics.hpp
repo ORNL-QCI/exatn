@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/07/08
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -243,6 +243,19 @@ inline bool registerTensorIsometry(const std::string & name,                    
                                    const std::vector<unsigned int> & iso_dims0, //in: tensor dimensions forming the isometry (group 0)
                                    const std::vector<unsigned int> & iso_dims1) //in: tensor dimensions forming the isometry (group 1)
  {return numericalServer->registerTensorIsometry(name,iso_dims0,iso_dims1);}
+
+
+/** Returns TRUE if the calling process is within the existence domain
+    of all given tensors, FALSE otherwise. **/
+template <typename... Args>
+inline bool withinTensorExistenceDomain(Args&&... tensor_names) //in: tensor names
+ {return numericalServer->withinTensorExistenceDomain(std::forward<Args>(tensor_names)...);}
+
+
+/** Returns the process group associated with a given tensor.
+    The calling process must be within the tensor exsistence domain. **/
+inline const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) //in: tensor name
+ {return numericalServer->getTensorProcessGroup(tensor_name);}
 
 
 //////////////////////////

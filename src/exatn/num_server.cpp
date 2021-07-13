@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/12
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -994,6 +994,25 @@ bool NumServer::registerTensorIsometry(const std::string & name,
  return registered;
 }
 
+bool NumServer::withinTensorExistenceDomain(const std::string & tensor_name) const
+{
+ auto iter = tensors_.find(tensor_name);
+ return (iter != tensors_.cend());
+}
+
+const ProcessGroup & NumServer::getTensorProcessGroup(const std::string & tensor_name) const
+{
+ bool exists = withinTensorExistenceDomain(tensor_name);
+ if(!exists){
+  std::cout << "#ERROR(exatn::getTensorProcessGroup): Process " << getProcessRank()
+            << " is not within the existence domain of tensor " << tensor_name << std::endl << std::flush;
+  assert(false);
+ }
+ auto iter = tensor_comms_.find(tensor_name);
+ if(iter != tensor_comms_.cend()) return iter->second;
+ return getDefaultProcessGroup();
+}
+
 bool NumServer::createTensor(const std::string & name,
                              const TensorSignature & signature,
                              TensorElementType element_type)
@@ -1065,8 +1084,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
-      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),
-                                         process_group.getMPICommProxy().get<void>()));
+      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
       assert(saved.second);
      }else{
       std::cout << "#ERROR(exatn::createTensor): Attempt to CREATE an already existing tensor "
@@ -1083,6 +1101,12 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
    op->setTensorOperand(tensor);
    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
    submitted = submit(op);
+   if(submitted){
+    if(process_group != getDefaultProcessGroup()){
+     auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
+     assert(saved.second);
+    }
+   }
   }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
@@ -1133,8 +1157,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
-      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),
-                                         process_group.getMPICommProxy().get<void>()));
+      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
       assert(saved.second);
      }else{
       std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
@@ -1151,7 +1174,13 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
    op->setTensorOperand(tensor);
    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
    submitted = submit(op);
-   if(submitted) submitted = sync(*op);
+   if(submitted){
+    if(process_group != getDefaultProcessGroup()){
+     auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
+     assert(saved.second);
+    }
+    submitted = sync(*op);
+   }
   }
  }else{
   std::cout << "#ERROR(exatn::createTensorSync): Missing data type!" << std::endl;
@@ -1269,6 +1298,9 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
   op->setTensorOperand(iter->second);
   submitted = submit(op);
+  if(submitted){
+   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+  }
  }
  return submitted;
 }
@@ -1304,7 +1336,10 @@ bool NumServer::destroyTensorSync(const std::string & name)
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
   op->setTensorOperand(iter->second);
   submitted = submit(op);
-  if(submitted) submitted = sync(*op);
+  if(submitted){
+   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   submitted = sync(*op);
+  }
  }
  return submitted;
 }

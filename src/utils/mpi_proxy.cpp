@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2021/07/12
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -38,7 +38,7 @@ MPICommProxy::~MPICommProxy()
 }
 
 
-bool MPICommProxy::operator==(const MPICommProxy & another)
+bool MPICommProxy::operator==(const MPICommProxy & another) const
 {
  bool equal = true;
 #ifdef MPI_ENABLED

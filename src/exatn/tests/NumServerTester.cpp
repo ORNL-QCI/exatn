@@ -3209,8 +3209,8 @@ TEST(NumServerTester, TensorComposite) {
  const auto & all_processes = exatn::getDefaultProcessGroup();
  const auto my_process_rank = exatn::getProcessRank(all_processes);
  const auto total_ranks = exatn::getNumProcesses(all_processes);
- std::cout << "Process " << my_process_rank << " from total number of MPI processes = "
-           << total_ranks << std::endl;
+ std::cout << "Process " << my_process_rank << " (total number of MPI processes = "
+           << total_ranks << ")" << std::endl;
 
  //Create composite tensors:
  success = exatn::createTensorSync(all_processes,"A",
@@ -3253,6 +3253,9 @@ TEST(NumServerTester, TensorComposite) {
                                    std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
                                    TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
  auto tensorC = exatn::castTensorComposite(exatn::getTensor("C")); assert(tensorC);
+
+ //std::cout << "Process " << my_process_rank << " is within existence domain of {A,B,C} = "
+ //          << exatn::withinTensorExistenceDomain("A","B","C") << std::endl; //debug
 
 
  //Destroy composite tensors:

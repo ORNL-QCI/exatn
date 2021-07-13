@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2021/07/12
+REVISION: 2021/07/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -33,7 +33,8 @@ public:
  MPICommProxy & operator=(MPICommProxy &&) noexcept = default;
  ~MPICommProxy();
 
- bool operator==(const MPICommProxy & another);
+ bool operator==(const MPICommProxy & another) const;
+ bool operator!=(const MPICommProxy & another) const {return !(*this == another);}
 
  /** Returns TRUE if the MPI communicator is empty (non-existing). **/
  bool isEmpty() const {return (mpi_comm_ptr_ == nullptr);}
@@ -85,9 +86,14 @@ public:
  ProcessGroup & operator=(ProcessGroup &&) noexcept = default;
  ~ProcessGroup() = default;
 
- inline bool operator==(const ProcessGroup & another)
+ inline bool operator==(const ProcessGroup & another) const
  {
   return (intra_comm_ == another.intra_comm_);
+ }
+
+ inline bool operator!=(const ProcessGroup & another) const
+ {
+  return !(*this == another);
  }
 
  /** Returns the size of the process group (number of MPI processes). **/
