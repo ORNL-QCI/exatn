@@ -58,7 +58,6 @@ public:
 private:
 
  MPICommProxy intra_comm_; //MPI intra-communicator
-
 };
 
 } //namespace numerics

@@ -66,7 +66,6 @@ public:
 private:
 
  std::shared_ptr<talsh::TensorFunctor<Identifiable>> functor_; //tensor functor (method)
-
 };
 
 } //namespace numerics

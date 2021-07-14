@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/13
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -18,6 +18,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
+#include "tensor_composite.hpp"
 #include "timers.hpp"
 
 #include <initializer_list>
@@ -35,12 +36,31 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+class TensorMapper{ //pure abstract (interface)
+public:
+
+ virtual ~TensorMapper() = default;
+
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
+                                       unsigned long long num_subtensors) const = 0;
+
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
+                                                                           unsigned long long num_subtensors) const = 0;
+
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,
+                               unsigned long long num_subtensors) const = 0;
+
+ virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0;
+};
+
+
 namespace runtime{
- // Tensor operation execution handle:
+ //Tensor operation execution handle:
  using TensorOpExecHandle = std::size_t;
- // Forward for TensorNodeExecutor:
+ //Forward for TensorNodeExecutor:
  class TensorNodeExecutor;
 }
+
 
 namespace numerics{
 

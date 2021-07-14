@@ -64,7 +64,6 @@ public:
 private:
 
  TensorElementType element_type_; //tensor element type
-
 };
 
 } //namespace numerics

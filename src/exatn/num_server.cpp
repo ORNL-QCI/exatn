@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/13
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -445,7 +445,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    }
    auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor)); //registers the tensor
    if(!(res.second)){
-    std::cout << "#ERROR(exatn::NumServer::submit): Attempt to CREATE an already existing tensor "
+    std::cout << "#ERROR(exatn::NumServer::submitOp): Attempt to CREATE an already existing tensor "
               << tensor->getName() << std::endl << std::flush;
     submitted = false;
    }
@@ -453,7 +453,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    auto tensor = operation->getTensorOperand(0);
    auto num_deleted = tensors_.erase(tensor->getName()); //unregisters the tensor
    if(num_deleted != 1){
-    std::cout << "#ERROR(exatn::NumServer::submit): Attempt to DESTROY a non-existing tensor "
+    std::cout << "#ERROR(exatn::NumServer::submitOp): Attempt to DESTROY a non-existing tensor "
               << tensor->getName() << std::endl << std::flush;
     submitted = false;
    }

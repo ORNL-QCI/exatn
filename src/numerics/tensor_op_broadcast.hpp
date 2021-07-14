@@ -65,7 +65,6 @@ private:
 
  MPICommProxy intra_comm_; //MPI intra-communicator
  int root_rank_; //MPI broadcast root process rank
-
 };
 
 } //namespace numerics

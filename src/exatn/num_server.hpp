@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/13
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -118,7 +118,7 @@ using numerics::FunctorPrint;
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
 
-/** Returns the closest owner id for a given subtensor. **/
+/** Returns the closest owner id (process rank) for a given subtensor. **/
 unsigned int subtensor_owner_id(unsigned int process_rank,          //in: current process rank
                                 unsigned int num_processes,         //in: total number of processes
                                 unsigned long long subtensor_id,    //in: id of the required subtensor
@@ -126,12 +126,54 @@ unsigned int subtensor_owner_id(unsigned int process_rank,          //in: curren
 
 /* Returns a range of subtensors [begin,end] owned by the specified process. */
 std::pair<unsigned long long, unsigned long long> owned_subtensors(
-                                                   unsigned int process_rank,          //in: current process rank
+                                                   unsigned int process_rank,          //in: target process rank
                                                    unsigned int num_processes,         //in: total number of processes
                                                    unsigned long long num_subtensors); //in: total number of subtensors
 
+//Composite tensor mapper (helper):
+class CompositeTensorMapper: public TensorMapper{
+public:
 
-//Numerical Server:
+ CompositeTensorMapper(unsigned int current_rank_in_group,
+                       unsigned int num_processes_in_group,
+                       const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
+  current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
+  local_tensors_(local_tensors) {}
+
+ virtual ~CompositeTensorMapper() = default;
+
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
+                                       unsigned long long num_subtensors) const override
+ {
+  return subtensor_owner_id(current_process_rank_,group_num_processes_,subtensor_id,num_subtensors);
+ }
+
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
+                                                                           unsigned long long num_subtensors) const override
+ {
+  return owned_subtensors(process_rank,group_num_processes_,num_subtensors);
+ }
+
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,
+                               unsigned long long num_subtensors) const override
+ {
+  return (subtensorOwnerId(subtensor_id,num_subtensors) == current_process_rank_);
+ }
+
+ virtual bool isLocalSubtensor(const Tensor & subtensor) const override
+ {
+  return (local_tensors_.find(subtensor.getName()) != local_tensors_.cend());
+ }
+
+private:
+
+ unsigned int current_process_rank_; //rank of the current process (in some process group)
+ unsigned int group_num_processes_;  //total number of processes (in some process group)
+ const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors_; //locally stored tensors
+};
+
+
+//Numerical server:
 class NumServer final {
 
 public:

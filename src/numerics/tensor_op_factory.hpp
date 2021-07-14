@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation factory
-REVISION: 2021/07/02
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -63,7 +63,6 @@ private:
  TensorOpFactory(); //private ctor
 
  std::map<TensorOpCode,createTensorOpFn> factory_map_;
-
 };
 
 } //namespace numerics

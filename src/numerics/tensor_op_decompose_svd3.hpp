@@ -56,7 +56,6 @@ public:
 private:
 
  char absorb_singular_values_; //regulates the absorption of the singular values factor
-
 };
 
 } //namespace numerics
