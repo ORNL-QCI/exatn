@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Destroys a tensor
-REVISION: 2020/06/25
+REVISION: 2021/07/14
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_service.hpp"
 
@@ -33,6 +33,13 @@ int TensorOpDestroy::accept(runtime::TensorNodeExecutor & node_executor,
 std::unique_ptr<TensorOperation> TensorOpDestroy::createNew()
 {
  return std::unique_ptr<TensorOperation>(new TensorOpDestroy());
+}
+
+std::size_t TensorOpDestroy::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+{
+ assert(false);
+ //`Implement
+ return 0;
 }
 
 } //namespace numerics

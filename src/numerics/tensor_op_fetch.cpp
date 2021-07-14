@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Fetches remote tensor data
-REVISION: 2021/07/02
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -67,6 +67,13 @@ bool TensorOpFetch::resetMessageTag(int tag)
 int TensorOpFetch::getMessageTag() const
 {
  return message_tag_;
+}
+
+std::size_t TensorOpFetch::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+{
+ assert(false);
+ //`Implement
+ return 0;
 }
 
 } //namespace numerics

@@ -45,10 +45,7 @@ public:
 
  /** Decomposes a composite tensor operation into simple ones.
      Returns the total number of generated simple operations. **/
- virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) override
- {
-  return 0;
- }
+ virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) override;
 
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();

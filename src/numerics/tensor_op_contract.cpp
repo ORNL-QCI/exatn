@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/03/13
+REVISION: 2021/07/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -55,6 +55,13 @@ void TensorOpContract::resetAccumulative(bool accum)
 {
  accumulative_ = accum;
  return;
+}
+
+std::size_t TensorOpContract::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+{
+ assert(false);
+ //`Implement
+ return 0;
 }
 
 } //namespace numerics
