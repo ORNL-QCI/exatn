@@ -540,7 +540,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, const TensorM
  if(success){
   //Submit the main tensor operation:
   if(operation->isComposite()){
-   const auto num_ops = operation->decompose(tensor_mapper);
+   const auto num_ops = operation->decompose(tensor_mapper); assert(num_ops > 0);
    for(std::size_t op_id = 0; op_id < num_ops; ++op_id){
     success = submitOp((*operation)[op_id]); if(!success) break;
    }
@@ -1093,34 +1093,12 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
  const auto & tensor_mapper = *getTensorMapper(process_group);
  if(element_type != TensorElementType::VOID){
   if(tensor->isComposite()){ //distributed storage
-   auto tensor_composite = castTensorComposite(tensor); assert(tensor_composite);
-   const auto num_subtensors = tensor_composite->getNumSubtensors(); assert(num_subtensors > 0);
    const auto num_processes = process_group.getSize(); assert(num_processes > 0);
-   unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
    if((num_processes & (num_processes - 1U)) == 0){ //power of 2 check
-    if(num_subtensors <= num_processes){ //one subtensor per process, subtensors may be partially replicated among processes
-     unsigned long long subtensor_id = static_cast<unsigned long long>(local_rank) % num_subtensors;
-     std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
-     std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-     op->setTensorOperand((*tensor_composite)[subtensor_id]);
-     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-     submitted = submit(op,tensor_mapper);
-    }else{ //each process gets more than one subtensor
-     assert((num_subtensors_per_process >= 2) && (num_subtensors % num_processes == 0));
-     auto nspp = num_subtensors_per_process;
-     unsigned long long num_minor_bits = 0;
-     while(nspp >>= 1) ++num_minor_bits; assert(num_minor_bits > 0);
-     unsigned long long subtensor_begin = static_cast<unsigned long long>(local_rank) << num_minor_bits;
-     unsigned long long subtensor_end = subtensor_begin | ((1ULL << num_minor_bits) - 1);
-     for(auto subtensor_id = subtensor_begin; subtensor_id <= subtensor_end; ++subtensor_id){
-      std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
-      std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-      op->setTensorOperand((*tensor_composite)[subtensor_id]);
-      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-      submitted = submit(op,tensor_mapper);
-      if(!submitted) break;
-     }
-    }
+    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+    op->setTensorOperand(tensor);
+    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+    submitted = submit(op,tensor_mapper);
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
@@ -1165,41 +1143,18 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
  const auto & tensor_mapper = *getTensorMapper(process_group);
  if(element_type != TensorElementType::VOID){
   if(tensor->isComposite()){ //distributed storage
-   auto tensor_composite = castTensorComposite(tensor); assert(tensor_composite);
-   const auto num_subtensors = tensor_composite->getNumSubtensors(); assert(num_subtensors > 0);
    const auto num_processes = process_group.getSize(); assert(num_processes > 0);
-   unsigned long long num_subtensors_per_process = num_subtensors / num_processes;
    if((num_processes & (num_processes - 1U)) == 0){ //power of 2 check
-    if(num_subtensors <= num_processes){ //one subtensor per process, subtensors may be partially replicated among processes
-     unsigned long long subtensor_id = static_cast<unsigned long long>(local_rank) % num_subtensors;
-     std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
-     std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-     op->setTensorOperand((*tensor_composite)[subtensor_id]);
-     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-     submitted = submit(op,tensor_mapper);
-     if(submitted) submitted = sync(*op);
-    }else{ //each process gets more than one subtensor
-     assert((num_subtensors_per_process >= 2) && (num_subtensors % num_processes == 0));
-     auto nspp = num_subtensors_per_process;
-     unsigned long long num_minor_bits = 0;
-     while(nspp >>= 1) ++num_minor_bits; assert(num_minor_bits > 0);
-     unsigned long long subtensor_begin = static_cast<unsigned long long>(local_rank) << num_minor_bits;
-     unsigned long long subtensor_end = subtensor_begin | ((1ULL << num_minor_bits) - 1);
-     for(auto subtensor_id = subtensor_begin; subtensor_id <= subtensor_end; ++subtensor_id){
-      std::cout << "#DEBUG(createTensorComposite): Local rank " << local_rank << " <-- Subtensor " << subtensor_id << std::endl; //debug
-      std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-      op->setTensorOperand((*tensor_composite)[subtensor_id]);
-      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-      submitted = submit(op,tensor_mapper);
-      if(submitted) submitted = sync(*op);
-      if(!submitted) break;
-     }
-    }
+    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+    op->setTensorOperand(tensor);
+    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
+    submitted = submit(op,tensor_mapper);
     if(submitted){
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
       auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
       assert(saved.second);
+      submitted = sync(*op);
      }else{
       std::cout << "#ERROR(exatn::createTensorSync): Attempt to CREATE an already existing tensor "
                 << tensor->getName() << std::endl;
@@ -1320,16 +1275,9 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
  }
  const auto & tensor_mapper = *getTensorMapper(getTensorProcessGroup(name));
  if(iter->second->isComposite()){
-  auto tensor_composite = castTensorComposite(iter->second); assert(tensor_composite);
-  for(auto tens = tensor_composite->begin(); tens != tensor_composite->end(); ++tens){
-   auto it = tensors_.find(tens->second->getName());
-   if(it != tensors_.end()){
-    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-    op->setTensorOperand(it->second);
-    submitted = submit(op,tensor_mapper);
-    if(!submitted) break;
-   }
-  }
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+  op->setTensorOperand(iter->second);
+  submitted = submit(op,tensor_mapper);
   if(submitted){
    auto num_deleted = tensor_comms_.erase(iter->second->getName());
    assert(num_deleted == 1);
@@ -1358,22 +1306,15 @@ bool NumServer::destroyTensorSync(const std::string & name)
  }
  const auto & tensor_mapper = *getTensorMapper(getTensorProcessGroup(name));
  if(iter->second->isComposite()){
-  auto tensor_composite = castTensorComposite(iter->second); assert(tensor_composite);
-  for(auto tens = tensor_composite->begin(); tens != tensor_composite->end(); ++tens){
-   auto it = tensors_.find(tens->second->getName());
-   if(it != tensors_.end()){
-    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-    op->setTensorOperand(it->second);
-    submitted = submit(op,tensor_mapper);
-    if(submitted) submitted = sync(*op);
-    if(!submitted) break;
-   }
-  }
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+  op->setTensorOperand(iter->second);
+  submitted = submit(op,tensor_mapper);
   if(submitted){
    auto num_deleted = tensor_comms_.erase(iter->second->getName());
    assert(num_deleted == 1);
    num_deleted = tensors_.erase(iter->second->getName());
    assert(num_deleted == 1);
+   submitted = sync(*op);
   }
  }else{
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);

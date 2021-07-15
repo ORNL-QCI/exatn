@@ -37,9 +37,20 @@ std::unique_ptr<TensorOperation> TensorOpDestroy::createNew()
 
 std::size_t TensorOpDestroy::decompose(const TensorMapper & tensor_mapper)
 {
- assert(false);
- //`Implement
- return 0;
+ simple_operations_.clear();
+ auto tensor0 = getTensorOperand(0);
+ if(tensor0->isComposite()){
+  auto composite_tensor0 = castTensorComposite(tensor0);
+  const auto num_subtensors = composite_tensor0->getNumSubtensors();
+  for(auto subtensor_iter = composite_tensor0->begin(); subtensor_iter != composite_tensor0->end(); ++subtensor_iter){
+   if(tensor_mapper.isLocalSubtensor(subtensor_iter->first,num_subtensors)){
+    simple_operations_.emplace_back(std::move(TensorOpDestroy::createNew()));
+    auto & op = simple_operations_.back();
+    op->setTensorOperand(subtensor_iter->second);
+   }
+  }
+ }
+ return simple_operations_.size();
 }
 
 } //namespace numerics
