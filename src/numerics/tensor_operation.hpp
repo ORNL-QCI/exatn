@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/14
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -93,15 +93,16 @@ public:
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) = 0;
 
- /** Decomposes a composite tensor operation into simple ones.
+ /** Decomposes a composite tensor operation into simple ones,
+     retaining only those to be executed by the current process.
      Returns the total number of generated simple operations. **/
- virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) = 0;
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) = 0;
 
  /** Returns whether or not the tensor operation is composite. **/
  bool isComposite() const;
 
  /** Returns the requested simple tensor operation in case the current tensor
-     operation is composite and has been already decomposed into simple operations. **/
+     operation is composite and has already been decomposed into simple operations. **/
  std::shared_ptr<TensorOperation> operator[](std::size_t operation_id);
 
  /** Returns the FMA flop estimate for the tensor operation, or zero if not available.

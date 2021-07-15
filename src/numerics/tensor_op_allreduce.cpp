@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: All-reduces a tensor
-REVISION: 2021/07/14
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -46,7 +46,7 @@ const MPICommProxy & TensorOpAllreduce::getMPICommunicator() const
  return intra_comm_;
 }
 
-std::size_t TensorOpAllreduce::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+std::size_t TensorOpAllreduce::decompose(const TensorMapper & tensor_mapper)
 {
  assert(false);
  //`Implement

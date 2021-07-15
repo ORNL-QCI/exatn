@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Orthogonalizes a tensor via SVD
-REVISION: 2021/07/14
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -35,7 +35,7 @@ std::unique_ptr<TensorOperation> TensorOpOrthogonalizeSVD::createNew()
  return std::unique_ptr<TensorOperation>(new TensorOpOrthogonalizeSVD());
 }
 
-std::size_t TensorOpOrthogonalizeSVD::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+std::size_t TensorOpOrthogonalizeSVD::decompose(const TensorMapper & tensor_mapper)
 {
  assert(false);
  //`Implement

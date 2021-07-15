@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Inserts a slice into a tensor
-REVISION: 2021/07/13
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -43,7 +43,7 @@ public:
 
  /** Decomposes a composite tensor operation into simple ones.
      Returns the total number of generated simple operations. **/
- virtual std::size_t decompose(std::function<bool (const Tensor &)> tensor_exists_locally) override;
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) override;
 
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();

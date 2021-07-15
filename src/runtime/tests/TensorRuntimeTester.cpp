@@ -57,14 +57,15 @@ TEST(TensorRuntimeTester, checkSimple) {
   destroy_tensor0->setTensorOperand(tensor0);
 
   //Execute all tensor operations via the ExaTN numerical server:
-  exatn::numericalServer->submit(create_tensor0);
-  exatn::numericalServer->submit(create_tensor1);
-  exatn::numericalServer->submit(create_tensor2);
-  exatn::numericalServer->submit(contract_tensors);
+  const auto & tensor_mapper = *exatn::numericalServer->getTensorMapper(exatn::getTensorProcessGroup(tensor0->getName()));
+  exatn::numericalServer->submit(create_tensor0,tensor_mapper);
+  exatn::numericalServer->submit(create_tensor1,tensor_mapper);
+  exatn::numericalServer->submit(create_tensor2,tensor_mapper);
+  exatn::numericalServer->submit(contract_tensors,tensor_mapper);
   //auto synced = exatn::numericalServer->sync(*tensor0,true); assert(synced);
-  exatn::numericalServer->submit(destroy_tensor2);
-  exatn::numericalServer->submit(destroy_tensor1);
-  exatn::numericalServer->submit(destroy_tensor0);
+  exatn::numericalServer->submit(destroy_tensor2,tensor_mapper);
+  exatn::numericalServer->submit(destroy_tensor1,tensor_mapper);
+  exatn::numericalServer->submit(destroy_tensor0,tensor_mapper);
 
 }
 

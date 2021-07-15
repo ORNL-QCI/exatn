@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Broadcasts a tensor
-REVISION: 2021/07/14
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -58,7 +58,7 @@ int TensorOpBroadcast::getRootRank() const
  return root_rank_;
 }
 
-std::size_t TensorOpBroadcast::decompose(std::function<bool (const Tensor &)> tensor_exists_locally)
+std::size_t TensorOpBroadcast::decompose(const TensorMapper & tensor_mapper)
 {
  assert(false);
  //`Implement
