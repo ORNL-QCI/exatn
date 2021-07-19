@@ -57,7 +57,7 @@ TEST(TensorRuntimeTester, checkSimple) {
   destroy_tensor0->setTensorOperand(tensor0);
 
   //Execute all tensor operations via the ExaTN numerical server:
-  const auto & tensor_mapper = *exatn::numericalServer->getTensorMapper(exatn::getTensorProcessGroup(tensor0->getName()));
+  auto tensor_mapper = exatn::numericalServer->getTensorMapper(exatn::getTensorProcessGroup(tensor0->getName()));
   exatn::numericalServer->submit(create_tensor0,tensor_mapper);
   exatn::numericalServer->submit(create_tensor1,tensor_mapper);
   exatn::numericalServer->submit(create_tensor2,tensor_mapper);

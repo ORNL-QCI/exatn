@@ -3260,8 +3260,9 @@ TEST(NumServerTester, TensorComposite) {
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);
- //success = exatn::destroyTensorSync("B"); assert(success); //Let garbage collector do it
- success = exatn::destroyTensorSync("A"); assert(success);
+ //success = exatn::destroyTensorSync("C"); assert(success); //let the garbage collector do it
+ //success = exatn::destroyTensorSync("B"); assert(success); //let the garbage collector do it
+ success = exatn::destroyTensorSync("A"); assert(success); //destroy explicitly
 
  //Synchronize:
  success = exatn::sync(); assert(success);

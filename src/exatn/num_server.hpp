@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/15
+REVISION: 2021/07/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -321,9 +321,9 @@ public:
 
 
  /** Submits an individual (simple or composite) tensor operation for processing.
-     Composite tensor operations require TensorMapper. **/
- bool submit(std::shared_ptr<TensorOperation> operation, //in: tensor operation for numerical evaluation
-             const TensorMapper & tensor_mapper);        //in: tensor mapper (for composite tensor operations only)
+     Composite tensor operations require an implementation of the TensorMapper interface. **/
+ bool submit(std::shared_ptr<TensorOperation> operation,   //in: tensor operation for numerical evaluation
+             std::shared_ptr<TensorMapper> tensor_mapper); //in: tensor mapper (for composite tensor operations only)
 
  /** Submits a tensor network for processing (evaluating the output tensor-result).
      If the output (result) tensor has not been created yet, it will be created and
@@ -943,7 +943,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submitted = submit(op,*getTensorMapper(process_group));
+  submitted = submit(op,getTensorMapper(process_group));
   if(submitted){
    if(process_group != getDefaultProcessGroup()){
     auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
@@ -968,7 +968,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submitted = submit(op,*getTensorMapper(process_group));
+  submitted = submit(op,getTensorMapper(process_group));
   if(submitted){
    if(process_group != getDefaultProcessGroup()){
     auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
@@ -1080,7 +1080,7 @@ bool NumServer::addTensors(const std::string & addition,
        op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       parsed = submit(op,*getTensorMapper(process_group));
+       parsed = submit(op,getTensorMapper(process_group));
       }else{
        parsed = true;
        //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -1138,7 +1138,7 @@ bool NumServer::addTensorsSync(const std::string & addition,
        op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       parsed = submit(op,*getTensorMapper(process_group));
+       parsed = submit(op,getTensorMapper(process_group));
        if(parsed) parsed = sync(*op);
       }else{
        parsed = true;
@@ -1203,7 +1203,7 @@ bool NumServer::contractTensors(const std::string & contraction,
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         parsed = submit(op,*getTensorMapper(process_group));
+         parsed = submit(op,getTensorMapper(process_group));
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -1276,7 +1276,7 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         parsed = submit(op,*getTensorMapper(process_group));
+         parsed = submit(op,getTensorMapper(process_group));
          if(parsed) parsed = sync(*op);
         }else{
          parsed = true;
