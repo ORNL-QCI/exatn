@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/03/02
+REVISION: 2021/06/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -98,6 +98,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  bra_vector_expansion.rename(vector_expansion_->getName()+"Bra");
  TensorExpansion operator_expectation(bra_vector_expansion,*vector_expansion_,*tensor_operator_);
  operator_expectation.rename("OperatorExpectation");
+ for(auto net = operator_expectation.begin(); net != operator_expectation.end(); ++net){
+  net->network->rename("OperExpect" + std::to_string(std::distance(operator_expectation.begin(),net)));
+ }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
   operator_expectation.printIt();
@@ -107,6 +110,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  // <vector|vector>
  TensorExpansion metrics_expectation(bra_vector_expansion,*vector_expansion_);
  metrics_expectation.rename("MetricsExpectation");
+ for(auto net = metrics_expectation.begin(); net != metrics_expectation.end(); ++net){
+  net->network->rename("MetrExpect" + std::to_string(std::distance(metrics_expectation.begin(),net)));
+ }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Metrics expectation expansion:" << std::endl;
   metrics_expectation.printIt();
@@ -160,9 +166,8 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
  auto scale_metrics = [this](TensorExpansion & expansion,
                              std::complex<double> old_eigenvalue,
                              std::complex<double> new_eigenvalue){
-  const std::string metric_name = this->vector_expansion_->getName() + "*" + this->vector_expansion_->getName();
   for(auto component = expansion.begin(); component != expansion.end(); ++component){
-   if(component->network->getName() == metric_name) component->coefficient *= (new_eigenvalue / old_eigenvalue);
+   if(component->network->getName().find("MetrExpect") == 0) component->coefficient *= (new_eigenvalue / old_eigenvalue);
   }
   return;
  };

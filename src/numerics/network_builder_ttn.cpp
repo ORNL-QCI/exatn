@@ -1,10 +1,10 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/04/10
+REVISION: 2021/06/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
-#include "network_builder_tree.hpp"
+#include "network_builder_ttn.hpp"
 #include "tensor_network.hpp"
 
 #include <initializer_list>
@@ -14,13 +14,13 @@ namespace exatn{
 
 namespace numerics{
 
-NetworkBuilderTree::NetworkBuilderTree():
+NetworkBuilderTTN::NetworkBuilderTTN():
  max_bond_dim_(1), arity_(2)
 {
 }
 
 
-bool NetworkBuilderTree::getParameter(const std::string & name, long long * value) const
+bool NetworkBuilderTTN::getParameter(const std::string & name, long long * value) const
 {
  bool found = true;
  if(name == "max_bond_dim"){
@@ -34,7 +34,7 @@ bool NetworkBuilderTree::getParameter(const std::string & name, long long * valu
 }
 
 
-bool NetworkBuilderTree::setParameter(const std::string & name, long long value)
+bool NetworkBuilderTTN::setParameter(const std::string & name, long long value)
 {
  bool found = true;
  if(name == "max_bond_dim"){
@@ -48,7 +48,7 @@ bool NetworkBuilderTree::setParameter(const std::string & name, long long value)
 }
 
 
-void NetworkBuilderTree::build(TensorNetwork & network)
+void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
 {
  //Inspect the output tensor:
  auto output_tensor = network.getTensor(0);
@@ -118,9 +118,9 @@ void NetworkBuilderTree::build(TensorNetwork & network)
 }
 
 
-std::unique_ptr<NetworkBuilder> NetworkBuilderTree::createNew()
+std::unique_ptr<NetworkBuilder> NetworkBuilderTTN::createNew()
 {
- return std::unique_ptr<NetworkBuilder>(new NetworkBuilderTree());
+ return std::unique_ptr<NetworkBuilder>(new NetworkBuilderTTN());
 }
 
 } //namespace numerics

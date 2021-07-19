@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/03/13
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -41,6 +41,10 @@ public:
  /** Accepts tensor node executor which will execute this tensor operation. **/
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) override;
+
+ /** Decomposes a composite tensor operation into simple ones.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) override;
 
  /** Returns the flop estimate for the tensor operation. **/
  virtual double getFlopEstimate() const override;

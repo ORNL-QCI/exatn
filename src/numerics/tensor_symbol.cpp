@@ -1,12 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2020/06/25
+REVISION: 2021/06/29
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
-
-#include "tensor_symbol.hpp"
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
+
+#include "tensor_symbol.hpp"
 
 namespace exatn{
 
@@ -288,6 +288,51 @@ bool generate_addition_pattern(unsigned int tensor_rank,
  unsigned int dim = 0;
  for(auto & leg: pattern) leg = numerics::TensorLeg(0,dim++);
  return generate_addition_pattern(pattern,symb_pattern,conjugated,dest_name,left_name);
+}
+
+bool parse_pauli_string(const std::string & input,
+                        std::string & paulis,
+                        std::complex<double> & coefficient)
+{
+ bool success = true;
+ double coef_real, coef_imag;
+ const auto left_par_pos = input.find("(");
+ if(left_par_pos != std::string::npos){
+  const auto right_par_pos = input.find(")",left_par_pos);
+  if(right_par_pos != std::string::npos){
+   const auto left_sq_pos = input.find("[",right_par_pos);
+   if(left_sq_pos != std::string::npos){
+    const auto right_sq_pos = input.find("]",left_sq_pos);
+    if(right_sq_pos != std::string::npos){
+     paulis = input.substr(left_sq_pos,right_sq_pos-left_sq_pos+1);
+     const auto plus_pos = input.find("+",left_par_pos);
+     if(plus_pos != std::string::npos){
+      const auto real_len = plus_pos - left_par_pos - 1;
+      if(real_len > 0) coef_real = std::stod(input.substr(left_par_pos+1,real_len));
+      const auto imag_end_pos = input.find("j",plus_pos);
+      if(imag_end_pos != std::string::npos){
+       const auto imag_len = imag_end_pos - plus_pos - 1;
+       if(imag_len > 0) coef_imag = std::stod(input.substr(plus_pos+1,imag_len));
+       coefficient = std::complex<double>{coef_real, coef_imag};
+      }else{
+       success = false;
+      }
+     }else{
+      success = false;
+     }
+    }else{
+     success = false;
+    }
+   }else{
+    success = false;
+   }
+  }else{
+   success = false;
+  }
+ }else{
+  success = false;
+ }
+ return success;
 }
 
 } //namespace exatn

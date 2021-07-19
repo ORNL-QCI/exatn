@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/06/22
+REVISION: 2021/07/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -118,7 +118,62 @@ using numerics::FunctorPrint;
 using TensorMethod = talsh::TensorFunctor<Identifiable>;
 
 
-//Numerical Server:
+/** Returns the closest owner id (process rank) for a given subtensor. **/
+unsigned int subtensor_owner_id(unsigned int process_rank,          //in: current process rank
+                                unsigned int num_processes,         //in: total number of processes
+                                unsigned long long subtensor_id,    //in: id of the required subtensor
+                                unsigned long long num_subtensors); //in: total number of subtensors
+
+/* Returns a range of subtensors [begin,end] owned by the specified process. */
+std::pair<unsigned long long, unsigned long long> owned_subtensors(
+                                                   unsigned int process_rank,          //in: target process rank
+                                                   unsigned int num_processes,         //in: total number of processes
+                                                   unsigned long long num_subtensors); //in: total number of subtensors
+
+//Composite tensor mapper (helper):
+class CompositeTensorMapper: public TensorMapper{
+public:
+
+ CompositeTensorMapper(unsigned int current_rank_in_group,
+                       unsigned int num_processes_in_group,
+                       const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
+  current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
+  local_tensors_(local_tensors) {}
+
+ virtual ~CompositeTensorMapper() = default;
+
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
+                                       unsigned long long num_subtensors) const override
+ {
+  return subtensor_owner_id(current_process_rank_,group_num_processes_,subtensor_id,num_subtensors);
+ }
+
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
+                                                                           unsigned long long num_subtensors) const override
+ {
+  return owned_subtensors(process_rank,group_num_processes_,num_subtensors);
+ }
+
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,
+                               unsigned long long num_subtensors) const override
+ {
+  return (subtensorOwnerId(subtensor_id,num_subtensors) == current_process_rank_);
+ }
+
+ virtual bool isLocalSubtensor(const Tensor & subtensor) const override
+ {
+  return (local_tensors_.find(subtensor.getName()) != local_tensors_.cend());
+ }
+
+private:
+
+ unsigned int current_process_rank_; //rank of the current process (in some process group)
+ unsigned int group_num_processes_;  //total number of processes (in some process group)
+ const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors_; //locally stored tensors
+};
+
+
+//Numerical server:
 class NumServer final {
 
 public:
@@ -191,14 +246,26 @@ public:
  /** Returns the default process group comprising all MPI processes and their communicator. **/
  const ProcessGroup & getDefaultProcessGroup() const;
 
- /** Returns the current process group comprising solely the current MPI process and its own communicator. **/
+ /** Returns the current process group comprising solely the current MPI process and its own self-communicator. **/
  const ProcessGroup & getCurrentProcessGroup() const;
+
+ /** Returns the local rank of the MPI process in a given process group, or -1 if it does not belong to it. **/
+ int getProcessRank(const ProcessGroup & process_group) const;
 
  /** Returns the global rank of the current MPI process in the default process group. **/
  int getProcessRank() const;
 
+ /** Returns the number of MPI processes in a given process group. **/
+ int getNumProcesses(const ProcessGroup & process_group) const;
+
  /** Returns the total number of MPI processes in the default process group. **/
  int getNumProcesses() const;
+
+ /** Returns a composite tensor mapper for a given process group. **/
+ std::shared_ptr<TensorMapper> getTensorMapper(const ProcessGroup & process_group) const;
+
+ /** Returns a composite tensor mapper for the default process group (all processes). **/
+ std::shared_ptr<TensorMapper> getTensorMapper() const;
 
  /** Registers an external tensor method. **/
  void registerTensorMethod(const std::string & tag,
@@ -253,8 +320,10 @@ public:
  const Subspace * getSubspace(const std::string & subspace_name) const;
 
 
- /** Submits an individual tensor operation for processing. **/
- bool submit(std::shared_ptr<TensorOperation> operation); //in: tensor operation for numerical evaluation
+ /** Submits an individual (simple or composite) tensor operation for processing.
+     Composite tensor operations require an implementation of the TensorMapper interface. **/
+ bool submit(std::shared_ptr<TensorOperation> operation,   //in: tensor operation for numerical evaluation
+             std::shared_ptr<TensorMapper> tensor_mapper); //in: tensor mapper (for composite tensor operations only)
 
  /** Submits a tensor network for processing (evaluating the output tensor-result).
      If the output (result) tensor has not been created yet, it will be created and
@@ -342,6 +411,30 @@ public:
  bool registerTensorIsometry(const std::string & name,                     //in: tensor name
                              const std::vector<unsigned int> & iso_dims0,  //in: tensor dimensions forming the isometry (group 0)
                              const std::vector<unsigned int> & iso_dims1); //in: tensor dimensions forming the isometry (group 1)
+
+ /** Returns TRUE if the calling process is within the existence domain of all given tensors, FALSE otherwise. **/
+ template <typename... Args>
+ bool withinTensorExistenceDomain(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
+ {
+  if(!withinTensorExistenceDomain(tensor_name)) return false;
+  return withinTensorExistenceDomain(std::forward<Args>(tensor_names)...);
+ }
+
+ bool withinTensorExistenceDomain(const std::string & tensor_name) const; //in: tensor name
+
+ /** Returns the process group associated with the given tensors.
+     The calling process must be within the tensor exsistence domain,
+     which must be the same for all tensors. **/
+ template <typename... Args>
+ const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
+ {
+  const auto & tensor_domain = getTensorProcessGroup(tensor_name);
+  const auto & other_tensors_domain = getTensorProcessGroup(std::forward<Args>(tensor_names)...);
+  assert(other_tensors_domain == tensor_domain);
+  return tensor_domain;
+ }
+
+ const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //tensor name
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
      See numerics::Tensor constructors for different creation options. **/
@@ -594,6 +687,16 @@ public:
  bool insertTensorSliceSync(const std::string & tensor_name, //in: tensor name
                             const std::string & slice_name); //in: slice name
 
+ /** Assigns one tensor to another congruent one (makes a copy of a tensor).
+     If the output tensor with the given name does not exist, it will be created.
+     Note that the output tensor must either exist or not exist across all
+     participating processes, otherwise it will result in an undefined behavior! **/
+ bool copyTensor(const std::string & output_name, //in: output tensor name
+                 const std::string & input_name); //in: input tensor name
+
+ bool copyTensorSync(const std::string & output_name, //in: output tensor name
+                     const std::string & input_name); //in: input tensor name
+
  /** Performs tensor addition: tensor0 += tensor1 * alpha **/
  template<typename NumericType>
  bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
@@ -780,6 +883,7 @@ private:
 
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
  std::list<std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
+ std::unordered_map<std::string,ProcessGroup> tensor_comms_; //process group associated with each tensor
 
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
  bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse
@@ -796,13 +900,14 @@ private:
  int num_processes_; //total number of parallel processes in the dedicated MPI communicator
  int process_rank_; //rank of the current parallel process in the dedicated MPI communicator
  int global_process_rank_; //rank of the current parallel process in MPI_COMM_WORLD
- MPICommProxy intra_comm_; //global MPI intra-communicator used to initialize the Numerical Server
+ MPICommProxy intra_comm_; //dedicated MPI intra-communicator used to initialize the Numerical Server
+ std::shared_ptr<TensorMapper> default_tensor_mapper_; //default composite tensor mapper (across all parallel processes)
  std::shared_ptr<ProcessGroup> process_world_; //default process group comprising all MPI processes and their communicator
  std::shared_ptr<ProcessGroup> process_self_;  //current process group comprising solely the current MPI process and its own communicator
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
  BytePacket byte_packet_; //byte packet for exchanging tensor meta-data
  double time_start_; //time stamp of the Numerical Server start
- bool validation_tracing_; //validation tracing flag
+ bool validation_tracing_; //validation tracing flag (for debugging)
 };
 
 /** Numerical service singleton (numerical server) **/
@@ -838,7 +943,13 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submitted = submit(op);
+  submitted = submit(op,getTensorMapper(process_group));
+  if(submitted){
+   if(process_group != getDefaultProcessGroup()){
+    auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+    assert(saved.second);
+   }
+  }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
  }
@@ -857,8 +968,14 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op->setTensorOperand(std::make_shared<Tensor>(name,std::forward<Args>(args)...));
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
-  submitted = submit(op);
-  if(submitted) submitted = sync(*op);
+  submitted = submit(op,getTensorMapper(process_group));
+  if(submitted){
+   if(process_group != getDefaultProcessGroup()){
+    auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+    assert(saved.second);
+   }
+   submitted = sync(*op);
+  }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
  }
@@ -957,25 +1074,26 @@ bool NumServer::addTensors(const std::string & addition,
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
+       const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName());
        std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
        op->setTensorOperand(tensor0,complex_conj0);
        op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       parsed = submit(op);
+       parsed = submit(op,getTensorMapper(process_group));
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-                 << addition << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+       //          << addition << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
                 << addition << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-               << addition << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+     //          << addition << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
@@ -1014,26 +1132,27 @@ bool NumServer::addTensorsSync(const std::string & addition,
       iter = tensors_.find(tensor_name);
       if(iter != tensors_.end()){
        auto tensor1 = iter->second;
+       const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName());
        std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
        op->setTensorOperand(tensor0,complex_conj0);
        op->setTensorOperand(tensor1,complex_conj1);
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
-       parsed = submit(op);
+       parsed = submit(op,getTensorMapper(process_group));
        if(parsed) parsed = sync(*op);
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-                 << addition << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+       //          << addition << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#1 in tensor addition: "
                 << addition << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
-               << addition << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
+     //          << addition << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::addTensors): Invalid argument#0 in tensor addition: "
@@ -1077,35 +1196,36 @@ bool NumServer::contractTensors(const std::string & contraction,
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setTensorOperand(tensor1,complex_conj1);
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         parsed = submit(op);
+         parsed = submit(op,getTensorMapper(process_group));
         }else{
-         parsed = false;
-         std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-                   << contraction << std::endl;
+         parsed = true;
+         //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+         //          << contraction << std::endl;
         }
        }else{
         std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#2 in tensor contraction: "
                   << contraction << std::endl;
        }
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-                 << contraction << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+       //          << contraction << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#1 in tensor contraction: "
                 << contraction << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-               << contraction << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+     //          << contraction << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#0 in tensor contraction: "
@@ -1149,36 +1269,37 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::CONTRACT);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setTensorOperand(tensor1,complex_conj1);
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
-         parsed = submit(op);
+         parsed = submit(op,getTensorMapper(process_group));
          if(parsed) parsed = sync(*op);
         }else{
-         parsed = false;
-         std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-                   << contraction << std::endl;
+         parsed = true;
+         //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+         //          << contraction << std::endl;
         }
        }else{
         std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#2 in tensor contraction: "
                   << contraction << std::endl;
        }
       }else{
-       parsed = false;
-       std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-                 << contraction << std::endl;
+       parsed = true;
+       //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+       //          << contraction << std::endl;
       }
      }else{
       std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#1 in tensor contraction: "
                 << contraction << std::endl;
      }
     }else{
-     parsed = false;
-     std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
-               << contraction << std::endl;
+     parsed = true;
+     //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
+     //          << contraction << std::endl;
     }
    }else{
     std::cout << "#ERROR(exatn::NumServer::contractTensors): Invalid argument#0 in tensor contraction: "

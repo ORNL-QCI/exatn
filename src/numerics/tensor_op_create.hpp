@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2021/01/07
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -42,6 +42,10 @@ public:
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) override;
 
+ /** Decomposes a composite tensor operation into simple ones.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) override;
+
  /** Prints. **/
  virtual void printIt() const override;
  virtual void printItFile(std::ofstream & output_file) const override;
@@ -60,7 +64,6 @@ public:
 private:
 
  TensorElementType element_type_; //tensor element type
-
 };
 
 } //namespace numerics

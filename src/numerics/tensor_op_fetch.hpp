@@ -1,15 +1,15 @@
-/** ExaTN::Numerics: Tensor operation: All-reduces a tensor
+/** ExaTN::Numerics: Tensor operation: Fetches remote tensor data
 REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) All-reduces a tensor inside the execution backend.
+ (a) Fetches tensor data from a remote MPI process.
 **/
 
-#ifndef EXATN_NUMERICS_TENSOR_OP_ALLREDUCE_HPP_
-#define EXATN_NUMERICS_TENSOR_OP_ALLREDUCE_HPP_
+#ifndef EXATN_NUMERICS_TENSOR_OP_FETCH_HPP_
+#define EXATN_NUMERICS_TENSOR_OP_FETCH_HPP_
 
 #include "tensor_basic.hpp"
 #include "tensor_operation.hpp"
@@ -20,19 +20,19 @@ namespace exatn{
 
 namespace numerics{
 
-class TensorOpAllreduce: public TensorOperation{
+class TensorOpFetch: public TensorOperation{
 public:
 
- TensorOpAllreduce();
+ TensorOpFetch();
 
- TensorOpAllreduce(const TensorOpAllreduce &) = default;
- TensorOpAllreduce & operator=(const TensorOpAllreduce &) = default;
- TensorOpAllreduce(TensorOpAllreduce &&) noexcept = default;
- TensorOpAllreduce & operator=(TensorOpAllreduce &&) noexcept = default;
- virtual ~TensorOpAllreduce() = default;
+ TensorOpFetch(const TensorOpFetch &) = default;
+ TensorOpFetch & operator=(const TensorOpFetch &) = default;
+ TensorOpFetch(TensorOpFetch &&) noexcept = default;
+ TensorOpFetch & operator=(TensorOpFetch &&) noexcept = default;
+ virtual ~TensorOpFetch() = default;
 
  virtual std::unique_ptr<TensorOperation> clone() const override{
-  return std::unique_ptr<TensorOperation>(new TensorOpAllreduce(*this));
+  return std::unique_ptr<TensorOperation>(new TensorOpFetch(*this));
  }
 
  /** Returns TRUE iff the tensor operation is fully set. **/
@@ -55,13 +55,27 @@ public:
  /** Returns the MPI communicator. **/
  const MPICommProxy & getMPICommunicator() const;
 
+ /** Resets the remote process rank. **/
+ bool resetRemoteProcessRank(unsigned int rank);
+
+ /** Returns the remote process rank. **/
+ int getRemoteProcessRank() const;
+
+ /** Resets the MPI message tag. **/
+ bool resetMessageTag(int tag);
+
+ /** Returns the MPI message tag. **/
+ int getMessageTag() const;
+
 private:
 
  MPICommProxy intra_comm_; //MPI intra-communicator
+ int remote_rank_; //MPI process rank
+ int message_tag_; //MPI message tag
 };
 
 } //namespace numerics
 
 } //namespace exatn
 
-#endif //EXATN_NUMERICS_TENSOR_OP_ALLREDUCE_HPP_
+#endif //EXATN_NUMERICS_TENSOR_OP_FETCH_HPP_

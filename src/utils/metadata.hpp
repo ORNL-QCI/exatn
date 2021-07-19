@@ -1,5 +1,5 @@
 /** ExaTN: Short metadata
-REVISION: 2021/04/27
+REVISION: 2021/06/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -23,8 +23,8 @@ class Metadata{
 
 public:
 
- /** Appends a key:value pair to the metadata.
-     The key must be alphanumeric_. **/
+ /** Appends a key:value pair to the metadata
+     (the key must be alphanumeric_). **/
  template<typename ValueType>
  inline void appendKeyValue(const std::string & key,
                             const ValueType & value);
@@ -121,10 +121,18 @@ inline void Metadata::appendKeyValue(const std::string & key, const ValueType & 
  return;
 }
 
+template<>
+inline void Metadata::appendKeyValue(const std::string & key, const std::string & value)
+{
+ data_ += "{" + key + ":" + value + "}";
+ return;
+}
+
+
 template<typename ValueType>
 inline bool Metadata::retrieveValue(const std::string & key, ValueType & value) const
 {
- auto pos = data_.find(key+":");
+ auto pos = data_.find(key + ":");
  if(pos != std::string::npos){
   const auto key_len = key.length();
   const auto value_beg_pos = pos + key_len + 1;

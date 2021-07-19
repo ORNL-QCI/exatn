@@ -1,8 +1,8 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2020/08/04
+REVISION: 2021/07/13
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "mpi_proxy.hpp"
 
@@ -35,6 +35,20 @@ MPICommProxy::~MPICommProxy()
   }
  }
 #endif
+}
+
+
+bool MPICommProxy::operator==(const MPICommProxy & another) const
+{
+ bool equal = true;
+#ifdef MPI_ENABLED
+ auto * lhs_comm = this->get<MPI_Comm>();
+ auto * rhs_comm = another.get<MPI_Comm>();
+ int res;
+ auto errc = MPI_Comm_compare(*lhs_comm,*rhs_comm,&res); assert(errc == MPI_SUCCESS);
+ equal = (res == MPI_IDENT);
+#endif
+ return equal;
 }
 
 

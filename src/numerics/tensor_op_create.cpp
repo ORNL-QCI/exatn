@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2021/01/07
+REVISION: 2021/07/15
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_service.hpp"
 
@@ -89,6 +89,25 @@ void TensorOpCreate::printItFile(std::ofstream & output_file) const
  output_file << "}" << std::endl;
  //output_file.flush();
  return;
+}
+
+std::size_t TensorOpCreate::decompose(const TensorMapper & tensor_mapper)
+{
+ simple_operations_.clear();
+ auto tensor0 = getTensorOperand(0);
+ if(tensor0->isComposite()){
+  auto composite_tensor0 = castTensorComposite(tensor0);
+  const auto num_subtensors = composite_tensor0->getNumSubtensors();
+  for(auto subtensor_iter = composite_tensor0->begin(); subtensor_iter != composite_tensor0->end(); ++subtensor_iter){
+   if(tensor_mapper.isLocalSubtensor(subtensor_iter->first,num_subtensors)){
+    simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
+    auto & op = simple_operations_.back();
+    op->setTensorOperand(subtensor_iter->second);
+    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(getTensorElementType());
+   }
+  }
+ }
+ return simple_operations_.size();
 }
 
 } //namespace numerics

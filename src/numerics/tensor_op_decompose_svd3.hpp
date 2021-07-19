@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Decomposes a tensor into three tensor factors via SVD
-REVISION: 2020/05/22
+REVISION: 2021/07/15
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Decomposes a tensor into three tensor factors via SVD, for example:
@@ -43,6 +43,10 @@ public:
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) override;
 
+ /** Decomposes a composite tensor operation into simple ones.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) override;
+
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
 
@@ -52,7 +56,6 @@ public:
 private:
 
  char absorb_singular_values_; //regulates the absorption of the singular values factor
-
 };
 
 } //namespace numerics

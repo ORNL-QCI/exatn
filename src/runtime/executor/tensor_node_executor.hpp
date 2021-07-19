@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2021/04/01
+REVISION: 2021/07/02
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -84,6 +84,10 @@ public:
   virtual int execute(numerics::TensorOpOrthogonalizeSVD & op,
                       TensorOpExecHandle * exec_handle) = 0;
   virtual int execute(numerics::TensorOpOrthogonalizeMGS & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpFetch & op,
+                      TensorOpExecHandle * exec_handle) = 0;
+  virtual int execute(numerics::TensorOpUpload & op,
                       TensorOpExecHandle * exec_handle) = 0;
   virtual int execute(numerics::TensorOpBroadcast & op,
                       TensorOpExecHandle * exec_handle) = 0;

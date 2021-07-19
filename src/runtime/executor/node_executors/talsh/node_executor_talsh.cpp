@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/04/01
+REVISION: 2021/07/02
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -860,6 +860,64 @@ int TalshNodeExecutor::execute(numerics::TensorOpOrthogonalizeMGS & op,
                                           op.getIndexPatternReduced(),
                                           DEV_HOST,0);
  */
+ return error_code;
+}
+
+
+int TalshNodeExecutor::execute(numerics::TensorOpFetch & op,
+                               TensorOpExecHandle * exec_handle)
+{
+ assert(op.isSet());
+ if(!finishPrefetching(op)) return TRY_LATER;
+
+ const auto & tensor = *(op.getTensorOperand(0));
+ const auto tensor_hash = tensor.getTensorHash();
+ auto tens_pos = tensors_.find(tensor_hash);
+ if(tens_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): FETCH: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ tens_pos->second.resetTensorShapeToReduced();
+ auto & tens = *(tens_pos->second.talsh_tensor);
+
+ *exec_handle = op.getId();
+
+ int error_code = 0;
+#ifdef MPI_ENABLED
+
+#else
+
+#endif
+ return error_code;
+}
+
+
+int TalshNodeExecutor::execute(numerics::TensorOpUpload & op,
+                               TensorOpExecHandle * exec_handle)
+{
+ assert(op.isSet());
+ if(!finishPrefetching(op)) return TRY_LATER;
+
+ const auto & tensor = *(op.getTensorOperand(0));
+ const auto tensor_hash = tensor.getTensorHash();
+ auto tens_pos = tensors_.find(tensor_hash);
+ if(tens_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): UPLOAD: Tensor operand 0 not found: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
+ tens_pos->second.resetTensorShapeToReduced();
+ auto & tens = *(tens_pos->second.talsh_tensor);
+
+ *exec_handle = op.getId();
+
+ int error_code = 0;
+#ifdef MPI_ENABLED
+
+#else
+
+#endif
  return error_code;
 }
 

@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2021/03/18
+REVISION: 2021/07/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -50,6 +50,8 @@ enum class TensorOpCode{
  DECOMPOSE_SVD2,    //tensor decomposition via SVD into two tensor factors
  ORTHOGONALIZE_SVD, //tensor orthogonalization via SVD
  ORTHOGONALIZE_MGS, //tensor orthogonalization via Modified Gram-Schmidt
+ FETCH,             //fetch tensor data from another MPI process (parallel execution only)
+ UPLOAD,            //upload tensor data to another MPI process (parallel execution only)
  BROADCAST,         //tensor broadcast (parallel execution only)
  ALLREDUCE          //tensor allreduce (parallel execution only)
 };

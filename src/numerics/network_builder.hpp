@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder
-REVISION: 2019/11/01
+REVISION: 2021/06/25
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network builder allows building complex tensor networks of a specific kind.
@@ -42,8 +42,12 @@ public:
  virtual bool setParameter(const std::string & name, long long value) = 0;
 
  /** Builds a tensor network of a specific kind. On input, the tensor
-     network must only contain the output tensor with dummy legs. **/
- virtual void build(TensorNetwork & network) = 0;
+     network must only contain the output tensor with dummy legs.
+     If tensor_operator = TRUE, the tensor network operator will
+     be built instead of the tensor network vector. In that case,
+     the first half legs correspond to ket while the rest to bra. **/
+ virtual void build(TensorNetwork & network,           //inout: tensor network
+                    bool tensor_operator = false) = 0; //in: tensor network vector or operator
 
 };
 

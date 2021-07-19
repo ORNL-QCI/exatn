@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/03/17
+REVISION: 2021/07/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -130,6 +130,12 @@ void TensorComposite::unpackTensorComposite(BytePacket & byte_packet)
   assert(res.second);
  }
  return;
+}
+
+
+std::shared_ptr<Tensor> TensorComposite::clone() const
+{
+ return makeSharedTensorComposite(*this);
 }
 
 

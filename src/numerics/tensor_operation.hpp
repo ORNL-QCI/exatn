@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/01/07
+REVISION: 2021/07/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  (a) A tensor operation is a formal numerical operation on one or more tensors.
  (b) A tensor operation may have mutable (output) and immutable (input) tensor operands.
      The mutable tensor operands must always precede immutable tensor operands!
+ (c) A tensor operation may be either simple or composite. A tensor operation is
+     composite when at least one tensor operand is composite. A composite tensor
+     operation is decomposed into two or more simple tensor operations.
 **/
 
 #ifndef EXATN_NUMERICS_TENSOR_OPERATION_HPP_
@@ -15,6 +18,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
+#include "tensor_composite.hpp"
 #include "timers.hpp"
 
 #include <initializer_list>
@@ -23,6 +27,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <complex>
+#include <functional>
 
 #include <iostream>
 #include <fstream>
@@ -31,12 +36,31 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+class TensorMapper{ //pure abstract (interface)
+public:
+
+ virtual ~TensorMapper() = default;
+
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
+                                       unsigned long long num_subtensors) const = 0;
+
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
+                                                                           unsigned long long num_subtensors) const = 0;
+
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,
+                               unsigned long long num_subtensors) const = 0;
+
+ virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0;
+};
+
+
 namespace runtime{
- // Tensor operation execution handle:
+ //Tensor operation execution handle:
  using TensorOpExecHandle = std::size_t;
- // Forward for TensorNodeExecutor:
+ //Forward for TensorNodeExecutor:
  class TensorNodeExecutor;
 }
+
 
 namespace numerics{
 
@@ -68,6 +92,18 @@ public:
      error code (0:Success). **/
  virtual int accept(runtime::TensorNodeExecutor & node_executor,
                     runtime::TensorOpExecHandle * exec_handle) = 0;
+
+ /** Decomposes a composite tensor operation into simple ones,
+     retaining only those to be executed by the current process.
+     Returns the total number of generated simple operations. **/
+ virtual std::size_t decompose(const TensorMapper & tensor_mapper) = 0;
+
+ /** Returns whether or not the tensor operation is composite. **/
+ bool isComposite() const;
+
+ /** Returns the requested simple tensor operation in case the current tensor
+     operation is composite and has already been decomposed into simple operations. **/
+ std::shared_ptr<TensorOperation> operator[](std::size_t operation_id);
 
  /** Returns the FMA flop estimate for the tensor operation, or zero if not available.
      The FMA flop estimate neither includes the FMA factor of 2.0 nor
@@ -191,6 +227,7 @@ private:
 
 protected:
 
+ std::vector<std::shared_ptr<TensorOperation>> simple_operations_; //container of simple tensor operations for composite operation decomposition
  std::string pattern_; //symbolic index pattern
  const std::vector<int> symb_pos_; //symb_pos_[operand_position] --> operand position in the symbolic index pattern;
  std::vector<std::tuple<std::shared_ptr<Tensor>,bool,bool>> operands_; //tensor operands <operand,conjugation,mutation>

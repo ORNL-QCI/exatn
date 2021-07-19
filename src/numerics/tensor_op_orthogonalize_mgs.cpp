@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation: Orthogonalizes a tensor via MGS
-REVISION: 2020/06/25
+REVISION: 2021/07/15
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_service.hpp"
 
@@ -33,6 +33,13 @@ int TensorOpOrthogonalizeMGS::accept(runtime::TensorNodeExecutor & node_executor
 std::unique_ptr<TensorOperation> TensorOpOrthogonalizeMGS::createNew()
 {
  return std::unique_ptr<TensorOperation>(new TensorOpOrthogonalizeMGS());
+}
+
+std::size_t TensorOpOrthogonalizeMGS::decompose(const TensorMapper & tensor_mapper)
+{
+ assert(false);
+ //`Implement
+ return 0;
 }
 
 } //namespace numerics

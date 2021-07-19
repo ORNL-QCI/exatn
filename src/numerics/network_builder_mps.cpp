@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2020/04/22
+REVISION: 2021/06/25
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "network_builder_mps.hpp"
 #include "tensor_network.hpp"
@@ -43,7 +43,7 @@ bool NetworkBuilderMPS::setParameter(const std::string & name, long long value)
 }
 
 
-void NetworkBuilderMPS::build(TensorNetwork & network)
+void NetworkBuilderMPS::build(TensorNetwork & network, bool tensor_operator)
 {
  bool appended = true;
  //Inspect the output tensor:
