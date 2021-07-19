@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/07/08
+REVISION: 2021/07/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -29,9 +29,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_basic.hpp"
 #include "tensor.hpp"
 
-#include <unordered_map>
 #include <functional>
 #include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 #include <memory>
@@ -51,8 +51,8 @@ class TensorComposite : public Tensor{
 public:
 
  /** For iterating over subtensors. **/
- using Iterator = std::unordered_map<unsigned long long, std::shared_ptr<Tensor>>::iterator;
- using ConstIterator = std::unordered_map<unsigned long long, std::shared_ptr<Tensor>>::const_iterator;
+ using Iterator = std::map<unsigned long long, std::shared_ptr<Tensor>>::iterator;
+ using ConstIterator = std::map<unsigned long long, std::shared_ptr<Tensor>>::const_iterator;
 
  /** Constructs a composite tensor by activating bisection on given tensor dimensions
      up to the provided maximal depth (max depth of 0 means no bisection). Note that
@@ -120,7 +120,7 @@ public:
 protected:
 
  std::vector<std::pair<unsigned int, unsigned int>> split_dims_; //split tensor dimensions: pair{Dimension,MaxDepth}
- std::unordered_map<unsigned long long, std::shared_ptr<Tensor>> subtensors_; //subtensors identified by their bit-strings
+ std::map<unsigned long long, std::shared_ptr<Tensor>> subtensors_; //subtensors identified by their bit-strings
 
 private:
 

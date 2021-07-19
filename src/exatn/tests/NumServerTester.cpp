@@ -3206,6 +3206,8 @@ TEST(NumServerTester, TensorComposite) {
  exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
+
+ // Determine parallel configuration:
  const auto & all_processes = exatn::getDefaultProcessGroup();
  const auto my_process_rank = exatn::getProcessRank(all_processes);
  const auto total_ranks = exatn::getNumProcesses(all_processes);
@@ -3256,6 +3258,14 @@ TEST(NumServerTester, TensorComposite) {
 
  //std::cout << "Process " << my_process_rank << " is within existence domain of {A,B,C} = "
  //          << exatn::withinTensorExistenceDomain("A","B","C") << std::endl; //debug
+
+ //Initialize composite tensors:
+ success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensorRnd("B"); assert(success);
+ success = exatn::initTensor("C",std::complex<float>{0.0,0.0}); assert(success);
+
+ //Sync all processes:
+ success = exatn::sync(); assert(success);
 
 
  //Destroy composite tensors:

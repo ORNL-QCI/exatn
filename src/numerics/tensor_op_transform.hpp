@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Transforms/initializes a tensor
-REVISION: 2021/07/15
+REVISION: 2021/07/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -56,6 +56,10 @@ public:
  void resetFunctor(std::shared_ptr<talsh::TensorFunctor<Identifiable>> functor){
   functor_ = functor;
   return;
+ }
+
+ std::shared_ptr<talsh::TensorFunctor<Identifiable>> getFunctor() const{
+  return functor_;
  }
 
  int apply(talsh::Tensor & local_tensor){

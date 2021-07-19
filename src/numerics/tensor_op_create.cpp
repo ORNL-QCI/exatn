@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2021/07/15
+REVISION: 2021/07/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -103,7 +103,7 @@ std::size_t TensorOpCreate::decompose(const TensorMapper & tensor_mapper)
     simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
     auto & op = simple_operations_.back();
     op->setTensorOperand(subtensor_iter->second);
-    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(getTensorElementType());
+    std::dynamic_pointer_cast<TensorOpCreate>(op)->resetTensorElementType(getTensorElementType());
    }
   }
  }
