@@ -3262,11 +3262,21 @@ TEST(NumServerTester, TensorComposite) {
  //Initialize composite tensors:
  success = exatn::initTensorRnd("A"); assert(success);
  success = exatn::initTensorRnd("B"); assert(success);
- success = exatn::initTensor("C",std::complex<float>{0.0,0.0}); assert(success);
+ success = exatn::initTensor("C",std::complex<float>{1e-4,0.0}); assert(success);
 
  //Sync all processes:
  success = exatn::sync(); assert(success);
 
+ //Compute the 1-norm of a composite tensor:
+ double norm = 0.0;
+ success = exatn::computeNorm1Sync("C",norm); assert(success);
+ std::cout << "1-norm of tensor C = " << norm << std::endl;
+ norm = 0.0;
+ success = exatn::computeNorm2Sync("C",norm); assert(success);
+ std::cout << "2-norm of tensor C = " << norm << std::endl;
+ norm = 0.0;
+ success = exatn::computeMaxAbsSync("C",norm); assert(success);
+ std::cout << "Max-Abs of tensor C = " << norm << std::endl;
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

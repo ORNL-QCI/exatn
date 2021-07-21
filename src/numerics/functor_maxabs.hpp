@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Computes max-abs norm of a tensor
-REVISION: 2020/11/11
+REVISION: 2021/07/21
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) This tensor functor (method) is used to compute the max-abs norm of a tensor,
@@ -20,6 +20,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <string>
 #include <complex>
+#include <mutex>
 
 #include "errors.hpp"
 
@@ -47,6 +48,7 @@ public:
  /** Packs data members into a byte packet. **/
  virtual void pack(BytePacket & packet) override
  {
+  const std::lock_guard<std::mutex> lock(mutex_);
   appendToBytePacket(&packet,norm_);
   return;
  }
@@ -54,6 +56,7 @@ public:
  /** Unpacks data members from a byte packet. **/
  virtual void unpack(BytePacket & packet) override
  {
+  const std::lock_guard<std::mutex> lock(mutex_);
   extractFromBytePacket(&packet,norm_);
   return;
  }
@@ -65,11 +68,15 @@ public:
  virtual int apply(talsh::Tensor & local_tensor) override;
 
  /** Returns the tensor norm. **/
- double getNorm() const {return norm_;}
+ double getNorm() const {
+  const std::lock_guard<std::mutex> lock(mutex_);
+  return norm_;
+ }
 
 private:
 
  double norm_; //computed norm
+ static std::mutex mutex_;
 };
 
 } //namespace numerics

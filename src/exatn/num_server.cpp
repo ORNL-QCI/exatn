@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/18
+REVISION: 2021/07/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -65,6 +65,21 @@ std::pair<unsigned long long, unsigned long long> owned_subtensors(unsigned int 
   subtensor_range = std::make_pair(subtensor_begin,subtensor_end);
  }
  return subtensor_range;
+}
+
+
+unsigned int replication_level(const ProcessGroup & process_group,
+                               std::shared_ptr<Tensor> & tensor)
+{
+ unsigned int repl_level = 1;
+ unsigned long long num_procs = process_group.getSize();
+ unsigned long long num_subtensors = 1;
+ if(tensor->isComposite()) num_subtensors = castTensorComposite(tensor)->getNumSubtensors();
+ if(num_subtensors < num_procs){
+  assert(num_procs % num_subtensors == 0);
+  repl_level = num_procs / num_subtensors;
+ }
+ return repl_level;
 }
 
 
@@ -928,7 +943,15 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
 
 bool NumServer::sync(TensorOperation & operation, bool wait) //`Local synchronization semantics
 {
- return tensor_rt_->sync(operation,wait);
+ bool success = true;
+ if(operation.isComposite()){
+  for(auto op = operation.begin(); op != operation.end(); ++op){
+   success = tensor_rt_->sync(**op,wait); if(!success) break;
+  }
+ }else{
+  success = tensor_rt_->sync(operation,wait);
+ }
+ return success;
 }
 
 bool NumServer::sync(TensorNetwork & network, bool wait)
@@ -1423,7 +1446,8 @@ bool NumServer::computeMaxAbsSync(const std::string & name,
   //std::cout << "#ERROR(exatn::NumServer::computeMaxAbsSync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorMaxAbs());
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
@@ -1431,7 +1455,15 @@ bool NumServer::computeMaxAbsSync(const std::string & name,
  auto submitted = submit(op,tensor_mapper);
  if(submitted){
   submitted = sync(*op);
-  if(submitted) norm = std::dynamic_pointer_cast<numerics::FunctorMaxAbs>(functor)->getNorm();
+  if(submitted){
+   norm = std::dynamic_pointer_cast<numerics::FunctorMaxAbs>(functor)->getNorm();
+   if(op->isComposite()){
+#ifdef MPI_ENABLED
+    int errc = MPI_Allreduce(MPI_IN_PLACE,&norm,1,MPI_DOUBLE,MPI_MAX,process_group.getMPICommProxy().getRef<MPI_Comm>());
+    assert(errc == MPI_SUCCESS);
+#endif
+   }
+  }
  }
  return submitted;
 }
@@ -1445,7 +1477,8 @@ bool NumServer::computeNorm1Sync(const std::string & name,
   //std::cout << "#ERROR(exatn::NumServer::computeNorm1Sync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorNorm1());
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
@@ -1453,7 +1486,16 @@ bool NumServer::computeNorm1Sync(const std::string & name,
  auto submitted = submit(op,tensor_mapper);
  if(submitted){
   submitted = sync(*op);
-  if(submitted) norm = std::dynamic_pointer_cast<numerics::FunctorNorm1>(functor)->getNorm();
+  if(submitted){
+   norm = std::dynamic_pointer_cast<numerics::FunctorNorm1>(functor)->getNorm();
+   if(op->isComposite()){
+#ifdef MPI_ENABLED
+    int errc = MPI_Allreduce(MPI_IN_PLACE,&norm,1,MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
+    assert(errc == MPI_SUCCESS);
+    norm /= static_cast<double>(replication_level(process_group,iter->second));
+#endif
+   }
+  }
  }
  return submitted;
 }
@@ -1467,7 +1509,8 @@ bool NumServer::computeNorm2Sync(const std::string & name,
   //std::cout << "#ERROR(exatn::NumServer::computeNorm2Sync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorNorm2());
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
@@ -1475,7 +1518,18 @@ bool NumServer::computeNorm2Sync(const std::string & name,
  auto submitted = submit(op,tensor_mapper);
  if(submitted){
   submitted = sync(*op);
-  if(submitted) norm = std::dynamic_pointer_cast<numerics::FunctorNorm2>(functor)->getNorm();
+  if(submitted){
+   norm = std::dynamic_pointer_cast<numerics::FunctorNorm2>(functor)->getNorm();
+   if(op->isComposite()){
+#ifdef MPI_ENABLED
+    auto norm2 = norm * norm;
+    int errc = MPI_Allreduce(MPI_IN_PLACE,&norm2,1,MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
+    assert(errc == MPI_SUCCESS);
+    norm2 /= static_cast<double>(replication_level(process_group,iter->second));
+    norm = std::sqrt(norm2);
+#endif
+   }
+  }
  }
  return submitted;
 }

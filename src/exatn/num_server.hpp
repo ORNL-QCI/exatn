@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/18
+REVISION: 2021/07/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -129,6 +129,11 @@ std::pair<unsigned long long, unsigned long long> owned_subtensors(
                                                    unsigned int process_rank,          //in: target process rank
                                                    unsigned int num_processes,         //in: total number of processes
                                                    unsigned long long num_subtensors); //in: total number of subtensors
+
+/* Returns the subtensor replication level (number of replicated subtensors). */
+unsigned int replication_level(const ProcessGroup & process_group, //in: process group
+                               std::shared_ptr<Tensor> & tensor);  //in: tensor
+
 
 //Composite tensor mapper (helper):
 class CompositeTensorMapper: public TensorMapper{

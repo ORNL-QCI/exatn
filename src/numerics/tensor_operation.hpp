@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/15
+REVISION: 2021/07/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -67,6 +67,9 @@ namespace numerics{
 class TensorOperation{ //abstract
 public:
 
+ using Iterator = typename std::vector<std::shared_ptr<TensorOperation>>::iterator;
+ using ConstIterator = typename std::vector<std::shared_ptr<TensorOperation>>::const_iterator;
+
  /** Constructs a yet undefined tensor operation with
      the specified number of tensor/scalar arguments. **/
  TensorOperation(TensorOpCode opcode,       //in: tensor operation code
@@ -98,12 +101,21 @@ public:
      Returns the total number of generated simple operations. **/
  virtual std::size_t decompose(const TensorMapper & tensor_mapper) = 0;
 
- /** Returns whether or not the tensor operation is composite. **/
- bool isComposite() const;
+ /** Begin iterator **/
+ inline Iterator begin() {return simple_operations_.begin();}
+ /** End iterator **/
+ inline Iterator end() {return simple_operations_.end();}
+ /** Begin constant iterator **/
+ inline ConstIterator cbegin() const {return simple_operations_.cbegin();}
+ /** End constant iterator **/
+ inline ConstIterator cend() const {return simple_operations_.cend();}
 
  /** Returns the requested simple tensor operation in case the current tensor
      operation is composite and has already been decomposed into simple operations. **/
  std::shared_ptr<TensorOperation> operator[](std::size_t operation_id);
+
+ /** Returns whether or not the tensor operation is composite. **/
+ bool isComposite() const;
 
  /** Returns the FMA flop estimate for the tensor operation, or zero if not available.
      The FMA flop estimate neither includes the FMA factor of 2.0 nor

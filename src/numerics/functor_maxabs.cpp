@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Computes max-abs norm of a tensor
-REVISION: 2020/11/11
+REVISION: 2021/07/21
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "functor_maxabs.hpp"
 
@@ -12,9 +12,12 @@ namespace exatn{
 
 namespace numerics{
 
+std::mutex FunctorMaxAbs::mutex_;
+
 int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
 {
- norm_ = 0.0;
+ const std::lock_guard<std::mutex> lock(mutex_);
+ //norm_ = 0.0;
  const auto tensor_volume = local_tensor.getVolume();
  auto access_granted = false;
 
@@ -32,7 +35,7 @@ int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
   const float * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = maxabs_func(body);
+   norm_ = std::max(norm_,maxabs_func(body));
    return 0;
   }
  }
@@ -41,7 +44,7 @@ int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
   const double * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = maxabs_func(body);
+   norm_ = std::max(norm_,maxabs_func(body));
    return 0;
   }
  }
@@ -50,7 +53,7 @@ int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
   const std::complex<float> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = maxabs_func(body);
+   norm_ = std::max(norm_,maxabs_func(body));
    return 0;
   }
  }
@@ -59,7 +62,7 @@ int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
   const std::complex<double> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = maxabs_func(body);
+   norm_ = std::max(norm_,maxabs_func(body));
    return 0;
   }
  }

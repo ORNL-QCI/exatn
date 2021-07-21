@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Computes 1-norm of a tensor
-REVISION: 2020/05/02
+REVISION: 2021/07/21
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "functor_norm1.hpp"
 
@@ -12,9 +12,12 @@ namespace exatn{
 
 namespace numerics{
 
+std::mutex FunctorNorm1::mutex_;
+
 int FunctorNorm1::apply(talsh::Tensor & local_tensor)
 {
- norm_ = 0.0;
+ const std::lock_guard<std::mutex> lock(mutex_);
+ //norm_ = 0.0;
  const auto tensor_volume = local_tensor.getVolume();
  auto access_granted = false;
 
@@ -30,7 +33,7 @@ int FunctorNorm1::apply(talsh::Tensor & local_tensor)
   const float * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = norm1_func(body);
+   norm_ += norm1_func(body);
    return 0;
   }
  }
@@ -39,7 +42,7 @@ int FunctorNorm1::apply(talsh::Tensor & local_tensor)
   const double * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = norm1_func(body);
+   norm_ += norm1_func(body);
    return 0;
   }
  }
@@ -48,7 +51,7 @@ int FunctorNorm1::apply(talsh::Tensor & local_tensor)
   const std::complex<float> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = norm1_func(body);
+   norm_ += norm1_func(body);
    return 0;
   }
  }
@@ -57,7 +60,7 @@ int FunctorNorm1::apply(talsh::Tensor & local_tensor)
   const std::complex<double> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ = norm1_func(body);
+   norm_ += norm1_func(body);
    return 0;
   }
  }
