@@ -11,6 +11,7 @@
 #include <iostream>
 #include <ios>
 #include <utility>
+#include <numeric>
 
 #include "errors.hpp"
 
@@ -3271,12 +3272,22 @@ TEST(NumServerTester, TensorComposite) {
  double norm = 0.0;
  success = exatn::computeNorm1Sync("C",norm); assert(success);
  std::cout << "1-norm of tensor C = " << norm << std::endl;
+ //Compute the 2-norm of a composite tensor:
  norm = 0.0;
  success = exatn::computeNorm2Sync("C",norm); assert(success);
  std::cout << "2-norm of tensor C = " << norm << std::endl;
+ //Compute the Max-Abs of a composite tensor:
  norm = 0.0;
  success = exatn::computeMaxAbsSync("C",norm); assert(success);
  std::cout << "Max-Abs of tensor C = " << norm << std::endl;
+ //Compute partial norms of a composite tensor:
+ norm = 0.0;
+ success = exatn::computeNorm2Sync("A",norm); assert(success);
+ std::vector<double> pnorms;
+ success = exatn::computePartialNormsSync("A",1,pnorms); assert(success);
+ auto pnorms_sum = std::accumulate(pnorms.cbegin(),pnorms.cend(),0.0);
+ std::cout << "Sum of partial norms of tensor A = " << pnorms_sum
+           << " VS full norm = " << (norm * norm) << std::endl;
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

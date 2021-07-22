@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Computes partial 2-norms over a given tensor dimension
-REVISION: 2020/04/23
+REVISION: 2021/07/22
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) Given a tensor D(a,b,c,k) and a specific dimension of it, say k,
@@ -26,6 +26,7 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <string>
 #include <vector>
 #include <complex>
+#include <mutex>
 
 #include "errors.hpp"
 
@@ -36,7 +37,8 @@ namespace numerics{
 class FunctorDiagRank: public talsh::TensorFunctor<Identifiable>{
 public:
 
- FunctorDiagRank(unsigned int tensor_dimension); //in: chosen tensor dimension
+ FunctorDiagRank(unsigned int tensor_dimension, //in: chosen tensor dimension
+                 DimExtent dimension_extent);   //in: tensor dimension extent
 
  virtual ~FunctorDiagRank() = default;
 
@@ -62,12 +64,16 @@ public:
      shape that both can be accessed by talsh::Tensor methods. **/
  virtual int apply(talsh::Tensor & local_tensor) override;
 
- const std::vector<double> & getPartialNorms() const {return partial_norms_;}
+ const std::vector<double> & getPartialNorms() const {
+  const std::lock_guard<std::mutex> lock(mutex_);
+  return partial_norms_;
+ }
 
 private:
 
  unsigned int tensor_dimension_;     //specific tensor dimension: [0..order-1]
  std::vector<double> partial_norms_; //partial norms over the chosen tensor dimension
+ static std::mutex mutex_;
 };
 
 } //namespace numerics

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/21
+REVISION: 2021/07/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1545,11 +1545,13 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
  }
  if(tensor_dimension >= iter->second->getRank()){
   std::cout << "#ERROR(exatn::NumServer::computePartialNormsSync): Chosen tensor dimension " << tensor_dimension
-            << " does not exist for tensor " << name << std::endl;
+            << " does not exist for tensor " << name << std::endl << std::flush;
   return false;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
- auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorDiagRank(tensor_dimension));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
+ const auto dim_extent = iter->second->getDimExtent(tensor_dimension); //`ignores base offset if tensor "name" is a slice
+ auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorDiagRank(tensor_dimension,dim_extent));
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
@@ -1559,7 +1561,21 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
   if(submitted){
    const auto & norms = std::dynamic_pointer_cast<numerics::FunctorDiagRank>(functor)->getPartialNorms();
    submitted = !norms.empty();
-   if(submitted) partial_norms.assign(norms.cbegin(),norms.cend());
+   if(submitted){
+    if(op->isComposite()){
+#ifdef MPI_ENABLED
+     partial_norms.resize(dim_extent);
+     std::fill(partial_norms.begin(),partial_norms.end(),0.0);
+     int errc = MPI_Allreduce(norms.data(),partial_norms.data(),static_cast<int>(dim_extent),
+                              MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
+     assert(errc == MPI_SUCCESS);
+#else
+     partial_norms.assign(norms.cbegin(),norms.cend());
+#endif
+    }else{
+     partial_norms.assign(norms.cbegin(),norms.cend());
+    }
+   }
   }
  }
  return submitted;
