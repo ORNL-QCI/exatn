@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/21
+REVISION: 2021/07/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -26,6 +26,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 #include <complex>
 #include <functional>
 
@@ -51,6 +52,10 @@ public:
                                unsigned long long num_subtensors) const = 0;
 
  virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0;
+
+ virtual unsigned int getProcessRank() const = 0;
+
+ virtual unsigned int getNumProcesses() const = 0;
 };
 
 

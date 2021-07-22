@@ -1578,6 +1578,7 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
      int errc = MPI_Allreduce(norms.data(),partial_norms.data(),static_cast<int>(dim_extent),
                               MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
      assert(errc == MPI_SUCCESS);
+     for(auto & pnrm: partial_norms) pnrm /= static_cast<double>(replication_level(process_group,iter->second));
 #else
      partial_norms.assign(norms.cbegin(),norms.cend());
 #endif

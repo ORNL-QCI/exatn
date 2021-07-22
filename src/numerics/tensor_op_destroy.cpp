@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Destroys a tensor
-REVISION: 2021/07/15
+REVISION: 2021/07/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,16 +37,17 @@ std::unique_ptr<TensorOperation> TensorOpDestroy::createNew()
 
 std::size_t TensorOpDestroy::decompose(const TensorMapper & tensor_mapper)
 {
- simple_operations_.clear();
- auto tensor0 = getTensorOperand(0);
- if(tensor0->isComposite()){
-  auto composite_tensor0 = castTensorComposite(tensor0);
-  const auto num_subtensors = composite_tensor0->getNumSubtensors();
-  for(auto subtensor_iter = composite_tensor0->begin(); subtensor_iter != composite_tensor0->end(); ++subtensor_iter){
-   if(tensor_mapper.isLocalSubtensor(subtensor_iter->first,num_subtensors)){
-    simple_operations_.emplace_back(std::move(TensorOpDestroy::createNew()));
-    auto & op = simple_operations_.back();
-    op->setTensorOperand(subtensor_iter->second);
+ if(this->isComposite()){
+  if(simple_operations_.empty()){
+   auto tensor0 = getTensorOperand(0);
+   auto composite_tensor0 = castTensorComposite(tensor0); assert(composite_tensor0);
+   const auto num_subtensors = composite_tensor0->getNumSubtensors();
+   for(auto subtensor_iter = composite_tensor0->begin(); subtensor_iter != composite_tensor0->end(); ++subtensor_iter){
+    if(tensor_mapper.isLocalSubtensor(subtensor_iter->first,num_subtensors)){
+     simple_operations_.emplace_back(std::move(TensorOpDestroy::createNew()));
+     auto & op = simple_operations_.back();
+     op->setTensorOperand(subtensor_iter->second);
+    }
    }
   }
  }

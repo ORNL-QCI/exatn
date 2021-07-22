@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/21
+REVISION: 2021/07/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -169,6 +169,10 @@ public:
  {
   return (local_tensors_.find(subtensor.getName()) != local_tensors_.cend());
  }
+
+ virtual unsigned int getProcessRank() const override {return current_process_rank_;}
+
+ virtual unsigned int getNumProcesses() const override {return group_num_processes_;}
 
 private:
 

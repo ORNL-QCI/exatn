@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/07/19
+REVISION: 2021/07/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -40,7 +40,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
-/** Creates a tensor as an intersection of two other tensors. **/
+/** Creates a tensor as an intersection of two other tensors.
+    If the intersection is empty, returns NULL. **/
 std::shared_ptr<numerics::Tensor> makeSharedTensorIntersection(const std::string & name,
                                                                const numerics::Tensor & tensor1,
                                                                const numerics::Tensor & tensor2);
