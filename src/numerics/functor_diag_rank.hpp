@@ -38,7 +38,8 @@ class FunctorDiagRank: public talsh::TensorFunctor<Identifiable>{
 public:
 
  FunctorDiagRank(unsigned int tensor_dimension, //in: chosen tensor dimension
-                 DimExtent dimension_extent);   //in: tensor dimension extent
+                 DimExtent dimension_extent,    //in: tensor dimension extent
+                 DimOffset dimension_base = 0); //in: tensor dimension base (for sliced dimensions)
 
  virtual ~FunctorDiagRank() = default;
 
@@ -72,6 +73,7 @@ public:
 private:
 
  unsigned int tensor_dimension_;     //specific tensor dimension: [0..order-1]
+ DimOffset dimension_base_;          //dimension base offset (if the dimension is sliced)
  std::vector<double> partial_norms_; //partial norms over the chosen tensor dimension
  static std::mutex mutex_;
 };

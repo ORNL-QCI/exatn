@@ -1550,8 +1550,17 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
  }
  const auto & process_group = getTensorProcessGroup(name);
  auto tensor_mapper = getTensorMapper(process_group);
- const auto dim_extent = iter->second->getDimExtent(tensor_dimension); //`ignores base offset if tensor "name" is a slice
- auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorDiagRank(tensor_dimension,dim_extent));
+ const auto dim_extent = iter->second->getDimExtent(tensor_dimension);
+ const auto dim_space = iter->second->getDimSpaceAttr(tensor_dimension);
+ DimOffset dim_base = 0;
+ if(dim_space.first == SOME_SPACE){
+  dim_base = dim_space.second;
+ }else{
+  const auto * subspace = space_register_->getSubspace(dim_space.first,dim_space.second);
+  assert(subspace);
+  dim_base = subspace->getLowerBound();
+ }
+ auto functor = std::shared_ptr<TensorMethod>(new numerics::FunctorDiagRank(tensor_dimension,dim_extent,dim_base));
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);

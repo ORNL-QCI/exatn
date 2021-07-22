@@ -16,8 +16,10 @@ namespace numerics{
 
 std::mutex FunctorDiagRank::mutex_;
 
-FunctorDiagRank::FunctorDiagRank(unsigned int tensor_dimension, DimExtent dimension_extent):
- tensor_dimension_(tensor_dimension), partial_norms_(dimension_extent,0.0)
+FunctorDiagRank::FunctorDiagRank(unsigned int tensor_dimension,
+                                 DimExtent dimension_extent,
+                                 DimOffset dimension_base):
+ tensor_dimension_(tensor_dimension), dimension_base_(dimension_base), partial_norms_(dimension_extent,0.0)
 {
 }
 
