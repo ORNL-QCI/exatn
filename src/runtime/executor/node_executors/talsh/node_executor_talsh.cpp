@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/07/02
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -882,12 +882,72 @@ int TalshNodeExecutor::execute(numerics::TensorOpFetch & op,
  auto & tens = *(tens_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): FETCH: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
 
  int error_code = 0;
 #ifdef MPI_ENABLED
-
-#else
-
+ auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
+ float * tens_body_r4 = nullptr;
+ double * tens_body_r8 = nullptr;
+ std::complex<float> * tens_body_c4 = nullptr;
+ std::complex<double> * tens_body_c8 = nullptr;
+ bool access_granted = false;
+ int tens_elem_type = tens.getElementType();
+ switch(tens_elem_type){
+  case(talsh::REAL32): access_granted = tens.getDataAccessHost(&tens_body_r4); break;
+  case(talsh::REAL64): access_granted = tens.getDataAccessHost(&tens_body_r8); break;
+  case(talsh::COMPLEX32): access_granted = tens.getDataAccessHost(&tens_body_c4); break;
+  case(talsh::COMPLEX64): access_granted = tens.getDataAccessHost(&tens_body_c8); break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): FETCH: Unknown TAL-SH data kind: "
+             << tens_elem_type << std::endl;
+   op.printIt();
+   assert(false);
+ }
+ if(access_granted){
+  auto mpi_data_kind = get_mpi_tensor_element_kind(tens_elem_type);
+  auto communicator = *(op.getMPICommunicator().get<MPI_Comm>());
+  int remote_rank = op.getRemoteProcessRank();
+  int mesg_tag = op.getMessageTag();
+  auto req_res = mpi_requests_.emplace(std::make_pair(*exec_handle,
+                                       std::list<void*>{})); assert(req_res.second);
+  std::size_t tens_volume = tens.getVolume();
+  int chunk = std::numeric_limits<int>::max();
+  for(std::size_t base = 0; base < tens_volume; base += chunk){
+   int count = std::min(chunk,static_cast<int>(tens_volume-base));
+   MPI_Request * mpi_req = new MPI_Request;
+   req_res.first->second.emplace_back((void*)mpi_req);
+   switch(tens_elem_type){
+    case(talsh::REAL32):
+     assert(tens_body_r4 != nullptr);
+     error_code = MPI_Irecv((void*)(&(tens_body_r4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::REAL64):
+     assert(tens_body_r8 != nullptr);
+     error_code = MPI_Irecv((void*)(&(tens_body_r8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::COMPLEX32):
+     assert(tens_body_c4 != nullptr);
+     error_code = MPI_Irecv((void*)(&(tens_body_c4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::COMPLEX64):
+     assert(tens_body_c8 != nullptr);
+     error_code = MPI_Irecv((void*)(&(tens_body_c8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+   }
+   if(error_code != MPI_SUCCESS) break;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): FETCH: Unable to get access to the tensor body!" << std::endl;
+  op.printIt();
+  assert(false);
+ }
 #endif
  return error_code;
 }
@@ -911,12 +971,72 @@ int TalshNodeExecutor::execute(numerics::TensorOpUpload & op,
  auto & tens = *(tens_pos->second.talsh_tensor);
 
  *exec_handle = op.getId();
+ auto task_res = tasks_.emplace(std::make_pair(*exec_handle,
+                                std::make_shared<talsh::TensorTask>()));
+ if(!task_res.second){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): UPLOAD: Attempt to execute the same operation twice: " << std::endl;
+  op.printIt();
+  assert(false);
+ }
 
  int error_code = 0;
 #ifdef MPI_ENABLED
-
-#else
-
+ auto synced = tens.sync(DEV_HOST,0,nullptr,true); assert(synced);
+ float * tens_body_r4 = nullptr;
+ double * tens_body_r8 = nullptr;
+ std::complex<float> * tens_body_c4 = nullptr;
+ std::complex<double> * tens_body_c8 = nullptr;
+ bool access_granted = false;
+ int tens_elem_type = tens.getElementType();
+ switch(tens_elem_type){
+  case(talsh::REAL32): access_granted = tens.getDataAccessHost(&tens_body_r4); break;
+  case(talsh::REAL64): access_granted = tens.getDataAccessHost(&tens_body_r8); break;
+  case(talsh::COMPLEX32): access_granted = tens.getDataAccessHost(&tens_body_c4); break;
+  case(talsh::COMPLEX64): access_granted = tens.getDataAccessHost(&tens_body_c8); break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): UPLOAD: Unknown TAL-SH data kind: "
+             << tens_elem_type << std::endl;
+   op.printIt();
+   assert(false);
+ }
+ if(access_granted){
+  auto mpi_data_kind = get_mpi_tensor_element_kind(tens_elem_type);
+  auto communicator = *(op.getMPICommunicator().get<MPI_Comm>());
+  int remote_rank = op.getRemoteProcessRank();
+  int mesg_tag = op.getMessageTag();
+  auto req_res = mpi_requests_.emplace(std::make_pair(*exec_handle,
+                                       std::list<void*>{})); assert(req_res.second);
+  std::size_t tens_volume = tens.getVolume();
+  int chunk = std::numeric_limits<int>::max();
+  for(std::size_t base = 0; base < tens_volume; base += chunk){
+   int count = std::min(chunk,static_cast<int>(tens_volume-base));
+   MPI_Request * mpi_req = new MPI_Request;
+   req_res.first->second.emplace_back((void*)mpi_req);
+   switch(tens_elem_type){
+    case(talsh::REAL32):
+     assert(tens_body_r4 != nullptr);
+     error_code = MPI_Isend((const void*)(&(tens_body_r4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::REAL64):
+     assert(tens_body_r8 != nullptr);
+     error_code = MPI_Isend((const void*)(&(tens_body_r8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::COMPLEX32):
+     assert(tens_body_c4 != nullptr);
+     error_code = MPI_Isend((const void*)(&(tens_body_c4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+    case(talsh::COMPLEX64):
+     assert(tens_body_c8 != nullptr);
+     error_code = MPI_Isend((const void*)(&(tens_body_c8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     break;
+   }
+   if(error_code != MPI_SUCCESS) break;
+  }
+ }else{
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): UPLOAD: Unable to get access to the tensor body!" << std::endl;
+  op.printIt();
+  assert(false);
+ }
 #endif
  return error_code;
 }
@@ -1094,6 +1214,37 @@ bool TalshNodeExecutor::sync(TensorOpExecHandle op_handle,
     if(synced && sts == TALSH_TASK_ERROR) *error_code = TALSH_TASK_ERROR;
    }
    if(synced && *error_code == 0) cacheMovedTensors(task);
+#ifdef MPI_ENABLED
+  }else{
+   auto req_iter = mpi_requests_.find(op_handle);
+   if(req_iter != mpi_requests_.end()){
+    while(!req_iter->second.empty()){
+     MPI_Request * req = (MPI_Request*)(req_iter->second.front());
+     assert(req != nullptr);
+     int completed = 0;
+     if(wait){
+      int errc = MPI_Wait(req,MPI_STATUS_IGNORE);
+      if(errc == MPI_SUCCESS){
+       completed = 1;
+      }else{
+       *error_code = TALSH_TASK_ERROR;
+      }
+      synced = synced && (completed != 0);
+     }else{
+      int errc = MPI_Test(req,&completed,MPI_STATUS_IGNORE);
+      if(errc != MPI_SUCCESS) *error_code = TALSH_TASK_ERROR;
+      synced = synced && (completed != 0);
+     }
+     if(completed){
+      delete req;
+      req_iter->second.pop_front();
+     }else{
+      break;
+     }
+    }
+    if(synced) mpi_requests_.erase(req_iter);
+   }
+#endif
   }
   if(synced) tasks_.erase(iter);
  }
@@ -1110,6 +1261,20 @@ bool TalshNodeExecutor::sync()
   synced = synced && snc;
  }
  evictions_.clear();
+
+#ifdef MPI_ENABLED
+ for(auto & task: mpi_requests_){
+  while(!task.second.empty()){
+   MPI_Request * req = (MPI_Request*)(task.second.front());
+   assert(req != nullptr);
+   int error_code = MPI_Wait(req,MPI_STATUS_IGNORE);
+   synced = synced && (error_code == MPI_SUCCESS);
+   delete req;
+   task.second.pop_front();
+  }
+ }
+ mpi_requests_.clear();
+#endif
 
  for(auto & task: tasks_){
   bool snc = task.second->wait();
@@ -1131,6 +1296,9 @@ bool TalshNodeExecutor::sync()
 
 bool TalshNodeExecutor::discard(TensorOpExecHandle op_handle)
 {
+#ifdef MPI_ENABLED
+ //`Cancel associated MPI message (if any)
+#endif
  auto iter = tasks_.find(op_handle);
  if(iter != tasks_.end()){
   tasks_.erase(iter);

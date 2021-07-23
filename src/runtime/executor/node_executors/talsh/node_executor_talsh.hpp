@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/07/02
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -17,6 +17,7 @@ Rationale:
 
 #include <unordered_map>
 #include <vector>
+#include <list>
 #include <memory>
 #include <atomic>
 
@@ -157,6 +158,8 @@ protected:
   std::unordered_map<talsh::Tensor*,std::shared_ptr<talsh::TensorTask>> evictions_;
   /** Register (cache) of tensors with body images moved/copied to accelerators **/
   std::unordered_map<talsh::Tensor*,CachedAttr> accel_cache_[DEV_MAX]; //cache for each device
+  /** Active MPI requests for non-blocking two-sided messages **/
+  std::unordered_map<TensorOpExecHandle,std::list<void*>> mpi_requests_; //owning pointers
   /** Max encountered actual tensor rank **/
   int max_tensor_rank_;
   /** Prefetching enabled flag **/
