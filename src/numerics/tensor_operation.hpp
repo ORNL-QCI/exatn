@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/22
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,6 +37,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 namespace exatn{
 
+class MPICommProxy;
+
 class TensorMapper{ //pure abstract (interface)
 public:
 
@@ -56,6 +58,8 @@ public:
  virtual unsigned int getProcessRank() const = 0;
 
  virtual unsigned int getNumProcesses() const = 0;
+
+ virtual const MPICommProxy & getMPICommProxy() const = 0;
 };
 
 

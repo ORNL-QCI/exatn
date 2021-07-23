@@ -66,7 +66,6 @@ TEST(TensorRuntimeTester, checkSimple) {
   exatn::numericalServer->submit(destroy_tensor2,tensor_mapper);
   exatn::numericalServer->submit(destroy_tensor1,tensor_mapper);
   exatn::numericalServer->submit(destroy_tensor0,tensor_mapper);
-
 }
 
 

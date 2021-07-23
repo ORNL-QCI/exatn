@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/22
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -93,7 +93,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(MPI_COMM_WORLD,&global_process_rank_); assert(mpi_error == MPI_SUCCESS);
- default_tensor_mapper_ = std::shared_ptr<TensorMapper>(new CompositeTensorMapper(process_rank_,num_processes_,tensors_));
+ default_tensor_mapper_ = std::shared_ptr<TensorMapper>(new CompositeTensorMapper(intra_comm_,process_rank_,num_processes_,tensors_));
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_);
  std::vector<unsigned int> myself = {static_cast<unsigned int>(process_rank_)};
  process_self_ = std::make_shared<ProcessGroup>(MPICommProxy(MPI_COMM_SELF),myself);
@@ -326,7 +326,12 @@ std::shared_ptr<TensorMapper> NumServer::getTensorMapper(const ProcessGroup & pr
  unsigned int local_rank;
  bool rank_is_in_group = process_group.rankIsIn(process_rank_,&local_rank);
  assert(rank_is_in_group);
+#ifdef MPI_ENABLED
+ return std::shared_ptr<TensorMapper>(new CompositeTensorMapper(process_group.getMPICommProxy(),
+                                                                local_rank,process_group.getSize(),tensors_));
+#else
  return std::shared_ptr<TensorMapper>(new CompositeTensorMapper(local_rank,process_group.getSize(),tensors_));
+#endif
 }
 
 std::shared_ptr<TensorMapper> NumServer::getTensorMapper() const

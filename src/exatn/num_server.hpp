@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/22
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -139,11 +139,20 @@ unsigned int replication_level(const ProcessGroup & process_group, //in: process
 class CompositeTensorMapper: public TensorMapper{
 public:
 
+#ifdef MPI_ENABLED
+ CompositeTensorMapper(const MPICommProxy & communicator,
+                       unsigned int current_rank_in_group,
+                       unsigned int num_processes_in_group,
+                       const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
+  current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
+  intra_comm_(communicator), local_tensors_(local_tensors) {}
+#else
  CompositeTensorMapper(unsigned int current_rank_in_group,
                        unsigned int num_processes_in_group,
                        const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
   current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
   local_tensors_(local_tensors) {}
+#endif
 
  virtual ~CompositeTensorMapper() = default;
 
@@ -174,10 +183,13 @@ public:
 
  virtual unsigned int getNumProcesses() const override {return group_num_processes_;}
 
+ virtual const MPICommProxy & getMPICommProxy() const override {return intra_comm_;}
+
 private:
 
  unsigned int current_process_rank_; //rank of the current process (in some process group)
  unsigned int group_num_processes_;  //total number of processes (in some process group)
+ MPICommProxy intra_comm_;           //MPI communicator for the process group
  const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors_; //locally stored tensors
 };
 

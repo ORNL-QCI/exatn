@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2021/07/22
+REVISION: 2021/07/23
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_op_add.hpp"
 
 #include "tensor_node_executor.hpp"
+
+#include <limits>
+#include <stack>
 
 namespace exatn{
 
@@ -54,6 +57,7 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
    assert(comp_tens0 || comp_tens1);
    const auto num_procs = tensor_mapper.getNumProcesses();
    const auto proc_rank = tensor_mapper.getProcessRank();
+   const auto & intra_comm = tensor_mapper.getMPICommProxy();
    const auto tens_elem_type0 = tensor0->getElementType();
    const auto tens_elem_type1 = tensor1->getElementType();
    std::map<unsigned long long, std::shared_ptr<Tensor>> self_composite0 {{0,tensor0}};
@@ -75,23 +79,90 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
     num_subtensors1 = comp_tens1->getNumSubtensors();
    }
    //Send local tensor slices to remote processes:
+   std::stack<std::shared_ptr<Tensor>> slices;
    for(auto subtens1 = beg1; subtens1 != end1; ++subtens1){
     if(tensor_mapper.isLocalSubtensor(*(subtens1->second))){
      for(auto subtens0 = beg0; subtens0 != end0; ++subtens0){
       auto slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
       if(slice){
        slice->rename();
-       simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
-       auto & op = simple_operations_.back();
-       op->setTensorOperand(slice);
-       std::dynamic_pointer_cast<TensorOpCreate>(op)->resetTensorElementType(tens_elem_type1);
-
+       const auto tensor_owner = tensor_mapper.subtensorOwnerId(subtens0->first,num_subtensors0);
+       if(tensor_owner != tensor_mapper.getProcessRank()){
+        {//Create the tensor intersection slice:
+         simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
+         auto & op = simple_operations_.back();
+         op->setTensorOperand(slice);
+         std::dynamic_pointer_cast<TensorOpCreate>(op)->resetTensorElementType(tens_elem_type1);
+        }
+        slices.emplace(slice); //stack of slices to be destroyed later
+        {//Extract the intersection slice:
+         simple_operations_.emplace_back(std::move(TensorOpSlice::createNew()));
+         auto & op = simple_operations_.back();
+         op->setTensorOperand(slice);
+         op->setTensorOperand(subtens1->second);
+        }
+        {//Upload the intersection slice to a remote process:
+         simple_operations_.emplace_back(std::move(TensorOpUpload::createNew()));
+         auto & op = simple_operations_.back();
+         op->setTensorOperand(slice);
+         std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMPICommunicator(intra_comm);
+         auto success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetRemoteProcessRank(tensor_owner); assert(success);
+         assert(subtens0->first <= std::numeric_limits<int>::max());
+         success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMessageTag(static_cast<int>(subtens0->first)); assert(success);
+        }
+       }
       }
      }
     }
    }
    //Receive necessary tensor slices from remote processes:
-   
+   for(auto subtens0 = beg0; subtens0 != end0; ++subtens0){
+    if(tensor_mapper.isLocalSubtensor(*(subtens0->second))){
+     for(auto subtens1 = beg1; subtens1 != end1; ++subtens1){
+      auto slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
+      if(slice){
+       slice->rename();
+       const auto tensor_owner = tensor_mapper.subtensorOwnerId(subtens1->first,num_subtensors1);
+       {//Create the tensor intersection slice:
+        simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
+        auto & op = simple_operations_.back();
+        op->setTensorOperand(slice);
+        std::dynamic_pointer_cast<TensorOpCreate>(op)->resetTensorElementType(tens_elem_type0);
+       }
+       slices.emplace(slice); //stack of slices to be destroyed later
+       if(tensor_owner == tensor_mapper.getProcessRank()){ //slice is local
+        //Extract the (local) intersection slice:
+        simple_operations_.emplace_back(std::move(TensorOpSlice::createNew()));
+        auto & op = simple_operations_.back();
+        op->setTensorOperand(slice);
+        op->setTensorOperand(subtens1->second);
+       }else{ //slice is remote
+        //Fetch the (remote) intersection slice:
+        simple_operations_.emplace_back(std::move(TensorOpFetch::createNew()));
+        auto & op = simple_operations_.back();
+        op->setTensorOperand(slice);
+        std::dynamic_pointer_cast<TensorOpFetch>(op)->resetMPICommunicator(intra_comm);
+        auto success = std::dynamic_pointer_cast<TensorOpFetch>(op)->resetRemoteProcessRank(tensor_owner); assert(success);
+        assert(subtens0->first <= std::numeric_limits<int>::max());
+        success = std::dynamic_pointer_cast<TensorOpFetch>(op)->resetMessageTag(static_cast<int>(subtens0->first)); assert(success);
+       }
+       {//Insert the intersection slice:
+        simple_operations_.emplace_back(std::move(TensorOpInsert::createNew()));
+        auto & op = simple_operations_.back();
+        op->setTensorOperand(subtens0->second);
+        op->setTensorOperand(slice);
+       }
+      }
+     }
+    }
+   }
+   //Destroy temporary slices:
+   while(!slices.empty()){
+    simple_operations_.emplace_back(std::move(TensorOpDestroy::createNew()));
+    auto & op = simple_operations_.back();
+    op->setTensorOperand(slices.top());
+    slices.pop();
+   }
   }
  }
  return simple_operations_.size();
