@@ -3254,7 +3254,7 @@ TEST(NumServerTester, TensorComposite) {
 
  success = exatn::createTensorSync(all_processes,"C",
                                    std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
-                                   TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
+                                   TENS_ELEM_TYPE,TensorShape{60,60}); assert(success);
  auto tensorC = exatn::castTensorComposite(exatn::getTensor("C")); assert(tensorC);
 
  //std::cout << "Process " << my_process_rank << " is within existence domain of {A,B,C} = "
@@ -3262,7 +3262,7 @@ TEST(NumServerTester, TensorComposite) {
 
  //Initialize composite tensors:
  success = exatn::initTensorRnd("A"); assert(success);
- success = exatn::initTensorRnd("B"); assert(success);
+ //success = exatn::initTensorRnd("B"); assert(success);
  success = exatn::initTensor("C",std::complex<float>{1e-4,0.0}); assert(success);
 
  //Sync all processes:
@@ -3288,6 +3288,12 @@ TEST(NumServerTester, TensorComposite) {
  auto pnorms_sum = std::accumulate(pnorms.cbegin(),pnorms.cend(),0.0);
  std::cout << "Sum of partial norms of tensor A = " << pnorms_sum
            << " VS full norm = " << (norm * norm) << std::endl;
+
+ //Copy a composite tensor:
+ success = exatn::addTensors("B(i,j)+=A(i,j)",1.0); assert(success);
+ norm = 0.0;
+ success = exatn::computeNorm2Sync("B",norm); assert(success);
+ std::cout << "2-norm of tensor B = " << norm << std::endl;
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

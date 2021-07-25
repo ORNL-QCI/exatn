@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/07/23
+REVISION: 2021/07/25
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -408,26 +408,45 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
   assert(false);
  }
 
+ const auto & tensor_signature = tensor1.getSignature();
  const auto & slice_signature = tensor0.getSignature();
  const auto slice_rank = slice_signature.getRank();
  std::vector<int> offsets(slice_rank);
  for(unsigned int i = 0; i < slice_rank; ++i){
-  auto space_id = slice_signature.getDimSpaceId(i);
-  auto subspace_id = slice_signature.getDimSubspaceId(i);
-  if(space_id == SOME_SPACE){
-   if(subspace_id > std::numeric_limits<int>::max()){
+  const auto tensor_space_id = tensor_signature.getDimSpaceId(i);
+  const auto tensor_subspace_id = tensor_signature.getDimSubspaceId(i);
+  const auto slice_space_id = slice_signature.getDimSpaceId(i);
+  const auto slice_subspace_id = slice_signature.getDimSubspaceId(i);
+  if(slice_space_id == SOME_SPACE && tensor_space_id == SOME_SPACE){
+   if(slice_subspace_id < tensor_subspace_id){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Slice offset below lower bound: "
+              << slice_subspace_id << " < " << tensor_subspace_id << std::endl;
+    assert(false);
+   }
+   if((slice_subspace_id - tensor_subspace_id) > std::numeric_limits<int>::max()){
     std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Integer (int) overflow in offsets" << std::endl;
     assert(false);
    }
-   offsets[i] = static_cast<int>(subspace_id);
+   offsets[i] = static_cast<int>(slice_subspace_id - tensor_subspace_id);
+  }else if(slice_space_id != SOME_SPACE && tensor_space_id == slice_space_id){
+   const auto * tensor_subspace = getSpaceRegister()->getSubspace(tensor_space_id,tensor_subspace_id);
+   const auto tensor_lower_bound = tensor_subspace->getLowerBound();
+   const auto * slice_subspace = getSpaceRegister()->getSubspace(slice_space_id,slice_subspace_id);
+   const auto slice_lower_bound = slice_subspace->getLowerBound();
+   if(slice_lower_bound < tensor_lower_bound){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Slice offset below lower bound: "
+              << slice_lower_bound << " < " << tensor_lower_bound << std::endl;
+    assert(false);
+   }
+   if((slice_lower_bound - tensor_lower_bound) > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
+   offsets[i] = static_cast<int>(slice_lower_bound - tensor_lower_bound);
   }else{
-   const auto * subspace = getSpaceRegister()->getSubspace(space_id,subspace_id);
-   auto lower_bound = subspace->getLowerBound();
-   if(lower_bound > std::numeric_limits<int>::max()){
-    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Integer (int) overflow in offsets" << std::endl;
-    assert(false);
-   }
-   offsets[i] = static_cast<int>(lower_bound);
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): SLICE: Space mismatch: "
+             << slice_space_id << " VS "<< tensor_space_id << std::endl;
+   assert(false);
   }
  }
 
@@ -477,26 +496,45 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
   assert(false);
  }
 
+ const auto & tensor_signature = tensor0.getSignature();
  const auto & slice_signature = tensor1.getSignature();
  const auto slice_rank = slice_signature.getRank();
  std::vector<int> offsets(slice_rank);
  for(unsigned int i = 0; i < slice_rank; ++i){
-  auto space_id = slice_signature.getDimSpaceId(i);
-  auto subspace_id = slice_signature.getDimSubspaceId(i);
-  if(space_id == SOME_SPACE){
-   if(subspace_id > std::numeric_limits<int>::max()){
+  const auto tensor_space_id = tensor_signature.getDimSpaceId(i);
+  const auto tensor_subspace_id = tensor_signature.getDimSubspaceId(i);
+  const auto slice_space_id = slice_signature.getDimSpaceId(i);
+  const auto slice_subspace_id = slice_signature.getDimSubspaceId(i);
+  if(slice_space_id == SOME_SPACE && tensor_space_id == SOME_SPACE){
+   if(slice_subspace_id < tensor_subspace_id){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Slice offset below lower bound: "
+              << slice_subspace_id << " < " << tensor_subspace_id << std::endl;
+    assert(false);
+   }
+   if((slice_subspace_id - tensor_subspace_id) > std::numeric_limits<int>::max()){
     std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Integer (int) overflow in offsets" << std::endl;
     assert(false);
    }
-   offsets[i] = static_cast<int>(subspace_id);
+   offsets[i] = static_cast<int>(slice_subspace_id - tensor_subspace_id);
+  }else if(slice_space_id != SOME_SPACE && tensor_space_id == slice_space_id){
+   const auto * tensor_subspace = getSpaceRegister()->getSubspace(tensor_space_id,tensor_subspace_id);
+   const auto tensor_lower_bound = tensor_subspace->getLowerBound();
+   const auto * slice_subspace = getSpaceRegister()->getSubspace(slice_space_id,slice_subspace_id);
+   const auto slice_lower_bound = slice_subspace->getLowerBound();
+   if(slice_lower_bound < tensor_lower_bound){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Slice offset below lower bound: "
+              << slice_lower_bound << " < " << tensor_lower_bound << std::endl;
+    assert(false);
+   }
+   if((slice_lower_bound - tensor_lower_bound) > std::numeric_limits<int>::max()){
+    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Integer (int) overflow in offsets" << std::endl;
+    assert(false);
+   }
+   offsets[i] = static_cast<int>(slice_lower_bound - tensor_lower_bound);
   }else{
-   const auto * subspace = getSpaceRegister()->getSubspace(space_id,subspace_id);
-   auto lower_bound = subspace->getLowerBound();
-   if(lower_bound > std::numeric_limits<int>::max()){
-    std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Integer (int) overflow in offsets" << std::endl;
-    assert(false);
-   }
-   offsets[i] = static_cast<int>(lower_bound);
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): INSERT: Space mismatch: "
+             << slice_space_id << " VS "<< tensor_space_id << std::endl;
+   assert(false);
   }
  }
 
