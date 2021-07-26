@@ -3262,7 +3262,7 @@ TEST(NumServerTester, TensorComposite) {
 
  //Initialize composite tensors:
  success = exatn::initTensorRnd("A"); assert(success);
- //success = exatn::initTensorRnd("B"); assert(success);
+ success = exatn::initTensor("B",std::complex<float>{0.0,0.0}); assert(success);
  success = exatn::initTensor("C",std::complex<float>{1e-4,0.0}); assert(success);
 
  //Sync all processes:
@@ -3290,10 +3290,10 @@ TEST(NumServerTester, TensorComposite) {
            << " VS full norm = " << (norm * norm) << std::endl;
 
  //Copy a composite tensor:
- success = exatn::addTensors("B(i,j)+=A(i,j)",1.0); assert(success);
+ success = exatn::addTensorsSync("B(i,j)+=A(i,j)",1.0); assert(success);
  norm = 0.0;
  success = exatn::computeNorm2Sync("B",norm); assert(success);
- std::cout << "2-norm of tensor B = " << norm << std::endl;
+ std::cout << "2-norm of tensor B = " << (norm * norm) << std::endl;
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

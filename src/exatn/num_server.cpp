@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/23
+REVISION: 2021/07/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1128,6 +1128,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
     submitted = submit(op,tensor_mapper);
     if(submitted){
+     tensor->setElementType(element_type);
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
       auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
@@ -1178,6 +1179,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
     submitted = submit(op,tensor_mapper);
     if(submitted){
+     tensor->setElementType(element_type);
      auto res = tensors_.emplace(std::make_pair(tensor->getName(),tensor));
      if(res.second){
       auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
