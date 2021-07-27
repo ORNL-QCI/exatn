@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Inserts a slice into a tensor
-REVISION: 2021/07/15
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,8 +48,17 @@ public:
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();
 
+ /** Resets the accumulative attribute. **/
+ void resetAccumulative(bool accum);
+
+ /** Queries the accumulative attribute. **/
+ inline bool isAccumulative() const {
+  return accumulative_;
+ }
+
 private:
 
+ bool accumulative_; //accumulative or not (default)
 };
 
 } //namespace numerics

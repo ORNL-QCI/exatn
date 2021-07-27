@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Creates a tensor
-REVISION: 2021/07/22
+REVISION: 2021/07/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,6 +62,7 @@ void TensorOpCreate::printIt() const
  }
  if(scalars_.size() > 0) std::cout << std::endl;
  std::cout << " TensorElementType = " << static_cast<int>(element_type_) << std::endl;
+ std::cout << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  std::cout << "}" << std::endl;
  return;
 }
@@ -86,6 +87,7 @@ void TensorOpCreate::printItFile(std::ofstream & output_file) const
  }
  if(scalars_.size() > 0) output_file << std::endl;
  output_file << " TensorElementType = " << static_cast<int>(element_type_) << std::endl;
+ output_file << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  output_file << "}" << std::endl;
  //output_file.flush();
  return;

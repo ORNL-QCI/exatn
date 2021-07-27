@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Uploads remote tensor data
-REVISION: 2021/07/15
+REVISION: 2021/07/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -45,6 +45,10 @@ public:
  /** Decomposes a composite tensor operation into simple ones.
      Returns the total number of generated simple operations. **/
  virtual std::size_t decompose(const TensorMapper & tensor_mapper) override;
+
+ /** Prints. **/
+ virtual void printIt() const override;
+ virtual void printItFile(std::ofstream & output_file) const override;
 
  /** Create a new polymorphic instance of this subclass. **/
  static std::unique_ptr<TensorOperation> createNew();

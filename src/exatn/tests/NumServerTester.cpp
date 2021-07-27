@@ -3217,7 +3217,7 @@ TEST(NumServerTester, TensorComposite) {
 
  //Create composite tensors:
  success = exatn::createTensorSync(all_processes,"A",
-                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,1},{0,1}},
+                                   std::vector<std::pair<unsigned int, unsigned int>>{{1,2},{0,1}},
                                    TENS_ELEM_TYPE,TensorShape{100,60}); assert(success);
  auto tensorA = exatn::castTensorComposite(exatn::getTensor("A")); assert(tensorA);
 
@@ -3294,6 +3294,8 @@ TEST(NumServerTester, TensorComposite) {
  norm = 0.0;
  success = exatn::computeNorm2Sync("B",norm); assert(success);
  std::cout << "2-norm of tensor B = " << (norm * norm) << std::endl;
+
+ //Contract composite tensors:
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

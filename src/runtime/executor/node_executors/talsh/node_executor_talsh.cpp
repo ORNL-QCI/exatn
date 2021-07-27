@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/07/25
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -453,7 +453,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpSlice & op,
  auto error_code = tens1.extractSlice((task_res.first)->second.get(),
                                       tens0,
                                       offsets,
-                                      DEV_HOST,0);
+                                      DEV_HOST,0,
+                                      op.isAccumulative());
 
  return error_code;
 }
@@ -541,7 +542,8 @@ int TalshNodeExecutor::execute(numerics::TensorOpInsert & op,
  auto error_code = tens0.insertSlice((task_res.first)->second.get(),
                                      tens1,
                                      offsets,
-                                     DEV_HOST,0);
+                                     DEV_HOST,0,
+                                     op.isAccumulative());
 
  return error_code;
 }

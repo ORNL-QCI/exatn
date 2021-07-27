@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Adds a tensor to another tensor
-REVISION: 2021/07/23
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -47,6 +47,10 @@ std::unique_ptr<TensorOperation> TensorOpAdd::createNew()
 
 std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
 {
+ auto replica_count = [](unsigned int num_processes, unsigned long long num_subtensors){
+  return static_cast<unsigned int>(std::max(1ULL,static_cast<unsigned long long>(num_processes)/num_subtensors));
+ };
+
  if(this->isComposite()){
   if(simple_operations_.empty()){
    //Prepare composite tensor operands:
@@ -79,15 +83,20 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
     num_subtensors1 = comp_tens1->getNumSubtensors();
    }
    //Send local tensor slices to remote processes:
-   std::stack<std::shared_ptr<Tensor>> slices;
+   std::stack<std::shared_ptr<Tensor>> slices; //temporary tensor slices
    for(auto subtens1 = beg1; subtens1 != end1; ++subtens1){
     if(tensor_mapper.isLocalSubtensor(*(subtens1->second))){
      for(auto subtens0 = beg0; subtens0 != end0; ++subtens0){
-      auto slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
+      std::shared_ptr<Tensor> slice;
+      bool congruent = subtens0->second->isCongruentTo(*(subtens1->second));
+      if(congruent){
+       slice = subtens1->second;
+      }else{
+       slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
+       if(slice) slice->rename();
+      }
       if(slice){
-       slice->rename();
-       const auto tensor_owner = tensor_mapper.subtensorOwnerId(subtens0->first,num_subtensors0);
-       if(tensor_owner != tensor_mapper.getProcessRank()){
+       if(!congruent){
         {//Create the tensor intersection slice:
          simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
          auto & op = simple_operations_.back();
@@ -101,14 +110,19 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
          op->setTensorOperand(slice);
          op->setTensorOperand(subtens1->second);
         }
-        {//Upload the intersection slice to a remote process:
-         simple_operations_.emplace_back(std::move(TensorOpUpload::createNew()));
-         auto & op = simple_operations_.back();
-         op->setTensorOperand(slice);
-         std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMPICommunicator(intra_comm);
-         auto success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetRemoteProcessRank(tensor_owner); assert(success);
-         assert(subtens0->first <= std::numeric_limits<int>::max());
-         success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMessageTag(static_cast<int>(subtens0->first)); assert(success);
+       }
+       const auto tensor_owner_first = tensor_mapper.subtensorFirstOwnerId(subtens0->first,num_subtensors0);
+       for(auto tensor_owner = tensor_owner_first; tensor_owner < num_procs; tensor_owner += num_subtensors0){
+        if(tensor_owner != proc_rank){ //consider only remote processes
+         if(tensor_mapper.subtensorOwnerId(tensor_owner,subtens1->first,num_subtensors1) == proc_rank){//Upload the intersection slice to a remote process:
+          simple_operations_.emplace_back(std::move(TensorOpUpload::createNew()));
+          auto & op = simple_operations_.back();
+          op->setTensorOperand(slice);
+          std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMPICommunicator(intra_comm);
+          auto success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetRemoteProcessRank(tensor_owner); assert(success);
+          assert(subtens0->first <= std::numeric_limits<int>::max());
+          success = std::dynamic_pointer_cast<TensorOpUpload>(op)->resetMessageTag(static_cast<int>(subtens0->first)); assert(success);
+         }
         }
        }
       }
@@ -119,23 +133,31 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
    for(auto subtens0 = beg0; subtens0 != end0; ++subtens0){
     if(tensor_mapper.isLocalSubtensor(*(subtens0->second))){
      for(auto subtens1 = beg1; subtens1 != end1; ++subtens1){
-      auto slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
+      std::shared_ptr<Tensor> slice;
+      bool congruent = subtens0->second->isCongruentTo(*(subtens1->second)) &&
+                       tensor_mapper.isLocalSubtensor(*(subtens1->second));
+      if(congruent){
+       slice = subtens1->second;
+      }else{
+       slice = makeSharedTensorIntersection("_",*(subtens0->second),*(subtens1->second));
+       if(slice) slice->rename();
+      }
       if(slice){
-       slice->rename();
        const auto tensor_owner = tensor_mapper.subtensorOwnerId(subtens1->first,num_subtensors1);
-       {//Create the tensor intersection slice:
+       if(!congruent){//Create the tensor intersection slice:
         simple_operations_.emplace_back(std::move(TensorOpCreate::createNew()));
         auto & op = simple_operations_.back();
         op->setTensorOperand(slice);
         std::dynamic_pointer_cast<TensorOpCreate>(op)->resetTensorElementType(tens_elem_type0);
+        slices.emplace(slice); //stack of slices to be destroyed later
        }
-       slices.emplace(slice); //stack of slices to be destroyed later
        if(tensor_owner == tensor_mapper.getProcessRank()){ //slice is local
-        //Extract the (local) intersection slice:
-        simple_operations_.emplace_back(std::move(TensorOpSlice::createNew()));
-        auto & op = simple_operations_.back();
-        op->setTensorOperand(slice);
-        op->setTensorOperand(subtens1->second);
+        if(!congruent){//Extract the (local) intersection slice:
+         simple_operations_.emplace_back(std::move(TensorOpSlice::createNew()));
+         auto & op = simple_operations_.back();
+         op->setTensorOperand(slice);
+         op->setTensorOperand(subtens1->second);
+        }
        }else{ //slice is remote
         //Fetch the (remote) intersection slice:
         simple_operations_.emplace_back(std::move(TensorOpFetch::createNew()));
@@ -151,6 +173,7 @@ std::size_t TensorOpAdd::decompose(const TensorMapper & tensor_mapper)
         auto & op = simple_operations_.back();
         op->setTensorOperand(subtens0->second);
         op->setTensorOperand(slice);
+        std::dynamic_pointer_cast<TensorOpInsert>(op)->resetAccumulative(true);
        }
       }
      }

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/23
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -124,13 +124,13 @@ unsigned int subtensor_owner_id(unsigned int process_rank,          //in: curren
                                 unsigned long long subtensor_id,    //in: id of the required subtensor
                                 unsigned long long num_subtensors); //in: total number of subtensors
 
-/* Returns a range of subtensors [begin,end] owned by the specified process. */
+/** Returns a range of subtensors [begin,end] owned by the specified process. **/
 std::pair<unsigned long long, unsigned long long> owned_subtensors(
                                                    unsigned int process_rank,          //in: target process rank
                                                    unsigned int num_processes,         //in: total number of processes
                                                    unsigned long long num_subtensors); //in: total number of subtensors
 
-/* Returns the subtensor replication level (number of replicated subtensors). */
+/** Returns the subtensor replication level (number of replicated subtensors). **/
 unsigned int replication_level(const ProcessGroup & process_group, //in: process group
                                std::shared_ptr<Tensor> & tensor);  //in: tensor
 
@@ -156,33 +156,68 @@ public:
 
  virtual ~CompositeTensorMapper() = default;
 
- virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
-                                       unsigned long long num_subtensors) const override
+ /** Returns the closest-to-the-target process rank owning the given subtensor. **/
+ virtual unsigned int subtensorOwnerId(unsigned int target_process_rank,                 //in: target process rank
+                                       unsigned long long subtensor_id,                  //in: subtensor id (binary mask)
+                                       unsigned long long num_subtensors) const override //in: total number of subtensors
+ {
+  assert(target_process_rank < group_num_processes_);
+  return subtensor_owner_id(target_process_rank,group_num_processes_,subtensor_id,num_subtensors);
+ }
+
+ /** Returns the closest process rank owning the given subtensor. **/
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,                  //in: subtensor id (binary mask)
+                                       unsigned long long num_subtensors) const override //in: total number of subtensors
  {
   return subtensor_owner_id(current_process_rank_,group_num_processes_,subtensor_id,num_subtensors);
  }
 
- virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
-                                                                           unsigned long long num_subtensors) const override
+ /** Returns the first process rank owning the given subtensor (first replica). **/
+ virtual unsigned int subtensorFirstOwnerId(unsigned long long subtensor_id,                  //in: subtensor id (binary mask)
+                                            unsigned long long num_subtensors) const override //in: total number of subtensors
+ {
+  return subtensor_owner_id(0,group_num_processes_,subtensor_id,num_subtensors);
+ }
+
+ /** Returns the number of replicas of a given subtensor within the process group. **/
+ virtual unsigned int subtensorNumReplicas(unsigned long long subtensor_id,                  //in: subtensor id (binary mask)
+                                           unsigned long long num_subtensors) const override //in: total number of subtensors
+ {
+  unsigned int num_replicas = 1;
+  if(num_subtensors < group_num_processes_){
+   assert(group_num_processes_ % num_subtensors == 0);
+   num_replicas = group_num_processes_ / num_subtensors;
+  }
+  return num_replicas;
+ }
+
+ /** Returns the range of subtensors (by their ids) owned by the given process rank. **/
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,                        //in: target process rank
+                                                                           unsigned long long num_subtensors) const override //in: total number of subtensors
  {
   return owned_subtensors(process_rank,group_num_processes_,num_subtensors);
  }
 
- virtual bool isLocalSubtensor(unsigned long long subtensor_id,
-                               unsigned long long num_subtensors) const override
+ /** Returns whether or not the given subtensor is owned by the current process. **/
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,                  //in: subtensor id (binary mask)
+                               unsigned long long num_subtensors) const override //in: total number of subtensors
  {
   return (subtensorOwnerId(subtensor_id,num_subtensors) == current_process_rank_);
  }
 
- virtual bool isLocalSubtensor(const Tensor & subtensor) const override
+ /** Returns whether or not the given subtensor is owned by the current process. **/
+ virtual bool isLocalSubtensor(const Tensor & subtensor) const override //in: subtensor
  {
   return (local_tensors_.find(subtensor.getName()) != local_tensors_.cend());
  }
 
+ /** Returns the rank of the current process. **/
  virtual unsigned int getProcessRank() const override {return current_process_rank_;}
 
+ /** Returns the total number of processes in the group. **/
  virtual unsigned int getNumProcesses() const override {return group_num_processes_;}
 
+ /** Returns the MPI intra-communicator associated with the group of processes. **/
  virtual const MPICommProxy & getMPICommProxy() const override {return intra_comm_;}
 
 private:

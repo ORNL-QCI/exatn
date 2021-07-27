@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/23
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -44,21 +44,41 @@ public:
 
  virtual ~TensorMapper() = default;
 
- virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,
-                                       unsigned long long num_subtensors) const = 0;
+ /** Returns the closest-to-the-target process rank owning the given subtensor. **/
+ virtual unsigned int subtensorOwnerId(unsigned int target_process_rank,             //in: target process rank
+                                       unsigned long long subtensor_id,              //in: subtensor id (binary mask)
+                                       unsigned long long num_subtensors) const = 0; //in: total number of subtensors
 
- virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,
-                                                                           unsigned long long num_subtensors) const = 0;
+ /** Returns the closest process rank owning the given subtensor. **/
+ virtual unsigned int subtensorOwnerId(unsigned long long subtensor_id,              //in: subtensor id (binary mask)
+                                       unsigned long long num_subtensors) const = 0; //in: total number of subtensors
 
- virtual bool isLocalSubtensor(unsigned long long subtensor_id,
-                               unsigned long long num_subtensors) const = 0;
+ /** Returns the first process rank owning the given subtensor (first replica). **/
+ virtual unsigned int subtensorFirstOwnerId(unsigned long long subtensor_id,              //in: subtensor id (binary mask)
+                                            unsigned long long num_subtensors) const = 0; //in: total number of subtensors
 
- virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0;
+ /** Returns the number of replicas of a given subtensor within the process group. **/
+ virtual unsigned int subtensorNumReplicas(unsigned long long subtensor_id,              //in: subtensor id (binary mask)
+                                           unsigned long long num_subtensors) const = 0; //in: total number of subtensors
 
+ /** Returns the range of subtensors (by their ids) owned by the given process rank. **/
+ virtual std::pair<unsigned long long, unsigned long long> ownedSubtensors(unsigned int process_rank,                    //in: target process rank
+                                                                           unsigned long long num_subtensors) const = 0; //in: total number of subtensors
+
+ /** Returns whether or not the given subtensor is owned by the current process. **/
+ virtual bool isLocalSubtensor(unsigned long long subtensor_id,              //in: subtensor id (binary mask)
+                               unsigned long long num_subtensors) const = 0; //in: total number of subtensors
+
+ /** Returns whether or not the given subtensor is owned by the current process. **/
+ virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0; //in: subtensor
+
+ /** Returns the rank of the current process. **/
  virtual unsigned int getProcessRank() const = 0;
 
+ /** Returns the total number of processes in the group. **/
  virtual unsigned int getNumProcesses() const = 0;
 
+ /** Return the MPI intra-communicator associated with the group of processes. **/
  virtual const MPICommProxy & getMPICommProxy() const = 0;
 };
 

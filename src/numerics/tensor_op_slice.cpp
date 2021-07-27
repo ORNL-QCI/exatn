@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Extracts a slice from a tensor
-REVISION: 2021/07/15
+REVISION: 2021/07/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,8 @@ namespace exatn{
 namespace numerics{
 
 TensorOpSlice::TensorOpSlice():
- TensorOperation(TensorOpCode::SLICE,2,0,1+0*2,{0,1})
+ TensorOperation(TensorOpCode::SLICE,2,0,1+0*2,{0,1}),
+ accumulative_(false)
 {
 }
 
@@ -33,6 +34,12 @@ int TensorOpSlice::accept(runtime::TensorNodeExecutor & node_executor,
 std::unique_ptr<TensorOperation> TensorOpSlice::createNew()
 {
  return std::unique_ptr<TensorOperation>(new TensorOpSlice());
+}
+
+void TensorOpSlice::resetAccumulative(bool accum)
+{
+ accumulative_ = accum;
+ return;
 }
 
 std::size_t TensorOpSlice::decompose(const TensorMapper & tensor_mapper)
