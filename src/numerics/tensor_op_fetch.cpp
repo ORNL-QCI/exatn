@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Fetches remote tensor data
-REVISION: 2021/07/26
+REVISION: 2021/07/28
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -88,7 +88,7 @@ void TensorOpFetch::printIt() const
   std::cout << " " << scalar;
  }
  if(scalars_.size() > 0) std::cout << std::endl;
- std::cout << " Remote process rank = " << remote_rank_ << ": Message tag = " << message_tag_ << "(fetch)" << std::endl;
+ std::cout << " Remote process rank = " << remote_rank_ << ": Message tag = " << message_tag_ << " (fetch)" << std::endl;
  std::cout << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  std::cout << "}" << std::endl << std::flush;
  return;
@@ -113,7 +113,7 @@ void TensorOpFetch::printItFile(std::ofstream & output_file) const
   output_file << " " << scalar;
  }
  if(scalars_.size() > 0) output_file << std::endl;
- output_file << " Remote process rank = " << remote_rank_ << ": Message tag = " << message_tag_ << "(fetch)" << std::endl;
+ output_file << " Remote process rank = " << remote_rank_ << ": Message tag = " << message_tag_ << " (fetch)" << std::endl;
  output_file << " GWord estimate = " << std::scientific << this->getWordEstimate()/1e9 << std::endl;
  output_file << "}" << std::endl;
  //output_file.flush();
