@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/06/30
+REVISION: 2021/07/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,7 +13,12 @@ namespace exatn{
 
 namespace quantum{
 
-// All quantum gates will look transposed because of the column-wise data storage:
+/** All quantum gates will look transposed because of the column-wise data storage,
+    that is, following the Big Endian convention, such that a qubit order reversal
+    will be needed to match the standard text book (matrix) convention, for example:
+    CX(i,j|k,l): {i,j} & {k,l} --> {00,10,01,11}, which requires q1q0 order instead
+    of q0q1 in order to match the standard matrix-based gate definitions.
+**/
 const std::vector<std::complex<double>> GATE_0 {{0.0, 0.0}, {0.0, 0.0},
                                                 {0.0, 0.0}, {0.0, 0.0}};
 const std::vector<std::complex<double>> GATE_I {{1.0, 0.0}, {0.0, 0.0},
@@ -30,6 +35,26 @@ const std::vector<std::complex<double>> GATE_S {{1.0, 0.0}, {0.0, 0.0},
                                                 {0.0, 0.0}, {0.0, 1.0}};
 const std::vector<std::complex<double>> GATE_T {{1.0, 0.0}, {0.0, 0.0},
                                                 {0.0, 0.0}, {std::sqrt(2.0)*0.5, std::sqrt(2.0)*0.5}};
+const std::vector<std::complex<double>> GATE_CX {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+const std::vector<std::complex<double>> GATE_CY {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 1.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {0.0,-1.0}, {0.0, 0.0}};
+const std::vector<std::complex<double>> GATE_CZ {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0},
+                                                 {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {-1.0,0.0}};
+const std::vector<std::complex<double>> GATE_SWAP {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                   {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0},
+                                                   {0.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                   {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}};
+const std::vector<std::complex<double>> GATE_ISWAP {{1.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                    {0.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 0.0},
+                                                    {0.0, 0.0}, {0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0},
+                                                    {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}};
 
 
 std::vector<std::complex<double>> getQuantumGateData(const QuantumGate gate_name,
@@ -45,6 +70,11 @@ std::vector<std::complex<double>> getQuantumGateData(const QuantumGate gate_name
   case(QuantumGate::gate_H): gate_data = GATE_H; break;
   case(QuantumGate::gate_S): gate_data = GATE_S; break;
   case(QuantumGate::gate_T): gate_data = GATE_T; break;
+  case(QuantumGate::gate_CX): gate_data = GATE_CX; break;
+  case(QuantumGate::gate_CY): gate_data = GATE_CY; break;
+  case(QuantumGate::gate_CZ): gate_data = GATE_CZ; break;
+  case(QuantumGate::gate_SWAP): gate_data = GATE_SWAP; break;
+  case(QuantumGate::gate_ISWAP): gate_data = GATE_ISWAP; break;
   default:
    std::cout << "#ERROR(exatn::quantum::getQuantumGateData): Unknown quantum gate!" << std::endl;
    assert(false);

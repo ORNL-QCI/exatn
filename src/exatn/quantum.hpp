@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/06/29
+REVISION: 2021/07/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -32,7 +32,12 @@ enum class QuantumGate{
  gate_Z,
  gate_H,
  gate_S,
- gate_T
+ gate_T,
+ gate_CX,
+ gate_CY,
+ gate_CZ,
+ gate_SWAP,
+ gate_ISWAP
 };
 
 /** Returns the data initialization vector for a specific quantum gate
