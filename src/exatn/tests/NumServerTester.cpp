@@ -16,7 +16,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -31,22 +31,19 @@
 #define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
-#define EXATN_TEST15
+//#define EXATN_TEST15 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST16
-#define EXATN_TEST17
-//#define EXATN_TEST18 //buggy (parsed named spaces/subspaces)
+//#define EXATN_TEST17 //MKL only (tensor hyper-contraction)
+#define EXATN_TEST18
 #define EXATN_TEST19
-//#define EXATN_TEST20 //MKL only (tensor hyper-contraction)
+#define EXATN_TEST20
 #define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-#define EXATN_TEST26
+//#define EXATN_TEST26 //requires input file from source
 #define EXATN_TEST27
-#define EXATN_TEST28
-#define EXATN_TEST29*/
-#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
@@ -437,272 +434,6 @@ TEST(NumServerTester, ParallelExaTN)
 #endif
 
 #ifdef EXATN_TEST3
-TEST(NumServerTester, checkNumServer)
-{
- using exatn::VectorSpace;
- using exatn::Subspace;
-
- const VectorSpace * space1;
- auto space1_id = exatn::numericalServer->createVectorSpace("Space1",1024,&space1);
- space1->printIt();
- std::cout << std::endl;
-
- const VectorSpace * space2;
- auto space2_id = exatn::numericalServer->createVectorSpace("Space2",2048,&space2);
- space2->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace1;
- auto subspace1_id = exatn::numericalServer->createSubspace("S11","Space1",{13,246},&subspace1);
- subspace1->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace2;
- auto subspace2_id = exatn::numericalServer->createSubspace("S21","Space2",{1056,1068},&subspace2);
- subspace2->printIt();
- std::cout << std::endl;
-
- const VectorSpace * space = exatn::numericalServer->getVectorSpace("");
- space->printIt();
- std::cout << std::endl;
-
- space = exatn::numericalServer->getVectorSpace("Space2");
- space->printIt();
- std::cout << std::endl;
-
- const Subspace * subspace = exatn::numericalServer->getSubspace("S11");
- subspace->printIt();
- std::cout << std::endl;
-}
-#endif
-
-#ifdef EXATN_TEST4
-TEST(NumServerTester, useNumServer)
-{
- using exatn::TensorOpCode;
- using exatn::Tensor;
- using exatn::TensorShape;
- using exatn::TensorOperation;
- using exatn::TensorOpFactory;
- using exatn::TensorNetwork;
-
- auto & op_factory = *(TensorOpFactory::get()); //tensor operation factory
-
- //Example of tensor network processing:
- //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
- //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
- // 0      1         2           3         4             5         6           7  <-- tensor id
-
- //Declare participating ExaTN tensors:
- auto z0 = std::make_shared<Tensor>("Z0");
- auto t0 = std::make_shared<Tensor>("T0",TensorShape{2,2});
- auto t1 = std::make_shared<Tensor>("T1",TensorShape{2,2,2});
- auto t2 = std::make_shared<Tensor>("T2",TensorShape{2,2});
- auto h0 = std::make_shared<Tensor>("H0",TensorShape{2,2,2,2});
- auto s0 = std::make_shared<Tensor>("S0",TensorShape{2,2});
- auto s1 = std::make_shared<Tensor>("S1",TensorShape{2,2,2});
- auto s2 = std::make_shared<Tensor>("S2",TensorShape{2,2});
-
- //Declare a tensor network:
- TensorNetwork network("{0,1} 3-site MPS closure", //tensor network name
-  "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)", //tensor network specification
-  std::map<std::string,std::shared_ptr<Tensor>>{
-   {z0->getName(),z0}, {t0->getName(),t0}, {t1->getName(),t1}, {t2->getName(),t2},
-   {h0->getName(),h0}, {s0->getName(),s0}, {s1->getName(),s1}, {s2->getName(),s2}
-  }
- );
- network.printIt();
-
- //Create participating ExaTN tensors:
- std::shared_ptr<TensorOperation> create_z0 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_z0->setTensorOperand(z0);
- exatn::numericalServer->submit(create_z0);
-
- std::shared_ptr<TensorOperation> create_t0 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_t0->setTensorOperand(t0);
- exatn::numericalServer->submit(create_t0);
-
- std::shared_ptr<TensorOperation> create_t1 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_t1->setTensorOperand(t1);
- exatn::numericalServer->submit(create_t1);
-
- std::shared_ptr<TensorOperation> create_t2 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_t2->setTensorOperand(t2);
- exatn::numericalServer->submit(create_t2);
-
- std::shared_ptr<TensorOperation> create_h0 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_h0->setTensorOperand(h0);
- exatn::numericalServer->submit(create_h0);
-
- std::shared_ptr<TensorOperation> create_s0 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_s0->setTensorOperand(s0);
- exatn::numericalServer->submit(create_s0);
-
- std::shared_ptr<TensorOperation> create_s1 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_s1->setTensorOperand(s1);
- exatn::numericalServer->submit(create_s1);
-
- std::shared_ptr<TensorOperation> create_s2 = op_factory.createTensorOp(TensorOpCode::CREATE);
- create_s2->setTensorOperand(s2);
- exatn::numericalServer->submit(create_s2);
-
- //Initialize participating ExaTN tensors:
- std::shared_ptr<TensorOperation> init_z0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_z0->setTensorOperand(z0);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_z0)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.0)));
- exatn::numericalServer->submit(init_z0);
-
- std::shared_ptr<TensorOperation> init_t0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_t0->setTensorOperand(t0);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t0)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_t0);
-
- std::shared_ptr<TensorOperation> init_t1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_t1->setTensorOperand(t1);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t1)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_t1);
-
- std::shared_ptr<TensorOperation> init_t2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_t2->setTensorOperand(t2);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_t2)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_t2);
-
- std::shared_ptr<TensorOperation> init_h0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_h0->setTensorOperand(h0);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_h0)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_h0);
-
- std::shared_ptr<TensorOperation> init_s0 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_s0->setTensorOperand(s0);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s0)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_s0);
-
- std::shared_ptr<TensorOperation> init_s1 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_s1->setTensorOperand(s1);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s1)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_s1);
-
- std::shared_ptr<TensorOperation> init_s2 = op_factory.createTensorOp(TensorOpCode::TRANSFORM);
- init_s2->setTensorOperand(s2);
- std::dynamic_pointer_cast<exatn::numerics::TensorOpTransform>(init_s2)->
-  resetFunctor(std::shared_ptr<exatn::TensorMethod>(new exatn::numerics::FunctorInitVal(0.001)));
- exatn::numericalServer->submit(init_s2);
-
- //Evaluate the tensor network:
- exatn::numericalServer->submit(network);
- auto synced = exatn::numericalServer->sync(network,true); assert(synced);
-
- //Print the tensor network in a symbolic form:
- std::string network_printed;
- auto printed = network.printTensorNetwork(network_printed); assert(printed);
- std::cout << "Reconstructed symbolic tensor network: " << network_printed;
-
- //Retrieve the result:
- auto talsh_tensor = exatn::numericalServer->getLocalTensor(z0);
-
- //Destroy participating ExaTN tensors:
- std::shared_ptr<TensorOperation> destroy_s2 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_s2->setTensorOperand(s2);
- exatn::numericalServer->submit(destroy_s2);
-
- std::shared_ptr<TensorOperation> destroy_s1 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_s1->setTensorOperand(s1);
- exatn::numericalServer->submit(destroy_s1);
-
- std::shared_ptr<TensorOperation> destroy_s0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_s0->setTensorOperand(s0);
- exatn::numericalServer->submit(destroy_s0);
-
- std::shared_ptr<TensorOperation> destroy_h0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_h0->setTensorOperand(h0);
- exatn::numericalServer->submit(destroy_h0);
-
- std::shared_ptr<TensorOperation> destroy_t2 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_t2->setTensorOperand(t2);
- exatn::numericalServer->submit(destroy_t2);
-
- std::shared_ptr<TensorOperation> destroy_t1 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_t1->setTensorOperand(t1);
- exatn::numericalServer->submit(destroy_t1);
-
- std::shared_ptr<TensorOperation> destroy_t0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_t0->setTensorOperand(t0);
- exatn::numericalServer->submit(destroy_t0);
-
- std::shared_ptr<TensorOperation> destroy_z0 = op_factory.createTensorOp(TensorOpCode::DESTROY);
- destroy_z0->setTensorOperand(z0);
- exatn::numericalServer->submit(destroy_z0);
- //Grab a beer!
-}
-#endif
-
-#ifdef EXATN_TEST5
-TEST(NumServerTester, easyNumServer)
-{
- using exatn::Tensor;
- using exatn::TensorShape;
- using exatn::TensorElementType;
-
- //Example of tensor network processing:
- //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
- //Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)
- // 0      1         2           3         4             5         6           7  <-- tensor id
-
- //Create tensors:
- auto created = false;
- created = exatn::numericalServer->createTensor("Z0",TensorElementType::REAL64); assert(created);
- created = exatn::numericalServer->createTensor("T0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("T1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("T2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("H0",TensorElementType::REAL64,TensorShape{2,2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
- created = exatn::numericalServer->createTensor("S2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
-
- //std::cout << "Z0 tensor element type is " << int(exatn::numericalServer->getTensorElementType("Z0")) << std::endl; //debug
-
- //Initialize tensors:
- auto initialized = false;
- initialized = exatn::numericalServer->initTensor("Z0",0.0); assert(initialized);
- initialized = exatn::numericalServer->initTensor("T0",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("T1",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("T2",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("H0",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("S0",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("S1",0.001); assert(initialized);
- initialized = exatn::numericalServer->initTensor("S2",0.001); assert(initialized);
-
- //Evaluate a tensor network:
- auto evaluated = false;
- evaluated = exatn::numericalServer->evaluateTensorNetwork("{0,1} 3-site MPS closure",
-  "Z0() = T0(a,b) * T1(b,c,d) * T2(d,e) * H0(a,c,f,g) * S0(f,h) * S1(h,g,i) * S2(i,e)");
-
- //Sync all operations on Z0:
- auto synced = false;
- synced = exatn::numericalServer->sync("Z0"); assert(synced);
-
- //Destroy tensors:
- auto destroyed = false;
- destroyed = exatn::numericalServer->destroyTensor("S2"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("S1"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("S0"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("H0"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("T2"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("T1"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("T0"); assert(destroyed);
- destroyed = exatn::numericalServer->destroyTensor("Z0"); assert(destroyed);
- //Grab a beer!
-}
-#endif
-
-#ifdef EXATN_TEST6
 TEST(NumServerTester, superEasyNumServer)
 {
  using exatn::Tensor;
@@ -726,8 +457,6 @@ TEST(NumServerTester, superEasyNumServer)
  created = exatn::createTensor("S0",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
  created = exatn::createTensor("S1",TensorElementType::REAL64,TensorShape{2,2,2}); assert(created);
  created = exatn::createTensor("S2",TensorElementType::REAL64,TensorShape{2,2}); assert(created);
-
- //std::cout << "Z0 tensor element type is " << int(exatn::numericalServer->getTensorElementType("Z0")) << std::endl; //debug
 
  //Initialize tensors:
  auto initialized = false;
@@ -771,7 +500,7 @@ TEST(NumServerTester, superEasyNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST7
+#ifdef EXATN_TEST4
 TEST(NumServerTester, circuitNumServer)
 {
  using exatn::Tensor;
@@ -873,7 +602,7 @@ TEST(NumServerTester, circuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST8
+#ifdef EXATN_TEST5
 TEST(NumServerTester, circuitConjugateNumServer)
 {
  using exatn::Tensor;
@@ -954,7 +683,7 @@ TEST(NumServerTester, circuitConjugateNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST9
+#ifdef EXATN_TEST6
 TEST(NumServerTester, largeCircuitNumServer)
 {
  using exatn::Tensor;
@@ -1099,7 +828,7 @@ TEST(NumServerTester, largeCircuitNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST10
+#ifdef EXATN_TEST7
 TEST(NumServerTester, Sycamore8NumServer)
 {
  using exatn::Tensor;
@@ -1225,7 +954,7 @@ TEST(NumServerTester, Sycamore8NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST11
+#ifdef EXATN_TEST8
 TEST(NumServerTester, Sycamore12NumServer)
 {
  using exatn::Tensor;
@@ -1342,7 +1071,7 @@ TEST(NumServerTester, Sycamore12NumServer)
 }
 #endif
 
-#ifdef EXATN_TEST12
+#ifdef EXATN_TEST9
 TEST(NumServerTester, rcsNumServer)
 {
  using exatn::Tensor;
@@ -1528,7 +1257,7 @@ TEST(NumServerTester, rcsNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST13
+#ifdef EXATN_TEST10
 TEST(NumServerTester, BigMPSNumServer)
 {
  using exatn::Tensor;
@@ -1602,7 +1331,7 @@ TEST(NumServerTester, BigMPSNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST14
+#ifdef EXATN_TEST11
 TEST(NumServerTester, HamiltonianNumServer)
 {
  using exatn::Tensor;
@@ -1758,7 +1487,7 @@ TEST(NumServerTester, HamiltonianNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST15
+#ifdef EXATN_TEST12
 TEST(NumServerTester, EigenNumServer)
 {
  using exatn::Tensor;
@@ -1848,7 +1577,7 @@ TEST(NumServerTester, EigenNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST16
+#ifdef EXATN_TEST13
 TEST(NumServerTester, MPSBuilderNumServer)
 {
  using exatn::Tensor;
@@ -1891,7 +1620,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
 }
 #endif
 
-#ifdef EXATN_TEST17
+#ifdef EXATN_TEST14
 TEST(NumServerTester, TestSVD)
 {
  using exatn::Tensor;
@@ -1927,7 +1656,7 @@ TEST(NumServerTester, TestSVD)
 }
 #endif
 
-#ifdef EXATN_TEST18
+#ifdef EXATN_TEST15
 TEST(NumServerTester, ParserExaTN)
 {
  using exatn::Tensor;
@@ -2002,7 +1731,7 @@ TEST(NumServerTester, ParserExaTN)
 }
 #endif
 
-#ifdef EXATN_TEST19
+#ifdef EXATN_TEST16
 TEST(NumServerTester, testGarbage) {
  using exatn::TensorShape;
  using exatn::Tensor;
@@ -2135,7 +1864,7 @@ TEST(NumServerTester, testGarbage) {
 }
 #endif
 
-#ifdef EXATN_TEST20
+#ifdef EXATN_TEST17
 TEST(NumServerTester, testHyper) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2219,7 +1948,7 @@ TEST(NumServerTester, testHyper) {
 }
 #endif
 
-#ifdef EXATN_TEST21
+#ifdef EXATN_TEST18
 TEST(NumServerTester, neurIPS) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2400,7 +2129,7 @@ TEST(NumServerTester, neurIPS) {
 }
 #endif
 
-#ifdef EXATN_TEST22
+#ifdef EXATN_TEST19
 TEST(NumServerTester, MPSNorm) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2479,7 +2208,7 @@ TEST(NumServerTester, MPSNorm) {
 }
 #endif
 
-#ifdef EXATN_TEST23
+#ifdef EXATN_TEST20
 TEST(NumServerTester, UserDefinedMethod) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2572,7 +2301,7 @@ TEST(NumServerTester, UserDefinedMethod) {
 }
 #endif
 
-#ifdef EXATN_TEST24
+#ifdef EXATN_TEST21
 TEST(NumServerTester, PrintTensors) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2620,7 +2349,7 @@ TEST(NumServerTester, PrintTensors) {
 }
 #endif
 
-#ifdef EXATN_TEST25
+#ifdef EXATN_TEST22
 TEST(NumServerTester, CollapseTensors) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2674,7 +2403,7 @@ TEST(NumServerTester, CollapseTensors) {
 }
 #endif
 
-#ifdef EXATN_TEST26
+#ifdef EXATN_TEST23
 TEST(NumServerTester, Reconstructor) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2758,7 +2487,7 @@ TEST(NumServerTester, Reconstructor) {
 }
 #endif
 
-#ifdef EXATN_TEST27
+#ifdef EXATN_TEST24
 TEST(NumServerTester, OptimizerTransverseIsing) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -2899,7 +2628,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
 }
 #endif
 
-#ifdef EXATN_TEST28
+#ifdef EXATN_TEST25
 TEST(NumServerTester, OptimizerHubbard) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -3075,7 +2804,7 @@ TEST(NumServerTester, OptimizerHubbard) {
 }
 #endif
 
-#ifdef EXATN_TEST29
+#ifdef EXATN_TEST26
 TEST(NumServerTester, HubbardHamiltonian) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -3191,7 +2920,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
 }
 #endif
 
-#ifdef EXATN_TEST30
+#ifdef EXATN_TEST27
 TEST(NumServerTester, TensorComposite) {
  using exatn::TensorShape;
  using exatn::TensorSignature;

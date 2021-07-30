@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/26
+REVISION: 2021/07/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -146,7 +146,8 @@ NumServer::~NumServer()
  auto iter = tensors_.begin();
  while(iter != tensors_.end()){
   if(iter->second->isComposite()){
-   auto success = destroyTensorSync(iter->first); assert(success);
+   const auto tensor_name = iter->first;
+   auto success = destroyTensorSync(tensor_name); assert(success);
    iter = tensors_.begin();
   }else{
    ++iter;
@@ -155,7 +156,8 @@ NumServer::~NumServer()
  //Destroy remaining simple tensors:
  iter = tensors_.begin();
  while(iter != tensors_.end()){
-  auto success = destroyTensorSync(iter->first); assert(success);
+  const auto tensor_name = iter->first;
+  auto success = destroyTensorSync(tensor_name); assert(success);
   iter = tensors_.begin();
  }
  //Close scope and clean:
@@ -1309,9 +1311,9 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(name);
    assert(num_deleted == 1);
-   num_deleted = tensors_.erase(iter->second->getName());
+   num_deleted = tensors_.erase(name);
    assert(num_deleted == 1);
   }
  }else{
@@ -1319,7 +1321,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(name);
   }
  }
  return submitted;
@@ -1340,9 +1342,9 @@ bool NumServer::destroyTensorSync(const std::string & name)
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(name);
    assert(num_deleted == 1);
-   num_deleted = tensors_.erase(iter->second->getName());
+   num_deleted = tensors_.erase(name);
    assert(num_deleted == 1);
    submitted = sync(*op);
   }
@@ -1351,7 +1353,7 @@ bool NumServer::destroyTensorSync(const std::string & name)
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(iter->second->getName());
+   auto num_deleted = tensor_comms_.erase(name);
    submitted = sync(*op);
   }
  }
