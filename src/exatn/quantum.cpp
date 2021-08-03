@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/07/30
+REVISION: 2021/08/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -57,26 +57,26 @@ const std::vector<std::complex<double>> GATE_ISWAP {{1.0, 0.0}, {0.0, 0.0}, {0.0
                                                     {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {1.0, 0.0}};
 
 
-std::vector<std::complex<double>> getQuantumGateData(const QuantumGate gate_name,
-                                                     std::initializer_list<double> angles)
+std::vector<std::complex<double>> getGateData(const Gate gate_name,
+                                              std::initializer_list<double> angles)
 {
  std::vector<std::complex<double>> gate_data;
  switch(gate_name){
-  case(QuantumGate::gate_0): gate_data = GATE_0; break;
-  case(QuantumGate::gate_I): gate_data = GATE_I; break;
-  case(QuantumGate::gate_X): gate_data = GATE_X; break;
-  case(QuantumGate::gate_Y): gate_data = GATE_Y; break;
-  case(QuantumGate::gate_Z): gate_data = GATE_Z; break;
-  case(QuantumGate::gate_H): gate_data = GATE_H; break;
-  case(QuantumGate::gate_S): gate_data = GATE_S; break;
-  case(QuantumGate::gate_T): gate_data = GATE_T; break;
-  case(QuantumGate::gate_CX): gate_data = GATE_CX; break;
-  case(QuantumGate::gate_CY): gate_data = GATE_CY; break;
-  case(QuantumGate::gate_CZ): gate_data = GATE_CZ; break;
-  case(QuantumGate::gate_SWAP): gate_data = GATE_SWAP; break;
-  case(QuantumGate::gate_ISWAP): gate_data = GATE_ISWAP; break;
+  case(Gate::gate_0): gate_data = GATE_0; break;
+  case(Gate::gate_I): gate_data = GATE_I; break;
+  case(Gate::gate_X): gate_data = GATE_X; break;
+  case(Gate::gate_Y): gate_data = GATE_Y; break;
+  case(Gate::gate_Z): gate_data = GATE_Z; break;
+  case(Gate::gate_H): gate_data = GATE_H; break;
+  case(Gate::gate_S): gate_data = GATE_S; break;
+  case(Gate::gate_T): gate_data = GATE_T; break;
+  case(Gate::gate_CX): gate_data = GATE_CX; break;
+  case(Gate::gate_CY): gate_data = GATE_CY; break;
+  case(Gate::gate_CZ): gate_data = GATE_CZ; break;
+  case(Gate::gate_SWAP): gate_data = GATE_SWAP; break;
+  case(Gate::gate_ISWAP): gate_data = GATE_ISWAP; break;
   default:
-   std::cout << "#ERROR(exatn::quantum::getQuantumGateData): Unknown quantum gate!" << std::endl;
+   std::cout << "#ERROR(exatn::quantum::getGateData): Unknown quantum gate!" << std::endl;
    assert(false);
  }
  return gate_data;
@@ -96,33 +96,33 @@ bool appendPauliComponent(exatn::numerics::TensorOperator & tens_operator,
  unsigned int pauli_id = 0;
  std::size_t pos = 1;
  while(paulis[pos] != ']'){
-  auto gate_name = QuantumGate::gate_I;
+  auto gate_name = Gate::gate_I;
   if(paulis[pos] == 'I'){
-   gate_name = QuantumGate::gate_I;
+   gate_name = Gate::gate_I;
    if(!exatn::tensorAllocated("_Pauli_I")){
     success = exatn::createTensorSync("_Pauli_I",precision,TensorShape{2,2});
-    if(success) success = exatn::initTensorDataSync("_Pauli_I",getQuantumGateData(gate_name));
+    if(success) success = exatn::initTensorDataSync("_Pauli_I",getGateData(gate_name));
    }
    gate_tensor = exatn::getTensor("_Pauli_I");
   }else if(paulis[pos] == 'X'){
-   gate_name = QuantumGate::gate_X;
+   gate_name = Gate::gate_X;
    if(!exatn::tensorAllocated("_Pauli_X")){
     success = exatn::createTensorSync("_Pauli_X",precision,TensorShape{2,2});
-    if(success) success = exatn::initTensorDataSync("_Pauli_X",getQuantumGateData(gate_name));
+    if(success) success = exatn::initTensorDataSync("_Pauli_X",getGateData(gate_name));
    }
    gate_tensor = exatn::getTensor("_Pauli_X");
   }else if(paulis[pos] == 'Y'){
-   gate_name = QuantumGate::gate_Y;
+   gate_name = Gate::gate_Y;
    if(!exatn::tensorAllocated("_Pauli_Y")){
     success = exatn::createTensorSync("_Pauli_Y",precision,TensorShape{2,2});
-    if(success) success = exatn::initTensorDataSync("_Pauli_Y",getQuantumGateData(gate_name));
+    if(success) success = exatn::initTensorDataSync("_Pauli_Y",getGateData(gate_name));
    }
    gate_tensor = exatn::getTensor("_Pauli_Y");
   }else if(paulis[pos] == 'Z'){
-   gate_name = QuantumGate::gate_Z;
+   gate_name = Gate::gate_Z;
    if(!exatn::tensorAllocated("_Pauli_Z")){
     success = exatn::createTensorSync("_Pauli_Z",precision,TensorShape{2,2});
-    if(success) success = exatn::initTensorDataSync("_Pauli_Z",getQuantumGateData(gate_name));
+    if(success) success = exatn::initTensorDataSync("_Pauli_Z",getGateData(gate_name));
    }
    gate_tensor = exatn::getTensor("_Pauli_Z");
   }else{

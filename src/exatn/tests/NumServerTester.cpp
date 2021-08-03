@@ -2932,13 +2932,13 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  using exatn::TensorOperator;
  using exatn::TensorElementType;
 
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
- const int num_sites = 16, max_bond_dim = std::max(static_cast<int>(std::pow(2,num_sites/2)),256);
+ const int num_sites = 10, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
  const unsigned int num_layers = 1;
 
  //Define the initial qubit state vector:
@@ -2954,9 +2954,9 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   success = exatn::initTensorData("Q"+std::to_string(i),qzero); assert(success);
  }
  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
- success = exatn::initTensorData("H",exatn::quantum::getQuantumGateData(exatn::quantum::QuantumGate::gate_H)); assert(success);
+ success = exatn::initTensorData("H",exatn::quantum::getGateData(exatn::quantum::Gate::gate_H)); assert(success);
  success = exatn::createTensor("CNOT",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
- success = exatn::initTensorData("CNOT",exatn::quantum::getQuantumGateData(exatn::quantum::QuantumGate::gate_CX)); assert(success);
+ success = exatn::initTensorData("CNOT",exatn::quantum::getGateData(exatn::quantum::Gate::gate_CX)); assert(success);
  auto circuit_net = exatn::makeSharedTensorNetwork("Circuit");
  for(unsigned int i = 0; i < num_sites; ++i){
   success = circuit_net->appendTensor(i+1,exatn::getTensor("Q"+std::to_string(i)),{}); assert(success);
@@ -2970,8 +2970,8 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   }
  }
  auto circuit = exatn::makeSharedTensorExpansion("Circuit",circuit_net,std::complex<double>{1.0,0.0});
- //circuit->printIt(); // debug
  success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
+ //circuit->printIt(); //debug
 
  //Evaluate the quantum circuit:
  //success = exatn::evaluateSync(*circuit_net); assert(success);
@@ -2983,7 +2983,6 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
  ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
  auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
- //ansatz->printIt(); //debug
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
   if(tens_conn->first != 0){ //input tensors only
    success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
@@ -2991,6 +2990,8 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   }
  }
  success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+ //ansatz->printIt(); //debug
+ //exatn::printTensor(ansatz_net->getTensor(1)->getName()); //debug
 
  /*//Create the full tensor ansatz:
  auto ansatz_full_tensor = exatn::makeSharedTensor("AnsatzFullTensor",std::vector<int>(num_sites,2));
@@ -2998,18 +2999,18 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  success = ansatz_full_net->appendTensor(1,ansatz_full_tensor,{}); assert(success);
  ansatz_full_net->markOptimizableAllTensors();
  auto ansatz_full = exatn::makeSharedTensorExpansion("AnsatzFull",ansatz_full_net,std::complex<double>{1.0,0.0});
- //ansatz_full->printIt(); //debug
  success = exatn::createTensor(ansatz_full_tensor,TENS_ELEM_TYPE); assert(success);
  success = exatn::initTensorRnd(ansatz_full_tensor->getName()); assert(success);
  success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,true); assert(success);
+ //ansatz_full->printIt(); //debug
  */
 
  //Reconstruct the quantum circuit by a given tensor network ansatz:
  std::cout << "Reconstructing the quantum circuit by a given tensor network ansatz:" << std::endl;
  ansatz->conjugate();
- exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ //exatn::TensorNetworkReconstructor::resetDebugLevel(2); //debug
  exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-3);
- reconstructor.resetLearningRate(0.5);
+ reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
@@ -3017,6 +3018,9 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
             << "; Fidelity = " << fidelity << std::endl;
+  /*for(auto tens = ansatz_net->cbegin(); tens != ansatz_net->cend(); ++tens){
+   if(tens->first != 0) exatn::printTensor(tens->second.getName()); //debug
+  }*/
   /*
   const auto & tensor0_name = ansatz_full_tensor->getName();
   const auto & tensor1_name = circuit_net->getTensor(0)->getName();
@@ -3038,8 +3042,9 @@ TEST(NumServerTester, ExaTNGenVisitor) {
 
  //Destroy tensors:
  //success = exatn::destroyTensor(ansatz_full_tensor->getName()); assert(success);
- success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+ //success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);
+ success = exatn::destroyTensors(*circuit_net); assert(success);
 
  //Synchronize:
  success = exatn::sync(); assert(success);

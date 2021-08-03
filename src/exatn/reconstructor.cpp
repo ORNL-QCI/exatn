@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/03/02
+REVISION: 2021/08/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -204,7 +204,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
     //Nesterov extrapolation:
     if(nesterov){
      double extra_coef = static_cast<double>(iteration) / (static_cast<double>(iteration) + 3.0);
-     done = scaleTensorSync(environment.tensor->getName(),(1.0+extra_coef)); assert(done);
+     done = scaleTensorSync(environment.tensor->getName(),(1.0 + extra_coef)); assert(done);
      std::string add_pattern;
      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                       environment.tensor->getName(),environment.tensor_aux->getName()); assert(done);
@@ -250,10 +250,14 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
+     //Normalize the optimizable tensor to unity:
+     done = normalizeNorm2Sync(environment.tensor->getName(),1.0); assert(done);
     }
     //Destroy the gradient tensor:
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
+   //Normalize the approximant as a whole:
+   // `Not sure if I need to do it
    //Compute the residual norm and check convergence:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
    done = evaluateSync(process_group,residual,scalar_norm); assert(done);
@@ -298,8 +302,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   fidelity_ = std::pow(overlap_abs / (input_norm_ * output_norm_), 2.0);
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Balance the approximant:
-  done = balanceNorm2Sync(process_group,*approximant_,1.0,true); assert(done);
-  done = normalizeNorm2Sync(process_group,*approximant_,output_norm_); assert(done);
+  done = balanceNormalizeNorm2Sync(process_group,*approximant_,1.0,output_norm_,true); assert(done);
  }
 
  //Destroy auxiliary tensors:

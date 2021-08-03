@@ -2683,6 +2683,7 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
     conjugate.rename(expansion.getName()+"Conj");
     TensorExpansion inner_product(conjugate,expansion);
     inner_product.rename("InnerProduct");
+    //inner_product.printIt(); //debug
     success = sync("_InnerProd"); assert(success);
     success = submit(process_group,inner_product,inner_prod_tensor);
     if(success){
@@ -2690,10 +2691,11 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
      double original_norm2;
      success = computeNorm1Sync("_InnerProd",original_norm2);
      if(success){
+      //std::cout << "#DEBUG(exatn::NormalizeNorm2Sync): Original squared 2-norm = " << original_norm2 << std::endl; //debug
       if(original_norm2 > 0.0){
        expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
       }else{
-       std::cout << "#WARNING(exatn::normalizeNorm2): Tensor expansion has zero norm, thus cannot be renormalized!" << std::endl;
+       std::cout << "#WARNING(exatn::normalizeNorm2): Tensor expansion has zero norm, thus cannot be normalized!" << std::endl;
        success = false;
       }
      }else{
