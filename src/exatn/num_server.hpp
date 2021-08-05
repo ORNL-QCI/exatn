@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/27
+REVISION: 2021/08/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -905,6 +905,21 @@ public:
                                 double tensor_norm = 1.0,           //in: desired 2-norm of each input tensor
                                 double expansion_norm = 1.0,        //in: desired 2-norm of the tensor network expansion
                                 bool only_optimizable = false);     //in: whether to normalize only optimizable tensors
+
+ /** Duplicates a given tensor network as a new tensor network copy.
+     The name of the tensor network copy will be prepended with an underscore
+     whereas all copies of the input tensors will be renamed with their unique hashes. **/
+ std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network); //in: tensor network
+
+ std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                              const TensorNetwork & network);     //in: tensor network
+
+ /** Duplicates a given tensor network expansion as a new tensor network expansion copy.
+     The new tensor network expansion copy will have no name. **/
+ std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion); //in: tensor expansion
+
+ std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                const TensorExpansion & expansion); //in: tensor expansion
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

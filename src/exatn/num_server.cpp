@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/07/30
+REVISION: 2021/08/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2797,6 +2797,55 @@ bool NumServer::balanceNormalizeNorm2Sync(const ProcessGroup & process_group,
  bool success = balanceNorm2Sync(process_group,expansion,tensor_norm,only_optimizable);
  if(success) success = normalizeNorm2Sync(process_group,expansion,expansion_norm);
  return success;
+}
+
+std::shared_ptr<TensorNetwork> NumServer::duplicateSync(const TensorNetwork & network)
+{
+ return duplicateSync(getDefaultProcessGroup(),network);
+}
+
+std::shared_ptr<TensorNetwork> NumServer::duplicateSync(const ProcessGroup & process_group,
+                                                        const TensorNetwork & network)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return std::shared_ptr<TensorNetwork>(nullptr); //process is not in the group: Do nothing
+ auto network_copy = makeSharedTensorNetwork(network,true); assert(network_copy);
+ std::unordered_map<std::string,std::shared_ptr<Tensor>> tensor_copies;
+ for(auto tensor = network_copy->begin(); tensor != network_copy->end(); ++tensor){ //replace input tensors by their copies
+  if(tensor->first != 0){
+   const auto & tensor_name = tensor->second.getName();
+   auto iter = tensor_copies.find(tensor_name);
+   if(iter == tensor_copies.end()){
+    auto res = tensor_copies.emplace(std::make_pair(tensor_name,makeSharedTensor(*(tensor->second.getTensor()))));
+    assert(res.second);
+    iter = res.first;
+    iter->second->rename();
+   }
+   tensor->second.replaceStoredTensor(iter->second);
+  }
+ }
+ network_copy->rename("_" + network.getName());
+ auto success = createTensorsSync(*network_copy,network.getTensorElementType()); assert(success);
+ return network_copy;
+}
+
+std::shared_ptr<TensorExpansion> NumServer::duplicateSync(const TensorExpansion & expansion)
+{
+ return duplicateSync(getDefaultProcessGroup(),expansion);
+}
+
+std::shared_ptr<TensorExpansion> NumServer::duplicateSync(const ProcessGroup & process_group,
+                                                          const TensorExpansion & expansion)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return std::shared_ptr<TensorExpansion>(nullptr); //process is not in the group: Do nothing
+ auto expansion_copy = makeSharedTensorExpansion(expansion.isKet()); assert(expansion_copy);
+ for(auto component = expansion.cbegin(); component != expansion.cend(); ++component){
+  auto success = expansion_copy->appendComponent(duplicateSync(process_group,*(component->network)),
+                                                 component->coefficient);
+  if(!success) return std::shared_ptr<TensorExpansion>(nullptr);
+ }
+ return expansion_copy;
 }
 
 std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)

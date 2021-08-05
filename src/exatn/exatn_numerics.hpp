@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/07/13
+REVISION: 2021/08/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -903,6 +903,27 @@ inline bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: 
                                       double expansion_norm = 1.0,        //in: desired 2-norm of the tensor network expansion
                                       bool only_optimizable = false)      //in: whether to normalize only optimizable tensors
  {return numericalServer->balanceNormalizeNorm2Sync(process_group,expansion,tensor_norm,expansion_norm,only_optimizable);}
+
+
+/** Duplicates a given tensor network as a new tensor network copy.
+    The name of the tensor network copy will be prepended with an underscore
+    whereas all copies of the input tensors will be renamed with their unique hashes. **/
+inline std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network) //in: tensor network
+ {return numericalServer->duplicateSync(network);}
+
+inline std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                    const TensorNetwork & network)      //in: tensor network
+ {return numericalServer->duplicateSync(process_group,network);}
+
+
+/** Duplicates a given tensor network expansion as a new tensor network expansion copy.
+    The new tensor network expansion copy will have no name. **/
+inline std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion) //in: tensor expansion
+ {return numericalServer->duplicateSync(expansion);}
+
+inline std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                      const TensorExpansion & expansion)  //in: tensor expansion
+ {return numericalServer->duplicateSync(process_group,expansion);}
 
 
 ///////////////////////
