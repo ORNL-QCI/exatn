@@ -1046,6 +1046,9 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
     assert(saved.second);
    }
    submitted = sync(*op);
+#ifdef MPI_ENABLED
+   if(submitted) submitted = sync(process_group);
+#endif
   }
  }else{
   std::cout << "#ERROR(exatn::createTensor): Missing data type!" << std::endl;
@@ -1210,7 +1213,12 @@ bool NumServer::addTensorsSync(const std::string & addition,
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
        parsed = submit(op,getTensorMapper(process_group));
-       if(parsed) parsed = sync(*op);
+       if(parsed){
+        parsed = sync(*op);
+#ifdef MPI_ENABLED
+        if(parsed) parsed = sync(process_group);
+#endif
+       }
       }else{
        parsed = true;
        //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -1348,7 +1356,12 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
          parsed = submit(op,getTensorMapper(process_group));
-         if(parsed) parsed = sync(*op);
+         if(parsed){
+          parsed = sync(*op);
+#ifdef MPI_ENABLED
+          if(parsed) parsed = sync(process_group);
+#endif
+         }
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

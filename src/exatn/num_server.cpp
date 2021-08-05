@@ -938,10 +938,12 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
    if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
     << "]: Locally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
 #ifdef MPI_ENABLED
-   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
-   success = success && (errc == MPI_SUCCESS);
-   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-    << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+   if(wait){
+    auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+    success = success && (errc == MPI_SUCCESS);
+    if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+     << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+   }
 #endif
   }
  }
@@ -985,10 +987,12 @@ bool NumServer::sync(const ProcessGroup & process_group, bool wait)
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
    << "]: Locally synchronized all operations" << std::endl << std::flush;
 #ifdef MPI_ENABLED
-  auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
-  success = success && (errc == MPI_SUCCESS);
-  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-   << "]: Globally synchronized all operations" << std::endl << std::flush;
+  if(wait){
+   auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+   success = success && (errc == MPI_SUCCESS);
+   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+    << "]: Globally synchronized all operations" << std::endl << std::flush;
+  }
 #endif
  }
  return success;
@@ -1210,6 +1214,9 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
     submitted = sync(*op);
    }
   }
+#ifdef MPI_ENABLED
+  if(submitted) submitted = sync(process_group);
+#endif
  }else{
   std::cout << "#ERROR(exatn::createTensorSync): Missing data type!" << std::endl;
  }
@@ -1311,9 +1318,9 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(name);
+   auto num_deleted = tensors_.erase(name);
    assert(num_deleted == 1);
-   num_deleted = tensors_.erase(name);
+   num_deleted = tensor_comms_.erase(name);
    assert(num_deleted == 1);
   }
  }else{
@@ -1336,25 +1343,32 @@ bool NumServer::destroyTensorSync(const std::string & name)
   //std::cout << "#WARNING(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  if(iter->second->isComposite()){
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(name);
-   assert(num_deleted == 1);
-   num_deleted = tensors_.erase(name);
+   auto num_deleted = tensors_.erase(name);
    assert(num_deleted == 1);
    submitted = sync(*op);
+#ifdef MPI_ENABLED
+   if(submitted) submitted = sync(process_group);
+#endif
+   num_deleted = tensor_comms_.erase(name);
+   assert(num_deleted == 1);
   }
  }else{
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
   op->setTensorOperand(iter->second);
   submitted = submit(op,tensor_mapper);
   if(submitted){
-   auto num_deleted = tensor_comms_.erase(name);
    submitted = sync(*op);
+#ifdef MPI_ENABLED
+   if(submitted) submitted = sync(process_group);
+#endif
+   auto num_deleted = tensor_comms_.erase(name);
   }
  }
  return submitted;
@@ -1434,9 +1448,9 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
   const auto & tens_name = tensor->getName();
   if(tensorAllocated(tens_name)){
    if(tens->first == 0){ //output tensor
-    success = initTensor(tens_name,0.0);
+    success = initTensorSync(tens_name,0.0);
    }else{ //input tensor
-    success = initTensorRnd(tens_name);
+    success = initTensorRndSync(tens_name);
    }
   }else{
    success = false;
@@ -1466,12 +1480,14 @@ bool NumServer::computeMaxAbsSync(const std::string & name,
   submitted = sync(*op);
   if(submitted){
    norm = std::dynamic_pointer_cast<numerics::FunctorMaxAbs>(functor)->getNorm();
-   if(op->isComposite()){
 #ifdef MPI_ENABLED
+   if(op->isComposite()){
     int errc = MPI_Allreduce(MPI_IN_PLACE,&norm,1,MPI_DOUBLE,MPI_MAX,process_group.getMPICommProxy().getRef<MPI_Comm>());
     assert(errc == MPI_SUCCESS);
-#endif
+   }else{
+    if(submitted) submitted = sync(process_group);
    }
+#endif
   }
  }
  return submitted;
@@ -1497,13 +1513,15 @@ bool NumServer::computeNorm1Sync(const std::string & name,
   submitted = sync(*op);
   if(submitted){
    norm = std::dynamic_pointer_cast<numerics::FunctorNorm1>(functor)->getNorm();
-   if(op->isComposite()){
 #ifdef MPI_ENABLED
+   if(op->isComposite()){
     int errc = MPI_Allreduce(MPI_IN_PLACE,&norm,1,MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
     assert(errc == MPI_SUCCESS);
     norm /= static_cast<double>(replication_level(process_group,iter->second));
-#endif
+   }else{
+    if(submitted) submitted = sync(process_group);
    }
+#endif
   }
  }
  return submitted;
@@ -1529,15 +1547,17 @@ bool NumServer::computeNorm2Sync(const std::string & name,
   submitted = sync(*op);
   if(submitted){
    norm = std::dynamic_pointer_cast<numerics::FunctorNorm2>(functor)->getNorm();
-   if(op->isComposite()){
 #ifdef MPI_ENABLED
+   if(op->isComposite()){
     auto norm2 = norm * norm;
     int errc = MPI_Allreduce(MPI_IN_PLACE,&norm2,1,MPI_DOUBLE,MPI_SUM,process_group.getMPICommProxy().getRef<MPI_Comm>());
     assert(errc == MPI_SUCCESS);
     norm2 /= static_cast<double>(replication_level(process_group,iter->second));
     norm = std::sqrt(norm2);
-#endif
+   }else{
+    if(submitted) submitted = sync(process_group);
    }
+#endif
   }
  }
  return submitted;
@@ -1593,6 +1613,9 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
 #endif
     }else{
      partial_norms.assign(norms.cbegin(),norms.cend());
+#ifdef MPI_ENABLED
+     if(submitted) submitted = sync(process_group);
+#endif
     }
    }
   }
@@ -1741,7 +1764,12 @@ bool NumServer::broadcastTensorSync(const ProcessGroup & process_group, const st
  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
  auto submitted = submit(op,tensor_mapper);
- if(submitted) submitted = sync(*op);
+ if(submitted){
+  submitted = sync(*op);
+#ifdef MPI_ENABLED
+  if(submitted) submitted = sync(process_group);
+#endif
+ }
  return submitted;
 }
 
@@ -1784,7 +1812,12 @@ bool NumServer::allreduceTensorSync(const ProcessGroup & process_group, const st
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
  auto submitted = submit(op,tensor_mapper);
- if(submitted) submitted = sync(*op);
+ if(submitted){
+  submitted = sync(*op);
+#ifdef MPI_ENABLED
+  if(submitted) submitted = sync(process_group);
+#endif
+ }
  return submitted;
 }
 
@@ -1810,12 +1843,18 @@ bool NumServer::transformTensorSync(const std::string & name, std::shared_ptr<Te
   //std::cout << "#ERROR(exatn::NumServer::transformTensorSync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
  op->setTensorOperand(iter->second);
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op)->resetFunctor(functor);
  auto submitted = submit(op,tensor_mapper);
- if(submitted) submitted = sync(*op);
+ if(submitted){
+  submitted = sync(*op);
+#ifdef MPI_ENABLED
+  if(submitted) submitted = sync(process_group);
+#endif
+ }
  return submitted;
 }
 
@@ -1865,12 +1904,18 @@ bool NumServer::extractTensorSliceSync(const std::string & tensor_name,
   iter = tensors_.find(slice_name);
   if(iter != tensors_.end()){
    auto tensor1 = iter->second;
-   auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor_name,slice_name));
+   const auto & process_group = getTensorProcessGroup(tensor_name,slice_name);
+   auto tensor_mapper = getTensorMapper(process_group);
    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
    op->setTensorOperand(tensor1);
    op->setTensorOperand(tensor0);
    success = submit(op,tensor_mapper);
-   if(success) success = sync(*op);
+   if(success){
+    success = sync(*op);
+#ifdef MPI_ENABLED
+    if(success) success = sync(process_group);
+#endif
+   }
   }else{
    success = true;
    //std::cout << "#ERROR(exatn::NumServer::extractTensorSliceSync): Tensor " << slice_name << " not found!\n";
@@ -1918,12 +1963,18 @@ bool NumServer::insertTensorSliceSync(const std::string & tensor_name,
   iter = tensors_.find(slice_name);
   if(iter != tensors_.end()){
    auto tensor1 = iter->second;
-   auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor_name,slice_name));
+   const auto & process_group = getTensorProcessGroup(tensor_name,slice_name);
+   auto tensor_mapper = getTensorMapper(process_group);
    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::INSERT);
    op->setTensorOperand(tensor0);
    op->setTensorOperand(tensor1);
    success = submit(op,tensor_mapper);
-   if(success) success = sync(*op);
+   if(success){
+    success = sync(*op);
+#ifdef MPI_ENABLED
+    if(success) success = sync(process_group);
+#endif
+   }
   }else{
    success = true;
    //std::cout << "#ERROR(exatn::NumServer::insertTensorSliceSync): Tensor " << slice_name << " not found!\n";
@@ -2050,7 +2101,8 @@ bool NumServer::decomposeTensorSVD(const std::string & contraction)
           iter = tensors_.find(tensor_name);
           if(iter != tensors_.end()){
            auto tensor3 = iter->second;
-           auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName()));
+           const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName());
+           auto tensor_mapper = getTensorMapper(process_group);
            std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
            op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
            op->setTensorOperand(tensor3,complex_conj3); //out: right tensor factor
@@ -2139,7 +2191,8 @@ bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
           iter = tensors_.find(tensor_name);
           if(iter != tensors_.end()){
            auto tensor3 = iter->second;
-           auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName()));
+           const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName());
+           auto tensor_mapper = getTensorMapper(process_group);
            std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
            op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
            op->setTensorOperand(tensor3,complex_conj3); //out: right tensor factor
@@ -2147,8 +2200,15 @@ bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
            op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
            op->setIndexPattern(contraction);
            parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2) && sync(*tensor3);
-           if(parsed) parsed = submit(op,tensor_mapper);
-           if(parsed) parsed = sync(*op);
+           if(parsed){
+            parsed = submit(op,tensor_mapper);
+            if(parsed){
+             parsed = sync(*op);
+#ifdef MPI_ENABLED
+             if(parsed) parsed = sync(process_group);
+#endif
+            }
+           }
           }else{
            parsed = true;
            //std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -2247,7 +2307,8 @@ bool NumServer::decomposeTensorSVDLR(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName()));
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
          op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
          op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
@@ -2320,15 +2381,23 @@ bool NumServer::decomposeTensorSVDLRSync(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName()));
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
          op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
          op->setTensorOperand(tensor2,complex_conj2); //out: right tensor factor
          op->setTensorOperand(tensor0,complex_conj0); //in: original tensor
          op->setIndexPattern(contraction);
          parsed = sync(*tensor0) && sync(*tensor1) && sync(*tensor2);
-         if(parsed) parsed = submit(op,tensor_mapper);
-         if(parsed) parsed = sync(*op);
+         if(parsed){
+          parsed = submit(op,tensor_mapper);
+          if(parsed){
+           parsed = sync(*op);
+#ifdef MPI_ENABLED
+           if(parsed) parsed = sync(process_group);
+#endif
+          }
+         }
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::decomposeTensorSVDLRSync): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -2394,7 +2463,8 @@ bool NumServer::orthogonalizeTensorSVD(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName()));
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setIndexPattern(contraction);
@@ -2465,13 +2535,21 @@ bool NumServer::orthogonalizeTensorSVDSync(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName()));
+         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_SVD);
          op->setTensorOperand(tensor0,complex_conj0);
          op->setIndexPattern(contraction);
          parsed = sync(*tensor0);
-         if(parsed) parsed = submit(op,tensor_mapper);
-         if(parsed) parsed = sync(*op);
+         if(parsed){
+          parsed = submit(op,tensor_mapper);
+          if(parsed){
+           parsed = sync(*op);
+#ifdef MPI_ENABLED
+           if(parsed) parsed = sync(process_group);
+#endif
+          }
+         }
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorSVDSync): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -2533,13 +2611,19 @@ bool NumServer::orthogonalizeTensorMGSSync(const std::string & name)
   //std::cout << "#ERROR(exatn::NumServer::orthogonalizeTensorMGSSync): Tensor " << name << " not found!" << std::endl;
   return true;
  }
- auto tensor_mapper = getTensorMapper(getTensorProcessGroup(name));
+ const auto & process_group = getTensorProcessGroup(name);
+ auto tensor_mapper = getTensorMapper(process_group);
  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ORTHOGONALIZE_MGS);
  op->setTensorOperand(iter->second);
  //`Finish: Convert the isometry specification into a symbolic index pattern
  //op->setIndexPattern(contraction);
  bool parsed = submit(op,tensor_mapper);
- if(parsed) parsed = sync(*op);
+ if(parsed){
+  parsed = sync(*op);
+#ifdef MPI_ENABLED
+  if(parsed) parsed = sync(process_group);
+#endif
+ }
  return parsed;
 }
 
@@ -2674,7 +2758,7 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
  if(expansion.getNumComponents() > 0){
   auto inner_prod_tensor = exatn::makeSharedTensor("_InnerProd");
   assert(expansion.cbegin()->network->getTensorElementType() != TensorElementType::VOID);
-  success = createTensor(inner_prod_tensor,expansion.cbegin()->network->getTensorElementType());
+  success = createTensor(process_group,inner_prod_tensor,expansion.cbegin()->network->getTensorElementType());
   if(success){
    success = initTensor("_InnerProd",0.0);
    if(success){
@@ -2684,10 +2768,10 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
     TensorExpansion inner_product(conjugate,expansion);
     inner_product.rename("InnerProduct");
     //inner_product.printIt(); //debug
-    success = sync("_InnerProd"); assert(success);
+    success = sync(process_group,"_InnerProd"); assert(success);
     success = submit(process_group,inner_product,inner_prod_tensor);
     if(success){
-     success = sync("_InnerProd"); assert(success);
+     success = sync(process_group,"_InnerProd"); assert(success);
      double original_norm2;
      success = computeNorm1Sync("_InnerProd",original_norm2);
      if(success){
@@ -2825,7 +2909,7 @@ std::shared_ptr<TensorNetwork> NumServer::duplicateSync(const ProcessGroup & pro
   }
  }
  network_copy->rename("_" + network.getName());
- auto success = createTensorsSync(*network_copy,network.getTensorElementType()); assert(success);
+ auto success = createTensorsSync(process_group,*network_copy,network.getTensorElementType()); assert(success);
  return network_copy;
 }
 
