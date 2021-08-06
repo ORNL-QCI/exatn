@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/07/15
+REVISION: 2021/08/06
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,6 +15,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_basic.hpp"
 #include "tensor_operation.hpp"
+
+#include <unordered_map>
 
 namespace exatn{
 
@@ -59,6 +61,43 @@ public:
  inline bool isAccumulative() const {
   return accumulative_;
  }
+
+protected:
+
+ enum class IndexType{HYPER,LEFT,RIGHT,CONTRACTED};
+
+ struct IndexAttr{
+  IndexType index_type;
+  DimExtent extent;
+  unsigned int depth;
+ };
+
+ struct IndexInfo{
+  std::vector<std::pair<std::string,IndexAttr>> hyper_indices;
+  std::vector<std::pair<std::string,IndexAttr>> left_indices;
+  std::vector<std::pair<std::string,IndexAttr>> right_indices;
+  std::vector<std::pair<std::string,IndexAttr>> contr_indices;
+  std::unordered_map<std::string,const IndexAttr*> index_attr;
+
+  DimExtent totalExtent(IndexType index_group) const{
+   DimExtent total_extent = 1;
+   switch(index_group){
+    case IndexType::HYPER:
+     for(const auto & ind: hyper_indices) total_extent *= ind.second.extent;
+     break;
+    case IndexType::LEFT:
+     for(const auto & ind: left_indices) total_extent *= ind.second.extent;
+     break;
+    case IndexType::RIGHT:
+     for(const auto & ind: right_indices) total_extent *= ind.second.extent;
+     break;
+    case IndexType::CONTRACTED:
+     for(const auto & ind: contr_indices) total_extent *= ind.second.extent;
+     break;
+   }
+   return total_extent;
+  }
+ };
 
 private:
 

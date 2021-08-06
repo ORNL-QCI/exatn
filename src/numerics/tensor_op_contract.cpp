@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/07/15
+REVISION: 2021/08/06
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,9 +59,15 @@ void TensorOpContract::resetAccumulative(bool accum)
 
 std::size_t TensorOpContract::decompose(const TensorMapper & tensor_mapper)
 {
- assert(false);
- //`Implement
- return 0;
+ if(this->isComposite()){
+  if(simple_operations_.empty()){
+   const auto num_procs = tensor_mapper.getNumProcesses();
+   const auto proc_rank = tensor_mapper.getProcessRank();
+   const auto & intra_comm = tensor_mapper.getMPICommProxy();
+   
+  }
+ }
+ return simple_operations_.size();
 }
 
 } //namespace numerics
