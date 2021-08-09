@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/06/22
+REVISION: 2021/08/09
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -283,6 +283,17 @@ void TensorExpansion::printIt() const
  for(const auto & component: components_){
   std::cout << "Component " << i++ << ": " << component.coefficient << std::endl;
   component.network->printIt();
+ }
+ std::cout << "}" << std::endl;
+ return;
+}
+
+
+void TensorExpansion::printCoefficients() const
+{
+ std::cout << "Tensor expansion coefficients (" << this->getName() << "){" << std::endl;
+ for(auto component = this->cbegin(); component != this->cend(); ++component){
+  std::cout << " " << std::distance(this->cbegin(),component) << ": " << component->coefficient << std::endl;
  }
  std::cout << "}" << std::endl;
  return;

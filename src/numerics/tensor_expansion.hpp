@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/06/22
+REVISION: 2021/08/09
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -234,6 +234,9 @@ public:
 
  /** Prints. **/
  void printIt() const;
+
+ /** Prints expansion coefficients only. **/
+ void printCoefficients() const;
 
  /** Prints the tensor operation list for a given tensor network component. **/
  void printOperationList(unsigned int component_id) const;

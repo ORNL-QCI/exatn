@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/08/06
+REVISION: 2021/08/09
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -264,8 +264,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    residual_norm_ = 0.0;
    done = computeNorm1Sync("_scalar_norm",residual_norm_); assert(done);
    residual_norm_ = std::sqrt(residual_norm_);
-   if(TensorNetworkReconstructor::debug > 0) std::cout << " Residual norm = " << residual_norm_
-                                             << "; Max gradient = " << max_grad_norm << std::endl;
+   if(TensorNetworkReconstructor::debug > 0){
+    std::cout << " Residual norm = " << residual_norm_ << "; Max gradient = " << max_grad_norm << std::endl;
+    approximant_->printCoefficients();
+   }
    converged = (max_grad_norm <= tolerance_);
    ++iteration;
   }
