@@ -14,7 +14,7 @@ def main(argv=None):
     # Print out libraries that are used in CMake
     if '--libs' in sys.argv[1:]:
         baseLibs = ['-rdynamic','-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/lib',
-                '-L', '@CMAKE_INSTALL_PREFIX@/lib', '-lCppMicroServices','-ltalsh', '-lexatn', '-lexatn-numerics', '-lexatn-runtime', '-lexatn-runtime-graph', '-ldl', '-lpthread']
+                '-L', '@CMAKE_INSTALL_PREFIX@/lib', '-lCppMicroServices','-ltalsh', '-lexatn', '-lexatn-numerics', '-lexatn-runtime', '-lexatn-runtime-graph', '-lexatn-utils', '-ldl', '-lpthread']
         if '@EXA_TALSH_ONLY@' != 'YES':
             baseLibs += ['-lexatensor']
         exatnLibs = '@REQUIRED_EXATENSOR_LIBS@'.split(';')
