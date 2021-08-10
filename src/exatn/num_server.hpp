@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/05
+REVISION: 2021/08/10
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -552,7 +552,7 @@ public:
                        TensorElementType element_type,                          //in: tensor element type
                        Args&&... args);                                         //in: other arguments for Tensor ctor
 
- /** Creates all tensors in a given tensor network that are still unallocated. **/
+ /** Creates all input tensors in a given tensor network that are still unallocated. **/
  bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
                     TensorElementType element_type);        //in: tensor element type
 
@@ -567,7 +567,7 @@ public:
                         TensorNetwork & tensor_network,     //inout: tensor network
                         TensorElementType element_type);    //in: tensor element type
 
- /** Creates all tensors in a given tensor network expansion that are still unallocated. **/
+ /** Creates all input tensors in a given tensor network expansion that are still unallocated. **/
  bool createTensors(TensorExpansion & tensor_expansion,     //inout: tensor expansion
                     TensorElementType element_type);        //in: tensor element type
 

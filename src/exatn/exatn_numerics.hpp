@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/08/05
+REVISION: 2021/08/10
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -337,7 +337,7 @@ inline bool createTensorSync(const ProcessGroup & process_group,                
  {return numericalServer->createTensorSync(process_group,name,split_dims,element_type,std::forward<Args>(args)...);}
 
 
-/** Creates all tensors in a given tensor network that are still unallocated storage. **/
+/** Creates all input tensors in a given tensor network that are still unallocated storage. **/
 inline bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
                           TensorElementType element_type)         //in: tensor element type
  {return numericalServer->createTensors(tensor_network,element_type);}
@@ -357,7 +357,7 @@ inline bool createTensorsSync(const ProcessGroup & process_group, //in: chosen g
  {return numericalServer->createTensorsSync(process_group,tensor_network,element_type);}
 
 
-/** Creates all tensors in a given tensor network expansion that are still unallocated storage. **/
+/** Creates all input tensors in a given tensor network expansion that are still unallocated storage. **/
 inline bool createTensors(TensorExpansion & tensor_expansion,     //inout: tensor expansion
                           TensorElementType element_type)         //in: tensor element type
  {return numericalServer->createTensors(tensor_expansion,element_type);}

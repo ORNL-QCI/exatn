@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/05
+REVISION: 2021/08/10
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1242,10 +1242,12 @@ bool NumServer::createTensors(const ProcessGroup & process_group,
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  bool success = true;
  for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
-  auto tensor = tens->second.getTensor();
-  const auto & tens_name = tensor->getName();
-  if(!tensorAllocated(tens_name)) success = createTensor(process_group,tensor,element_type);
-  if(!success) break;
+  if(tens->first != 0){ //only input tensors
+   auto tensor = tens->second.getTensor();
+   const auto & tens_name = tensor->getName();
+   if(!tensorAllocated(tens_name)) success = createTensor(process_group,tensor,element_type);
+   if(!success) break;
+  }
  }
  return success;
 }
@@ -1257,10 +1259,12 @@ bool NumServer::createTensorsSync(const ProcessGroup & process_group,
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
  bool success = true;
  for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
-  auto tensor = tens->second.getTensor();
-  const auto & tens_name = tensor->getName();
-  if(!tensorAllocated(tens_name)) success = createTensorSync(process_group,tensor,element_type);
-  if(!success) break;
+  if(tens->first != 0){ //only input tensors
+   auto tensor = tens->second.getTensor();
+   const auto & tens_name = tensor->getName();
+   if(!tensorAllocated(tens_name)) success = createTensorSync(process_group,tensor,element_type);
+   if(!success) break;
+  }
  }
  return success;
 }

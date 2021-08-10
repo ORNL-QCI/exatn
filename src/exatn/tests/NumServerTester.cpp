@@ -16,7 +16,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -43,8 +43,8 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 //#define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27*/
-#define EXATN_TEST28
+#define EXATN_TEST27
+//#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -2932,13 +2932,13 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  using exatn::TensorOperator;
  using exatn::TensorElementType;
 
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
- const int num_sites = 10, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
+ const int num_sites = 53, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
  const unsigned int num_layers = 1;
 
  //Define the initial qubit state vector:
@@ -2947,16 +2947,20 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  };
 
  //Create a shallow quantum circuit:
+ // Create and initialize qubit tensors:
  for(unsigned int i = 0; i < num_sites; ++i){
   success = exatn::createTensor("Q"+std::to_string(i),TENS_ELEM_TYPE,TensorShape{2}); assert(success);
  }
  for(unsigned int i = 0; i < num_sites; ++i){
   success = exatn::initTensorData("Q"+std::to_string(i),qzero); assert(success);
  }
+ // Create and initalize 1-body gates:
  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{2,2}); assert(success);
  success = exatn::initTensorData("H",exatn::quantum::getGateData(exatn::quantum::Gate::gate_H)); assert(success);
+ // Create and initialize 2-body gates:
  success = exatn::createTensor("CNOT",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
  success = exatn::initTensorData("CNOT",exatn::quantum::getGateData(exatn::quantum::Gate::gate_CX)); assert(success);
+ // Append qubit tensors, 1-body and 2-body gates to a tensor network:
  auto circuit_net = exatn::makeSharedTensorNetwork("Circuit");
  for(unsigned int i = 0; i < num_sites; ++i){
   success = circuit_net->appendTensor(i+1,exatn::getTensor("Q"+std::to_string(i)),{}); assert(success);
@@ -2964,11 +2968,11 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  for(unsigned int i = 0; i < num_sites; ++i){
   success = circuit_net->appendTensorGate(exatn::getTensor("H"),{i});
  }
- for(unsigned int layer = 0; layer < num_layers; ++layer){
+ /*for(unsigned int layer = 0; layer < num_layers; ++layer){
   for(unsigned int i = (layer % 2); i < (num_sites-1); i += 2){
    success = circuit_net->appendTensorGate(exatn::getTensor("CNOT"),{i,i+1}); assert(success);
   }
- }
+ }*/
  auto circuit = exatn::makeSharedTensorExpansion("Circuit",circuit_net,std::complex<double>{1.0,0.0});
  success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
  //circuit->printIt(); //debug
@@ -3013,7 +3017,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,false);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
