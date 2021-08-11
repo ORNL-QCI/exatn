@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/08/09
+REVISION: 2021/08/11
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -95,7 +95,6 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  output_norm_ = 0.0;
  residual_norm_ = 0.0;
  fidelity_ = 0.0;
- double overlap_abs = 0.0;
 
  if(TensorNetworkReconstructor::debug > 0){
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Target tensor expansion:" << std::endl;
@@ -184,6 +183,9 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  //Tensor optimization procedure:
  bool converged = environments_.empty();
  if(!converged){
+  double overlap_abs = 0.0;
+  double overlap_prev = 0.0;
+  double overlap_diff = 0.0;
   if(TensorNetworkReconstructor::debug > 0) expansion_->printCoefficients();
   //Compute the 2-norm of the input tensor network expansion:
   auto scalar_norm = makeSharedTensor("_scalar_norm");
@@ -292,12 +294,16 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
    overlap_abs = 0.0;
    done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
+   overlap_diff = std::max(overlap_diff,std::abs(overlap_abs-overlap_prev));
+   overlap_prev = overlap_abs;
    if(TensorNetworkReconstructor::debug > 0)
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
               << output_norm_ << "; Absolute overlap = " << overlap_abs/output_norm_ << std::endl;
    //Normalize the approximant as a whole (`this will make closed expansions obsolete):
    //done = normalizeNorm2Sync(process_group,*approximant_,1.0); assert(done);
-   converged = (max_grad_norm <= tolerance_);
+   bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
+   converged = (max_grad_norm <= tolerance_) || ((overlap_diff <= tolerance_) && last_diff_iteration);
+   if(last_diff_iteration) overlap_diff = 0.0;
    ++iteration;
   }
   /*//Inspect the residual norm contributions (debug):
