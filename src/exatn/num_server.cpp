@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/10
+REVISION: 2021/08/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2934,6 +2934,34 @@ std::shared_ptr<TensorExpansion> NumServer::duplicateSync(const ProcessGroup & p
   if(!success) return std::shared_ptr<TensorExpansion>(nullptr);
  }
  return expansion_copy;
+}
+
+std::shared_ptr<TensorNetwork> NumServer::projectSliceSync(const TensorNetwork & network,
+                                                           const Tensor & slice)
+{
+ return projectSliceSync(getDefaultProcessGroup(),network,slice);
+}
+
+std::shared_ptr<TensorNetwork> NumServer::projectSliceSync(const ProcessGroup & process_group,
+                                                           const TensorNetwork & network,
+                                                           const Tensor & slice)
+{
+ //`Finish
+ return std::shared_ptr<TensorNetwork>(nullptr);
+}
+
+std::shared_ptr<TensorExpansion> NumServer::projectSliceSync(const TensorExpansion & expansion,
+                                                             const Tensor & slice)
+{
+ return projectSliceSync(getDefaultProcessGroup(),expansion,slice);
+}
+
+std::shared_ptr<TensorExpansion> NumServer::projectSliceSync(const ProcessGroup & process_group,
+                                                             const TensorExpansion & expansion,
+                                                             const Tensor & slice)
+{
+ //`Finish
+ return std::shared_ptr<TensorExpansion>(nullptr);
 }
 
 std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(std::shared_ptr<Tensor> tensor, //in: exatn::numerics::Tensor to get slice of (by copy)

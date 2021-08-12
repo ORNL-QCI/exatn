@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/10
+REVISION: 2021/08/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -920,6 +920,22 @@ public:
 
  std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                                 const TensorExpansion & expansion); //in: tensor expansion
+
+ /** Projects a given tensor network to a chosen slice of its full output tensor. **/
+ std::shared_ptr<TensorNetwork> projectSliceSync(const TensorNetwork & network, //in: tensor network
+                                                 const Tensor & slice);         //in: desired slice of the output tensor
+
+ std::shared_ptr<TensorNetwork> projectSliceSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                 const TensorNetwork & network,      //in: tensor network
+                                                 const Tensor & slice);              //in: desired slice of the output tensor
+
+ /** Projects a given tensor network expansion to a chosen slice of its full output tensor. **/
+ std::shared_ptr<TensorExpansion> projectSliceSync(const TensorExpansion & expansion, //in: tensor network expansion
+                                                   const Tensor & slice);             //in: desired slice of the output tensor
+
+ std::shared_ptr<TensorExpansion> projectSliceSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                   const TensorExpansion & expansion,  //in: tensor network expansion
+                                                   const Tensor & slice);              //in: desired slice of the output tensor
 
  /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
      This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

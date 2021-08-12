@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/08/10
+REVISION: 2021/08/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -924,6 +924,28 @@ inline std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & ex
 inline std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                                       const TensorExpansion & expansion)  //in: tensor expansion
  {return numericalServer->duplicateSync(process_group,expansion);}
+
+
+/** Projects a given tensor network to a chosen slice of its full output tensor. **/
+inline std::shared_ptr<TensorNetwork> projectSliceSync(const TensorNetwork & network, //in: tensor network
+                                                       const Tensor & slice)          //in: desired slice of the output tensor
+ {return numericalServer->projectSliceSync(network,slice);}
+
+inline std::shared_ptr<TensorNetwork> projectSliceSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                       const TensorNetwork & network,      //in: tensor network
+                                                       const Tensor & slice)               //in: desired slice of the output tensor
+ {return numericalServer->projectSliceSync(process_group,network,slice);}
+
+
+/** Projects a given tensor network expansion to a chosen slice of its full output tensor. **/
+inline std::shared_ptr<TensorExpansion> projectSliceSync(const TensorExpansion & expansion, //in: tensor network expansion
+                                                         const Tensor & slice)              //in: desired slice of the output tensor
+ {return numericalServer->projectSliceSync(expansion,slice);}
+
+inline std::shared_ptr<TensorExpansion> projectSliceSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                                         const TensorExpansion & expansion,  //in: tensor network expansion
+                                                         const Tensor & slice)               //in: desired slice of the output tensor
+ {return numericalServer->projectSliceSync(process_group,expansion,slice);}
 
 
 ///////////////////////
