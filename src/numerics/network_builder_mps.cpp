@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2021/06/25
+REVISION: 2021/08/12
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -62,7 +62,8 @@ void NetworkBuilderMPS::build(TensorNetwork & network, bool tensor_operator)
   auto & tensor = *(network.getTensor(1));
   tensor.rename(generateTensorName(tensor,"t"));
  }else if(output_tensor_rank == 2){
-  DimExtent bond_dim = std::min(output_dim_extents[0],output_dim_extents[1]);
+  DimExtent bond_dim = std::min(static_cast<DimExtent>(max_bond_dim_),
+                                std::min(output_dim_extents[0],output_dim_extents[1]));
   appended = network.placeTensor(1, //tensor id
                                  std::make_shared<Tensor>("_T"+std::to_string(1), //tensor name
                                   std::initializer_list<DimExtent>{output_dim_extents[0],bond_dim}),
