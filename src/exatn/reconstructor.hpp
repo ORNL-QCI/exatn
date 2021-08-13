@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/08/11
+REVISION: 2021/08/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -37,6 +37,8 @@ public:
  static constexpr const double DEFAULT_LEARN_RATE = 0.25;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
  static constexpr const unsigned int DEFAULT_OVERLAP_ITERATIONS = 3;
+ static constexpr const double DEFAULT_ACCEPTABLE_FIDELITY = 0.01;
+ static constexpr const double DEFAULT_MIN_INITIAL_OVERLAP = 1e-12;
 
  TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
                             std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor network expansion
@@ -60,13 +62,16 @@ public:
  /** Approximately reconstructs a tensor network expansion via another tensor network
      expansion. Upon success, returns the achieved fidelity of the reconstruction,
      that is, the squared overlap between the two tensor network expansions: [0..1]. **/
- bool reconstruct(double * residual_norm,  //out: 2-norm of the residual tensor (error)
-                  double * fidelity,       //out: squared overlap
-                  bool nesterov = false);  //in: Nesterov acceleration
+ bool reconstruct(double * residual_norm,             //out: 2-norm of the residual tensor (error)
+                  double * fidelity,                  //out: squared normalized overlap (fidelity)
+                  bool nesterov = false,              //in: Nesterov acceleration
+                  double acceptable_fidelity = DEFAULT_ACCEPTABLE_FIDELITY); //in: acceptable fidelity
+
  bool reconstruct(const ProcessGroup & process_group, //in: executing process group
                   double * residual_norm,             //out: 2-norm of the residual tensor (error)
-                  double * fidelity,                  //out: squared overlap
-                  bool nesterov = false);             //in: Nesterov acceleration
+                  double * fidelity,                  //out: squared normalized overlap (fidelity)
+                  bool nesterov = false,              //in: Nesterov acceleration
+                  double acceptable_fidelity = DEFAULT_ACCEPTABLE_FIDELITY); //in: acceptable fidelity
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
  std::shared_ptr<TensorExpansion> getSolution(double * residual_norm,   //out: 2-norm of the residual tensor (error)
@@ -75,6 +80,8 @@ public:
  static void resetDebugLevel(unsigned int level = 0);
 
 private:
+
+ void reinitializeApproximant(const ProcessGroup & process_group);
 
  struct Environment{
   std::shared_ptr<Tensor> tensor;       //tensor being optimized

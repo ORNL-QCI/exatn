@@ -2935,8 +2935,8 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //Test configuration:
- const int num_sites = 2, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
- const unsigned int num_layers = 1;
+ const int num_sites = 16, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
+ const int max_layers = (num_sites - 1); //1 less CNOT gates
  bool EVALUATE_FULL_TENSOR = false;
 
  //exatn::resetLoggingLevel(2,2); //debug
@@ -2970,10 +2970,8 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  for(unsigned int i = 0; i < 1; ++i){
   success = circuit_net->appendTensorGate(exatn::getTensor("H"),{i});
  }
- for(unsigned int layer = 0; layer < num_layers; ++layer){
-  for(unsigned int i = 1; i < num_sites; ++i){
-   success = circuit_net->appendTensorGate(exatn::getTensor("CNOT"),{i,i-1}); assert(success);
-  }
+ for(unsigned int i = 1; i < std::min(max_layers+1,num_sites); ++i){
+  success = circuit_net->appendTensorGate(exatn::getTensor("CNOT"),{i,i-1}); assert(success);
  }
  auto circuit = exatn::makeSharedTensorExpansion("Circuit",circuit_net,std::complex<double>{1.0,0.0});
  success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
@@ -3016,7 +3014,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  //Reconstruct the quantum circuit by a given tensor network ansatz:
  std::cout << "Reconstructing the quantum circuit by a given tensor network ansatz:" << std::endl;
  ansatz->conjugate();
- exatn::TensorNetworkReconstructor::resetDebugLevel(2); //debug
+ //exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-3);
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
