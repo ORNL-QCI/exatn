@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/07/22
+REVISION: 2021/08/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -86,6 +86,13 @@ public:
 
  virtual bool isComposite() const override;
 
+ /** Returns TRUE if the tensor is congruent to another tensor and
+     it is also decomposed (or replicated) in the same way.
+     By being decomposed in the same way, the tensor is meant to
+     have exactly the same subset of dimensions split in exactly
+     the same way in exactly the same order. **/
+ virtual bool isConformantTo(const Tensor & another) const override;
+
  inline Iterator begin() {return subtensors_.begin();}
  inline Iterator end() {return subtensors_.end();}
  inline ConstIterator cbegin() {return subtensors_.cbegin();}
@@ -117,6 +124,9 @@ public:
  /** Returns the tensor dimension and bisection depth corresponding
      to a given bit position (= given bisection). **/
  inline std::pair<unsigned int, unsigned int> dimPositionAndDepth(unsigned int bit_position) const;
+
+ /** Returns the vector of splitted tensor dimensions and their splitting depths. **/
+ inline const std::vector<std::pair<unsigned int, unsigned int>> & getSplitDimsAndDepths() const;
 
 protected:
 
@@ -263,6 +273,12 @@ inline std::pair<unsigned int, unsigned int> TensorComposite::dimPositionAndDept
 {
  assert(bit_position < num_bisections_);
  return bisect_bits_[bit_position];
+}
+
+
+inline const std::vector<std::pair<unsigned int, unsigned int>> & TensorComposite::getSplitDimsAndDepths() const
+{
+ return split_dims_;
 }
 
 } //namespace numerics

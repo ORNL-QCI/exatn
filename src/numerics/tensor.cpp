@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2021/07/08
+REVISION: 2021/08/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -166,6 +166,17 @@ void Tensor::unpack(BytePacket & byte_packet)
 bool Tensor::isComposite() const
 {
  return false;
+}
+
+bool Tensor::isConformantTo(const Tensor & another) const
+{
+ bool ans = true;
+ if(another.isComposite()){
+  ans = another.isConformantTo(*this);
+ }else{
+  ans = isCongruentTo(another);
+ }
+ return ans;
 }
 
 void Tensor::printIt(bool with_hash) const

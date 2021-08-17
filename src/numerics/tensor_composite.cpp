@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/07/19
+REVISION: 2021/08/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -156,6 +156,20 @@ void TensorComposite::unpack(BytePacket & byte_packet)
 bool TensorComposite::isComposite() const
 {
  return true;
+}
+
+
+bool TensorComposite::isConformantTo(const Tensor & another) const
+{
+ bool ans = isCongruentTo(another);
+ if(ans){
+  if(another.isComposite()){ //composite-to-composite compare
+   ans = (getSplitDimsAndDepths() == dynamic_cast<const TensorComposite &>(another).getSplitDimsAndDepths());
+  }else{ //composite-to-simple compare
+   ans = getSplitDimsAndDepths().empty();
+  }
+ }
+ return ans;
 }
 
 
