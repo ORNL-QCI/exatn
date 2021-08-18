@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/12
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1269,7 +1269,8 @@ bool NumServer::contractTensors(const std::string & contraction,
                                 NumericType alpha)
 {
  std::vector<std::string> tensors;
- auto parsed = parse_tensor_network(contraction,tensors);
+ std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
+ auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);
  if(parsed){
   if(tensors.size() == 3){
    std::string tensor_name;
@@ -1298,7 +1299,14 @@ bool NumServer::contractTensors(const std::string & contraction,
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
+         //Create temporary tensors with optimized distributed layout and copy tensor data:
+         std::dynamic_pointer_cast<numerics::TensorOpContract>(op)->
+          introduceOptTemporaries(process_group.getSize(),process_group.getMemoryLimitPerProcess(),left_inds,right_inds,contr_inds,hyper_inds);
+         
+         //Submit tensor contraction for execution:
          parsed = submit(op,getTensorMapper(process_group));
+         //Destroy temporary tensors:
+         
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -1342,7 +1350,8 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
                                     NumericType alpha)
 {
  std::vector<std::string> tensors;
- auto parsed = parse_tensor_network(contraction,tensors);
+ std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
+ auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);
  if(parsed){
   if(tensors.size() == 3){
    std::string tensor_name;
@@ -1371,6 +1380,11 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          op->setTensorOperand(tensor2,complex_conj2);
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
+         //Create temporary tensors with optimized distributed layout and copy tensor data:
+         std::dynamic_pointer_cast<numerics::TensorOpContract>(op)->
+          introduceOptTemporaries(process_group.getSize(),process_group.getMemoryLimitPerProcess(),left_inds,right_inds,contr_inds,hyper_inds);
+         
+         //Submit tensor contraction for execution:
          parsed = submit(op,getTensorMapper(process_group));
          if(parsed){
           parsed = sync(*op);
@@ -1378,6 +1392,8 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
           if(parsed) parsed = sync(process_group);
 #endif
          }
+         //Destroy temporary tensors:
+         
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

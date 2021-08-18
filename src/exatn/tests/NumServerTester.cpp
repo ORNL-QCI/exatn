@@ -41,10 +41,10 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25*/
+#define EXATN_TEST25
 //#define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27
-//#define EXATN_TEST28
+#define EXATN_TEST27*/
+#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -3168,7 +3168,10 @@ TEST(NumServerTester, TensorComposite) {
  std::cout << "2-norm of tensor B = " << (norm * norm) << std::endl;
 
  //Contract composite tensors:
- 
+ success = exatn::contractTensorsSync("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+ norm = 0.0;
+ success = exatn::computeNorm1Sync("C",norm); assert(success);
+ std::cout << "1-norm of tensor C after contraction = " << norm << std::endl;
 
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);

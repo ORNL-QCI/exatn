@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/06
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -57,13 +57,56 @@ void TensorOpContract::resetAccumulative(bool accum)
  return;
 }
 
+void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
+                                               std::size_t mem_per_process,
+                                               const std::vector<PosIndexLabel> & left_indices,
+                                               const std::vector<PosIndexLabel> & right_indices,
+                                               const std::vector<PosIndexLabel> & contr_indices,
+                                               const std::vector<PosIndexLabel> & hyper_indices)
+{
+ bool success = true;
+ index_info_ = std::make_shared<IndexInfo>(this);
+ for(const auto & lbl: left_indices){
+  success = index_info_->appendIndex(lbl); assert(success);
+ }
+ for(const auto & lbl: right_indices){
+  success = index_info_->appendIndex(lbl); assert(success);
+ }
+ for(const auto & lbl: contr_indices){
+  success = index_info_->appendIndex(lbl); assert(success);
+ }
+ for(const auto & lbl: hyper_indices){
+  success = index_info_->appendIndex(lbl); assert(success);
+ }
+ //index_info_->printIt(); //debug
+ 
+ std::abort(); //debug
+ return;
+}
+
+void TensorOpContract::introduceOptTemporaries(unsigned int num_processes, std::size_t mem_per_process)
+{
+ std::vector<std::string> tensors;
+ std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
+ auto parsed = parse_tensor_contraction(getIndexPattern(),tensors,left_inds,right_inds,contr_inds,hyper_inds);
+ if(!parsed){
+  std::cout << "#ERROR(TensorOpContract:introduceOptTemporaries): Invalid tensor contraction specification: "
+            << getIndexPattern() << std::endl << std::flush;
+  assert(false);
+ }
+ return introduceOptTemporaries(num_processes,mem_per_process,left_inds,right_inds,contr_inds,hyper_inds);
+}
+
 std::size_t TensorOpContract::decompose(const TensorMapper & tensor_mapper)
 {
  if(this->isComposite()){
   if(simple_operations_.empty()){
+   //Identify parallel configuration:
    const auto num_procs = tensor_mapper.getNumProcesses();
    const auto proc_rank = tensor_mapper.getProcessRank();
    const auto & intra_comm = tensor_mapper.getMPICommProxy();
+   //Proceed with decomposition:
+   assert(index_info_);
    
   }
  }

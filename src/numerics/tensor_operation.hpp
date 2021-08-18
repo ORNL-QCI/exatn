@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/27
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -17,6 +17,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_NUMERICS_TENSOR_OPERATION_HPP_
 
 #include "tensor_basic.hpp"
+#include "tensor_symbol.hpp"
 #include "tensor.hpp"
 #include "tensor_composite.hpp"
 #include "timers.hpp"
