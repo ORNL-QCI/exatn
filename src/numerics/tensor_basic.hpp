@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2021/07/02
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,10 +31,23 @@ constexpr SpaceId SOME_SPACE = 0; //any unregistered (anonymous) space (all regi
 constexpr SubspaceId FULL_SUBSPACE = 0; //every space has its trivial (full) subspace automatically registered as subspace 0
 constexpr SubspaceId UNREG_SUBSPACE = 0xFFFFFFFFFFFFFFFF; //id of any unregistered subspace
 
+//Direction of a leg (directed edge) in a tensor network:
 enum class LegDirection{
  UNDIRECT, //no direction
  INWARD,   //inward direction
  OUTWARD   //outward direction
+};
+
+//Index kind in a binary tensor contraction (D=L*R):
+enum class IndexKind{
+ VOID,   //unspecified index kind
+ LEFT,   //left open index (shared solely by the destination and left tensor operand)
+ RIGHT,  //right open index (shared solely by the destination and right tensor operand)
+ CONTR,  //contracted index (shared solely by the left and right tensor operand)
+ HYPER,  //hyper index (shared by all three tensor operands: destination, left and right)
+ DTRACE, //open index present solely in the destination tensor operand (destination batch)
+ LTRACE, //traced index in the left tensor operand
+ RTRACE  //traced index in the right tensor operand
 };
 
 enum class TensorOpCode{

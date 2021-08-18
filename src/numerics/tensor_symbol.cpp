@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/06/29
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -7,6 +7,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <iostream>
 
 #include "tensor_symbol.hpp"
+
+#include <map>
 
 namespace exatn{
 
@@ -129,6 +131,74 @@ bool parse_tensor_network(const std::string & network,        //in: tensor netwo
   return false;
  }
  return true;
+}
+
+
+bool parse_tensor_contraction(const std::string & contraction,            //in: binary tensor contraction as a string
+                              std::vector<std::string> & tensors,         //out: parsed (symbolic) tensors
+                              std::vector<PosIndexLabel> & left_indices,  //out: left indices
+                              std::vector<PosIndexLabel> & right_indices, //out: right indices
+                              std::vector<PosIndexLabel> & contr_indices, //out: contracted indices
+                              std::vector<PosIndexLabel> & hyper_indices) //out: hyper indices
+{
+ assert(contraction.length() > 0);
+ bool success = parse_tensor_network(contraction,tensors);
+ if(success){
+  assert(tensors.size() == 3); //three tensor operands
+
+  typedef struct{int arg_id[3];} IndexPositions;
+  const IndexPositions void_pos{{-1,-1,-1}};
+
+  auto compare = [](const IndexLabel & item1, const IndexLabel & item2){
+   return item1.label < item2.label;
+  };
+
+  std::map<IndexLabel,IndexPositions,decltype(compare)> labels(compare);
+  for(unsigned int i = 0; i < 3; ++i){
+   std::vector<IndexLabel> indices;
+   std::string tensor_name;
+   bool conj;
+   success = parse_tensor(tensors[i],tensor_name,indices,conj);
+   if(success){
+    for(int pos = 0; pos < indices.size(); ++pos){
+     auto res = labels.emplace(std::make_pair(indices[pos],void_pos));
+     assert(res.first->second.arg_id[i] < 0);
+     res.first->second.arg_id[i] = pos;
+    }
+   }else{
+    break;
+   }
+  }
+  if(success){
+   left_indices.clear();
+   right_indices.clear();
+   contr_indices.clear();
+   hyper_indices.clear();
+   for(const auto & kv: labels){
+    PosIndexLabel ind_label{kv.first,{-1,-1,-1}};
+    for(int j = 0; j < 3; ++j) ind_label.arg_pos[j] = kv.second.arg_id[j];
+    auto ind_kind = indexKind(ind_label);
+    switch(ind_kind){
+    case IndexKind::LEFT:
+     left_indices.emplace_back(ind_label);
+     break;
+    case IndexKind::RIGHT:
+     right_indices.emplace_back(ind_label);
+     break;
+    case IndexKind::CONTR:
+     contr_indices.emplace_back(ind_label);
+     break;
+    case IndexKind::HYPER:
+     hyper_indices.emplace_back(ind_label);
+     break;
+    default:
+     std::cout << "#ERROR(parse_tensor_contraction): Invalid index kind!" << std::endl << std::flush;
+     assert(false);
+    }
+   }
+  }
+ }
+ return success;
 }
 
 

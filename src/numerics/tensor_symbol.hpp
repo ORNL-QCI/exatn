@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/06/28
+REVISION: 2021/08/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -50,6 +50,28 @@ typedef struct{
  LegDirection direction; //index variance (leg direction)
 } IndexLabel;
 
+//Positioned index label (in a basic tensor operation):
+typedef struct{
+ IndexLabel index_label; //index label
+ int arg_pos[3];         //index position in each tensor operand, operands: {0:Destination, 1:Left, 2:Right};
+} PosIndexLabel;         // -1 means index is absent in the corresponding tensor operand
+
+//Returns index kind {VOID, LEFT, RIGHT, CONTR, HYPER} for a given PosIndexLabel:
+inline IndexKind indexKind(const PosIndexLabel & label){
+ const IndexKind index_kinds[2][2][2] = { //DLR
+  IndexKind::VOID,   //000
+  IndexKind::RTRACE, //001
+  IndexKind::LTRACE, //010
+  IndexKind::CONTR,  //011
+  IndexKind::DTRACE, //100
+  IndexKind::RIGHT,  //101
+  IndexKind::LEFT,   //110
+  IndexKind::HYPER   //111
+ };
+ return index_kinds[(int)(label.arg_pos[0] >= 0)][(int)(label.arg_pos[1] >= 0)][(int)(label.arg_pos[2] >= 0)];
+}
+
+
 inline bool is_letter(const char & ch){
  return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 }
@@ -97,9 +119,9 @@ inline bool is_alphanumeric(const std::string & identifier)
  return true;
 }
 
-/** Returns the string view range without leading and trailing spaces. **/
+/** Returns the string view range [begin,end] without leading and trailing spaces. **/
 inline std::pair<int,int> trim_spaces_off(const std::string & str, //in: full string container
-                                          std::pair<int,int> view) //in: input string view
+                                          std::pair<int,int> view) //in: input string view [begin,end]
 {
  int sbeg = view.first;
  int send = view.second;
@@ -133,18 +155,28 @@ std::string tensor_hex_name(const std::string & symb_part, //symbolic part of th
  return name;
 }
 
-/** Returns TRUE if the tensor parses as a valid symbolic tensor.
+/** Returns TRUE if the given tensor parses as a valid symbolic tensor.
     The output function parameters will contain parsed tokens. **/
 bool parse_tensor(const std::string & tensor,        //in: tensor as a string
                   std::string & tensor_name,         //out: tensor name
                   std::vector<IndexLabel> & indices, //out: tensor indices (labels)
                   bool & complex_conjugated);        //out: whether or not tensor appears complex conjugated
 
-/** Returns TRUE if the tensor network parses as a valid symbolic tensor network.
+/** Returns TRUE if the given tensor network parses as a valid symbolic tensor network.
     The output std::vector returns parsed symbolic tensors where element #0 is
     the output tensor of the tensor network. **/
 bool parse_tensor_network(const std::string & network,         //in: tensor network as a string
                           std::vector<std::string> & tensors); //out: parsed (symbolic) tensors
+
+/** Returns TRUE if the given tensor contraction parses as a valid
+    symbolic binary tensor contraction. The output function parameters
+    will contain relevant tokens and information. **/
+bool parse_tensor_contraction(const std::string & contraction,             //in: binary tensor contraction as a string
+                              std::vector<std::string> & tensors,          //out: parsed (symbolic) tensors
+                              std::vector<PosIndexLabel> & left_indices,   //out: left indices
+                              std::vector<PosIndexLabel> & right_indices,  //out: right indices
+                              std::vector<PosIndexLabel> & contr_indices,  //out: contracted indices
+                              std::vector<PosIndexLabel> & hyper_indices); //out: hyper indices
 
 /** Assembles a symbolic indexed tensor specification from its parts. **/
 std::string assemble_symbolic_tensor(const std::string & tensor_name,         //in: tensor name
