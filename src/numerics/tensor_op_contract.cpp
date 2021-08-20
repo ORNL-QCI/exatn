@@ -230,6 +230,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
   auto original_tensor = getTensorOperand(0); assert(original_tensor);
   if(original_tensor->isComposite()){
    auto success = resetTensorOperand(0,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
+   getTensorOperand(0)->rename();
   }
  }
  //Left tensor operand:
@@ -248,6 +249,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
   auto original_tensor = getTensorOperand(1); assert(original_tensor);
   if(original_tensor->isComposite()){
    auto success = resetTensorOperand(1,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
+   getTensorOperand(1)->rename();
   }
  }
  //Right tensor operand:
@@ -266,6 +268,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
   auto original_tensor = getTensorOperand(2); assert(original_tensor);
   if(original_tensor->isComposite()){
    auto success = resetTensorOperand(2,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
+   getTensorOperand(2)->rename();
   }
  }
  return;
