@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/08/18
+REVISION: 2021/08/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -53,8 +53,9 @@ typedef struct{
 //Positioned index label (in a basic tensor operation):
 typedef struct{
  IndexLabel index_label; //index label
- int arg_pos[3];         //index position in each tensor operand, operands: {0:Destination, 1:Left, 2:Right};
-} PosIndexLabel;         // -1 means index is absent in the corresponding tensor operand
+ int arg_pos[3];         //index position in each tensor operand, operands: {0:Destination, 1:Left, 2:Right}; -1 means index is absent in the corresponding tensor operand
+ unsigned int depth;     //index depth
+} PosIndexLabel;
 
 //Returns index kind {VOID, LEFT, RIGHT, CONTR, HYPER} for a given PosIndexLabel:
 inline IndexKind indexKind(const PosIndexLabel & label){

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/08/18
+REVISION: 2021/08/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -72,6 +72,9 @@ public:
 
  /** Returns whether or not the given subtensor is owned by the current process. **/
  virtual bool isLocalSubtensor(const numerics::Tensor & subtensor) const = 0; //in: subtensor
+
+ /** Returns the amount of memory per process. **/
+ virtual std::size_t getMemoryPerProcess() const = 0;
 
  /** Returns the rank of the current process. **/
  virtual unsigned int getProcessRank() const = 0;

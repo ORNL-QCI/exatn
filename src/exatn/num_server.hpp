@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/18
+REVISION: 2021/08/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -143,15 +143,17 @@ public:
  CompositeTensorMapper(const MPICommProxy & communicator,
                        unsigned int current_rank_in_group,
                        unsigned int num_processes_in_group,
+                       std::size_t memory_per_process,
                        const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
   current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
-  intra_comm_(communicator), local_tensors_(local_tensors) {}
+  memory_per_process_(memory_per_process), intra_comm_(communicator), local_tensors_(local_tensors) {}
 #else
  CompositeTensorMapper(unsigned int current_rank_in_group,
                        unsigned int num_processes_in_group,
+                       std::size_t memory_per_process,
                        const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors):
   current_process_rank_(current_rank_in_group), group_num_processes_(num_processes_in_group),
-  local_tensors_(local_tensors) {}
+  memory_per_process_(memory_per_process), local_tensors_(local_tensors) {}
 #endif
 
  virtual ~CompositeTensorMapper() = default;
@@ -211,6 +213,9 @@ public:
   return (local_tensors_.find(subtensor.getName()) != local_tensors_.cend());
  }
 
+ /** Returns the amount of memory per process. **/
+ virtual std::size_t getMemoryPerProcess() const override {return memory_per_process_;}
+
  /** Returns the rank of the current process. **/
  virtual unsigned int getProcessRank() const override {return current_process_rank_;}
 
@@ -224,6 +229,7 @@ private:
 
  unsigned int current_process_rank_; //rank of the current process (in some process group)
  unsigned int group_num_processes_;  //total number of processes (in some process group)
+ std::size_t memory_per_process_;    //amount of memory (bytes) per process
  MPICommProxy intra_comm_;           //MPI communicator for the process group
  const std::unordered_map<std::string,std::shared_ptr<Tensor>> & local_tensors_; //locally stored tensors
 };
@@ -1302,11 +1308,23 @@ bool NumServer::contractTensors(const std::string & contraction,
          //Create temporary tensors with optimized distributed layout and copy tensor data:
          std::dynamic_pointer_cast<numerics::TensorOpContract>(op)->
           introduceOptTemporaries(process_group.getSize(),process_group.getMemoryLimitPerProcess(),left_inds,right_inds,contr_inds,hyper_inds);
-         
+         auto tensor0a = op->getTensorOperand(0);
+         auto tensor1a = op->getTensorOperand(1);
+         auto tensor2a = op->getTensorOperand(2);
+         if(parsed && tensor0a != tensor0) parsed = copyTensor(tensor0a->getName(),tensor0->getName());
+         if(parsed && tensor1a != tensor1) parsed = copyTensor(tensor1a->getName(),tensor1->getName());
+         if(parsed && tensor2a != tensor2) parsed = copyTensor(tensor2a->getName(),tensor2->getName());
+         if(parsed) parsed = sync(process_group);
          //Submit tensor contraction for execution:
          parsed = submit(op,getTensorMapper(process_group));
+         //Copy the result back:
+         if(parsed) parsed = sync(process_group);
+         if(parsed && tensor0a != tensor0) parsed = copyTensor(tensor0->getName(),tensor0a->getName());
          //Destroy temporary tensors:
-         
+         if(parsed && tensor2a != tensor2) parsed = destroyTensor(tensor2a->getName());
+         if(parsed && tensor1a != tensor1) parsed = destroyTensor(tensor1a->getName());
+         if(parsed) parsed = sync(process_group);
+         if(parsed && tensor0a != tensor0) parsed = destroyTensor(tensor0a->getName());
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -1383,17 +1401,28 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          //Create temporary tensors with optimized distributed layout and copy tensor data:
          std::dynamic_pointer_cast<numerics::TensorOpContract>(op)->
           introduceOptTemporaries(process_group.getSize(),process_group.getMemoryLimitPerProcess(),left_inds,right_inds,contr_inds,hyper_inds);
-         
+         auto tensor0a = op->getTensorOperand(0);
+         auto tensor1a = op->getTensorOperand(1);
+         auto tensor2a = op->getTensorOperand(2);
+         if(parsed && tensor0a != tensor0) parsed = copyTensorSync(tensor0a->getName(),tensor0->getName());
+         if(parsed && tensor1a != tensor1) parsed = copyTensorSync(tensor1a->getName(),tensor1->getName());
+         if(parsed && tensor2a != tensor2) parsed = copyTensorSync(tensor2a->getName(),tensor2->getName());
          //Submit tensor contraction for execution:
-         parsed = submit(op,getTensorMapper(process_group));
          if(parsed){
-          parsed = sync(*op);
+          parsed = submit(op,getTensorMapper(process_group));
+          if(parsed){
+           parsed = sync(*op);
 #ifdef MPI_ENABLED
-          if(parsed) parsed = sync(process_group);
+           if(parsed) parsed = sync(process_group);
 #endif
+          }
          }
+         //Copy the result back:
+         if(parsed && tensor0a != tensor0) parsed = copyTensorSync(tensor0->getName(),tensor0a->getName());
          //Destroy temporary tensors:
-         
+         if(parsed && tensor2a != tensor2) parsed = destroyTensorSync(tensor2a->getName());
+         if(parsed && tensor1a != tensor1) parsed = destroyTensorSync(tensor1a->getName());
+         if(parsed && tensor0a != tensor0) parsed = destroyTensorSync(tensor0a->getName());
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

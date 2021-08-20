@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2021/08/18
+REVISION: 2021/08/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -88,6 +88,19 @@ template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::REAL6
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX16>(){return 4;} //4 bytes
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX32>(){return 8;} //8 bytes
 template <> constexpr std::size_t TensorElementTypeSize<TensorElementType::COMPLEX64>(){return 16;} //16 bytes
+
+inline std::size_t TensorElementTypeSize(TensorElementType element_type)
+{
+ switch(element_type){
+  case TensorElementType::REAL16: return 2;
+  case TensorElementType::REAL32: return 4;
+  case TensorElementType::REAL64: return 8;
+  case TensorElementType::COMPLEX16: return 4;
+  case TensorElementType::COMPLEX32: return 8;
+  case TensorElementType::COMPLEX64: return 16;
+ }
+ return 0;
+}
 
 //TensorElementTypeOpFactor<enum TensorElementType>() --> Multiplication factor:
 template <TensorElementType> constexpr double TensorElementTypeOpFactor();

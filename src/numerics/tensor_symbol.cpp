@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/08/18
+REVISION: 2021/08/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -175,7 +175,7 @@ bool parse_tensor_contraction(const std::string & contraction,            //in: 
    contr_indices.clear();
    hyper_indices.clear();
    for(const auto & kv: labels){
-    PosIndexLabel ind_label{kv.first,{-1,-1,-1}};
+    PosIndexLabel ind_label{kv.first,{-1,-1,-1},0};
     for(int j = 0; j < 3; ++j) ind_label.arg_pos[j] = kv.second.arg_id[j];
     auto ind_kind = indexKind(ind_label);
     switch(ind_kind){
