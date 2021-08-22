@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/20
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -111,22 +111,26 @@ void TensorOpContract::determineNumBisections(unsigned int num_processes,
    serial = false;
    dim_hyper /= 2;
    (*bisect_hyper)++;
+   index_info_->bisect_sequence_.emplace_back(Bisect{IndexKind::HYPER,static_cast<unsigned int>(proc_count),serial});
   }else{
    if(dim_right >= dim_left && dim_right >= dim_contr){
     tensor_size = dim_left * dim_contr * tens_elem_size;
     serial = dfs(mem_count,tensor_size);
     dim_right /= 2;
     (*bisect_right)++;
+    index_info_->bisect_sequence_.emplace_back(Bisect{IndexKind::RIGHT,static_cast<unsigned int>(proc_count),serial});
    }else if(dim_left >= dim_contr && dim_left >= dim_right){
     tensor_size = dim_contr * dim_right * tens_elem_size;
     serial = dfs(mem_count,tensor_size);
     dim_left /= 2;
     (*bisect_left)++;
+    index_info_->bisect_sequence_.emplace_back(Bisect{IndexKind::LEFT,static_cast<unsigned int>(proc_count),serial});
    }else if(dim_contr >= dim_right && dim_contr >= dim_left){
     tensor_size = dim_right * dim_left * tens_elem_size;
     serial = dfs(mem_count,tensor_size);
     dim_contr /= 2;
     (*bisect_contr)++;
+    index_info_->bisect_sequence_.emplace_back(Bisect{IndexKind::CONTR,static_cast<unsigned int>(proc_count),serial});
    }
   }
   if(!serial){
@@ -215,7 +219,8 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //index_info_->printIt(); //debug
  //Replace original tensor operands with new ones with proper decomposition:
  //Destination tensor operand:
- if(split_left > 0 || split_right > 0 || split_hyper > 0){
+ bool operand_is_composite = getTensorOperand(0)->isComposite();
+ if(split_left > 0 || split_right > 0 || split_hyper > 0 || operand_is_composite){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_left+split_right+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->left_indices_){
@@ -228,13 +233,19 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
    if(ind.depth > 0) split_dims[i++] = std::pair<unsigned int, unsigned int>(ind.arg_pos[0],ind.depth);
   }
   auto original_tensor = getTensorOperand(0); assert(original_tensor);
-  if(original_tensor->isComposite()){
-   auto success = resetTensorOperand(0,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
-   getTensorOperand(0)->rename();
+  if(split_dims.size() > 0){
+   auto success = resetTensorOperand(0,
+    makeSharedTensorComposite(split_dims,original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
+  }else{
+   auto success = resetTensorOperand(0,
+    makeSharedTensor(original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
   }
  }
  //Left tensor operand:
- if(split_contr > 0 || split_left > 0 || split_hyper > 0){
+ operand_is_composite = getTensorOperand(1)->isComposite();
+ if(split_contr > 0 || split_left > 0 || split_hyper > 0 || operand_is_composite){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_contr+split_left+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->contr_indices_){
@@ -247,13 +258,19 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
    if(ind.depth > 0) split_dims[i++] = std::pair<unsigned int, unsigned int>(ind.arg_pos[1],ind.depth);
   }
   auto original_tensor = getTensorOperand(1); assert(original_tensor);
-  if(original_tensor->isComposite()){
-   auto success = resetTensorOperand(1,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
-   getTensorOperand(1)->rename();
+  if(split_dims.size() > 0){
+   auto success = resetTensorOperand(1,
+    makeSharedTensorComposite(split_dims,original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
+  }else{
+   auto success = resetTensorOperand(1,
+    makeSharedTensor(original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
   }
  }
  //Right tensor operand:
- if(split_contr > 0 || split_right > 0 || split_hyper > 0){
+ operand_is_composite = getTensorOperand(2)->isComposite();
+ if(split_contr > 0 || split_right > 0 || split_hyper > 0 || operand_is_composite){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_contr+split_right+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->contr_indices_){
@@ -266,9 +283,14 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
    if(ind.depth > 0) split_dims[i++] = std::pair<unsigned int, unsigned int>(ind.arg_pos[2],ind.depth);
   }
   auto original_tensor = getTensorOperand(2); assert(original_tensor);
-  if(original_tensor->isComposite()){
-   auto success = resetTensorOperand(2,makeSharedTensorComposite(split_dims,*original_tensor)); assert(success);
-   getTensorOperand(2)->rename();
+  if(split_dims.size() > 0){
+   auto success = resetTensorOperand(2,
+    makeSharedTensorComposite(split_dims,original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
+  }else{
+   auto success = resetTensorOperand(2,
+    makeSharedTensor(original_tensor->getShape(),original_tensor->getSignature()));
+   assert(success);
   }
  }
  return;
@@ -297,7 +319,7 @@ std::size_t TensorOpContract::decompose(const TensorMapper & tensor_mapper)
    const auto & intra_comm = tensor_mapper.getMPICommProxy();
    //Proceed with decomposition:
    assert(index_info_);
-   
+   //`Finish
    std::abort(); //`debug
   }
  }

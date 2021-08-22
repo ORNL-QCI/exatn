@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/20
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1996,7 +1996,7 @@ bool NumServer::insertTensorSliceSync(const std::string & tensor_name,
 bool NumServer::copyTensor(const std::string & output_name,
                            const std::string & input_name)
 {
- bool success = false;
+ bool success = true;
  if(output_name != input_name){
   auto iter = tensors_.find(input_name);
   if(iter != tensors_.end()){
@@ -2027,9 +2027,11 @@ bool NumServer::copyTensor(const std::string & output_name,
    }
   }else{
    std::cout << "#ERROR(exatn::NumServer::copyTensor): Tensor " << input_name << " not found!\n";
+   success = false;
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::copyTensor): Cannot copy tensor " << input_name << " into itself!\n";
+  success = false;
  }
  return success;
 }
@@ -2037,7 +2039,7 @@ bool NumServer::copyTensor(const std::string & output_name,
 bool NumServer::copyTensorSync(const std::string & output_name,
                                const std::string & input_name)
 {
- bool success = false;
+ bool success = true;
  if(output_name != input_name){
   auto iter = tensors_.find(input_name);
   if(iter != tensors_.end()){
@@ -2068,9 +2070,11 @@ bool NumServer::copyTensorSync(const std::string & output_name,
    }
   }else{
    std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Tensor " << input_name << " not found!\n";
+   success = false;
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::copyTensorSync): Cannot copy tensor " << input_name << " into itself!\n";
+  success = false;
  }
  return success;
 }

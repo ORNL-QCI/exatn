@@ -1311,9 +1311,18 @@ bool NumServer::contractTensors(const std::string & contraction,
          auto tensor0a = op->getTensorOperand(0);
          auto tensor1a = op->getTensorOperand(1);
          auto tensor2a = op->getTensorOperand(2);
-         if(parsed && tensor0a != tensor0) parsed = copyTensor(tensor0a->getName(),tensor0->getName());
-         if(parsed && tensor1a != tensor1) parsed = copyTensor(tensor1a->getName(),tensor1->getName());
-         if(parsed && tensor2a != tensor2) parsed = copyTensor(tensor2a->getName(),tensor2->getName());
+         if(parsed && tensor0a != tensor0){
+          parsed = createTensorSync(tensor0a,tensor0->getElementType());
+          if(parsed) parsed = copyTensor(tensor0a->getName(),tensor0->getName());
+         }
+         if(parsed && tensor1a != tensor1){
+          parsed = createTensorSync(tensor1a,tensor1->getElementType());
+          if(parsed) parsed = copyTensor(tensor1a->getName(),tensor1->getName());
+         }
+         if(parsed && tensor2a != tensor2){
+          parsed = createTensorSync(tensor2a,tensor2->getElementType());
+          if(parsed) parsed = copyTensor(tensor2a->getName(),tensor2->getName());
+         }
          if(parsed) parsed = sync(process_group);
          //Submit tensor contraction for execution:
          parsed = submit(op,getTensorMapper(process_group));
@@ -1404,9 +1413,19 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          auto tensor0a = op->getTensorOperand(0);
          auto tensor1a = op->getTensorOperand(1);
          auto tensor2a = op->getTensorOperand(2);
-         if(parsed && tensor0a != tensor0) parsed = copyTensorSync(tensor0a->getName(),tensor0->getName());
-         if(parsed && tensor1a != tensor1) parsed = copyTensorSync(tensor1a->getName(),tensor1->getName());
-         if(parsed && tensor2a != tensor2) parsed = copyTensorSync(tensor2a->getName(),tensor2->getName());
+         //std::cout << "#DEBUG: " << tensor0a->getName() << " " << tensor1a->getName() << " " << tensor2a->getName() << std::endl; //debug
+         if(parsed && tensor0a != tensor0){
+          parsed = createTensorSync(tensor0a,tensor0->getElementType());
+          if(parsed) parsed = copyTensorSync(tensor0a->getName(),tensor0->getName());
+         }
+         if(parsed && tensor1a != tensor1){
+          parsed = createTensorSync(tensor1a,tensor1->getElementType());
+          if(parsed) parsed = copyTensorSync(tensor1a->getName(),tensor1->getName());
+         }
+         if(parsed && tensor2a != tensor2){
+          parsed = createTensorSync(tensor2a,tensor2->getElementType());
+          if(parsed) parsed = copyTensorSync(tensor2a->getName(),tensor2->getName());
+         }
          //Submit tensor contraction for execution:
          if(parsed){
           parsed = submit(op,getTensorMapper(process_group));

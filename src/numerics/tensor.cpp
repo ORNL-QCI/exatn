@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2021/08/17
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,9 +25,20 @@ name_(name), shape_(shape), signature_(signature), element_type_(TensorElementTy
  assert(signature_.getRank() == shape_.getRank());
 }
 
+Tensor::Tensor(const TensorShape & shape,
+               const TensorSignature & signature):
+ Tensor(tensor_hex_name("",getTensorHash()),shape,signature)
+{
+}
+
 Tensor::Tensor(const std::string & name,
                const TensorShape & shape):
 name_(name), shape_(shape), signature_(shape.getRank()), element_type_(TensorElementType::VOID)
+{
+}
+
+Tensor::Tensor(const TensorShape & shape):
+ Tensor(tensor_hex_name("",getTensorHash()),shape)
 {
 }
 

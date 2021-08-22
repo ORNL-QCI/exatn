@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/20
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -17,6 +17,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_operation.hpp"
 
 #include <map>
+#include <list>
 
 namespace exatn{
 
@@ -79,13 +80,20 @@ public:
 
 protected:
 
+ struct Bisect{
+  IndexKind index_kind;
+  unsigned int process_count;
+  bool serial;
+ };
+
  //Information on all indices of a tensor contraction:
  struct IndexInfo{
   std::vector<PosIndexLabel> left_indices_;
   std::vector<PosIndexLabel> right_indices_;
   std::vector<PosIndexLabel> contr_indices_;
   std::vector<PosIndexLabel> hyper_indices_;
-  std::map<std::string,const PosIndexLabel*> index_map;
+  std::map<std::string,const PosIndexLabel*> index_map_;
+  std::list<Bisect> bisect_sequence_;
 
   //Constructor:
   IndexInfo(const std::vector<PosIndexLabel> & left_indices,   //in: extracted left indices
@@ -96,27 +104,27 @@ protected:
    contr_indices_(contr_indices), hyper_indices_(hyper_indices)
   {
    for(const auto & ind: left_indices_){
-    auto res = index_map.emplace(std::make_pair(ind.index_label.label,&ind));
+    auto res = index_map_.emplace(std::make_pair(ind.index_label.label,&ind));
     assert(res.second);
    }
    for(const auto & ind: right_indices_){
-    auto res = index_map.emplace(std::make_pair(ind.index_label.label,&ind));
+    auto res = index_map_.emplace(std::make_pair(ind.index_label.label,&ind));
     assert(res.second);
    }
    for(const auto & ind: contr_indices_){
-    auto res = index_map.emplace(std::make_pair(ind.index_label.label,&ind));
+    auto res = index_map_.emplace(std::make_pair(ind.index_label.label,&ind));
     assert(res.second);
    }
    for(const auto & ind: hyper_indices_){
-    auto res = index_map.emplace(std::make_pair(ind.index_label.label,&ind));
+    auto res = index_map_.emplace(std::make_pair(ind.index_label.label,&ind));
     assert(res.second);
    }
   }
 
   //Retrieves an index of a tensor contraction:
   const PosIndexLabel * getIndex(const std::string & index_name){
-   auto iter = index_map.find(index_name);
-   if(iter == index_map.end()) return nullptr;
+   auto iter = index_map_.find(index_name);
+   if(iter == index_map_.end()) return nullptr;
    return iter->second;
   }
 

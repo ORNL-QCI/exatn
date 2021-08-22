@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2021/08/17
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -69,10 +69,17 @@ public:
  Tensor(const std::string & name,           //tensor name
         const TensorShape & shape,          //tensor shape
         const TensorSignature & signature); //tensor signature
+ /** Create a tensor by providing its shape and signature,
+     the name will be generated automatically based on the tensor hash. **/
+ Tensor(const TensorShape & shape,          //tensor shape
+        const TensorSignature & signature); //tensor signature
  /** Create a tensor by providing its name and shape.
      The signature defaults to SOME_SPACE spaces and lbound=0 subspaces. **/
  Tensor(const std::string & name,           //tensor name
         const TensorShape & shape);         //tensor shape
+ /** Create a tensor by providing its shape, the name will be generated
+     automatically based on the tensor hash. **/
+ Tensor(const TensorShape & shape);         //tensor shape
  /** Create a tensor by providing its name, shape and signature from scratch. **/
  template<typename T>
  Tensor(const std::string & name,                                        //tensor name
@@ -137,8 +144,8 @@ public:
                           bool with_hash = false) const;
 
  /** Rename (use this method with care as it can mess up higher-level maps). **/
- void rename(const std::string & name);
- void rename(); //a unique tensor name will be generated automatically via tensor hash
+ virtual void rename(const std::string & name);
+ virtual void rename(); //a unique tensor name will be generated automatically via tensor hash
 
  /** Get tensor name. **/
  const std::string & getName() const;

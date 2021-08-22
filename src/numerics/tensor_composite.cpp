@@ -1,10 +1,11 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/08/17
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_composite.hpp"
+#include "tensor_symbol.hpp"
 #include "space_register.hpp"
 
 namespace exatn{
@@ -170,6 +171,28 @@ bool TensorComposite::isConformantTo(const Tensor & another) const
   }
  }
  return ans;
+}
+
+
+void TensorComposite::rename(const std::string & name)
+{
+ name_ = name;
+ for(auto & kv: subtensors_){
+  kv.second->rename(); //generate a unique hash-name
+  kv.second->rename(kv.second->getName() + "_" + this->getName() + "_" + std::to_string(kv.first));
+ }
+ return;
+}
+
+
+void TensorComposite::rename()
+{
+ name_ = tensor_hex_name("",this->getTensorHash());
+ for(auto & kv: subtensors_){
+  kv.second->rename(); //generate a unique hash-name
+  kv.second->rename(kv.second->getName() + "_" + this->getName() + "_" + std::to_string(kv.first));
+ }
+ return;
 }
 
 

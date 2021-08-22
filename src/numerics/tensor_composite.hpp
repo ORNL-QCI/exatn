@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/08/17
+REVISION: 2021/08/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -92,6 +92,10 @@ public:
      have exactly the same subset of dimensions split in exactly
      the same way in exactly the same order. **/
  virtual bool isConformantTo(const Tensor & another) const override;
+
+ /** Renames the composite tensor and all its constituent subtensors. **/
+ virtual void rename(const std::string & name) override;
+ virtual void rename() override; //a unique tensor name will be generated automatically via tensor hash
 
  inline Iterator begin() {return subtensors_.begin();}
  inline Iterator end() {return subtensors_.end();}
