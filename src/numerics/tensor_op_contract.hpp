@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/21
+REVISION: 2021/08/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -146,6 +146,12 @@ protected:
    std::cout << " Hyper indices:";
    for(const auto & ind: hyper_indices_) std::cout << " " << ind.index_label.label
     << "[" << ind.arg_pos[0] << "," << ind.arg_pos[1] << "," << ind.arg_pos[2] << "]" << "{" << ind.depth << "}";;
+   std::cout << std::endl;
+   std::cout << " Bisections:";
+   const char bd[2] = {'B','D'};
+   for(const auto & bisect: bisect_sequence_)
+    std::cout << " " << bd[static_cast<unsigned int>(bisect.serial)] << static_cast<int>(bisect.index_kind)
+              << "(" << bisect.process_count << ")";
    std::cout << std::endl;
    std::cout << "}" << std::endl;
   }
