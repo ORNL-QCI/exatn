@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/04/27
+REVISION: 2021/08/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -95,6 +95,38 @@ double getTensorContractionCost(const TensorConn & left_tensor,
 void printContractionSequence(const std::list<numerics::ContrTriple> & contr_seq); //in: tensor contraction sequence
 void printContractionSequence(std::ofstream & output_file,                         //in: output file stream
                               const std::list<numerics::ContrTriple> & contr_seq); //in: tensor contraction sequence
+
+
+class BondAdaptivity{
+
+ friend class TensorNetwork;
+
+public:
+
+ enum class IncrPolicy{
+  CONST,       //keep original bond dimension
+  ADD,         //add a constant to the bond dimension
+  MULTIPLY,    //multiply the bond dimension by a constant
+  EXPONENTIATE //exponentiate the bond dimension to a constant power
+ };
+
+ struct BondPolicy{
+  std::pair<TensorLeg,TensorLeg> bond;
+  IncrPolicy incr_policy;
+  double factor;
+ };
+
+ virtual ~BondAdaptivity() = default;
+
+ void addBondPolicy(const BondPolicy & bond_policy){
+  bond_policy_.emplace_back(bond_policy);
+  return;
+ }
+
+protected:
+
+ std::list<BondPolicy> bond_policy_;
+};
 
 
 class TensorNetwork{
