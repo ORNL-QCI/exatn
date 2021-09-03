@@ -1,0 +1,66 @@
+BUGS:
+
+- 32-bit integer MPI message chunking issue in the backend.
+
+- Fix the bug(s) in the tensor order reduction mechanism in the backend.
+
+
+FEATURES:
+
+- Limit the DAG size:
+  Option 1: Once the limit has been reached, synchronize and clear it.
+  Option 2: Once the limit has been reached, create a new empty
+            DAG and start adding new operations to the new DAG
+            while completing the execution of the previous one.
+            Once execution of the previous one has been completed,
+            destroy the previous DAG.
+  Issues: Tensor instruction numeration must be global such that
+          every time a DAG is cleared a global increment will be
+          introduced in the tensor instruction id numbering.
+
+
+- GPU-RAM persistence:
+  1. Create large tensors on GPU;
+  2. Use COPY_T for smaller tensors;
+  3. Cache eviction policy: Evict minimally necessary ones (prefer smaller tensors);
+  4. Limit the Host buffer size to be similar to the combined device buffer size;
+
+
+- Implement tensor operator builders.
+
+
+- TensorExpansion: Constructor that converts a TensorOperator
+  into a TensorExpansion.
+
+
+- TensorNetwork: Subnetwork replacement method:
+  Contract replaced tensors, then replace the contracted
+  tensor with a new tensor (sub)network.
+
+
+- Introduce parallelization over tensor networks within a tensor expansion.
+
+
+- Implement constrained optimization for isometric tensors.
+
+
+- Tensor network bond dimension adaptivity in solvers.
+
+
+- Implement parameterized non-linear optimization:
+  dTensorFunctional/dParameter = dTensorFunctional/dTensor * dTensor/dParameter
+
+
+- Implement conjugate gradient optimization procedure.
+
+
+- Fix index slicing logic (switch to two passes):
+  Pass 1: Compute the throughout volume (TH) for all indices;
+          TH(index) = Sum of tensor volumes for all tensors containing the index.
+  Pass 2: Slice indices with maximal throughout volume;
+
+
+- Introduce DAG nodes/dependencies with multiple output operands.
+
+
+- Implement the guided k-way partitioning algorithm.
