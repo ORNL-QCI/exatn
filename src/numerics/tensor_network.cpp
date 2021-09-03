@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/03/31
+REVISION: 2021/09/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -566,6 +566,19 @@ void TensorNetwork::invalidateContractionSequence()
  operations_.clear();
  contraction_seq_.clear();
  contraction_seq_flops_ = 0.0;
+ max_intermediate_presence_volume_ = 0.0;
+ max_intermediate_volume_ = 0.0;
+ max_intermediate_rank_ = 0;
+ universal_indexing_ = false;
+ return;
+}
+
+
+void TensorNetwork::invalidateTensorOperationList()
+{
+ split_tensors_.clear();
+ split_indices_.clear();
+ operations_.clear();
  max_intermediate_presence_volume_ = 0.0;
  max_intermediate_volume_ = 0.0;
  max_intermediate_rank_ = 0;
@@ -2090,6 +2103,69 @@ bool TensorNetwork::decomposeTensors()
   }
  }
  return true;
+}
+
+
+bool TensorNetwork::resetBondAdaptivity(std::shared_ptr<BondAdaptivity> bond_adaptivity)
+{
+ if(finalized_ == 0){
+  std::cout << "#ERROR(TensorNetwork::resetBondAdaptivity): Invalid request: " <<
+   "Unfinalized tensor network cannot have bond adaptivity policy!" << std::endl;
+  return false;
+ }
+ bond_adaptivity_ = bond_adaptivity;
+ return true;
+}
+
+
+bool TensorNetwork::applyBondAdaptivityStep(bool invalidate)
+{
+ bool success = true, adapted = false;
+ if(bond_adaptivity_){
+  for(const auto & policy: bond_adaptivity_->bond_policy_){
+   const auto tid1 = policy.bond.first.getTensorId();
+   const auto lid1 = policy.bond.first.getDimensionId();
+   const auto tid2 = policy.bond.second.getTensorId();
+   const auto lid2 = policy.bond.second.getDimensionId();
+   const auto * tensor1 = getTensorConn(tid1);
+   const auto * tensor2 = getTensorConn(tid2);
+   if(tensor1 == nullptr || tensor2 == nullptr){
+    std::cout << "#ERROR(TensorNetwork::applyBondAdaptivityStep): Invalid policy: " <<
+     "Bond adaptivity policy refers to non-existing tensors: " << tid1 << " " << tid2 << std::endl;
+    return false;
+   }
+   if(tensor1->getTensorLeg(lid1).getTensorId() != tid2 ||
+      tensor1->getTensorLeg(lid1).getDimensionId() != lid2){
+    std::cout << "#ERROR(TensorNetwork::applyBondAdaptivityStep): Invalid policy: " <<
+     "Bond adaptivity policy refers to a non-existing bond between two tensors: " <<
+     tid1 << " " << tid2 << std::endl;
+    return false;
+   }
+   const auto dim_ext = tensor1->getDimExtent(lid1);
+   const auto new_dim_ext = policy.adapt(dim_ext);
+   if(new_dim_ext != dim_ext){
+    auto new_tensor1 = makeSharedTensor(*(tensor1->getTensor()));
+    new_tensor1->replaceDimension(lid1,new_dim_ext);
+    new_tensor1->rename();
+    auto new_tensor2 = makeSharedTensor(*(tensor2->getTensor()));
+    new_tensor2->replaceDimension(lid2,new_dim_ext);
+    new_tensor2->rename();
+    success = substituteTensor(tid1,new_tensor1);
+    success = substituteTensor(tid2,new_tensor2);
+    adapted = true;
+   }
+  }
+  if(adapted){
+   if(invalidate){
+    invalidateContractionSequence();
+   }else{
+    invalidateTensorOperationList();
+   }
+  }
+ }else{
+  success = false;
+ }
+ return success;
 }
 
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/08/27
+REVISION: 2021/09/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -113,7 +113,25 @@ public:
  struct BondPolicy{
   std::pair<TensorLeg,TensorLeg> bond;
   IncrPolicy incr_policy;
-  double factor;
+  DimExtent factor;
+  DimExtent limit;
+
+  DimExtent adapt(DimExtent dim_ext) const{
+   DimExtent new_dim_ext = dim_ext;
+   switch(incr_policy){
+    case(IncrPolicy::ADD):
+     new_dim_ext = std::min(dim_ext + factor, limit);
+     break;
+    case(IncrPolicy::MULTIPLY):
+     new_dim_ext = std::min(dim_ext *= factor, limit);
+     break;
+    case(IncrPolicy::EXPONENTIATE):
+     new_dim_ext = std::min(static_cast<DimExtent>(
+      std::llround(std::pow(static_cast<double>(dim_ext),static_cast<double>(factor)))), limit);
+     break;
+   };
+   return new_dim_ext;
+  }
  };
 
  virtual ~BondAdaptivity() = default;
@@ -398,6 +416,14 @@ public:
  /** Decomposes all tensors in the tensor network to restrict the highest tensor order to 3. **/
  bool decomposeTensors();
 
+ /** Sets up a new bond adaptivity policy, making the tensor network adaptive.
+     Returns FALSE if the given policy does not match the structure of the tensor network. **/
+ bool resetBondAdaptivity(std::shared_ptr<BondAdaptivity> bond_adaptivity);
+
+ /** Performs a single adaptivity step based on the currently set bond adaptivity policy.
+     If no policy has been set, does nothing and returns FALSE. **/
+ bool applyBondAdaptivityStep(bool invalidate = false); //whether to invalidate the cached tensor contraction sequence
+
  /** Partitions the tensor network into multiple parts by minimizing the weighted edge cut.
      The returned vector <parts> is:
       parts[i] = pair{Partition weight, Ordered list of vertices forming partition i}.
@@ -556,6 +582,9 @@ protected:
  /** Invalidates cached tensor contraction sequence. **/
  void invalidateContractionSequence();
 
+ /** Invalidates cached tensor operation list. **/
+ void invalidateTensorOperationList();
+
  /** Determines a pseudo-optimal tensor contraction sequence required for evaluating the tensor network.
      Returns an estimate of the total flop count required by the returned contraction sequence.
      The tensor network must contain at least two input tensors in order to generate a single contraction.
@@ -610,6 +639,9 @@ private:
                                 unsigned int>> //position of the split index in the tensor operand: [0..max]
          > split_tensors_; //information on tensors with split dimensions
  bool universal_indexing_; //universal indexing flag
+
+ /** Data members: Bond adaptivity: **/
+ std::shared_ptr<BondAdaptivity> bond_adaptivity_; //bond adaptivity policy
 };
 
 
