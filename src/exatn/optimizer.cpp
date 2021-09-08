@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/09/05
+REVISION: 2021/09/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -222,7 +222,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      }
      if(micro_iteration == (micro_iterations_ - 1)) average_expect_val += expect_val;
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
-                                                     << " = " << expect_val << std::endl;
+                                                     << " = " << std::scientific << expect_val << std::endl;
      //Update the expectation value in the gradient expansion:
      scale_metrics(environment.gradient_expansion,environment.expect_value,expect_val);
      //Initialize the gradient tensor to zero:

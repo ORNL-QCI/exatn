@@ -2822,7 +2822,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  bool success = true;
 
- const int num_sites = 8, max_bond_dim = std::pow(2,num_sites/2); //2x2 sites x dim(4) = 8 qubits (sites)
+ const int num_sites = 8, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),16); //2x2 sites x dim(4) = 8 qubits (sites)
 
  //Read 2x2 Hubbard Hamiltonian in spin representation:
  auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2.txt",TENS_ELEM_TYPE);
@@ -2874,8 +2874,8 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  //Reconstruct the exact eigen-tensor as a tensor network:
  ansatz->conjugate();
- success = exatn::balanceNorm2Sync(*ansatz_full,1.0,false); assert(success);
- success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
+ success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,false); assert(success);
+ success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
  success = exatn::sync(); assert(success);
