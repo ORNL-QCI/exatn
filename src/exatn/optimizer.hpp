@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/07/12
+REVISION: 2021/09/08
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,7 +9,8 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      of some tensor operator closed from both sides by the bra and ket
      vectors formed by the same tensor network expansion, this tensor network
      variational optimizer will optimize the tensor factors constituting the
-     bra/ket tensor network vectors to arrive at an extremum of that functional.
+     bra/ket tensor network vectors to arrive at an extremum of that functional,
+     specifically targeting its minimum.
 **/
 
 #ifndef EXATN_OPTIMIZER_HPP_
@@ -30,8 +31,8 @@ public:
 
  static unsigned int debug;
 
- static constexpr const double DEFAULT_TOLERANCE = 1e-3;
- static constexpr const double DEFAULT_LEARN_RATE = 0.25;
+ static constexpr const double DEFAULT_TOLERANCE = 1e-4;
+ static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
  static constexpr const unsigned int DEFAULT_MICRO_ITERATIONS = 1;
 

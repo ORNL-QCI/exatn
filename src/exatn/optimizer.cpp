@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/06/22
+REVISION: 2021/09/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -273,9 +273,15 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
        default:
         assert(false);
       }
-      epsilon_ = grad_norm * grad_norm / denom;
-      if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
-                                                      << ": Denominator = " << denom << std::endl;
+      denom = std::abs(denom);
+      if(denom > 1e-7){
+       epsilon_ = grad_norm * grad_norm / denom;
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
+                                                       << ": Denominator = " << denom << std::endl;
+      }else{
+       epsilon_ = DEFAULT_LEARN_RATE;
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
+      }
       //Update the optimized tensor:
       std::string add_pattern;
       done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,

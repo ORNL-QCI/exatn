@@ -41,10 +41,10 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25
-//#define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27*/
-#define EXATN_TEST28
+#define EXATN_TEST25*/
+#define EXATN_TEST26 //requires input file from source
+//#define EXATN_TEST27
+//#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -2461,7 +2461,7 @@ TEST(NumServerTester, Reconstructor) {
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
- exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-4);
+ exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-5);
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
@@ -2579,7 +2579,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
    /*std::cout << "Reconstructing ground state on a tensor network manifold:" << std::endl;
    ansatz->conjugate();
    exatn::TensorNetworkReconstructor::resetDebugLevel(1);
-   exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-4);
+   exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
    double residual_norm, fidelity;
    bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
    success = exatn::sync(); assert(success);
@@ -2877,7 +2877,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
  success = exatn::balanceNorm2Sync(*ansatz_full,1.0,false); assert(success);
  success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
- exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-4);
+ exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
@@ -3015,7 +3015,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  std::cout << "Reconstructing the quantum circuit by a given tensor network ansatz:" << std::endl;
  ansatz->conjugate();
  //exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
- exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-3);
+ exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-5);
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
