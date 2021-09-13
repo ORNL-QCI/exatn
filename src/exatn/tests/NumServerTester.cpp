@@ -38,12 +38,12 @@
 #define EXATN_TEST19
 #define EXATN_TEST20
 #define EXATN_TEST21
-#define EXATN_TEST22
+#define EXATN_TEST22*/
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25*/
+#define EXATN_TEST25
 #define EXATN_TEST26 //requires input file from source
-//#define EXATN_TEST27
+#define EXATN_TEST27
 //#define EXATN_TEST28
 
 
@@ -2457,7 +2457,7 @@ TEST(NumServerTester, Reconstructor) {
 
  //Normalize input tensors in the tensor network expansions to 1.0:
  success = exatn::balanceNorm2Sync(*target,1.0,false); assert(success);
- success = exatn::balanceNorm2Sync(*approximant,1.0,true); assert(success);
+ //success = exatn::balanceNorm2Sync(*approximant,1.0,true); assert(success);
 
  //Construct the reconstructor (solver):
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
@@ -2875,7 +2875,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
  //Reconstruct the exact eigen-tensor as a tensor network:
  ansatz->conjugate();
  success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,false); assert(success);
- success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+ //success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
  success = exatn::sync(); assert(success);
@@ -3014,12 +3014,12 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  //Reconstruct the quantum circuit by a given tensor network ansatz:
  std::cout << "Reconstructing the quantum circuit by a given tensor network ansatz:" << std::endl;
  ansatz->conjugate();
- //exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-5);
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,false);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm

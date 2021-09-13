@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/08/13
+REVISION: 2021/09/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -121,6 +121,9 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  residual_norm_ = 0.0;
  fidelity_ = 0.0;
 
+ //Balance-normalize the approximant:
+ bool success = balanceNormalizeNorm2Sync(process_group,*approximant_,1.0,1.0,true); assert(success);
+
  if(TensorNetworkReconstructor::debug > 0){
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Target tensor expansion:" << std::endl;
   expansion_->printIt();
@@ -141,7 +144,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  TensorExpansion normalization(*approximant_,approximant_ket); // <approximant|approximant>
  normalization.rename("Normalization");
  TensorExpansion lagrangian;
- bool success = lagrangian.appendExpansion(normalization,{1.0,0.0}); assert(success);
+ success = lagrangian.appendExpansion(normalization,{1.0,0.0}); assert(success);
  success = lagrangian.appendExpansion(overlap,{-1.0,0.0}); assert(success);
  lagrangian.rename("Lagrangian");
  if(TensorNetworkReconstructor::debug > 1){
@@ -229,7 +232,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    output_norm_ = 0.0;
    done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
    output_norm_ = std::sqrt(output_norm_);
-   //Compute the direct overlap with the approximant:
+   //Compute the direct absolute overlap with the approximant:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
    done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
    overlap_abs = 0.0;
@@ -240,7 +243,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
               << std::scientific << input_norm_ << "; Output 2-norm = " << output_norm_
               << "; Absolute overlap = " << overlap_abs << std::endl;
    }
-   if(overlap_abs < DEFAULT_MIN_INITIAL_OVERLAP){
+   if(overlap_abs <= DEFAULT_MIN_INITIAL_OVERLAP){
     if(TensorNetworkReconstructor::debug > 0)
      std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Approximant will be reinitialized due to low overlap\n";
     reinitializeApproximant(process_group);
@@ -337,8 +340,6 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
    if(TensorNetworkReconstructor::debug > 0)
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
               << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
-   //Normalize the approximant as a whole (`this would make scalar expansions outdated):
-   //done = normalizeNorm2Sync(process_group,*approximant_,1.0); assert(done);
    bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
    converged = (overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration;
    //converged = (max_grad_norm <= tolerance_) || ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
