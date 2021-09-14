@@ -38,12 +38,12 @@
 #define EXATN_TEST19
 #define EXATN_TEST20
 #define EXATN_TEST21
-#define EXATN_TEST22*/
+#define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25
+#define EXATN_TEST25*/
 #define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27
+//#define EXATN_TEST27
 //#define EXATN_TEST28
 
 
@@ -2466,7 +2466,7 @@ TEST(NumServerTester, Reconstructor) {
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
@@ -2581,7 +2581,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
    exatn::TensorNetworkReconstructor::resetDebugLevel(1);
    exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
    double residual_norm, fidelity;
-   bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+   bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
    success = exatn::sync(); assert(success);
    ansatz->conjugate();
    if(reconstructed){
@@ -2840,15 +2840,14 @@ TEST(NumServerTester, HubbardHamiltonian) {
  //Allocate/initialize tensors in the tensor network ansatz:
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
   if(tens_conn->first != 0){ //input tensors only
-   success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
-   success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
+   success = exatn::createTensorSync(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRndSync(tens_conn->second.getName()); assert(success);
   }
  }
- success = exatn::balanceNorm2Sync(*ansatz,1.0,true); assert(success);
 
  //Create the full tensor ansatz:
- success = exatn::createTensor(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
- success = exatn::initTensorRnd(ansatz_tensor->getName()); assert(success);
+ success = exatn::createTensorSync(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorRndSync(ansatz_tensor->getName()); assert(success);
  auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
  success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
  ansatz_full_net->markOptimizableAllTensors();
@@ -2875,12 +2874,11 @@ TEST(NumServerTester, HubbardHamiltonian) {
  //Reconstruct the exact eigen-tensor as a tensor network:
  ansatz->conjugate();
  success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,false); assert(success);
- //success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-5);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
@@ -2890,14 +2888,12 @@ TEST(NumServerTester, HubbardHamiltonian) {
  }
  ansatz->conjugate();
 
- //success = exatn::initTensorSync(ansatz_tensor->getName(),0.0); assert(success);
-
  //Perform ground state optimization on a tensor network manifold:
  {
   std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1);
   exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz,1e-4);
-  optimizer.resetMicroIterations(1);
+  //optimizer.resetMicroIterations(1);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);
   if(converged){
@@ -3019,7 +3015,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm

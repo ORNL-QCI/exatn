@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/09/13
+REVISION: 2021/09/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -97,16 +97,18 @@ void TensorNetworkReconstructor::reinitializeApproximant(const ProcessGroup & pr
 
 bool TensorNetworkReconstructor::reconstruct(double * residual_norm,
                                              double * fidelity,
+                                             bool rnd_init,
                                              bool nesterov,
                                              double acceptable_fidelity)
 {
- return reconstruct(exatn::getDefaultProcessGroup(), residual_norm, fidelity, nesterov, acceptable_fidelity);
+ return reconstruct(exatn::getDefaultProcessGroup(), residual_norm, fidelity, rnd_init, nesterov, acceptable_fidelity);
 }
 
 
 bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
                                              double * residual_norm,
                                              double * fidelity,
+                                             bool rnd_init,
                                              bool nesterov,
                                              double acceptable_fidelity)
 {
@@ -121,7 +123,10 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
  residual_norm_ = 0.0;
  fidelity_ = 0.0;
 
- //Balance-normalize the approximant:
+ //Initialize the approximant to a random value (if needed):
+ if(rnd_init) reinitializeApproximant(process_group);
+
+ //Balance-normalize the approximant (only optimizable tensors):
  bool success = balanceNormalizeNorm2Sync(process_group,*approximant_,1.0,1.0,true); assert(success);
 
  if(TensorNetworkReconstructor::debug > 0){
@@ -225,7 +230,7 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   input_norm_ = std::sqrt(input_norm_);
   //Check the initial guess:
   overlap_abs = 0.0;
-  while(overlap_abs < DEFAULT_MIN_INITIAL_OVERLAP){
+  while(overlap_abs <= DEFAULT_MIN_INITIAL_OVERLAP){
    //Compute the approximant norm:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
    done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
@@ -385,12 +390,11 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
   }
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Check the necessity to restart iterations:
-  if(!converged || fidelity_ < acceptable_fidelity){
+  if(converged && fidelity_ < acceptable_fidelity && tolerance_ > 1e-6){
    if(TensorNetworkReconstructor::debug > 0){
-    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iterations will be restarted with a different initial guess\n";
+    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Insufficient fidelity, iterations will be restarted\n";
    }
-   reinitializeApproximant(process_group);
-   tolerance_ /= 2.0;
+   tolerance_ *= 0.1;
    converged = false;
   }
  }

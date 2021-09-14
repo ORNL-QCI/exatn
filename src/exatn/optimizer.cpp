@@ -73,6 +73,8 @@ bool TensorNetworkOptimizer::optimize()
 
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
 {
+ constexpr bool NORMALIZE_WITH_METRICS = false; //whether to normalize tensor network factors with metrics or not
+
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
 
@@ -224,7 +226,15 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
      //Update the expectation value in the gradient expansion:
+     if(TensorNetworkOptimizer::debug > 1){
+      std::cout << " Old gradient expansion coefficients:\n";
+      environment.gradient_expansion.printCoefficients();
+     }
      scale_metrics(environment.gradient_expansion,environment.expect_value,expect_val);
+     if(TensorNetworkOptimizer::debug > 1){
+      std::cout << " New gradient expansion coefficients:\n";
+      environment.gradient_expansion.printCoefficients();
+     }
      //Initialize the gradient tensor to zero:
      done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
      //Evaluate the gradient tensor expansion:
@@ -253,8 +263,16 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      if(local_convergence > tolerance_){
       if(micro_iteration == (micro_iterations_ - 1)) converged = false;
       //Compute the optimal step size:
-      done = initTensorSync("_scalar_norm",0.0); assert(done);
+      if(TensorNetworkOptimizer::debug > 1){
+       std::cout << " Old hessian expansion coefficients:\n";
+       environment.hessian_expansion.printCoefficients();
+      }
       scale_metrics(environment.hessian_expansion,environment.expect_value,expect_val);
+      if(TensorNetworkOptimizer::debug > 1){
+       std::cout << " New hessian expansion coefficients:\n";
+       environment.hessian_expansion.printCoefficients();
+      }
+      done = initTensorSync("_scalar_norm",0.0); assert(done);
       done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm); assert(done);
       denom = 0.0;
       switch(scalar_norm->getElementType()){
@@ -287,18 +305,24 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
       done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                        environment.tensor->getName(),environment.gradient->getName()); assert(done);
       done = addTensorsSync(add_pattern,-epsilon_); assert(done);
-      /*//Normalize the optimized tensor w.r.t. metrics:
-      done = initTensorSync("_scalar_norm",0.0); assert(done);
-      done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
-      tens_norm = 0.0;
-      done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-      tens_norm = std::sqrt(tens_norm);
-      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);*/
-      //Normalize the optimized tensor:
-      tens_norm = 0.0;
-      done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
-      if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated tensor norm before normalization = " << tens_norm << std::endl;
-      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+      if(NORMALIZE_WITH_METRICS){
+       //Normalize the optimized tensor w.r.t. metrics:
+       done = initTensorSync("_scalar_norm",0.0); assert(done);
+       done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
+       tens_norm = 0.0;
+       done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
+       tens_norm = std::sqrt(tens_norm);
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated metrical tensor norm before normalization = "
+                                                       << tens_norm << std::endl;
+       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+      }else{
+       //Normalize the optimized tensor with unity metrics:
+       tens_norm = 0.0;
+       done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated regular tensor norm before normalization = "
+                                                       << tens_norm << std::endl;
+       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+      }
      }
      //Update the old expectation value:
      environment.expect_value = expect_val;
