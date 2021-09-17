@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/09/08
+REVISION: 2021/09/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,7 +73,7 @@ bool TensorNetworkOptimizer::optimize()
 
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
 {
- constexpr bool NORMALIZE_WITH_METRICS = false; //whether to normalize tensor network factors with metrics or not
+ constexpr bool NORMALIZE_WITH_METRICS = true; //whether to normalize tensor network factors with metrics or not
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
@@ -250,18 +250,23 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      done = evaluateSync(process_group,environment.operator_gradient,environment.gradient_aux); assert(done);
      tens_norm = 0.0;
      done = computeNorm2Sync(environment.gradient_aux->getName(),tens_norm); assert(done);
+     if(TensorNetworkOptimizer::debug > 1) std::cout << environment.tensor->getName()
+                                                     << ": |H|x> 2-norm = " << tens_norm;
      denom += tens_norm;
      done = initTensorSync(environment.gradient_aux->getName(),0.0); assert(done);
      done = evaluateSync(process_group,environment.metrics_gradient,environment.gradient_aux); assert(done);
      tens_norm = 0.0;
      done = computeNorm2Sync(environment.gradient_aux->getName(),tens_norm); assert(done);
+     if(TensorNetworkOptimizer::debug > 1) std::cout << "; |S|x> 2-norm = " << tens_norm
+                                                     << "; Absolute eigenvalue = " << std::abs(expect_val) << std::endl;
      denom += std::abs(expect_val) * tens_norm;
      local_convergence = grad_norm / denom;
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Convergence w.r.t. " << environment.tensor->getName()
-                                                     << " = " << local_convergence
-                                                     << ": Denominator = " << denom << std::endl;
+                                                     << " = " << grad_norm << " / " << denom
+                                                     << " = " << local_convergence << std::endl;
      if(local_convergence > tolerance_){
       if(micro_iteration == (micro_iterations_ - 1)) converged = false;
+     }
       //Compute the optimal step size:
       if(TensorNetworkOptimizer::debug > 1){
        std::cout << " Old hessian expansion coefficients:\n";
@@ -291,6 +296,9 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
        default:
         assert(false);
       }
+      if(TensorNetworkOptimizer::debug > 1) std::cout << " Step size for " << environment.tensor->getName() << " = "
+                                                      << (grad_norm * grad_norm) << " / " << denom << " = "
+                                                      << (grad_norm * grad_norm / denom) << std::endl;
       denom = std::abs(denom);
       if(denom > 1e-7){
        epsilon_ = grad_norm * grad_norm / denom;
@@ -312,18 +320,18 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
        tens_norm = 0.0;
        done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
        tens_norm = std::sqrt(tens_norm);
-       if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated metrical tensor norm before normalization = "
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Metrical tensor norm before normalization = "
                                                        << tens_norm << std::endl;
        done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
       }else{
        //Normalize the optimized tensor with unity metrics:
        tens_norm = 0.0;
        done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
-       if(TensorNetworkOptimizer::debug > 1) std::cout << " Updated regular tensor norm before normalization = "
+       if(TensorNetworkOptimizer::debug > 1) std::cout << " Regular tensor norm before normalization = "
                                                        << tens_norm << std::endl;
        done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
       }
-     }
+     //}
      //Update the old expectation value:
      environment.expect_value = expect_val;
      if(local_convergence <= tolerance_) break;
