@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/03/05
+REVISION: 2021/09/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -134,6 +134,9 @@ public:
                                 unsigned int bra_space_rank,                   //in: rank of the global bra tensor space
                                 const std::complex<double> coefficient,        //in: expansion coefficient
                                 bool antisymmetrize = false);                  //in: whether or not to negate the coefficient for odd permutations
+
+ /** Deletes the specified component of the tensor operator. **/
+ bool deleteComponent(std::size_t component_num);
 
  /** Conjugates the tensor operator: All constituting tensors are complex conjugated,
      all tensor legs reverse their direction, bra legs and ket legs are swapped,

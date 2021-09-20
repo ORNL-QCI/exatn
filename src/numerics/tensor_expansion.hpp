@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/08/09
+REVISION: 2021/09/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -198,6 +198,9 @@ public:
  /** Appends another tensor network expansion into the current one. **/
  bool appendExpansion(const TensorExpansion & another,         //in: tensor network expansion
                       const std::complex<double> coefficient); //in: scaling coefficient (applies to the appended tensor network expansion)
+
+ /** Deletes the specified component of the tensor expansion. **/
+ bool deleteComponent(std::size_t component_num);
 
  /** Conjugates the tensor network expansion: All constituting tensors are complex conjugated,
      all tensor legs reverse their direction, complex linear expansion coefficients are conjugated:

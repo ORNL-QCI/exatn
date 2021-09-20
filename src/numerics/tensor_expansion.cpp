@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/08/09
+REVISION: 2021/09/20
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -202,6 +202,14 @@ bool TensorExpansion::appendExpansion(const TensorExpansion & another,
   if(!appended) break;
  }
  return appended;
+}
+
+
+bool TensorExpansion::deleteComponent(std::size_t component_num)
+{
+ if(component_num >= components_.size()) return false;
+ components_.erase(components_.cbegin()+component_num);
+ return true;
 }
 
 

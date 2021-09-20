@@ -378,10 +378,12 @@ bool parse_pauli_string(const std::string & input,
      const auto plus_pos = input.find("+",left_par_pos);
      if(plus_pos != std::string::npos){
       const auto real_len = plus_pos - left_par_pos - 1;
+      //std::cout << "#DEBUG(parse_pauli_string): Coef: " << input.substr(left_par_pos+1,real_len); //debug
       if(real_len > 0) coef_real = std::stod(input.substr(left_par_pos+1,real_len));
       const auto imag_end_pos = input.find("j",plus_pos);
       if(imag_end_pos != std::string::npos){
        const auto imag_len = imag_end_pos - plus_pos - 1;
+       //std::cout << " " << input.substr(plus_pos+1,imag_len) << std::endl; //debug
        if(imag_len > 0) coef_imag = std::stod(input.substr(plus_pos+1,imag_len));
        coefficient = std::complex<double>{coef_real, coef_imag};
       }else{

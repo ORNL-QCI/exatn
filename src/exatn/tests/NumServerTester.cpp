@@ -16,7 +16,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -41,10 +41,10 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25
+#define EXATN_TEST25*/
 #define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27
-#define EXATN_TEST28
+//#define EXATN_TEST27
+//#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -2825,7 +2825,9 @@ TEST(NumServerTester, HubbardHamiltonian) {
  const int num_sites = 8, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),16); //2x2 sites x dim(4) = 8 qubits (sites)
 
  //Read 2x2 Hubbard Hamiltonian in spin representation:
- auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2.txt",TENS_ELEM_TYPE);
+ //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.txt",TENS_ELEM_TYPE);
+ //success = hubbard_operator->deleteComponent(0); assert(success);
+ auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2_8q.txt",TENS_ELEM_TYPE);
  hubbard_operator->printIt();
 
  //Create tensor network ansatz:
