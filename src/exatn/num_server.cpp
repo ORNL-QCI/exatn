@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/08/21
+REVISION: 2021/09/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1433,14 +1433,14 @@ bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
  for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
-  if(tensorAllocated(tens_name)){
-   if(tens->first == 0){ //output tensor
-    success = initTensor(tens_name,0.0);
-   }else{ //input tensor
+  if(tens->first != 0){ //input tensor
+   if(tensorAllocated(tens_name)){
     success = initTensorRnd(tens_name);
+   }else{
+    success = false;
    }
-  }else{
-   success = false;
+  }else{ //output tensor
+   if(tensorAllocated(tens_name)) success = initTensor(tens_name,0.0);
   }
   if(!success) break;
  }
@@ -1453,14 +1453,14 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
  for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
-  if(tensorAllocated(tens_name)){
-   if(tens->first == 0){ //output tensor
-    success = initTensorSync(tens_name,0.0);
-   }else{ //input tensor
+  if(tens->first != 0){ //input tensor
+   if(tensorAllocated(tens_name)){
     success = initTensorRndSync(tens_name);
+   }else{
+    success = false;
    }
-  }else{
-   success = false;
+  }else{ //output tensor
+   if(tensorAllocated(tens_name)) success = initTensorSync(tens_name,0.0);
   }
   if(!success) break;
  }

@@ -16,7 +16,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -41,10 +41,10 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25*/
+#define EXATN_TEST25
 #define EXATN_TEST26 //requires input file from source
-//#define EXATN_TEST27
-//#define EXATN_TEST28
+#define EXATN_TEST27
+#define EXATN_TEST28
 
 
 #ifdef EXATN_TEST0
@@ -1961,9 +1961,7 @@ TEST(NumServerTester, neurIPS) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(1,2); //debug
-
- //exatn::activateContrSeqCaching(true);
-
+ exatn::activateContrSeqCaching(true);
  //exatn::activateFastMath();
 
  bool success = true;
@@ -1991,16 +1989,19 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("E"); assert(success);
   success = exatn::initTensorRnd("F"); assert(success);
   success = exatn::initTensorRnd("G"); assert(success);
-  success = exatn::sync(); assert(success);
 
-  auto flops = exatn::getTotalFlopCount();
-  auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluateTensorNetwork("MERA1d","Z(z0,z1,z2,z3)+=A(a0,a1,a2,z2)*B(b0,b1,b2,z3)*C(c0,c1,a2,b0)*D(d0,d1,a1,c0)*E(e2,e3,d1,c1)*F(a0,d0,e2,z0)*G(e3,b1,b2,z1)");
-  assert(success);
-  success = exatn::sync(); assert(success);
-  auto duration = exatn::Timer::timeInSecHR(time_start);
-  flops = exatn::getTotalFlopCount() - flops;
-  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  for(int repeat = 0; repeat < 2; ++repeat){
+   success = exatn::sync(); assert(success);
+   auto flops = exatn::getTotalFlopCount();
+   auto time_start = exatn::Timer::timeInSecHR();
+   success = exatn::evaluateTensorNetwork("MERA1d",
+    "Z(z0,z1,z2,z3)+=A(a0,a1,a2,z2)*B(b0,b1,b2,z3)*C(c0,c1,a2,b0)*D(d0,d1,a1,c0)*E(e2,e3,d1,c1)*F(a0,d0,e2,z0)*G(e3,b1,b2,z1)");
+   assert(success);
+   success = exatn::sync(); assert(success);
+   auto duration = exatn::Timer::timeInSecHR(time_start);
+   flops = exatn::getTotalFlopCount() - flops;
+   std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  }
 
   success = exatn::destroyTensor("G"); assert(success);
   success = exatn::destroyTensor("F"); assert(success);
@@ -2031,7 +2032,7 @@ TEST(NumServerTester, neurIPS) {
 
   std::string deriv_tens_name;
   for(auto tens = network_ttn_conj->cbegin(); tens != network_ttn_conj->cend(); ++tens){
-   if(tens->first != 0){
+   if(tens->first != 0 && tens->second.getRank() == 3){
     deriv_tens_name = tens->second.getName();
     break;
    }
@@ -2044,20 +2045,23 @@ TEST(NumServerTester, neurIPS) {
   }
 
   for(auto net = derivative.begin(); net != derivative.end(); ++net){
-   success = exatn::initTensorsRnd(*(net->network)); assert(success);
+   success = exatn::initTensorsRndSync(*(net->network)); assert(success);
   }
 
   auto deriv_output_tensor = derivative[0].network->getTensor(0);
   success = exatn::createTensorSync("acc",TENS_ELEM_TYPE,deriv_output_tensor->getShape()); assert(success);
-  success = exatn::initTensor("acc",0.0); assert(success);
+  success = exatn::initTensorSync("acc",0.0); assert(success);
 
-  auto flops = exatn::getTotalFlopCount();
-  auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluate(derivative,exatn::getTensor("acc")); assert(success);
-  success = exatn::sync(); assert(success);
-  auto duration = exatn::Timer::timeInSecHR(time_start);
-  flops = exatn::getTotalFlopCount() - flops;
-  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  for(int repeat = 0; repeat < 2; ++repeat){
+   success = exatn::sync(); assert(success);
+   auto flops = exatn::getTotalFlopCount();
+   auto time_start = exatn::Timer::timeInSecHR();
+   success = exatn::evaluate(derivative,exatn::getTensor("acc")); assert(success);
+   success = exatn::sync(); assert(success);
+   auto duration = exatn::Timer::timeInSecHR(time_start);
+   flops = exatn::getTotalFlopCount() - flops;
+   std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  }
 
   success = exatn::destroyTensorSync("acc"); assert(success);
   for(auto net = derivative.begin(); net != derivative.end(); ++net){
@@ -2097,16 +2101,19 @@ TEST(NumServerTester, neurIPS) {
   success = exatn::initTensorRnd("I"); assert(success);
   success = exatn::initTensorRnd("J"); assert(success);
   success = exatn::initTensorRnd("K"); assert(success);
-  success = exatn::sync(); assert(success);
 
-  auto flops = exatn::getTotalFlopCount();
-  auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluateTensorNetwork("ML_MERA","Z(z0,z1,z2)+=A(z0,a1,a2)*B(z1,z2,b2,b3)*C(a1,c1)*D(a2,b2,d2)*E(b3,e1)*F(c1,f1,f2)*G(d2,e1,g2,g3)*H(f1,h1)*I(f2,g2,i2)*J(g3,j1)*K(h1,i2,j1)");
-  assert(success);
-  success = exatn::sync(); assert(success);
-  auto duration = exatn::Timer::timeInSecHR(time_start);
-  flops = exatn::getTotalFlopCount() - flops;
-  std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  for(int repeat = 0; repeat < 2; ++repeat){
+   success = exatn::sync(); assert(success);
+   auto flops = exatn::getTotalFlopCount();
+   auto time_start = exatn::Timer::timeInSecHR();
+   success = exatn::evaluateTensorNetwork("ML_MERA",
+    "Z(z0,z1,z2)+=A(z0,a1,a2)*B(z1,z2,b2,b3)*C(a1,c1)*D(a2,b2,d2)*E(b3,e1)*F(c1,f1,f2)*G(d2,e1,g2,g3)*H(f1,h1)*I(f2,g2,i2)*J(g3,j1)*K(h1,i2,j1)");
+   assert(success);
+   success = exatn::sync(); assert(success);
+   auto duration = exatn::Timer::timeInSecHR(time_start);
+   flops = exatn::getTotalFlopCount() - flops;
+   std::cout << "Time (s) = " << duration << "; GFlop/s = " << flops/duration/1e9 << std::endl << std::flush;
+  }
 
   success = exatn::destroyTensor("K"); assert(success);
   success = exatn::destroyTensor("J"); assert(success);
@@ -2125,6 +2132,7 @@ TEST(NumServerTester, neurIPS) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
+ exatn::deactivateContrSeqCaching();
  exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
