@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization of Ordering Projection tensors
-REVISION: 2021/02/16
+REVISION: 2021/09/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,7 +8,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  (A) This tensor functor (method) is used to initialize an ordering projection tensor.
      An ordering projection tensor is an even-order tensor with the following elements:
      - Element = 1 if: The first half and the second half of the indices are the same and
-                       both are in a monotonically increasing order;
+                       both are in a monotonically increasing (or non-decreasing) order;
      - Elelent = 0 otherwise.
 **/
 
@@ -33,7 +33,9 @@ namespace numerics{
 class FunctorInitProj: public talsh::TensorFunctor<Identifiable>{
 public:
 
- FunctorInitProj() = default;
+ FunctorInitProj(bool weak_ordering = false): //strong VS weak index ordering
+  weak_ordering_(weak_ordering)
+ {}
 
  virtual ~FunctorInitProj() = default;
 
@@ -61,6 +63,7 @@ public:
 
 private:
 
+ bool weak_ordering_;
 };
 
 } //namespace numerics

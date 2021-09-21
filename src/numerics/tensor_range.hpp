@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2021/02/16
+REVISION: 2021/09/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -107,6 +107,14 @@ public:
  /** Tests whether both halves of the indices of the current multi-index are the same and
      each is in a monotonically decreasing order. **/
  inline bool decreasingOrderDiag() const;
+
+ /** Tests whether both halves of the indices of the current multi-index are the same and
+     each is in a monotonically non-decreasing order. **/
+ inline bool nondecreasingOrderDiag() const;
+
+ /** Tests whether both halves of the indices of the current multi-index are the same and
+     each is in a monotonically non-increasing order. **/
+ inline bool nonincreasingOrderDiag() const;
 
  /** Returns the flat offset produced by the current multi-index value per se. **/
  inline DimOffset localOffset() const; //little endian
@@ -353,7 +361,7 @@ inline bool TensorRange::increasingOrderDiag() const
  if(indeed && half_size > 0){
   for(int i = 1; i < half_size; ++i){
    if(((bases_[i] + mlndx_[i]) <= (bases_[i-1] + mlndx_[i-1])) ||
-      ((bases_[i] + mlndx_[i]) == (bases_[half_size+i] + mlndx_[half_size+i]))){
+      ((bases_[i] + mlndx_[i]) != (bases_[half_size+i] + mlndx_[half_size+i]))){
     indeed = false;
     break;
    }
@@ -371,7 +379,43 @@ inline bool TensorRange::decreasingOrderDiag() const
  if(indeed && half_size > 0){
   for(int i = 1; i < half_size; ++i){
    if(((bases_[i] + mlndx_[i]) >= (bases_[i-1] + mlndx_[i-1])) ||
-      ((bases_[i] + mlndx_[i]) == (bases_[half_size+i] + mlndx_[half_size+i]))){
+      ((bases_[i] + mlndx_[i]) != (bases_[half_size+i] + mlndx_[half_size+i]))){
+    indeed = false;
+    break;
+   }
+  }
+  indeed = indeed && ((bases_[0] + mlndx_[0]) == (bases_[half_size] + mlndx_[half_size]));
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::nondecreasingOrderDiag() const
+{
+ bool indeed = (mlndx_.size() % 2 == 0);
+ int half_size = mlndx_.size() / 2;
+ if(indeed && half_size > 0){
+  for(int i = 1; i < half_size; ++i){
+   if(((bases_[i] + mlndx_[i]) < (bases_[i-1] + mlndx_[i-1])) ||
+      ((bases_[i] + mlndx_[i]) != (bases_[half_size+i] + mlndx_[half_size+i]))){
+    indeed = false;
+    break;
+   }
+  }
+  indeed = indeed && ((bases_[0] + mlndx_[0]) == (bases_[half_size] + mlndx_[half_size]));
+ }
+ return indeed;
+}
+
+
+inline bool TensorRange::nonincreasingOrderDiag() const
+{
+ bool indeed = (mlndx_.size() % 2 == 0);
+ int half_size = mlndx_.size() / 2;
+ if(indeed && half_size > 0){
+  for(int i = 1; i < half_size; ++i){
+   if(((bases_[i] + mlndx_[i]) > (bases_[i-1] + mlndx_[i-1])) ||
+      ((bases_[i] + mlndx_[i]) != (bases_[half_size+i] + mlndx_[half_size+i]))){
     indeed = false;
     break;
    }
