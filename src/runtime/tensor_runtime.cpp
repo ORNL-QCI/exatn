@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/04/01
+REVISION: 2021/09/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -275,6 +275,13 @@ bool TensorRuntime::sync(bool wait) {
   while(wait && still_working){
    if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
    still_working = executing_.load();
+  }
+  if(wait && (!still_working)){
+   if(current_dag_->getNumNodes() > MAX_RUNTIME_DAG_SIZE){
+    std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Clearing DAG ... "; //debug
+    current_dag_->clear();
+    std::cout << "Done\n" << std::flush; //debug
+   }
   }
   return !still_working;
 }

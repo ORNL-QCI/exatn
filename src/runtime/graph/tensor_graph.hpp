@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph (DAG) of tensor operations
-REVISION: 2020/06/23
+REVISION: 2021/09/21
 
-Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Alex McCaskey, Tiffany Mintz
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) The execution space consists of one or more DAGs in which nodes
@@ -341,6 +341,13 @@ public:
   /** Affirms that the DAG has unexecuted nodes. **/
   inline bool hasUnexecutedNodes() {
     return (exec_state_.getFrontNode() < this->getNumNodes());
+  }
+
+  virtual void clear() {
+    lock();
+    exec_state_.clear();
+    unlock();
+    return;
   }
 
   inline void lock() {mtx_.lock();}

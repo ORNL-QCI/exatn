@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2020/06/23
+REVISION: 2021/09/21
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph is a directed acyclic graph in which vertices
@@ -131,6 +131,9 @@ public:
 
   /** Returns the front node id. **/
   VertexIdType getFrontNode() const;
+
+  /** Clears the object. **/
+  void clear();
 
 private:
   /** Table for tracking the execution status of a given tensor:

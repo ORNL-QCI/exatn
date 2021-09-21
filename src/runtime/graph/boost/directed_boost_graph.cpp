@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2020/06/23
+REVISION: 2021/09/21
 
-Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Alex McCaskey, Tiffany Mintz
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "directed_boost_graph.hpp"
@@ -163,6 +163,16 @@ void DirectedBoostGraph::printIt()
     std::cout << "}" << std::endl;
   }
   std::cout << "#END MSG" << std::endl;
+  unlock();
+  return;
+}
+
+
+void DirectedBoostGraph::clear()
+{
+  lock();
+  dag_->clear();
+  exec_state_.clear();
   unlock();
   return;
 }

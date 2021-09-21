@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Directed acyclic graph of tensor operations
-REVISION: 2020/06/08
+REVISION: 2021/09/21
 
-Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Alex McCaskey, Tiffany Mintz
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph is a directed acyclic graph in which vertices
@@ -120,6 +120,8 @@ public:
   std::shared_ptr<TensorGraph> clone() override {
     return std::make_shared<DirectedBoostGraph>();
   }
+
+  virtual void clear() override;
 
 protected:
   DirectedGraphType dag_; //std::shared_ptr<d_adj_list>

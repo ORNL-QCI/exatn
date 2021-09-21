@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph execution state
-REVISION: 2020/06/23
+REVISION: 2021/09/21
 
-Copyright (C) 2018-2020 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "tensor_exec_state.hpp"
@@ -135,6 +135,15 @@ bool TensorExecState::progressFrontNode(VertexIdType node_executed)
 VertexIdType TensorExecState::getFrontNode() const
 {
  return front_node_;
+}
+
+void TensorExecState::clear()
+{
+ assert(nodes_ready_.empty());
+ assert(nodes_executing_.empty());
+ tensor_info_.clear();
+ front_node_ = 0;
+ return;
 }
 
 } // namespace runtime

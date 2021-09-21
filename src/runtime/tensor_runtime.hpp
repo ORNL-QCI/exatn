@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/04/01
+REVISION: 2021/09/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -68,6 +68,8 @@ namespace runtime {
 class TensorRuntime final {
 
 public:
+
+  static constexpr std::size_t MAX_RUNTIME_DAG_SIZE = 1000000000;
 
 #ifdef MPI_ENABLED
   TensorRuntime(const MPICommProxy & communicator,                               //MPI communicator proxy
