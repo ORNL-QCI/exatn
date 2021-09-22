@@ -42,7 +42,7 @@
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-#define EXATN_TEST26 //requires input file from source
+//#define EXATN_TEST26 //requires input file from source
 #define EXATN_TEST27
 #define EXATN_TEST28
 
@@ -1757,7 +1757,7 @@ TEST(NumServerTester, testGarbage) {
 
  // Create qubit tensors:
  auto success = true;
- const int NB_QUBITS = 24;
+ const int NB_QUBITS = 16;
 
  for (int i = 0; i < NB_QUBITS; ++i) {
   success = exatn::createTensor("Q" + std::to_string(i), TensorElementType::COMPLEX64, TensorShape{2});
@@ -3198,7 +3198,7 @@ int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
   //Set the available CPU Host RAM size to be used by ExaTN:
-  exatn_parameters.setParameter("host_memory_buffer_size",8L*1024L*1024L*1024L);
+  exatn_parameters.setParameter("host_memory_buffer_size",2L*1024L*1024L*1024L);
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);

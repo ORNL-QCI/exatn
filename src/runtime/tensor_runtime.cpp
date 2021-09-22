@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/09/21
+REVISION: 2021/09/22
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -134,45 +134,45 @@ void TensorRuntime::processTensorDataRequests()
 
 void TensorRuntime::resetLoggingLevel(int level)
 {
- while(!graph_executor_);
- graph_executor_->resetLoggingLevel(level);
- logging_ = level;
- return;
+  while(!graph_executor_);
+  graph_executor_->resetLoggingLevel(level);
+  logging_ = level;
+  return;
 }
 
 
 void TensorRuntime::resetSerialization(bool serialize, bool validation_trace)
 {
- while(!graph_executor_);
- return graph_executor_->resetSerialization(serialize,validation_trace);
+  while(!graph_executor_);
+  return graph_executor_->resetSerialization(serialize,validation_trace);
 }
 
 
 void TensorRuntime::activateDryRun(bool dry_run)
 {
- while(!graph_executor_);
- return graph_executor_->activateDryRun(dry_run);
+  while(!graph_executor_);
+  return graph_executor_->activateDryRun(dry_run);
 }
 
 
 void TensorRuntime::activateFastMath()
 {
- while(!graph_executor_);
- return graph_executor_->activateFastMath();
+  while(!graph_executor_);
+  return graph_executor_->activateFastMath();
 }
 
 
 std::size_t TensorRuntime::getMemoryBufferSize() const
 {
- while(!graph_executor_);
- return graph_executor_->getMemoryBufferSize();
+  while(!graph_executor_);
+  return graph_executor_->getMemoryBufferSize();
 }
 
 
 double TensorRuntime::getTotalFlopCount() const
 {
- while(!graph_executor_);
- return graph_executor_->getTotalFlopCount();
+  while(!graph_executor_);
+  return graph_executor_->getTotalFlopCount();
 }
 
 
@@ -247,8 +247,8 @@ bool TensorRuntime::sync(TensorOperation & op, bool wait) {
   auto opid = op.getId();
   bool completed = current_dag_->nodeExecuted(opid);
   while(wait && (!completed)){
-   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
-   completed = current_dag_->nodeExecuted(opid);
+    executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+    completed = current_dag_->nodeExecuted(opid);
   }
   return completed;
 }
@@ -260,8 +260,8 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
   bool completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
   while(wait && (!completed)){
-   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
-   completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
+    executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
+    completed = (current_dag_->getTensorUpdateCount(tensor) == 0);
   }
   //if(wait) std::cout << "Synced" << std::endl; //debug
   return completed;
@@ -269,20 +269,22 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 
 
 bool TensorRuntime::sync(bool wait) {
+  //if(wait) std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Syncing ... "; //debug
   assert(currentScopeIsSet());
   if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
   bool still_working = executing_.load();
   while(wait && still_working){
-   if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
-   still_working = executing_.load();
+    if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
+    still_working = executing_.load();
   }
   if(wait && (!still_working)){
-   if(current_dag_->getNumNodes() > MAX_RUNTIME_DAG_SIZE){
-    std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Clearing DAG ... "; //debug
-    current_dag_->clear();
-    std::cout << "Done\n" << std::flush; //debug
-   }
+    if(current_dag_->getNumNodes() > MAX_RUNTIME_DAG_SIZE){
+      //std::cout << "Clearing DAG ... "; //debug
+      current_dag_->clear();
+      //std::cout << "Done; "; //debug
+    }
   }
+  //if(wait) std::cout << "Synced\n" << std::flush; //debug
   return !still_working;
 }
 

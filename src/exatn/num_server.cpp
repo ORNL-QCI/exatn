@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/21
+REVISION: 2021/09/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -687,7 +687,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  auto output_tensor = network.getTensor(0);
  auto iter = tensors_.find(output_tensor->getName());
  if(iter == tensors_.end()){ //output tensor does not exist and needs to be created
-  implicit_tensors_.emplace_back(output_tensor); //list of implicitly created tensors (for garbage collection)
+  implicit_tensors_.emplace(std::make_pair(output_tensor->getName(),output_tensor)); //list of implicitly created tensors (for garbage collection)
   //Create output tensor:
   std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
   op0->setTensorOperand(output_tensor);
@@ -1072,8 +1072,9 @@ bool NumServer::registerTensorIsometry(const std::string & name,
 
 bool NumServer::withinTensorExistenceDomain(const std::string & tensor_name) const
 {
- auto iter = tensors_.find(tensor_name);
- return (iter != tensors_.cend());
+ bool exists = (tensors_.find(tensor_name) != tensors_.cend());
+ if(!exists) exists = (implicit_tensors_.find(tensor_name) != implicit_tensors_.cend());
+ return exists;
 }
 
 const ProcessGroup & NumServer::getTensorProcessGroup(const std::string & tensor_name) const
@@ -3002,21 +3003,25 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & nam
 
 void NumServer::destroyOrphanedTensors()
 {
+ //std::cout << "#DEBUG(exatn::NumServer): Destroying orphaned tensors ... "; //debug
  auto iter = implicit_tensors_.begin();
  while(iter != implicit_tensors_.end()){
   int ref_count = 1;
-  auto tens = tensors_.find((*iter)->getName());
+  auto tens = tensors_.find(iter->first);
   if(tens != tensors_.end()) ++ref_count;
-  if(iter->use_count() <= ref_count){
-   auto tensor_mapper = getTensorMapper(getTensorProcessGroup((*iter)->getName()));
+  if(iter->second.use_count() <= ref_count){
+   //std::cout << "#DEBUG(exatn::NumServer::destroyOrphanedTensors): Orphan found with ref count "
+   //          << ref_count << ": " << iter->first << std::endl; //debug
+   auto tensor_mapper = getTensorMapper(getTensorProcessGroup(iter->first));
    std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-   destroy_op->setTensorOperand(*iter);
+   destroy_op->setTensorOperand(iter->second);
    auto submitted = submit(destroy_op,tensor_mapper);
    iter = implicit_tensors_.erase(iter);
   }else{
    ++iter;
   }
  }
+ //std::cout << "Done\n" << std::flush; //debug
  return;
 }
 
@@ -3024,7 +3029,7 @@ void NumServer::printImplicitTensors() const
 {
  std::cout << "#DEBUG(exatn::NumServer::printImplicitTensors):" << std::endl;
  for(const auto & tens: implicit_tensors_){
-  std::cout << tens->getName() << ": Reference count = " << tens.use_count() << std::endl;
+  std::cout << tens.first << ": Reference count = " << tens.second.use_count() << std::endl;
  }
  std::cout << "#END" << std::endl << std::flush;
  return;
