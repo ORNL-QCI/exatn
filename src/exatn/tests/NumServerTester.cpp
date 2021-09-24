@@ -12,6 +12,8 @@
 #include <ios>
 #include <utility>
 #include <numeric>
+#include <chrono>
+#include <thread>
 
 #include "errors.hpp"
 
@@ -62,16 +64,17 @@ TEST(NumServerTester, PerformanceExaTN)
                                     //3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  //exatn::resetExecutionSerialization(true,true); //debug
 
  //exatn::activateFastMath(); //fast math (mixed-precision)
 
- std::cout << "Contractions of rank-2 tensors:" << std::endl;
  bool success = true;
+ std::cout << "Contractions of rank-2 tensors:" << std::endl;
 
  //Create tensors:
+ std::cout << " Creating all tensors ... ";
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
@@ -81,8 +84,10 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("H",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
  success = exatn::createTensor("I",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ std::cout << "Done\n";
 
  //Initialize tensors:
+ std::cout << " Initializing all tensors ... ";
  success = exatn::initTensor("A",1e-4); assert(success);
  success = exatn::initTensor("B",1e-3); assert(success);
  success = exatn::initTensor("C",0.0); assert(success);
@@ -92,43 +97,68 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::initTensor("G",1e-4); assert(success);
  success = exatn::initTensor("H",1e-3); assert(success);
  success = exatn::initTensor("I",0.0); assert(success);
+ std::cout << "Done\n";
 
- //Contract tensors (case 1):
- std::cout << " Case 1: C=A*B five times: ";
- exatn::sync();
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
+ //Contract tensors (case 0):
+ std::cout << " Case 0: C=A*B five times: Warm-up: ";
+ success = exatn::sync(); assert(success);
  auto time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(i,k)*B(k,j)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(j,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(i,k)*B(j,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
- exatn::sync();
+ success = exatn::sync(); assert(success);
  auto duration = exatn::Timer::timeInSecHR(time_start);
  std::cout << "Average performance (GFlop/s) = " << 5.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
 
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
+ //Contract tensors (case 1):
+ std::cout << " Case 1: C=A*B five times: Reuse: ";
+ success = exatn::sync(); assert(success);
+ time_start = exatn::Timer::timeInSecHR();
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(i,k)*B(k,j)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(j,k)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(i,k)*B(j,k)",1.0); assert(success);
+ success = exatn::contractTensors("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
+ success = exatn::sync(); assert(success);
+ duration = exatn::Timer::timeInSecHR(time_start);
+ std::cout << "Average performance (GFlop/s) = " << 5.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
+
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
  //Contract tensors (case 2):
- std::cout << " Case 2: C=A*B | F=D*E | I=G*H pipeline: ";
- exatn::sync();
+ std::cout << " Case 2: C=A*B | F=D*E | I=G*H: Pipeline: ";
+ success = exatn::sync(); assert(success);
  time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("I(i,j)+=G(j,k)*H(i,k)",1.0); assert(success);
  success = exatn::contractTensors("F(i,j)+=D(j,k)*E(i,k)",1.0); assert(success);
  success = exatn::contractTensors("C(i,j)+=A(j,k)*B(i,k)",1.0); assert(success);
- exatn::sync();
+ success = exatn::sync(); assert(success);
  duration = exatn::Timer::timeInSecHR(time_start);
  std::cout << "Average performance (GFlop/s) = " << 3.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
 
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
  //Contract tensors (case 3):
- std::cout << " Case 3: I=A*B | I=D*E | I=G*H prefetch: ";
- exatn::sync();
+ std::cout << " Case 3: I=A*B | I=D*E | I=G*H: Prefetch: ";
+ success = exatn::sync(); assert(success);
  time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("I(i,j)+=G(j,k)*H(i,k)",1.0); assert(success);
  success = exatn::contractTensors("I(i,j)+=D(j,k)*E(i,k)",1.0); assert(success);
  success = exatn::contractTensors("I(i,j)+=A(j,k)*B(i,k)",1.0); assert(success);
- exatn::sync();
+ success = exatn::sync(); assert(success);
  duration = exatn::Timer::timeInSecHR(time_start);
  std::cout << "Average performance (GFlop/s) = " << 3.0*2.0*double{DIM}*double{DIM}*double{DIM}/duration/1e9 << std::endl;
 
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
  //Destroy tensors:
+ std::cout << " Destroying all tensors ... ";
  success = exatn::destroyTensor("I"); assert(success);
  success = exatn::destroyTensor("H"); assert(success);
  success = exatn::destroyTensor("G"); assert(success);
@@ -138,34 +168,43 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("C"); assert(success);
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
+ std::cout << "Done\n";
 
- exatn::sync();
+ success = exatn::sync(); assert(success);
 
  //Create tensors:
+ std::cout << " Creating all tensors ... ";
  success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM,DIM,32ULL}); assert(success);
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM,DIM,32ULL}); assert(success);
  success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM,DIM}); assert(success);
+ std::cout << "Done\n";
 
  //Initialize tensors:
+ std::cout << " Initializing all tensors ... ";
  success = exatn::initTensor("A",1e-4); assert(success);
  success = exatn::initTensor("B",1e-3); assert(success);
  success = exatn::initTensor("C",0.0); assert(success);
+ std::cout << "Done\n";
 
  //Contract tensors:
- std::cout << " Case 4: C=A*B out-of-core large dims: ";
- exatn::sync();
+ std::cout << " Case 4: C=A*B: Out-of-core large dims: ";
+ success = exatn::sync(); assert(success);
  time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("C(i,j)+=A(j,k,l)*B(i,k,l)",1.0); assert(success);
- exatn::sync();
+ success = exatn::sync(); assert(success);
  duration = exatn::Timer::timeInSecHR(time_start);
  std::cout << "Average performance (GFlop/s) = " << 2.0*double{DIM}*double{DIM}*double{DIM}*double{32}/duration/1e9 << std::endl;
 
+ std::this_thread::sleep_for(std::chrono::microseconds(100000));
+
  //Destroy tensors:
+ std::cout << " Destroying all tensors ... ";
  success = exatn::destroyTensor("C"); assert(success);
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
+ std::cout << "Done\n";
 
- exatn::sync();
+ success = exatn::sync(); assert(success);
 
 /* REQUIRES at least 48 GB Host RAM:
  //Create tensors:
@@ -227,7 +266,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Synchronize ExaTN server:
  exatn::sync();
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -3083,7 +3122,7 @@ TEST(NumServerTester, TensorComposite) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -3173,13 +3212,13 @@ TEST(NumServerTester, TensorComposite) {
  norm = 0.0;
  success = exatn::computeNorm2Sync("B",norm); assert(success);
  std::cout << "2-norm of tensor B = " << (norm * norm) << std::endl;
-
+#if 0
  //Contract composite tensors:
  success = exatn::contractTensorsSync("C(i,j)+=A(k,i)*B(k,j)",1.0); assert(success);
  norm = 0.0;
  success = exatn::computeNorm1Sync("C",norm); assert(success);
  std::cout << "1-norm of tensor C after contraction = " << norm << std::endl;
-
+#endif
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);
  //success = exatn::destroyTensorSync("C"); assert(success); //let the garbage collector do it
@@ -3198,7 +3237,7 @@ int main(int argc, char **argv) {
 
   exatn::ParamConf exatn_parameters;
   //Set the available CPU Host RAM size to be used by ExaTN:
-  exatn_parameters.setParameter("host_memory_buffer_size",2L*1024L*1024L*1024L);
+  exatn_parameters.setParameter("host_memory_buffer_size",4L*1024L*1024L*1024L);
 #ifdef MPI_ENABLED
   int thread_provided;
   int mpi_error = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &thread_provided);

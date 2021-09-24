@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/24
+REVISION: 2021/09/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -81,9 +81,9 @@ public:
 protected:
 
  struct Bisect{
-  IndexKind index_kind;
-  unsigned int process_count;
-  bool serial;
+  IndexKind index_kind;       //index kind
+  unsigned int process_count; //number of associated processes
+  bool serial;                //DFS/BFS
  };
 
  //Information on all indices of a tensor contraction:
@@ -92,8 +92,8 @@ protected:
   std::vector<PosIndexLabel> right_indices_;
   std::vector<PosIndexLabel> contr_indices_;
   std::vector<PosIndexLabel> hyper_indices_;
-  std::map<std::string,const PosIndexLabel*> index_map_;
-  std::list<Bisect> bisect_sequence_;
+  std::map<std::string,const PosIndexLabel*> index_map_; //index name --> pointer to its description
+  std::list<Bisect> bisect_sequence_; //pre-calculated sequence of bisections
 
   //Constructor:
   IndexInfo(const std::vector<PosIndexLabel> & left_indices,   //in: extracted left indices

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/07/27
+REVISION: 2021/09/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -1505,6 +1505,8 @@ void TalshNodeExecutor::cacheMovedTensors(talsh::TensorTask & talsh_task)
      if(arg_coherence == COPY_M || arg_coherence == COPY_K){ //move or copy of tensor body image
       auto res = accel_cache_[device].emplace(std::make_pair(const_cast<talsh::Tensor*>(talsh_task.getTensorArgument(oprnd)),
                                                              CachedAttr{exatn::Timer::timeInSecHR()}));
+      //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CACHE: Device " << device
+      //          << " cached " << res.first->first << std::endl << std::flush; //debug
      }
     }
    }
@@ -1542,6 +1544,8 @@ bool TalshNodeExecutor::evictMovedTensors(int device_id, std::size_t required_sp
      auto task_res = evictions_.emplace(std::make_pair(iter->first,
                                                        std::make_shared<talsh::TensorTask>()));
      if(task_res.second){
+      //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): CACHE: Device " << dev
+      //          << " evicting " << iter->first << std::endl << std::flush; //debug
       bool synced = iter->first->sync(task_res.first->second.get(),DEV_HOST,0,nullptr,!single_device); //initiate a move of the tensor body image back to Host
       iter = accel_cache_[dev].erase(iter);
       freed_bytes += talsh_tens_size;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/08/24
+REVISION: 2021/09/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -61,18 +61,20 @@ DimExtent TensorOpContract::getCombinedDimExtent(IndexKind index_kind) const
 {
  assert(index_info_);
  DimExtent dim_ext = 1;
+ const auto & tensor0 = *getTensorOperand(0);
+ const auto & tensor1 = *getTensorOperand(1);
  switch(index_kind){
   case IndexKind::LEFT:
-   for(const auto & ind: index_info_->left_indices_) dim_ext *= getTensorOperand(0)->getDimExtent(ind.arg_pos[0]);
+   for(const auto & ind: index_info_->left_indices_) dim_ext *= tensor0.getDimExtent(ind.arg_pos[0]);
    break;
   case IndexKind::RIGHT:
-   for(const auto & ind: index_info_->right_indices_) dim_ext *= getTensorOperand(0)->getDimExtent(ind.arg_pos[0]);
+   for(const auto & ind: index_info_->right_indices_) dim_ext *= tensor0.getDimExtent(ind.arg_pos[0]);
    break;
   case IndexKind::CONTR:
-   for(const auto & ind: index_info_->contr_indices_) dim_ext *= getTensorOperand(1)->getDimExtent(ind.arg_pos[1]);
+   for(const auto & ind: index_info_->contr_indices_) dim_ext *= tensor1.getDimExtent(ind.arg_pos[1]);
    break;
   case IndexKind::HYPER:
-   for(const auto & ind: index_info_->hyper_indices_) dim_ext *= getTensorOperand(0)->getDimExtent(ind.arg_pos[0]);
+   for(const auto & ind: index_info_->hyper_indices_) dim_ext *= tensor0.getDimExtent(ind.arg_pos[0]);
    break;
   default:
    assert(false);
@@ -100,6 +102,7 @@ void TensorOpContract::determineNumBisections(unsigned int num_processes,
  std::size_t proc_count = num_processes;
  std::size_t mem_count = mem_per_process * num_processes;
 
+ //Decides whether or not to replicate the tensor at a specific stage of decomposition:
  auto dfs = [](std::size_t mem_lim, std::size_t tens_size){
   return (tens_size > static_cast<std::size_t>(static_cast<double>(mem_lim)*replication_threshold));
  };
@@ -163,13 +166,14 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //Set the splitting depth for the left indices:
  unsigned int split_left = 0;
  if(bisect_left > 0){
+  const auto & tensor = *getTensorOperand(0);
   auto & indices = index_info_->left_indices_;
   int i = indices.size();
   auto n = bisect_left;
   while(n-- > 0){
    if(--i < 0) i = (indices.size() - 1);
    const unsigned int new_depth = indices[i].depth + 1;
-   if(getTensorOperand(0)->getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
+   if(tensor.getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
     if((indices[i].depth)++ == 0) ++split_left;
    }
   }
@@ -177,13 +181,14 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //Set the splitting depth for the right indices:
  unsigned int split_right = 0;
  if(bisect_right > 0){
+  const auto & tensor = *getTensorOperand(0);
   auto & indices = index_info_->right_indices_;
   int i = indices.size();
   auto n = bisect_right;
   while(n-- > 0){
    if(--i < 0) i = (indices.size() - 1);
    const unsigned int new_depth = indices[i].depth + 1;
-   if(getTensorOperand(0)->getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
+   if(tensor.getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
     if((indices[i].depth)++ == 0) ++split_right;
    }
   }
@@ -191,13 +196,14 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //Set the splitting depth for the contracted indices:
  unsigned int split_contr = 0;
  if(bisect_contr > 0){
+  const auto & tensor = *getTensorOperand(1);
   auto & indices = index_info_->contr_indices_;
   int i = indices.size();
   auto n = bisect_contr;
   while(n-- > 0){
    if(--i < 0) i = (indices.size() - 1);
    const unsigned int new_depth = indices[i].depth + 1;
-   if(getTensorOperand(1)->getDimExtent(indices[i].arg_pos[1]) >= (1U << new_depth)){
+   if(tensor.getDimExtent(indices[i].arg_pos[1]) >= (1U << new_depth)){
     if((indices[i].depth)++ == 0) ++split_contr;
    }
   }
@@ -205,13 +211,14 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //Set the splitting depth for the hyper indices:
  unsigned int split_hyper = 0;
  if(bisect_hyper > 0){
+  const auto & tensor = *getTensorOperand(0);
   auto & indices = index_info_->hyper_indices_;
   int i = indices.size();
   auto n = bisect_hyper;
   while(n-- > 0){
    if(--i < 0) i = (indices.size() - 1);
    const unsigned int new_depth = indices[i].depth + 1;
-   if(getTensorOperand(0)->getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
+   if(tensor.getDimExtent(indices[i].arg_pos[0]) >= (1U << new_depth)){
     if((indices[i].depth)++ == 0) ++split_hyper;
    }
   }
@@ -220,7 +227,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  //Replace original tensor operands with new ones with proper decomposition:
  //Destination tensor operand:
  bool operand_is_composite = getTensorOperand(0)->isComposite();
- if(split_left > 0 || split_right > 0 || split_hyper > 0 || operand_is_composite){
+ if(operand_is_composite && (split_left > 0 || split_right > 0 || split_hyper > 0)){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_left+split_right+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->left_indices_){
@@ -245,7 +252,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  }
  //Left tensor operand:
  operand_is_composite = getTensorOperand(1)->isComposite();
- if(split_contr > 0 || split_left > 0 || split_hyper > 0 || operand_is_composite){
+ if(operand_is_composite && (split_contr > 0 || split_left > 0 || split_hyper > 0)){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_contr+split_left+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->contr_indices_){
@@ -270,7 +277,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
  }
  //Right tensor operand:
  operand_is_composite = getTensorOperand(2)->isComposite();
- if(split_contr > 0 || split_right > 0 || split_hyper > 0 || operand_is_composite){
+ if(operand_is_composite && (split_contr > 0 || split_right > 0 || split_hyper > 0)){
   std::vector<std::pair<unsigned int, unsigned int>> split_dims(split_contr+split_right+split_hyper);
   unsigned int i = 0;
   for(const auto & ind: index_info_->contr_indices_){

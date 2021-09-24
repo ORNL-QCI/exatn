@@ -7,23 +7,12 @@ BUGS:
 
 FEATURES:
 
-- Limit the DAG size:
-  Option 1: Once the limit has been reached, synchronize and clear it.
-  Option 2: Once the limit has been reached, create a new empty
-            DAG and start adding new operations to the new DAG
-            while completing the execution of the previous one.
-            Once execution of the previous one has been completed,
-            destroy the previous DAG.
-  Issues: Tensor instruction numeration must be global such that
-          every time a DAG is cleared a global increment will be
-          introduced in the tensor instruction id numbering.
-
-
 - GPU-RAM persistence:
   1. Create large tensors on GPU;
   2. Use COPY_T for smaller tensors;
   3. Cache eviction policy: Evict minimally necessary ones (prefer smaller tensors);
-  4. Limit the Host buffer size to be similar to the combined device buffer size;
+  4. Limit the Host buffer size to be similar to the combined devices buffer size;
+  5. Introduce manual knobs to keep tensors on GPU;
 
 
 - Implement tensor operator builders.

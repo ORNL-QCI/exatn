@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/22
+REVISION: 2021/09/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1306,33 +1306,48 @@ bool NumServer::contractTensors(const std::string & contraction,
          op->setIndexPattern(contraction);
          op->setScalar(0,std::complex<double>(alpha));
          //Create temporary tensors with optimized distributed layout and copy tensor data:
+         bool redistribution = false;
          std::dynamic_pointer_cast<numerics::TensorOpContract>(op)->
           introduceOptTemporaries(process_group.getSize(),process_group.getMemoryLimitPerProcess(),left_inds,right_inds,contr_inds,hyper_inds);
          auto tensor0a = op->getTensorOperand(0);
          auto tensor1a = op->getTensorOperand(1);
          auto tensor2a = op->getTensorOperand(2);
          if(parsed && tensor0a != tensor0){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensors): New temporary for tensor operand 0" << std::endl; //debug
+          redistribution = true;
           parsed = createTensorSync(tensor0a,tensor0->getElementType());
           if(parsed) parsed = copyTensor(tensor0a->getName(),tensor0->getName());
          }
          if(parsed && tensor1a != tensor1){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensors): New temporary for tensor operand 1" << std::endl; //debug
+          redistribution = true;
           parsed = createTensorSync(tensor1a,tensor1->getElementType());
           if(parsed) parsed = copyTensor(tensor1a->getName(),tensor1->getName());
          }
          if(parsed && tensor2a != tensor2){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensors): New temporary for tensor operand 2" << std::endl; //debug
+          redistribution = true;
           parsed = createTensorSync(tensor2a,tensor2->getElementType());
           if(parsed) parsed = copyTensor(tensor2a->getName(),tensor2->getName());
          }
-         if(parsed) parsed = sync(process_group);
+#ifdef MPI_ENABLED
+         if(parsed && redistribution) parsed = sync(process_group);
+#endif
          //Submit tensor contraction for execution:
-         parsed = submit(op,getTensorMapper(process_group));
+         if(parsed) parsed = submit(op,getTensorMapper(process_group));
          //Copy the result back:
-         if(parsed) parsed = sync(process_group);
-         if(parsed && tensor0a != tensor0) parsed = copyTensor(tensor0->getName(),tensor0a->getName());
+         if(parsed && tensor0a != tensor0){
+#ifdef MPI_ENABLED
+          if(redistribution) parsed = sync(process_group);
+#endif
+          if(parsed) parsed = copyTensor(tensor0->getName(),tensor0a->getName());
+         }
          //Destroy temporary tensors:
          if(parsed && tensor2a != tensor2) parsed = destroyTensor(tensor2a->getName());
          if(parsed && tensor1a != tensor1) parsed = destroyTensor(tensor1a->getName());
-         if(parsed) parsed = sync(process_group);
+#ifdef MPI_ENABLED
+         if(parsed && redistribution) parsed = sync(process_group);
+#endif
          if(parsed && tensor0a != tensor0) parsed = destroyTensor(tensor0a->getName());
         }else{
          parsed = true;
@@ -1415,14 +1430,17 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          auto tensor2a = op->getTensorOperand(2);
          //std::cout << "#DEBUG: " << tensor0a->getName() << " " << tensor1a->getName() << " " << tensor2a->getName() << std::endl; //debug
          if(parsed && tensor0a != tensor0){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensorsSync): New temporary for tensor operand 0" << std::endl; //debug
           parsed = createTensorSync(tensor0a,tensor0->getElementType());
           if(parsed) parsed = copyTensorSync(tensor0a->getName(),tensor0->getName());
          }
          if(parsed && tensor1a != tensor1){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensorsSync): New temporary for tensor operand 1" << std::endl; //debug
           parsed = createTensorSync(tensor1a,tensor1->getElementType());
           if(parsed) parsed = copyTensorSync(tensor1a->getName(),tensor1->getName());
          }
          if(parsed && tensor2a != tensor2){
+          //std::cout << "#DEBUG(exatn::NumServer::contractTensorsSync): New temporary for tensor operand 2" << std::endl; //debug
           parsed = createTensorSync(tensor2a,tensor2->getElementType());
           if(parsed) parsed = copyTensorSync(tensor2a->getName(),tensor2->getName());
          }
