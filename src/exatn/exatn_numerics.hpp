@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/08/12
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -770,26 +770,30 @@ inline bool evaluateSync(const ProcessGroup & process_group, //in: chosen group 
 
 /** Evaluates a tensor network expansion into the explicitly provided tensor accumulator. **/
 inline bool evaluate(TensorExpansion & expansion,         //in: tensor network expansion
-                     std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
- {return numericalServer->submit(expansion,accumulator);}
+                     std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                     unsigned int parallel_width = 1)     //in: requested number of execution subgroups running in parallel
+ {return numericalServer->submit(expansion,accumulator,parallel_width);}
 
 inline bool evaluateSync(TensorExpansion & expansion,         //in: tensor network expansion
-                         std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
+                         std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                         unsigned int parallel_width = 1)     //in: requested number of execution subgroups running in parallel
  {if(!accumulator) return false;
-  bool success = numericalServer->submit(expansion,accumulator);
+  bool success = numericalServer->submit(expansion,accumulator,parallel_width);
   if(success) success = numericalServer->sync(*accumulator);
   return success;}
 
 inline bool evaluate(const ProcessGroup & process_group,  //in: chosen group of MPI processes
                      TensorExpansion & expansion,         //in: tensor network expansion
-                     std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
- {return numericalServer->submit(process_group,expansion,accumulator);}
+                     std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                     unsigned int parallel_width = 1)     //in: requested number of execution subgroups running in parallel
+ {return numericalServer->submit(process_group,expansion,accumulator,parallel_width);}
 
 inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group of MPI processes
                          TensorExpansion & expansion,         //in: tensor network expansion
-                         std::shared_ptr<Tensor> accumulator) //inout: tensor accumulator
+                         std::shared_ptr<Tensor> accumulator, //inout: tensor accumulator
+                         unsigned int parallel_width = 1)     //in: requested number of execution subgroups running in parallel
  {if(!accumulator) return false;
-  bool success = numericalServer->submit(process_group,expansion,accumulator);
+  bool success = numericalServer->submit(process_group,expansion,accumulator,parallel_width);
   if(success) success = numericalServer->sync(process_group,*accumulator);
   return success;}
 

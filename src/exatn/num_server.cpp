@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/22
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -866,55 +866,64 @@ bool NumServer::submit(const ProcessGroup & process_group,
 }
 
 bool NumServer::submit(TensorExpansion & expansion,
-                       std::shared_ptr<Tensor> accumulator)
+                       std::shared_ptr<Tensor> accumulator,
+                       unsigned int parallel_width)
 {
- return submit(getDefaultProcessGroup(),expansion,accumulator);
+ return submit(getDefaultProcessGroup(),expansion,accumulator,parallel_width);
 }
 
 bool NumServer::submit(std::shared_ptr<TensorExpansion> expansion,
-                       std::shared_ptr<Tensor> accumulator)
+                       std::shared_ptr<Tensor> accumulator,
+                       unsigned int parallel_width)
 {
- return submit(getDefaultProcessGroup(),expansion,accumulator);
+ return submit(getDefaultProcessGroup(),expansion,accumulator,parallel_width);
 }
 
 bool NumServer::submit(const ProcessGroup & process_group,
                        TensorExpansion & expansion,
-                       std::shared_ptr<Tensor> accumulator)
+                       std::shared_ptr<Tensor> accumulator,
+                       unsigned int parallel_width)
 {
- if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ unsigned int local_rank;
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
  assert(accumulator);
- auto tensor_mapper = getTensorMapper(process_group);
- std::list<std::shared_ptr<TensorOperation>> accumulations;
- for(auto component = expansion.begin(); component != expansion.end(); ++component){
-  //Evaluate the tensor network component (compute its output tensor):
-  auto & network = *(component->network);
-  auto submitted = submit(process_group,network); if(!submitted) return false;
-  //Create accumulation operation for the scaled computed output tensor:
-  bool conjugated;
-  auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
-  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
-  op->setTensorOperand(accumulator);
-  op->setTensorOperand(output_tensor,conjugated);
-  op->setScalar(0,component->coefficient);
-  std::string add_pattern;
-  auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern,false,
-                                             accumulator->getName(),output_tensor->getName());
-  assert(generated);
-  op->setIndexPattern(add_pattern);
-  accumulations.emplace_back(op);
- }
- //Submit all previously created accumulation operations:
- for(auto & accumulation: accumulations){
-  auto submitted = submit(accumulation,tensor_mapper); if(!submitted) return false;
+ if(parallel_width <= 1){ //all processes execute all tensor networks one-by-one
+  auto tensor_mapper = getTensorMapper(process_group);
+  std::list<std::shared_ptr<TensorOperation>> accumulations;
+  for(auto component = expansion.begin(); component != expansion.end(); ++component){
+   //Evaluate the tensor network component (compute its output tensor):
+   auto & network = *(component->network);
+   auto submitted = submit(process_group,network); if(!submitted) return false;
+   //Create accumulation operation for the scaled computed output tensor:
+   bool conjugated;
+   auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
+   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ADD);
+   op->setTensorOperand(accumulator);
+   op->setTensorOperand(output_tensor,conjugated);
+   op->setScalar(0,component->coefficient);
+   std::string add_pattern;
+   auto generated = generate_addition_pattern(accumulator->getRank(),add_pattern,false,
+                                              accumulator->getName(),output_tensor->getName());
+   assert(generated);
+   op->setIndexPattern(add_pattern);
+   accumulations.emplace_back(op);
+  }
+  //Submit all previously created accumulation operations:
+  for(auto & accumulation: accumulations){
+   auto submitted = submit(accumulation,tensor_mapper); if(!submitted) return false;
+  }
+ }else{ //tensor networks will be distributed among subgroups of processes
+  std::abort(); //`Finish
  }
  return true;
 }
 
 bool NumServer::submit(const ProcessGroup & process_group,
                        std::shared_ptr<TensorExpansion> expansion,
-                       std::shared_ptr<Tensor> accumulator)
+                       std::shared_ptr<Tensor> accumulator,
+                       unsigned int parallel_width)
 {
- if(expansion) return submit(process_group,*expansion,accumulator);
+ if(expansion) return submit(process_group,*expansion,accumulator,parallel_width);
  return false;
 }
 

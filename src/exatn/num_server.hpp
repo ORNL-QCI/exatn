@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/24
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -405,15 +405,19 @@ public:
      tensor. By default all parallel processes will be processing the tensor network,
      otherwise the desired process subset needs to be explicitly specified. **/
  bool submit(TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             unsigned int parallel_width = 1);            //in: requested number of execution subgroups running in parallel
  bool submit(std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             unsigned int parallel_width = 1);            //in: requested number of execution subgroups running in parallel
  bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
              TensorExpansion & expansion,                 //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             unsigned int parallel_width = 1);            //in: requested number of execution subgroups running in parallel
  bool submit(const ProcessGroup & process_group,          //in: chosen group of MPI processes
              std::shared_ptr<TensorExpansion> expansion,  //in: tensor expansion for numerical evaluation
-             std::shared_ptr<Tensor> accumulator);        //inout: tensor accumulator (result)
+             std::shared_ptr<Tensor> accumulator,         //inout: tensor accumulator (result)
+             unsigned int parallel_width = 1);            //in: requested number of execution subgroups running in parallel
 
  /** Synchronizes all update operations on a given tensor.
      Changing wait to FALSE, only tests for completion.
