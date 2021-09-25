@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -44,9 +44,10 @@
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-//#define EXATN_TEST26 //requires input file from source
-#define EXATN_TEST27
-#define EXATN_TEST28
+#define EXATN_TEST26*/
+//#define EXATN_TEST27 //requires input file from source
+#define EXATN_TEST28 //requires input file from source
+//#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
@@ -2853,122 +2854,6 @@ TEST(NumServerTester, OptimizerHubbard) {
 #endif
 
 #ifdef EXATN_TEST26
-TEST(NumServerTester, HubbardHamiltonian) {
- using exatn::TensorShape;
- using exatn::TensorSignature;
- using exatn::Tensor;
- using exatn::TensorComposite;
- using exatn::TensorNetwork;
- using exatn::TensorExpansion;
- using exatn::TensorOperator;
- using exatn::TensorElementType;
-
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
-
- //exatn::resetLoggingLevel(2,2); //debug
-
- bool success = true;
-
- const int num_sites = 8, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),16); //2x2 sites x dim(4) = 8 qubits (sites)
-
- //Read 2x2 Hubbard Hamiltonian in spin representation:
- //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
- //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
- //success = hubbard_operator->deleteComponent(0); assert(success);
- auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
- hubbard_operator->printIt();
-
- //Create tensor network ansatz:
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
- success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
- auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
- auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
- ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
- auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
- //ansatz->printIt(); //debug
-
- //Allocate/initialize tensors in the tensor network ansatz:
- for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
-  if(tens_conn->first != 0){ //input tensors only
-   success = exatn::createTensorSync(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
-   success = exatn::initTensorRndSync(tens_conn->second.getName()); assert(success);
-  }
- }
- success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
-
- //Create the full tensor ansatz:
- success = exatn::createTensorSync(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
- success = exatn::initTensorRndSync(ansatz_tensor->getName()); assert(success);
- auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
- success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
- ansatz_full_net->markOptimizableAllTensors();
- auto ansatz_full = exatn::makeSharedTensorExpansion("AnsatzFull",ansatz_full_net,std::complex<double>{1.0,0.0});
- //ansatz_full->printIt(); //debug
-
- //Perform ground state optimization in a complete tensor space:
- {
-  std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
-  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz_full,1e-4);
-  success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   std::cout << "Optimization succeeded!" << std::endl;
-  }else{
-   std::cout << "Optimization failed!" << std::endl; assert(false);
-  }
- }
- success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
- //success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
-
- //Reconstruct the exact eigen-tensor as a tensor network:
- ansatz->conjugate();
- success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,false); assert(success);
- exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
- exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-7);
- success = exatn::sync(); assert(success);
- double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
- success = exatn::sync(); assert(success);
- if(reconstructed){
-  std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
-            << "; Fidelity = " << fidelity << std::endl;
- }else{
-  std::cout << "Reconstruction failed!" << std::endl; //assert(false);
- }
- ansatz->conjugate();
-
- //Perform ground state optimization on a tensor network manifold:
- {
-  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
-  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz,1e-4);
-  //optimizer.resetMicroIterations(1);
-  bool converged = optimizer.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   std::cout << "Optimization succeeded!" << std::endl;
-   success = exatn::evaluateSync(*((*ansatz)[0].network)); assert(success);
-   success = exatn::normalizeNorm2Sync((*ansatz)[0].network->getTensor(0)->getName(),1.0); assert(success);
-   //success = exatn::printTensor((*ansatz)[0].network->getTensor(0)->getName()); assert(success);
-  }else{
-   std::cout << "Optimization failed!" << std::endl; assert(false);
-  }
- }
-
- //Destroy tensors:
- success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
- success = exatn::destroyTensors(*ansatz_net); assert(success);
-
- //Synchronize:
- success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
- //Grab a beer!
-}
-#endif
-
-#ifdef EXATN_TEST27
 TEST(NumServerTester, ExaTNGenVisitor) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -3110,7 +2995,189 @@ TEST(NumServerTester, ExaTNGenVisitor) {
 }
 #endif
 
+#ifdef EXATN_TEST27
+TEST(NumServerTester, HubbardHamiltonian) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ const int num_sites = 8, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),16); //2x2 sites x dim(4) = 8 qubits (sites)
+
+ //Read 2x2 Hubbard Hamiltonian in spin representation:
+ //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
+ //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
+ //success = hubbard_operator->deleteComponent(0); assert(success);
+ auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
+ hubbard_operator->printIt();
+
+ //Create tensor network ansatz:
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
+ //ansatz->printIt(); //debug
+
+ //Allocate/initialize tensors in the tensor network ansatz:
+ for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
+  if(tens_conn->first != 0){ //input tensors only
+   success = exatn::createTensorSync(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRndSync(tens_conn->second.getName()); assert(success);
+  }
+ }
+ success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+
+ //Create the full tensor ansatz:
+ success = exatn::createTensorSync(ansatz_tensor,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorRndSync(ansatz_tensor->getName()); assert(success);
+ auto ansatz_full_net = exatn::makeSharedTensorNetwork("AnsatzFull");
+ success = ansatz_full_net->appendTensor(1,ansatz_tensor,{}); assert(success);
+ ansatz_full_net->markOptimizableAllTensors();
+ auto ansatz_full = exatn::makeSharedTensorExpansion("AnsatzFull",ansatz_full_net,std::complex<double>{1.0,0.0});
+ //ansatz_full->printIt(); //debug
+
+ //Perform ground state optimization in a complete tensor space:
+ {
+  std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz_full,1e-4);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+ success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
+ //success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
+
+ //Reconstruct the exact eigen-tensor as a tensor network:
+ ansatz->conjugate();
+ success = exatn::balanceNormalizeNorm2Sync(*ansatz_full,1.0,1.0,false); assert(success);
+ exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor reconstructor(ansatz_full,ansatz,1e-7);
+ success = exatn::sync(); assert(success);
+ double residual_norm, fidelity;
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
+ success = exatn::sync(); assert(success);
+ if(reconstructed){
+  std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
+            << "; Fidelity = " << fidelity << std::endl;
+ }else{
+  std::cout << "Reconstruction failed!" << std::endl; //assert(false);
+ }
+ ansatz->conjugate();
+
+ //Perform ground state optimization on a tensor network manifold:
+ {
+  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hubbard_operator,ansatz,1e-4);
+  //optimizer.resetMicroIterations(1);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+   success = exatn::evaluateSync(*((*ansatz)[0].network)); assert(success);
+   success = exatn::normalizeNorm2Sync((*ansatz)[0].network->getTensor(0)->getName(),1.0); assert(success);
+   //success = exatn::printTensor((*ansatz)[0].network->getTensor(0)->getName()); assert(success);
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+
+ //Destroy tensors:
+ success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
+ success = exatn::destroyTensors(*ansatz_net); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
 #ifdef EXATN_TEST28
+TEST(NumServerTester, MCVQEHamiltonian) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ const int num_sites = 8;
+ const int bond_dim_lim = 4;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
+
+ //Read the Hamiltonian in spin representation:
+ auto hamiltonian_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam",
+     "mcvqe_"+std::to_string(num_sites)+"q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
+ success = hamiltonian_operator->deleteComponent(0); assert(success); //remove SCF part
+ hamiltonian_operator->printIt();
+
+ //Create tensor network ansatz:
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
+ auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
+ //ansatz->printIt(); //debug
+
+ //Allocate/initialize tensors in the tensor network ansatz:
+ success = exatn::createTensorsSync(*ansatz_net,TENS_ELEM_TYPE); assert(success);
+ success = exatn::initTensorsRndSync(*ansatz_net); assert(success);
+ //success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+
+ //Perform ground state optimization on a tensor network manifold:
+ {
+  std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
+  exatn::TensorNetworkOptimizer optimizer(hamiltonian_operator,ansatz,5e-4);
+  //optimizer.resetMicroIterations(1);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Optimization succeeded!" << std::endl;
+  }else{
+   std::cout << "Optimization failed!" << std::endl; assert(false);
+  }
+ }
+
+ //Destroy tensors:
+ success = exatn::destroyTensorsSync(*ansatz_net); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST30
 TEST(NumServerTester, TensorComposite) {
  using exatn::TensorShape;
  using exatn::TensorSignature;

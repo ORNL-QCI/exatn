@@ -467,8 +467,8 @@ bool parse_pauli_string_qcware(const std::string & input,
     ++npaulis;
    }
    paulis += "]";
-   std::cout << "#DEBUG(parse_pauli_string_qcware): Parsed: "
-             << paulis << " * " << coefficient << std::endl; //debug
+   //std::cout << "#DEBUG(parse_pauli_string_qcware): Parsed: "
+   //          << paulis << " * " << coefficient << std::endl; //debug
   }else{
    success = false;
   }

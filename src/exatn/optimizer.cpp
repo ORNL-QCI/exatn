@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/09/17
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -226,12 +226,12 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
      //Update the expectation value in the gradient expansion:
-     if(TensorNetworkOptimizer::debug > 1){
+     if(TensorNetworkOptimizer::debug > 2){
       std::cout << " Old gradient expansion coefficients:\n";
       environment.gradient_expansion.printCoefficients();
      }
      scale_metrics(environment.gradient_expansion,environment.expect_value,expect_val);
-     if(TensorNetworkOptimizer::debug > 1){
+     if(TensorNetworkOptimizer::debug > 2){
       std::cout << " New gradient expansion coefficients:\n";
       environment.gradient_expansion.printCoefficients();
      }
@@ -268,12 +268,12 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
       if(micro_iteration == (micro_iterations_ - 1)) converged = false;
      }
       //Compute the optimal step size:
-      if(TensorNetworkOptimizer::debug > 1){
+      if(TensorNetworkOptimizer::debug > 2){
        std::cout << " Old hessian expansion coefficients:\n";
        environment.hessian_expansion.printCoefficients();
       }
       scale_metrics(environment.hessian_expansion,environment.expect_value,expect_val);
-      if(TensorNetworkOptimizer::debug > 1){
+      if(TensorNetworkOptimizer::debug > 2){
        std::cout << " New hessian expansion coefficients:\n";
        environment.hessian_expansion.printCoefficients();
       }
