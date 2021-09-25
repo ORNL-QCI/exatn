@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/09/22
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -347,7 +347,6 @@ bool generate_addition_pattern(const std::vector<numerics::TensorLeg> & pattern,
 }
 
 
-/* Generates the trivial tensor addition pattern. */
 bool generate_addition_pattern(unsigned int tensor_rank,
                                std::string & symb_pattern,
                                bool conjugated,
@@ -360,9 +359,10 @@ bool generate_addition_pattern(unsigned int tensor_rank,
  return generate_addition_pattern(pattern,symb_pattern,conjugated,dest_name,left_name);
 }
 
-bool parse_pauli_string(const std::string & input,
-                        std::string & paulis,
-                        std::complex<double> & coefficient)
+
+bool parse_pauli_string_ofermion(const std::string & input,
+                                 std::string & paulis,
+                                 std::complex<double> & coefficient)
 {
  bool success = true;
  double coef_real, coef_imag;
@@ -389,7 +389,7 @@ bool parse_pauli_string(const std::string & input,
      }
      if(sep_pos != std::string::npos){
       const auto real_len = sep_pos - left_par_pos - 1;
-      //std::cout << "#DEBUG(parse_pauli_string): Coef: " << input.substr(left_par_pos+1,real_len); //debug
+      //std::cout << "#DEBUG(parse_pauli_string_ofermion): Coef: " << input.substr(left_par_pos+1,real_len); //debug
       if(real_len > 0) coef_real = std::stod(input.substr(left_par_pos+1,real_len));
       const auto imag_end_pos = input.find("j",sep_pos);
       if(imag_end_pos != std::string::npos){
@@ -397,6 +397,8 @@ bool parse_pauli_string(const std::string & input,
        //std::cout << " " << input.substr(sep_pos+1,imag_len) << std::endl; //debug
        if(imag_len > 0) coef_imag = std::stod(input.substr(sep_pos+1,imag_len));
        coefficient = std::complex<double>{coef_real, coef_imag};
+       //std::cout << "#DEBUG(parse_pauli_string_ofermion): Parsed: "
+       //          << paulis << " * " << coefficient << std::endl; //debug
       }else{
        success = false;
       }
@@ -409,6 +411,64 @@ bool parse_pauli_string(const std::string & input,
    }else{
     success = false;
    }
+  }else{
+   success = false;
+  }
+ }else{
+  success = false;
+ }
+ return success;
+}
+
+
+bool parse_pauli_string_qcware(const std::string & input,
+                               std::string & paulis,
+                               std::complex<double> & coefficient)
+{
+ bool success = true;
+ const auto input_len = input.length();
+ double coef_real = 0.0, coef_imag = 0.0;
+ const auto first_star_pos = input.find("*");
+ if(first_star_pos != std::string::npos){
+  int beg = 0;
+  while(input[beg] == ' ') ++beg;
+  if(input[beg] == '+') ++beg;
+  const auto coef_len = first_star_pos - beg;
+  if(coef_len > 0){
+   coef_real = std::stod(input.substr(beg,coef_len));
+   coefficient = std::complex<double>{coef_real,coef_imag};
+   paulis = "[";
+   unsigned int npaulis = 0;
+   beg = first_star_pos + 1;
+   int len = 0;
+   while(beg+len < input_len){
+    if(input[beg+len] == '*'){
+     assert(len > 0);
+     if(input[beg] != 'I'){
+      if(npaulis > 0){
+       paulis += (" " + input.substr(beg,len));
+      }else{
+       paulis += input.substr(beg,len);
+      }
+      ++npaulis;
+     }
+     beg = beg + len + 1;
+     len = 0;
+    }else{
+     ++len;
+    }
+   }
+   if(len > 0 && input[beg] != 'I'){
+    if(npaulis > 0){
+     paulis += (" " + input.substr(beg,len));
+    }else{
+     paulis += input.substr(beg,len);
+    }
+    ++npaulis;
+   }
+   paulis += "]";
+   std::cout << "#DEBUG(parse_pauli_string_qcware): Parsed: "
+             << paulis << " * " << coefficient << std::endl; //debug
   }else{
    success = false;
   }

@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/08/12
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -60,10 +60,14 @@ std::vector<std::complex<double>> getGateData(const Gate gate_name,
                                               std::initializer_list<double> angles = {});
 
 /** Creates a tensor network operator for a given spin Hamiltonian
-    stored in an OpenFermion file (linear combination of Pauli strings). **/
+    represented as a linear combination of Pauli strings. Supported formats:
+    + "OpenFermion": Open Fermion format (default);
+    + "QCWare": QCWare collab format (by Rob Parrish);
+**/
 std::shared_ptr<exatn::numerics::TensorOperator> readSpinHamiltonian(const std::string & operator_name,
                                                                      const std::string & filename,
-                                                                     TensorElementType precision = TensorElementType::COMPLEX64);
+                                                                     TensorElementType precision = TensorElementType::COMPLEX64,
+                                                                     const std::string & format = "OpenFermion");
 } //namespace quantum
 
 } //namespace exatn

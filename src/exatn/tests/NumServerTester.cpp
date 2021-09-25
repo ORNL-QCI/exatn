@@ -2872,9 +2872,10 @@ TEST(NumServerTester, HubbardHamiltonian) {
  const int num_sites = 8, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),16); //2x2 sites x dim(4) = 8 qubits (sites)
 
  //Read 2x2 Hubbard Hamiltonian in spin representation:
- //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.txt",TENS_ELEM_TYPE);
+ //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
+ //auto hubbard_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam","mcvqe_8q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
  //success = hubbard_operator->deleteComponent(0); assert(success);
- auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2_8q.txt",TENS_ELEM_TYPE);
+ auto hubbard_operator = exatn::quantum::readSpinHamiltonian("HubbardHam","hubbard_2x2_8q.ofn.txt",TENS_ELEM_TYPE,"OpenFermion");
  hubbard_operator->printIt();
 
  //Create tensor network ansatz:

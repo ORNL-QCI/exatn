@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/08/12
+REVISION: 2021/09/25
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -143,7 +143,8 @@ bool appendPauliComponent(exatn::numerics::TensorOperator & tens_operator,
 
 std::shared_ptr<exatn::numerics::TensorOperator> readSpinHamiltonian(const std::string & operator_name,
                                                                      const std::string & filename,
-                                                                     TensorElementType precision)
+                                                                     TensorElementType precision,
+                                                                     const std::string & format)
 {
  assert(filename.length() > 0);
  assert(precision == TensorElementType::COMPLEX32 || precision == TensorElementType::COMPLEX64);
@@ -157,7 +158,17 @@ std::shared_ptr<exatn::numerics::TensorOperator> readSpinHamiltonian(const std::
  while(std::getline(input_file,line)){
   std::string paulis;
   std::complex<double> coef;
-  auto success = parse_pauli_string(line,paulis,coef); assert(success);
+  auto success = false;
+  if(format == "OpenFermion"){
+   success = parse_pauli_string_ofermion(line,paulis,coef);
+  }else if(format == "QCWare"){
+   success = parse_pauli_string_qcware(line,paulis,coef);
+  }
+  if(!success){
+   std::cout << "#ERROR(exatn:quantum:readSpinHamiltonian): Unable to parse file "
+             << filename << " with format " << format << std::endl;
+   assert(false);
+  }
   //std::cout << "#DEBUG: " << paulis << std::endl; //debug
   assert(paulis.length() >= 2); //'[]' at least
   assert(paulis[0] == '[' && paulis[paulis.length()-1] == ']');

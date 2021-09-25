@@ -1,5 +1,5 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/08/20
+REVISION: 2021/09/24
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -224,9 +224,14 @@ bool generate_addition_pattern(unsigned int tensor_rank,
                                const std::string & left_name = "L");
 
 /** Parses a Pauli string output from OpenFermion. **/
-bool parse_pauli_string(const std::string & input,           //in: input string
-                        std::string & paulis,                //out: output string with Pauli operators
-                        std::complex<double> & coefficient); //out: linear combination coefficient
+bool parse_pauli_string_ofermion(const std::string & input,           //in: input string
+                                 std::string & paulis,                //out: output string with Pauli operators
+                                 std::complex<double> & coefficient); //out: linear combination coefficient
+
+/** Parses a Pauli string output from QCWare. **/
+bool parse_pauli_string_qcware(const std::string & input,           //in: input string
+                               std::string & paulis,                //out: output string with Pauli operators
+                               std::complex<double> & coefficient); //out: linear combination coefficient
 
 } //namespace exatn
 
