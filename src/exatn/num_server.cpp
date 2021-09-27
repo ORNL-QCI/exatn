@@ -2222,7 +2222,7 @@ bool NumServer::decomposeTensorSVD(const std::string & contraction)
           iter = tensors_.find(tensor_name);
           if(iter != tensors_.end()){
            auto tensor3 = iter->second;
-           const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName());
+           const auto & process_group = getTensorProcessGroup(tensor1->getName(),tensor3->getName(),tensor2->getName(),tensor0->getName());
            auto tensor_mapper = getTensorMapper(process_group);
            std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
            op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
@@ -2312,7 +2312,7 @@ bool NumServer::decomposeTensorSVDSync(const std::string & contraction)
           iter = tensors_.find(tensor_name);
           if(iter != tensors_.end()){
            auto tensor3 = iter->second;
-           const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName(),tensor3->getName());
+           const auto & process_group = getTensorProcessGroup(tensor1->getName(),tensor3->getName(),tensor2->getName(),tensor0->getName());
            auto tensor_mapper = getTensorMapper(process_group);
            std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD3);
            op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
@@ -2428,7 +2428,7 @@ bool NumServer::decomposeTensorSVDLR(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         const auto & process_group = getTensorProcessGroup(tensor1->getName(),tensor2->getName(),tensor0->getName());
          auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
          op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
@@ -2502,7 +2502,7 @@ bool NumServer::decomposeTensorSVDLRSync(const std::string & contraction)
         iter = tensors_.find(tensor_name);
         if(iter != tensors_.end()){
          auto tensor2 = iter->second;
-         const auto & process_group = getTensorProcessGroup(tensor0->getName(),tensor1->getName(),tensor2->getName());
+         const auto & process_group = getTensorProcessGroup(tensor1->getName(),tensor2->getName(),tensor0->getName());
          auto tensor_mapper = getTensorMapper(process_group);
          std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DECOMPOSE_SVD2);
          op->setTensorOperand(tensor1,complex_conj1); //out: left tensor factor
