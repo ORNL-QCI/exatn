@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2021/07/13
+REVISION: 2021/09/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -13,8 +13,15 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include <cstdlib>
 
 #include <iostream>
+#include <algorithm>
 
 namespace exatn {
+
+//Temporary buffers:
+constexpr std::size_t MAX_NUM_MPI_PROCESSES = 65536;
+std::vector<unsigned int> processes1;
+std::vector<unsigned int> processes2;
+
 
 MPICommProxy::~MPICommProxy()
 {
@@ -49,6 +56,44 @@ bool MPICommProxy::operator==(const MPICommProxy & another) const
  equal = (res == MPI_IDENT);
 #endif
  return equal;
+}
+
+
+bool ProcessGroup::isCongruentTo(const ProcessGroup & another) const
+{
+ bool is_congruent = (*this == another);
+ if(!is_congruent){
+  is_congruent = (this->process_ranks_.size() == another.process_ranks_.size());
+  if(is_congruent && this->process_ranks_.size() > 0){
+   processes1.reserve(MAX_NUM_MPI_PROCESSES);
+   processes2.reserve(MAX_NUM_MPI_PROCESSES);
+   processes1 = this->process_ranks_;
+   std::sort(processes1.begin(),processes1.end());
+   processes2 = another.process_ranks_;
+   std::sort(processes2.begin(),processes2.end());
+   is_congruent = (processes1 == processes2);
+  }
+ }
+ return is_congruent;
+}
+
+
+bool ProcessGroup::isContainedIn(const ProcessGroup & another) const
+{
+ bool is_contained = (*this == another);
+ if(!is_contained){
+  is_contained = (this->process_ranks_.size() <= another.process_ranks_.size());
+  if(is_contained){
+   processes1.reserve(MAX_NUM_MPI_PROCESSES);
+   processes2.reserve(MAX_NUM_MPI_PROCESSES);
+   processes1 = this->process_ranks_;
+   std::sort(processes1.begin(),processes1.end());
+   processes2 = another.process_ranks_;
+   std::sort(processes2.begin(),processes2.end());
+   is_contained = std::includes(processes2.begin(),processes2.end(),processes1.begin(),processes1.end());
+  }
+ }
+ return is_contained;
 }
 
 

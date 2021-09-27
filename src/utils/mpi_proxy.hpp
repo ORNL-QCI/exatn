@@ -1,5 +1,5 @@
 /** ExaTN: MPI Communicator Proxy & Process group
-REVISION: 2021/07/13
+REVISION: 2021/09/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -86,15 +86,22 @@ public:
  ProcessGroup & operator=(ProcessGroup &&) noexcept = default;
  ~ProcessGroup() = default;
 
+ /** Checks whether the process group has the same
+     intra-communicator as another process group,
+     hence both process groups being fully identical. **/
  inline bool operator==(const ProcessGroup & another) const
  {
   return (intra_comm_ == another.intra_comm_);
  }
 
- inline bool operator!=(const ProcessGroup & another) const
- {
-  return !(*this == another);
- }
+ /** Returns TRUE if the process group is composed
+     of the same processes as another process group,
+     with no regard to their intra-communicators. **/
+ bool isCongruentTo(const ProcessGroup & another) const;
+
+ /** Returns TRUE if the process group is contained in
+     or congruent to another process group. **/
+ bool isContainedIn(const ProcessGroup & another) const;
 
  /** Returns the size of the process group (number of MPI processes). **/
  unsigned int getSize() const {return process_ranks_.size();}

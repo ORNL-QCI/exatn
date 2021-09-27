@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/09/25
+REVISION: 2021/09/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -88,13 +88,20 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
         MPI processses are aware of the existence of the created tensor. Note that the concrete
         physical distribution of the tensor body among the MPI processes is hidden from the user
         (either fully replicated or fully distributed or a mix of the two).
-    (c) All tensor operands of any non-unary tensor operation must have the same domain of existence,
-        otherwise the code is non-compliant, resulting in an undefined behavior.
+    (c) A subset of MPI processes participating in a given tensor operation defines
+        its execution domain. The tensor operation execution domain must be compatible
+        with the existence domains of its tensor operands:
+         (1) The existence domains of all output tensor operands must be the same;
+         (2) The tensor operation execution domain must coincide with the existence
+             domains of all output tensor operands;
+         (3) The existence domain of each input tensor operand must include
+             the tensor operation execution domain AND each input tensor operand
+             must be fully available within the tensor operation execution domain.
     (d) By default, the tensor body is replicated across all MPI processes in its domain of existence.
         The user also has an option to create a distributed tensor by specifying which dimensions of
         this tensor to split into segments, thus inducing a block-wise decomposition of the tensor body.
         Each tensor dimension chosen for splitting must be given its splitting depth, that is, the number
-        of recursive bisections applied to that dimension (a depth of D results in 2^D segments).
+        of recursive bisections applied to that dimension (a depth of D results in 2^D dimension segments).
         As a consequence, the total number of tensor blocks will be a power of 2. Because of this,
         the size of the domain of existence of the corresponding composite tensor must also be a power of 2.
         In general, the user is also allowed to provide a Lambda predicate to select which tensor blocks
@@ -105,7 +112,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
     (f) Tensor creation generally does not initialize a tensor to any value. Setting a tensor to some value
         requires calling the tensor initialization operation.
     (g) Any other unary tensor operation can be implemented as a tensor transformation operation with
-        a specific tranformation functor.
+        a specific tranformation functor (exatn::TensorMethod interface).
     (h) Tensor addition is the main binary tensor operation which also implements tensor copy
         when the output tensor operand is initialized to zero.
     (i) Tensor contraction and tensor decomposition are the main ternary tensor operations, being
@@ -252,9 +259,12 @@ inline bool withinTensorExistenceDomain(Args&&... tensor_names) //in: tensor nam
  {return numericalServer->withinTensorExistenceDomain(std::forward<Args>(tensor_names)...);}
 
 
-/** Returns the process group associated with the given tensors.
-    The calling process must be within the tensor exsistence domain,
-    which must be the same for all tensors. **/
+/** Returns the process group associated with the given tensors, that is,
+    the overlap of existence domains of the given tensors. Note that the
+    existence domains of the given tensors must be properly nested,
+     tensorA <= tensorB <= tensorC <= ... <= tensorZ,
+    otherwise the code will result in an undefined behavior. As a useful
+    rule, always place output tensors in front of input tensors. **/
 template <typename... Args>
 inline const ProcessGroup & getTensorProcessGroup(Args&&... tensor_names) //in: tensor names
  {return numericalServer->getTensorProcessGroup(std::forward<Args>(tensor_names)...);}

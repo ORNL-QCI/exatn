@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/25
+REVISION: 2021/09/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -488,15 +488,22 @@ public:
 
  bool withinTensorExistenceDomain(const std::string & tensor_name) const; //in: tensor name
 
- /** Returns the process group associated with the given tensors.
-     The calling process must be within the tensor exsistence domain,
-     which must be the same for all tensors. **/
+ /** Returns the process group associated with the given tensors, that is,
+     the overlap of existence domains of the given tensors. Note that the
+     existence domains of the given tensors must be properly nested,
+      tensorA <= tensorB <= tensorC <= ... <= tensorZ,
+     otherwise the code will result in an undefined behavior. As a useful
+     rule, always place output tensors in front of input tensors. **/
  template <typename... Args>
  const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
  {
   const auto & tensor_domain = getTensorProcessGroup(tensor_name);
   const auto & other_tensors_domain = getTensorProcessGroup(std::forward<Args>(tensor_names)...);
-  assert(other_tensors_domain == tensor_domain);
+  if(!tensor_domain.isContainedIn(other_tensors_domain)){
+   std::cout << "#ERROR(exatn::getTensorProcessGroup): Tensor operand existence domains must be properly nested: "
+             << "Tensor " << tensor_name << " violates this requirement!" << std::endl;
+   assert(false);
+  };
   return tensor_domain;
  }
 
@@ -1042,7 +1049,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submitted = submit(op,getTensorMapper(process_group));
   if(submitted){
-   if(process_group != getDefaultProcessGroup()){
+   if(!(process_group == getDefaultProcessGroup())){
     auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
     assert(saved.second);
    }
@@ -1067,7 +1074,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
   submitted = submit(op,getTensorMapper(process_group));
   if(submitted){
-   if(process_group != getDefaultProcessGroup()){
+   if(!(process_group == getDefaultProcessGroup())){
     auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
     assert(saved.second);
    }

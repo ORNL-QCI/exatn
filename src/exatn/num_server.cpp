@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/25
+REVISION: 2021/09/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1091,7 +1091,7 @@ const ProcessGroup & NumServer::getTensorProcessGroup(const std::string & tensor
  bool exists = withinTensorExistenceDomain(tensor_name);
  if(!exists){
   std::cout << "#ERROR(exatn::getTensorProcessGroup): Process " << getProcessRank()
-            << " is not within the existence domain of tensor " << tensor_name << std::endl << std::flush;
+            << " is not within the existence domain of tensor " << tensor_name << std::endl;
   assert(false);
  }
  auto iter = tensor_comms_.find(tensor_name);
@@ -1168,7 +1168,7 @@ bool NumServer::createTensor(const ProcessGroup & process_group,
    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
    submitted = submit(op,tensor_mapper);
    if(submitted){
-    if(process_group != getDefaultProcessGroup()){
+    if(!(process_group == getDefaultProcessGroup())){
      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
      assert(saved.second);
     }
@@ -1220,7 +1220,7 @@ bool NumServer::createTensorSync(const ProcessGroup & process_group,
    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op)->resetTensorElementType(element_type);
    submitted = submit(op,tensor_mapper);
    if(submitted){
-    if(process_group != getDefaultProcessGroup()){
+    if(!(process_group == getDefaultProcessGroup())){
      auto saved = tensor_comms_.emplace(std::make_pair(tensor->getName(),process_group));
      assert(saved.second);
     }
@@ -1660,6 +1660,11 @@ bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::s
  int byte_packet_len = 0;
  if(local_rank == root_process_rank){
   if(iter != tensors_.end()){
+   if(iter->second->isComposite()){
+    std::cout << "#ERROR(exatn::NumServer::replicateTensor): Tensor " << name
+              << " is composite, replication not allowed!" << std::endl << std::flush;
+    return false;
+   }
    iter->second->pack(byte_packet_);
    byte_packet_len = static_cast<int>(byte_packet_.size_bytes); assert(byte_packet_len > 0);
   }else{
@@ -1686,6 +1691,12 @@ bool NumServer::replicateTensor(const ProcessGroup & process_group, const std::s
   auto submitted = submit(op,tensor_mapper);
   if(submitted) submitted = sync(*op);
   assert(submitted);
+ }else{
+  auto num_deleted = tensor_comms_.erase(name);
+ }
+ if(!(process_group == getDefaultProcessGroup())){
+  auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+  assert(saved.second);
  }
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
@@ -1705,6 +1716,11 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
  int byte_packet_len = 0;
  if(local_rank == root_process_rank){
   if(iter != tensors_.end()){
+   if(iter->second->isComposite()){
+    std::cout << "#ERROR(exatn::NumServer::replicateTensorSync): Tensor " << name
+              << " is composite, replication not allowed!" << std::endl << std::flush;
+    return false;
+   }
    iter->second->pack(byte_packet_);
    byte_packet_len = static_cast<int>(byte_packet_.size_bytes); assert(byte_packet_len > 0);
   }else{
@@ -1731,6 +1747,12 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
   auto submitted = submit(op,tensor_mapper);
   if(submitted) submitted = sync(*op);
   assert(submitted);
+ }else{
+  auto num_deleted = tensor_comms_.erase(name);
+ }
+ if(!(process_group == getDefaultProcessGroup())){
+  auto saved = tensor_comms_.emplace(std::make_pair(name,process_group));
+  assert(saved.second);
  }
  clearBytePacket(&byte_packet_);
  //Broadcast the tensor body:
@@ -1895,7 +1917,7 @@ bool NumServer::extractTensorSlice(const std::string & tensor_name,
   iter = tensors_.find(slice_name);
   if(iter != tensors_.end()){
    auto tensor1 = iter->second;
-   auto tensor_mapper = getTensorMapper(getTensorProcessGroup(tensor_name,slice_name));
+   auto tensor_mapper = getTensorMapper(getTensorProcessGroup(slice_name,tensor_name));
    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
    op->setTensorOperand(tensor1);
    op->setTensorOperand(tensor0);
@@ -1921,7 +1943,7 @@ bool NumServer::extractTensorSliceSync(const std::string & tensor_name,
   iter = tensors_.find(slice_name);
   if(iter != tensors_.end()){
    auto tensor1 = iter->second;
-   const auto & process_group = getTensorProcessGroup(tensor_name,slice_name);
+   const auto & process_group = getTensorProcessGroup(slice_name,tensor_name);
    auto tensor_mapper = getTensorMapper(process_group);
    std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::SLICE);
    op->setTensorOperand(tensor1);

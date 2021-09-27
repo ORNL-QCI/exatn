@@ -47,7 +47,7 @@
 #define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-//#define EXATN_TEST30
+#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
