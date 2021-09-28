@@ -504,8 +504,10 @@ public:
              << "Tensor " << tensor_name << " violates this requirement!" << std::endl;
    const auto & tensor_domain_ranks = tensor_domain.getProcessRanks();
    const auto & other_tensors_domain_ranks = other_tensors_domain.getProcessRanks();
+   std::cout << tensor_name << ":" << std::endl;
    for(const auto & proc_rank: tensor_domain_ranks) std::cout << " " << proc_rank;
    std::cout << std::endl;
+   print_variadic_pack(std::forward<Args>(tensor_names)...); std::cout << ":" << std::endl;
    for(const auto & proc_rank: other_tensors_domain_ranks) std::cout << " " << proc_rank;
    std::cout << std::endl;
    assert(false);
