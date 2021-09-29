@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/27
+REVISION: 2021/09/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -630,7 +630,6 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                            << "]: Found a contraction sequence candidate locally (caching = " << contr_seq_caching_
                            << ")" << std::endl;
-
 #ifdef MPI_ENABLED
  //Synchronize on the best tensor contraction sequence across processes:
  if(num_procs > 1 && num_input_tensors > 2){
@@ -706,7 +705,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
  submitted = submit(op1,tensor_mapper); if(!submitted) return false;
+
  //Submit all tensor operations for tensor network evaluation:
+ std::size_t num_tens_ops_in_fly = 0;
  const auto num_split_indices = network.getNumSplitIndices(); //total number of indices that were split
  if(logging_ > 0) logfile_ << "Number of split indices = " << num_split_indices << std::endl << std::flush;
  std::size_t num_items_executed = 0; //number of tensor sub-networks executed
@@ -805,6 +806,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
        std::dynamic_pointer_cast<numerics::TensorOpCreate>(create_slice)->
         resetTensorElementType(tensor->getElementType());
        submitted = submit(create_slice,tensor_mapper); if(!submitted) return false;
+       ++num_tens_ops_in_fly;
        //Extract the slice contents from the input/output tensor:
        if(tensor_is_output){ //make sure the output tensor slice only shows up once
         //assert(tensor == output_tensor);
@@ -815,6 +817,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
        extract_slice->setTensorOperand(tensor_slice);
        extract_slice->setTensorOperand(tensor);
        submitted = submit(extract_slice,tensor_mapper); if(!submitted) return false;
+       ++num_tens_ops_in_fly;
       }
      }else{
       if(debugging && logging_ > 1) logfile_ << " without split indices" << std::endl; //debug
@@ -822,12 +825,14 @@ bool NumServer::submit(const ProcessGroup & process_group,
     } //loop over tensor operands
     //Submit the primary tensor operation with the current slices:
     submitted = submit(tens_op,tensor_mapper); if(!submitted) return false;
+    ++num_tens_ops_in_fly;
     //Insert the output tensor slice back into the output tensor:
     if(output_tensor_slice){
      std::shared_ptr<TensorOperation> insert_slice = tensor_op_factory_->createTensorOp(TensorOpCode::INSERT);
      insert_slice->setTensorOperand(output_tensor);
      insert_slice->setTensorOperand(output_tensor_slice);
      submitted = submit(insert_slice,tensor_mapper); if(!submitted) return false;
+     ++num_tens_ops_in_fly;
      output_tensor_slice.reset();
     }
     //Destroy temporary input tensor slices:
@@ -835,8 +840,12 @@ bool NumServer::submit(const ProcessGroup & process_group,
      std::shared_ptr<TensorOperation> destroy_slice = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
      destroy_slice->setTensorOperand(input_slice);
      submitted = submit(destroy_slice,tensor_mapper); if(!submitted) return false;
+     ++num_tens_ops_in_fly;
     }
-    if(serialize) sync(process_group); //sync for serialization
+    if(serialize || num_tens_ops_in_fly > exatn::runtime::TensorRuntime::MAX_RUNTIME_DAG_SIZE){
+     sync(process_group);
+     num_tens_ops_in_fly = 0;
+    }
     input_slices.clear();
    } //loop over tensor operations
    //Erase intermediate tensor slices once all tensor operations have been executed:
@@ -851,10 +860,12 @@ bool NumServer::submit(const ProcessGroup & process_group,
    allreduce->setTensorOperand(output_tensor);
    std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(allreduce)->resetMPICommunicator(process_group.getMPICommProxy());
    submitted = submit(allreduce,tensor_mapper); if(!submitted) return false;
+   ++num_tens_ops_in_fly;
   }
  }else{ //only a single tensor (sub-)network executed redundantly by all processes
   for(auto op = op_list.begin(); op != op_list.end(); ++op){
    submitted = submit(*op,tensor_mapper); if(!submitted) return false;
+   ++num_tens_ops_in_fly;
   }
   ++num_items_executed;
  }

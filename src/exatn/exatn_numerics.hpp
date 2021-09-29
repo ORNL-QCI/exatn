@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/09/27
+REVISION: 2021/09/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -25,8 +25,10 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
     (c) Tensor signature is an ordered tuple of {space_id,subspace_id} pairs
         for each tensor dimension. In case space_id = SOME_SPACE, subspace_id
         is simply the base offset in the anonymous vector space (min = 0).
-    (d) Additionally, a subset of tensor dimensions can be assigned an isometry property;
-        any tensor may have no more than two disjoint isometric dimension groups.
+    (d) Additionally, a subset of tensor dimensions can be assigned an isometry property.
+        Contraction over such a subset of isometric dimensions of a tensor with its
+        conjugate produces a Kronecker Delta tensor. Any tensor may have no more than
+        two disjoint isometric dimension subsets.
  4. Tensor operation [tensor_operation.hpp]:
     (a) Tensor operation is a mathematical operation on one or more tensor arguments.
     (b) Evaluating a tensor operation means computing the value of all its output tensors,
@@ -84,19 +86,28 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
     (a) A tensor can be allocated storage and processed at any time after its formal definition.
     (b) Tensor storage allocation is called tensor creation. A tensor can either be created across all
         MPI processes or within a specified group of them. The subset of MPI processes participating
-        in the tensor creation operation defines its domain of existence, meaning that only these
+        in the tensor creation operation defines its Domain of Existence, meaning that only these
         MPI processses are aware of the existence of the created tensor. Note that the concrete
         physical distribution of the tensor body among the MPI processes is hidden from the user
-        (either fully replicated or fully distributed or a mix of the two).
-    (c) A subset of MPI processes participating in a given tensor operation defines
+        (either fully replicated or fully distributed or a mix of the two). A contiguous subset
+        of MPI processes from the tensor existence domain that contains all tensor elements is
+        called the Subdomain of Full Presence.
+    (c) A set of MPI processes participating in a given tensor operation defines
         its execution domain. The tensor operation execution domain must be compatible
-        with the existence domains of its tensor operands:
-         (1) The existence domains of all output tensor operands must be the same;
-         (2) The tensor operation execution domain must coincide with the existence
-             domains of all output tensor operands;
-         (3) The existence domain of each input tensor operand must include
-             the tensor operation execution domain AND each input tensor operand
-             must be fully available within the tensor operation execution domain.
+        with the existence/presence domains of its tensor operands:
+         (1) The existence domains of all tensor operands must be properly nested,
+             that is, there should exist an order of their placement such that
+             each previous domain is contained in or congruent to the next one:
+              D_i <= D_j <= D_k <= ...,
+             where D_i is the existence domain of tensor operand i.
+         (2) The tensor operation execution domain is the smallest of
+             the tensor operand existence domains;
+         (3) The tensor operation execution domain must be a subdomain
+             of full presence for all tensor operands;
+         (4) If any of the output tensor operands has a larger existence domain
+             than the execution domain of the tensor operation, it is the user's
+             responsibility to update the tensor value outside the tensor operation
+             execution domain, otherwise the code is non-compliant.
     (d) By default, the tensor body is replicated across all MPI processes in its domain of existence.
         The user also has an option to create a distributed tensor by specifying which dimensions of
         this tensor to split into segments, thus inducing a block-wise decomposition of the tensor body.
@@ -260,11 +271,13 @@ inline bool withinTensorExistenceDomain(Args&&... tensor_names) //in: tensor nam
 
 
 /** Returns the process group associated with the given tensors, that is,
-    the overlap of existence domains of the given tensors. Note that the
-    existence domains of the given tensors must be properly nested,
+    the intersection of existence domains of the given tensors. Note that
+    the existence domains of the given tensors must be properly nested,
      tensorA <= tensorB <= tensorC <= ... <= tensorZ,
-    otherwise the code will result in an undefined behavior. As a useful
-    rule, always place output tensors in front of input tensors. **/
+    for some order of the tensors, otherwise the code will result in
+    an undefined behavior. It is user's responsibility to ensure that
+    the returned process group is also a subdomain of full presence
+    for all participating tensors. **/
 template <typename... Args>
 inline const ProcessGroup & getTensorProcessGroup(Args&&... tensor_names) //in: tensor names
  {return numericalServer->getTensorProcessGroup(std::forward<Args>(tensor_names)...);}

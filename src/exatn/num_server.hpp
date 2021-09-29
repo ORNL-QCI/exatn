@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/27
+REVISION: 2021/09/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -427,11 +427,6 @@ public:
  bool sync(const ProcessGroup & process_group,
            const Tensor & tensor,
            bool wait = true);
- /** Synchronizes execution of a specific tensor operation.
-     Changing wait to FALSE will only test for completion.
-    `This method has local synchronization semantics! **/
- bool sync(TensorOperation & operation,
-           bool wait = true);
  /** Synchronizes execution of a specific tensor network.
      Changing wait to FALSE, only tests for completion.
      If ProcessGroup is not provided, defaults to the local process. **/
@@ -489,19 +484,26 @@ public:
  bool withinTensorExistenceDomain(const std::string & tensor_name) const; //in: tensor name
 
  /** Returns the process group associated with the given tensors, that is,
-     the overlap of existence domains of the given tensors. Note that the
-     existence domains of the given tensors must be properly nested,
+     the intersection of existence domains of the given tensors. Note that
+     the existence domains of the given tensors must be properly nested,
       tensorA <= tensorB <= tensorC <= ... <= tensorZ,
-     otherwise the code will result in an undefined behavior. As a useful
-     rule, always place output tensors in front of input tensors. **/
+     for some order of the tensors, otherwise the code will result in
+     an undefined behavior. It is user's responsibility to ensure that
+     the returned process group is also a subdomain of full presence
+     for all participating tensors. **/
  template <typename... Args>
  const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name, Args&&... tensor_names) const //in: tensor names
  {
   const auto & tensor_domain = getTensorProcessGroup(tensor_name);
   const auto & other_tensors_domain = getTensorProcessGroup(std::forward<Args>(tensor_names)...);
-  if(!tensor_domain.isContainedIn(other_tensors_domain)){
+  if(tensor_domain.isContainedIn(other_tensors_domain)){
+   return tensor_domain;
+  }else if(other_tensors_domain.isContainedIn(tensor_domain)){
+   return other_tensors_domain;
+  }else{
    std::cout << "#ERROR(exatn::getTensorProcessGroup): Tensor operand existence domains must be properly nested: "
-             << "Tensor " << tensor_name << " violates this requirement!" << std::endl;
+             << "Tensor " << tensor_name << " is not properly nested w.r.t. tensors ";
+   print_variadic_pack(std::forward<Args>(tensor_names)...); std::cout << std::endl;
    const auto & tensor_domain_ranks = tensor_domain.getProcessRanks();
    const auto & other_tensors_domain_ranks = other_tensors_domain.getProcessRanks();
    std::cout << tensor_name << ":" << std::endl;
@@ -512,7 +514,7 @@ public:
    std::cout << std::endl;
    assert(false);
   };
-  return tensor_domain;
+  return getDefaultProcessGroup();
  }
 
  const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //tensor name
@@ -984,6 +986,12 @@ protected:
 
  /** Submits an individual tensor operation for processing. **/
  bool submitOp(std::shared_ptr<TensorOperation> operation); //in: tensor operation for numerical evaluation
+
+ /** Synchronizes execution of a specific tensor operation.
+     Changing wait to FALSE will only test for completion.
+     This method has local synchronization semantics! **/
+ bool sync(TensorOperation & operation, //in: previously submitted tensor operation
+           bool wait = true);
 
  /** Destroys orphaned tensors (garbage collection). **/
  void destroyOrphanedTensors();
