@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/29
+REVISION: 2021/09/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1849,6 +1849,92 @@ bool NumServer::replicateTensorSync(const ProcessGroup & process_group, const st
 // errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>()); assert(errc == MPI_SUCCESS);
 #endif
  return broadcastTensorSync(process_group,name,root_process_rank);
+}
+
+bool NumServer::dereplicateTensor(const std::string & name, int root_process_rank)
+{
+ return dereplicateTensor(getDefaultProcessGroup(),name,root_process_rank);
+}
+
+bool NumServer::dereplicateTensorSync(const std::string & name, int root_process_rank)
+{
+ return dereplicateTensorSync(getDefaultProcessGroup(),name,root_process_rank);
+}
+
+bool NumServer::dereplicateTensor(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+ auto iter = tensors_.find(name);
+ if(iter != tensors_.end()){
+  if(getTensorProcessGroup(name).isCongruentTo(process_group)){
+   if(!iter->second->isComposite()){
+    auto tensor_mapper = getTensorMapper(process_group);
+    auto num_deleted = tensor_comms_.erase(name);
+    if(local_rank == root_process_rank){
+     auto saved = tensor_comms_.emplace(std::make_pair(name,getCurrentProcessGroup()));
+     assert(saved.second);
+    }else{
+     std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+     op->setTensorOperand(iter->second);
+     auto submitted = submit(op,tensor_mapper);
+     assert(submitted);
+    }
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::dereplicateTensor): Unable to dereplicate composite tensors like tensor "
+              << name << std::endl;
+    assert(false);
+   }
+  }else{
+   std::cout << "#ERROR(exatn::NumServer::dereplicateTensor): Domain of existence of tensor " << name
+             << " does not match the provided execution process group!" << std::endl;
+   assert(false);
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::dereplicateTensor): Tensor " << name << " not found!" << std::endl;
+  assert(false);
+ }
+ return true;
+}
+
+bool NumServer::dereplicateTensorSync(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
+{
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+ auto iter = tensors_.find(name);
+ if(iter != tensors_.end()){
+  if(getTensorProcessGroup(name).isCongruentTo(process_group)){
+   if(!iter->second->isComposite()){
+    auto tensor_mapper = getTensorMapper(process_group);
+    auto num_deleted = tensor_comms_.erase(name);
+    if(local_rank == root_process_rank){
+     auto saved = tensor_comms_.emplace(std::make_pair(name,getCurrentProcessGroup()));
+     assert(saved.second);
+    }else{
+     std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
+     op->setTensorOperand(iter->second);
+     auto submitted = submit(op,tensor_mapper);
+     if(submitted) submitted = sync(*op);
+     assert(submitted);
+    }
+#ifdef MPI_ENABLED
+    auto synced = sync(process_group);
+#endif
+   }else{
+    std::cout << "#ERROR(exatn::NumServer::dereplicateTensorSync): Unable to dereplicate composite tensors like tensor "
+              << name << std::endl;
+    assert(false);
+   }
+  }else{
+   std::cout << "#ERROR(exatn::NumServer::dereplicateTensorSync): Domain of existence of tensor " << name
+             << " does not match the provided execution process group!" << std::endl;
+   assert(false);
+  }
+ }else{
+  std::cout << "#ERROR(exatn::NumServer::dereplicateTensorSync): Tensor " << name << " not found!" << std::endl;
+  assert(false);
+ }
+ return true;
 }
 
 bool NumServer::broadcastTensor(const std::string & name, int root_process_rank)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/29
+REVISION: 2021/09/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -697,6 +697,21 @@ public:
  bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                           const std::string & name,           //in: tensor name
                           int root_process_rank);             //in: local rank of the root process within the given process group
+
+ /** Shrinks the domain of existence of a given tensor to a single process. **/
+ bool dereplicateTensor(const std::string & name,     //in: tensor name
+                        int root_process_rank);       //in: local rank of the chosen process
+
+ bool dereplicateTensorSync(const std::string & name, //in: tensor name
+                            int root_process_rank);   //in: local rank of the chosen process
+
+ bool dereplicateTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                        const std::string & name,           //in: tensor name
+                        int root_process_rank);             //in: local rank of the chose process
+
+ bool dereplicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                            const std::string & name,           //in: tensor name
+                            int root_process_rank);             //in: local rank of the chosen process
 
  /** Broadcast a tensor among all MPI processes within a given process group,
      which defaults to all MPI processes. This function is needed when

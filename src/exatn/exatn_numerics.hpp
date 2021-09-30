@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/09/29
+REVISION: 2021/09/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -521,6 +521,26 @@ inline bool replicateTensorSync(const ProcessGroup & process_group, //in: chosen
                                 const std::string & name,           //in: tensor name
                                 int root_process_rank)              //in: local rank of the root process within the given process group
  {return numericalServer->replicateTensorSync(process_group,name,root_process_rank);}
+
+
+/** Shrinks the domain of existence of a given tensor to a single process. **/
+inline bool dereplicateTensor(const std::string & name,           //in: tensor name
+                              int root_process_rank)              //in: local rank of the chosen process
+ {return numericalServer->dereplicateTensor(name,root_process_rank);}
+
+inline bool dereplicateTensorSync(const std::string & name,       //in: tensor name
+                                  int root_process_rank)          //in: local rank of the chosen process
+ {return numericalServer->dereplicateTensorSync(name,root_process_rank);}
+
+inline bool dereplicateTensor(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                              const std::string & name,           //in: tensor name
+                              int root_process_rank)              //in: local rank of the chosen process
+ {return numericalServer->dereplicateTensor(process_group,name,root_process_rank);}
+
+inline bool dereplicateTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
+                                  const std::string & name,           //in: tensor name
+                                  int root_process_rank)              //in: local rank of the chosen process
+ {return numericalServer->dereplicateTensorSync(process_group,name,root_process_rank);}
 
 
 /** Broadcast a tensor among all MPI processes within a given process group,
