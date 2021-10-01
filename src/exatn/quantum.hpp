@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/09/25
+REVISION: 2021/10/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,17 +8,16 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  a) Provides utilities related to quantum circuit simulations, like quantum gates,
     Pauli matrix based Hamiltonian reading, etc.
  b) Normal gate action translates to the following tensor notation:
-     q(i0) * G(i0|i1) --> v(i1),
-     q(i0) q(i1) * G(i0,i1|i2,i3) --> v(i2,i3), etc.
-    Note that if G(i0,i1|i2,i3) is a controlled 2-body gate,
-    the control (senior) index is i1, not i0.
-    A convenient way to remember this is to use the standard
-    bra-ket convention such that we will have:
-    |v(i3,i2)> = CX(i3,i2|i1,i0) * |q(i1)q(i0)>, where
-    tensor leg numeration is from right to left:
-      (i3)--V  =  (i3)--CX--(i1)--q
-      (i2)--V     (i2)--CX--(i0)--q
-    where the control line is i1.
+     q(j0) * G(j0|i0) --> v(i0),
+     q(j1,j0) * G(j1,j0|i1,i0) --> v(i1,i0), etc,
+    where the inverse order of indices and the transposed
+    form of the equations is a consequence of the column-wise
+    storage of matrix G(j1,j0|i1,i0), to match the textbook
+    definitions of quantum gates. Note that if G(j1,j0|i1,i0)
+    is a controlled 2-body gate, the control (senior) indices
+    are i0 and j0. A convenient way to remember this is to use
+    the standard bra-ket convention such that we will have:
+     <v(i1,i0)| = <q(j1,j0)| * CX(j1,j0|i1,i0)
 **/
 
 #ifndef EXATN_QUANTUM_HPP_

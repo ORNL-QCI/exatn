@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/09/25
+REVISION: 2021/10/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -73,7 +73,8 @@ bool TensorNetworkOptimizer::optimize()
 
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
 {
- constexpr bool NORMALIZE_WITH_METRICS = true; //whether to normalize tensor network factors with metrics or not
+ constexpr bool NORMALIZE_WITH_METRICS = true;  //whether to normalize tensor network factors with metrics or not
+ constexpr double MIN_ACCEPTABLE_DENOM = 1e-13; //minimally acceptable denominator in optimal step size determination
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
@@ -300,7 +301,7 @@ bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
                                                       << (grad_norm * grad_norm) << " / " << denom << " = "
                                                       << (grad_norm * grad_norm / denom) << std::endl;
       denom = std::abs(denom);
-      if(denom > 1e-7){
+      if(denom > MIN_ACCEPTABLE_DENOM){
        epsilon_ = grad_norm * grad_norm / denom;
        if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
                                                        << ": Denominator = " << denom << std::endl;

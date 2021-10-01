@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/30
+REVISION: 2021/10/01
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -956,11 +956,14 @@ bool NumServer::submit(const ProcessGroup & process_group,
   int procs_per_subgroup = num_procs / parallel_width;
   int remainder_procs = num_procs % parallel_width;
   int my_subgroup_id = -1;
+  int my_subgroup_size = 0;
   if(local_rank < (procs_per_subgroup + 1) * remainder_procs){
    my_subgroup_id = local_rank / (procs_per_subgroup + 1);
+   my_subgroup_size = procs_per_subgroup + 1;
   }else{
    my_subgroup_id = remainder_procs +
                    (local_rank - ((procs_per_subgroup + 1) * remainder_procs)) / procs_per_subgroup;
+   my_subgroup_size = procs_per_subgroup;
   }
   assert(my_subgroup_id >= 0 && my_subgroup_id < parallel_width);
   auto process_subgroup = process_group.split(my_subgroup_id);
@@ -1002,11 +1005,11 @@ bool NumServer::submit(const ProcessGroup & process_group,
   assert(generated);
   accumulation->setIndexPattern(add_pattern);
   success = submit(accumulation,local_tensor_mapper); assert(success);
-  success = sync(*process_subgroup); assert(success);
-  success = allreduceTensorSync(accumulator->getName()); assert(success);
   success = sync(process_group); assert(success);
-  //Destroy local accumulator tensors:
-  success = destroyTensorSync(local_accumulator->getName()); assert(success);
+  success = scaleTensor(accumulator->getName(),1.0/static_cast<double>(my_subgroup_size)); assert(success);
+  success = destroyTensor(local_accumulator->getName()); assert(success);
+  success = sync(process_group); assert(success);
+  success = allreduceTensorSync(process_group,accumulator->getName()); assert(success);
  }
  return success;
 }
