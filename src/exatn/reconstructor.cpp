@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/09/14
+REVISION: 2021/10/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -111,6 +111,17 @@ bool TensorNetworkReconstructor::reconstruct(const ProcessGroup & process_group,
                                              bool rnd_init,
                                              bool nesterov,
                                              double acceptable_fidelity)
+{
+ return reconstruct_sd(process_group, residual_norm, fidelity, rnd_init, nesterov, acceptable_fidelity);
+}
+
+
+bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_group,
+                                                double * residual_norm,
+                                                double * fidelity,
+                                                bool rnd_init,
+                                                bool nesterov,
+                                                double acceptable_fidelity)
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing

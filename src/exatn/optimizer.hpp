@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/09/08
+REVISION: 2021/10/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -66,6 +66,11 @@ public:
  std::shared_ptr<TensorExpansion> getSolution() const;
 
  static void resetDebugLevel(unsigned int level = 0);
+
+protected:
+
+ //Implementation based on the steepest descent algorithm:
+ bool optimize_sd(const ProcessGroup & process_group); //in: executing process group
 
 private:
 

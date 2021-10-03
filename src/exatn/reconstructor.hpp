@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/09/14
+REVISION: 2021/10/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -80,6 +80,16 @@ public:
                                               double * fidelity) const; //out: squared normalized overlap (fidelity)
 
  static void resetDebugLevel(unsigned int level = 0);
+
+protected:
+
+ //Implementation based on the steepest descent algorithm:
+ bool reconstruct_sd(const ProcessGroup & process_group, //in: executing process group
+                     double * residual_norm,             //out: 2-norm of the residual tensor (error)
+                     double * fidelity,                  //out: squared normalized overlap (fidelity)
+                     bool rnd_init,                      //in: random initialization flag
+                     bool nesterov,                      //in: Nesterov acceleration
+                     double acceptable_fidelity);        //in: acceptable fidelity
 
 private:
 

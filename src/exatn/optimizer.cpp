@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/01
+REVISION: 2021/10/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -72,6 +72,12 @@ bool TensorNetworkOptimizer::optimize()
 
 
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
+{
+ return optimize_sd(process_group);
+}
+
+
+bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 {
  constexpr bool NORMALIZE_WITH_METRICS = true;  //whether to normalize tensor network factors with metrics or not
  constexpr double MIN_ACCEPTABLE_DENOM = 1e-13; //minimally acceptable denominator in optimal step size determination
