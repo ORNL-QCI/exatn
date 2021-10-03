@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/01
+REVISION: 2021/10/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1953,41 +1953,55 @@ bool NumServer::broadcastTensorSync(const std::string & name, int root_process_r
 bool NumServer::broadcastTensor(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
  auto tensor_mapper = getTensorMapper(process_group);
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::broadcastTensor): Tensor " << name << " not found!" << std::endl;
   return false;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
- op->setTensorOperand(iter->second);
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
- auto submitted = submit(op,tensor_mapper);
- return submitted;
+ if(iter->second->isComposite()){
+  std::cout << "#ERROR(exatn::NumServer::broadcastTensor): Tensor " << name
+            << " is composite, broadcast not implemented!" << std::endl << std::flush;
+  assert(false);
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
+  op->setTensorOperand(iter->second);
+  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
+  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
+  success = submit(op,tensor_mapper);
+ }
+ return success;
 }
 
 bool NumServer::broadcastTensorSync(const ProcessGroup & process_group, const std::string & name, int root_process_rank)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
  auto tensor_mapper = getTensorMapper(process_group);
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::broadcastTensorSync): Tensor " << name << " not found!" << std::endl;
   return false;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
- op->setTensorOperand(iter->second);
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
- std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
- auto submitted = submit(op,tensor_mapper);
- if(submitted){
-  submitted = sync(*op);
+ if(iter->second->isComposite()){
+  std::cout << "#ERROR(exatn::NumServer::broadcastTensorSync): Tensor " << name
+            << " is composite, broadcast not implemented!" << std::endl << std::flush;
+  assert(false);
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::BROADCAST);
+  op->setTensorOperand(iter->second);
+  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetMPICommunicator(process_group.getMPICommProxy());
+  std::dynamic_pointer_cast<numerics::TensorOpBroadcast>(op)->resetRootRank(root_process_rank);
+  success = submit(op,tensor_mapper);
+  if(success){
+   success = sync(*op);
 #ifdef MPI_ENABLED
-  if(submitted) submitted = sync(process_group);
+   if(success) success = sync(process_group);
 #endif
+  }
  }
- return submitted;
+ return success;
 }
 
 bool NumServer::allreduceTensor(const std::string & name)
@@ -2003,39 +2017,53 @@ bool NumServer::allreduceTensorSync(const std::string & name)
 bool NumServer::allreduceTensor(const ProcessGroup & process_group, const std::string & name)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
  auto tensor_mapper = getTensorMapper(process_group);
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::allreduceTensor): Tensor " << name << " not found!" << std::endl;
   return false;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
- op->setTensorOperand(iter->second);
- std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
- auto submitted = submit(op,tensor_mapper);
- return submitted;
+ if(iter->second->isComposite()){
+  std::cout << "#ERROR(exatn::NumServer::allreduceTensor): Tensor " << name
+            << " is composite, allreduce not implemented!" << std::endl << std::flush;
+  assert(false);
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+  op->setTensorOperand(iter->second);
+  std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
+  success = submit(op,tensor_mapper);
+ }
+ return success;
 }
 
 bool NumServer::allreduceTensorSync(const ProcessGroup & process_group, const std::string & name)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
+ bool success = true;
  auto tensor_mapper = getTensorMapper(process_group);
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   std::cout << "#ERROR(exatn::NumServer::allreduceTensorSync): Tensor " << name << " not found!" << std::endl;
   return false;
  }
- std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
- op->setTensorOperand(iter->second);
- std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
- auto submitted = submit(op,tensor_mapper);
- if(submitted){
-  submitted = sync(*op);
+ if(iter->second->isComposite()){
+  std::cout << "#ERROR(exatn::NumServer::allreduceTensorSync): Tensor " << name
+            << " is composite, allreduce not implemented!" << std::endl << std::flush;
+  assert(false);
+ }else{
+  std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::ALLREDUCE);
+  op->setTensorOperand(iter->second);
+  std::dynamic_pointer_cast<numerics::TensorOpAllreduce>(op)->resetMPICommunicator(process_group.getMPICommProxy());
+  success = submit(op,tensor_mapper);
+  if(success){
+   success = sync(*op);
 #ifdef MPI_ENABLED
-  if(submitted) submitted = sync(process_group);
+   if(success) success = sync(process_group);
 #endif
+  }
  }
- return submitted;
+ return success;
 }
 
 bool NumServer::transformTensor(const std::string & name, std::shared_ptr<TensorMethod> functor)
