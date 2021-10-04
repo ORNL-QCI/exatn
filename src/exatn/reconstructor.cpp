@@ -15,13 +15,14 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 unsigned int TensorNetworkReconstructor::debug{0};
+int TensorNetworkReconstructor::focus{-1};
 
 
 TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,
                                                        std::shared_ptr<TensorExpansion> approximant,
                                                        double tolerance):
  expansion_(expansion), approximant_(approximant),
- max_iterations_(DEFAULT_MAX_ITERATIONS), epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance),
+ max_iterations_(DEFAULT_MAX_ITERATIONS), epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), parallel_(true),
  input_norm_(0.0), output_norm_(0.0), residual_norm_(0.0), fidelity_(0.0)
 {
  if(!expansion_->isKet()){
@@ -125,9 +126,14 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
+ const auto num_procs = process_group.getSize();
 
  assert(residual_norm != nullptr);
  assert(fidelity != nullptr);
+
+ if(TensorNetworkReconstructor::focus >= 0){
+  if(getProcessRank() != TensorNetworkReconstructor::focus) TensorNetworkReconstructor::debug = 0;
+ }
 
  input_norm_ = 0.0;
  output_norm_ = 0.0;
@@ -235,7 +241,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   auto scalar_norm = makeSharedTensor("_scalar_norm");
   bool done = createTensorSync(scalar_norm,environments_[0].tensor->getElementType()); assert(done);
   done = initTensorSync("_scalar_norm",0.0); assert(done);
-  done = evaluateSync(process_group,input_norm,scalar_norm); assert(done);
+  done = evaluateSync(process_group,input_norm,scalar_norm,num_procs); assert(done);
   input_norm_ = 0.0;
   done = computeNorm1Sync("_scalar_norm",input_norm_); assert(done);
   input_norm_ = std::sqrt(input_norm_);
@@ -244,13 +250,13 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   while(overlap_abs <= DEFAULT_MIN_INITIAL_OVERLAP){
    //Compute the approximant norm:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
-   done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
+   done = evaluateSync(process_group,normalization,scalar_norm,num_procs); assert(done);
    output_norm_ = 0.0;
    done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
    output_norm_ = std::sqrt(output_norm_);
    //Compute the direct absolute overlap with the approximant:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
-   done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
+   done = evaluateSync(process_group,overlap,scalar_norm,num_procs); assert(done);
    overlap_abs = 0.0;
    done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
    overlap_abs /= (output_norm_ * input_norm_);
@@ -291,7 +297,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     //Initialize the gradient tensor to zero:
     done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
     //Evaluate the gradient tensor expansion:
-    done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient); assert(done);
+    done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient,num_procs); assert(done);
     //Compute the norm of the gradient tensor:
     double grad_norm = 0.0;
     done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
@@ -304,7 +310,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     //Update the optimizable tensor using the computed gradient:
     //Compute the optimal step size:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
-    done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm); assert(done);
+    done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm,num_procs); assert(done);
     double hess_grad = 0.0;
     done = computeNorm1Sync("_scalar_norm",hess_grad); assert(done);
     if(hess_grad > 0.0){
@@ -331,7 +337,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    }
    //Compute the residual norm and check convergence:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
-   done = evaluateSync(process_group,residual,scalar_norm); assert(done);
+   done = evaluateSync(process_group,residual,scalar_norm,num_procs); assert(done);
    residual_norm_ = 0.0;
    done = computeNorm1Sync("_scalar_norm",residual_norm_); assert(done);
    residual_norm_ = std::sqrt(residual_norm_);
@@ -341,13 +347,13 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    }
    //Compute the approximant norm:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
-   done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
+   done = evaluateSync(process_group,normalization,scalar_norm,num_procs); assert(done);
    output_norm_ = 0.0;
    done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
    output_norm_ = std::sqrt(output_norm_);
    //Compute the direct overlap:
    done = initTensorSync("_scalar_norm",0.0); assert(done);
-   done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
+   done = evaluateSync(process_group,overlap,scalar_norm,num_procs); assert(done);
    overlap_abs = 0.0;
    done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
    overlap_abs = overlap_abs / (output_norm_ * input_norm_);
@@ -374,7 +380,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   }*/
   //Compute the approximant norm:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
-  done = evaluateSync(process_group,normalization,scalar_norm); assert(done);
+  done = evaluateSync(process_group,normalization,scalar_norm,num_procs); assert(done);
   output_norm_ = 0.0;
   done = computeNorm1Sync("_scalar_norm",output_norm_); assert(done);
   output_norm_ = std::sqrt(output_norm_);
@@ -383,13 +389,13 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
              << output_norm_ << std::endl;
   //Compute final approximation fidelity and overlap:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
-  done = evaluateSync(process_group,overlap_conj,scalar_norm); assert(done);
+  done = evaluateSync(process_group,overlap_conj,scalar_norm,num_procs); assert(done);
   overlap_abs = 0.0;
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
   if(TensorNetworkReconstructor::debug > 0)
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated overlap = " << overlap_abs << std::endl;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
-  done = evaluateSync(process_group,overlap,scalar_norm); assert(done);
+  done = evaluateSync(process_group,overlap,scalar_norm,num_procs); assert(done);
   overlap_abs = 0.0;
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
   fidelity_ = std::pow(overlap_abs / (output_norm_ * input_norm_), 2.0);
@@ -426,9 +432,17 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
 }
 
 
-void TensorNetworkReconstructor::resetDebugLevel(unsigned int level)
+void TensorNetworkReconstructor::enableParallelization(bool parallel)
+{
+ parallel_ = parallel;
+ return;
+}
+
+
+void TensorNetworkReconstructor::resetDebugLevel(unsigned int level, int focus_process)
 {
  TensorNetworkReconstructor::debug = level;
+ TensorNetworkReconstructor::focus = focus_process;
  return;
 }
 

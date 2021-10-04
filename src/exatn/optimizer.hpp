@@ -30,6 +30,7 @@ class TensorNetworkOptimizer{
 public:
 
  static unsigned int debug;
+ static int focus;
 
  static constexpr const double DEFAULT_TOLERANCE = 1e-4;
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
@@ -65,7 +66,11 @@ public:
  /** Returns the optimized tensor network expansion forming the optimal bra/ket vectors. **/
  std::shared_ptr<TensorExpansion> getSolution() const;
 
- static void resetDebugLevel(unsigned int level = 0);
+ /** Enables/disables coarse-grain parallelization over tensor networks. **/
+ void enableParallelization(bool parallel = true);
+
+ static void resetDebugLevel(unsigned int level = 0,  //in: debug level
+                             int focus_process = -1); //in: process to focus on (-1: all)
 
 protected:
 
@@ -91,6 +96,7 @@ private:
  unsigned int micro_iterations_;                     //number of microiterations per optimized tensor
  double epsilon_;                                    //learning rate for the gradient descent based tensor update
  double tolerance_;                                  //numerical convergence tolerance (for the gradient)
+ bool parallel_;                                     //enables/disables coarse-grain parallelization over tensor networks
 
  std::vector<Environment> environments_;             //optimization environments for each optimizable tensor
 };

@@ -3129,7 +3129,7 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  bool success = true;
 
  const int num_sites = 8;
- const int bond_dim_lim = 4;
+ const int bond_dim_lim = 1;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
 
  //Read the Hamiltonian in spin representation:
@@ -3150,13 +3150,22 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  //Allocate/initialize tensors in the tensor network ansatz:
  success = exatn::createTensorsSync(*ansatz_net,TENS_ELEM_TYPE); assert(success);
  success = exatn::initTensorsRndSync(*ansatz_net); assert(success);
+ /*for(auto tens = ansatz_net->begin(); tens != ansatz_net->end(); ++tens){
+  if(tens->first == 0){
+   success = exatn::initTensorSync(tens->second.getName(),0.0); assert(success);
+  }else{
+   success = exatn::initTensorSync(tens->second.getName(),1e-2); assert(success);
+  }
+ }*/
  //success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
 
  //Perform ground state optimization on a tensor network manifold:
  {
   std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1);
-  exatn::TensorNetworkOptimizer optimizer(hamiltonian_operator,ansatz,5e-4);
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer(hamiltonian_operator,ansatz,1e-4);
+  optimizer.enableParallelization(true);
+  //optimizer.resetMaxIterations(50);
   //optimizer.resetMicroIterations(1);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);

@@ -32,6 +32,7 @@ class TensorNetworkReconstructor{
 public:
 
  static unsigned int debug;
+ static int focus;
 
  static constexpr const double DEFAULT_TOLERANCE = 1e-5;
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
@@ -79,7 +80,11 @@ public:
  std::shared_ptr<TensorExpansion> getSolution(double * residual_norm,   //out: 2-norm of the residual tensor (error)
                                               double * fidelity) const; //out: squared normalized overlap (fidelity)
 
- static void resetDebugLevel(unsigned int level = 0);
+ /** Enables/disables coarse-grain parallelization over tensor networks. **/
+ void enableParallelization(bool parallel = true);
+
+ static void resetDebugLevel(unsigned int level = 0,  //in: debug level
+                             int focus_process = -1); //in: process to focus on (-1: all)
 
 protected:
 
@@ -109,6 +114,7 @@ private:
  unsigned int max_iterations_;                  //max number of macro-iterations
  double epsilon_;                               //learning rate for the gradient descent based tensor update
  double tolerance_;                             //numerical reconstruction convergence tolerance (for the gradient)
+ bool parallel_;                                //enables/disables coarse-grain parallelization over tensor networks
 
  double input_norm_;                            //2-norm of the input tensor expansion
  double output_norm_;                           //2-norm of the approximant tensor expansion

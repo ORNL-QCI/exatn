@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/02
+REVISION: 2021/10/04
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1005,6 +1005,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   assert(generated);
   accumulation->setIndexPattern(add_pattern);
   success = submit(accumulation,local_tensor_mapper); assert(success);
+  success = sync(*process_subgroup); assert(success);
   success = sync(process_group); assert(success);
   success = scaleTensor(accumulator->getName(),1.0/static_cast<double>(my_subgroup_size)); assert(success);
   success = destroyTensor(local_accumulator->getName()); assert(success);
@@ -1098,8 +1099,13 @@ bool NumServer::sync(const ProcessGroup & process_group, bool wait)
   if(wait){
    auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
    success = success && (errc == MPI_SUCCESS);
-   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-    << "]: Globally synchronized all operations" << std::endl << std::flush;
+   if(success){
+    if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+     << "]: Globally synchronized all operations" << std::endl << std::flush;
+   }else{
+    std::cout << "#ERROR(exatn::sync)[" << process_rank_ << "]: MPI_Barrier error " << errc << std::endl;
+    assert(false);
+   }
   }
 #endif
  }
@@ -1521,12 +1527,18 @@ bool NumServer::initTensorFileSync(const std::string & name,
 
 bool NumServer::initTensorRnd(const std::string & name)
 {
- return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+ const auto & process_group = getTensorProcessGroup(name);
+ bool success = transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+ if(success) success = broadcastTensor(process_group,name,0);
+ return success;
 }
 
 bool NumServer::initTensorRndSync(const std::string & name)
 {
- return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+ const auto & process_group = getTensorProcessGroup(name);
+ bool success = transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitRnd()));
+ if(success) success = broadcastTensorSync(process_group,name,0);
+ return success;
 }
 
 bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)

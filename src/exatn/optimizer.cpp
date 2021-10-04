@@ -14,6 +14,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 unsigned int TensorNetworkOptimizer::debug{0};
+int TensorNetworkOptimizer::focus{-1};
 
 
 TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,
@@ -21,7 +22,7 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
                                                double tolerance):
  tensor_operator_(tensor_operator), vector_expansion_(vector_expansion),
  max_iterations_(DEFAULT_MAX_ITERATIONS), micro_iterations_(DEFAULT_MICRO_ITERATIONS),
- epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance)
+ epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), parallel_(true)
 {
  if(!vector_expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkOptimizer): The tensor network vector expansion must be a ket!"
@@ -84,6 +85,11 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
+ const auto num_procs = process_group.getSize();
+
+ if(TensorNetworkOptimizer::focus >= 0){
+  if(getProcessRank() != TensorNetworkOptimizer::focus) TensorNetworkOptimizer::debug = 0;
+ }
 
  //Balance-normalize the tensor network vector expansion:
  //bool success = balanceNormalizeNorm2Sync(*vector_expansion_,1.0,1.0,true); assert(success);
@@ -204,14 +210,14 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     for(unsigned int micro_iteration = 0; micro_iteration < micro_iterations_; ++micro_iteration){
      //Normalize the optimized tensor w.r.t. metrics:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
-     done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
+     done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
      double tens_norm = 0.0;
      done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
      tens_norm = std::sqrt(tens_norm);
      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done); //`Only works with no repeated tensors
      //Compute the operator expectation value w.r.t. the optimized tensor:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
-     done = evaluateSync(process_group,operator_expectation,scalar_norm); assert(done);
+     done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
      std::complex<double> expect_val{0.0,0.0};
      switch(scalar_norm->getElementType()){
       case TensorElementType::REAL32:
@@ -245,7 +251,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
      //Initialize the gradient tensor to zero:
      done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
      //Evaluate the gradient tensor expansion:
-     done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient); assert(done);
+     done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient,num_procs); assert(done);
      //Compute the norm of the gradient tensor:
      double grad_norm = 0.0;
      done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
@@ -254,14 +260,14 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
      //Compute the convergence criterion:
      double denom = 0.0;
      done = initTensorSync(environment.gradient_aux->getName(),0.0); assert(done);
-     done = evaluateSync(process_group,environment.operator_gradient,environment.gradient_aux); assert(done);
+     done = evaluateSync(process_group,environment.operator_gradient,environment.gradient_aux,num_procs); assert(done);
      tens_norm = 0.0;
      done = computeNorm2Sync(environment.gradient_aux->getName(),tens_norm); assert(done);
      if(TensorNetworkOptimizer::debug > 1) std::cout << environment.tensor->getName()
                                                      << ": |H|x> 2-norm = " << tens_norm;
      denom += tens_norm;
      done = initTensorSync(environment.gradient_aux->getName(),0.0); assert(done);
-     done = evaluateSync(process_group,environment.metrics_gradient,environment.gradient_aux); assert(done);
+     done = evaluateSync(process_group,environment.metrics_gradient,environment.gradient_aux,num_procs); assert(done);
      tens_norm = 0.0;
      done = computeNorm2Sync(environment.gradient_aux->getName(),tens_norm); assert(done);
      if(TensorNetworkOptimizer::debug > 1) std::cout << "; |S|x> 2-norm = " << tens_norm
@@ -285,7 +291,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
        environment.hessian_expansion.printCoefficients();
       }
       done = initTensorSync("_scalar_norm",0.0); assert(done);
-      done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm); assert(done);
+      done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm,num_procs); assert(done);
       denom = 0.0;
       switch(scalar_norm->getElementType()){
        case TensorElementType::REAL32:
@@ -323,7 +329,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
       if(NORMALIZE_WITH_METRICS){
        //Normalize the optimized tensor w.r.t. metrics:
        done = initTensorSync("_scalar_norm",0.0); assert(done);
-       done = evaluateSync(process_group,metrics_expectation,scalar_norm); assert(done);
+       done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
        tens_norm = 0.0;
        done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
        tens_norm = std::sqrt(tens_norm);
@@ -367,9 +373,17 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 }
 
 
-void TensorNetworkOptimizer::resetDebugLevel(unsigned int level)
+void TensorNetworkOptimizer::enableParallelization(bool parallel)
+{
+ parallel_ = parallel;
+ return;
+}
+
+
+void TensorNetworkOptimizer::resetDebugLevel(unsigned int level, int focus_process)
 {
  TensorNetworkOptimizer::debug = level;
+ TensorNetworkOptimizer::focus = focus_process;
  return;
 }
 
