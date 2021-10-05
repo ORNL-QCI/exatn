@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/04
+REVISION: 2021/10/05
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -935,20 +935,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
    bool conjugated;
    auto output_tensor = network.getTensor(0,&conjugated); assert(!conjugated); //output tensor cannot be conjugated
    const auto & output_tensor_name = output_tensor->getName();
-   if(tensorAllocated(output_tensor_name)){
-    success = destroyTensorSync(output_tensor_name); assert(success);
-   }else{
-    auto iter = implicit_tensors_.find(output_tensor_name);
-    if(iter != implicit_tensors_.end()){
-     std::shared_ptr<TensorOperation> destruction = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
-     destruction->setTensorOperand(iter->second);
-     success = submit(destruction,tensor_mapper); assert(success);
-     auto num_deleted = implicit_tensors_.erase(output_tensor_name); assert(num_deleted == 1);
-     num_deleted = tensor_comms_.erase(output_tensor_name);
-     success = sync(*destruction); assert(success);
-    }
-   }
+   success = destroyTensor(output_tensor_name); assert(success);
   }
+  success = sync(process_group); assert(success);
   //Split the process group into subgroups:
   const auto num_procs = process_group.getSize();
   const auto num_networks = expansion.getNumComponents();
@@ -992,6 +981,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
     assert(generated);
     local_accumulation->setIndexPattern(add_pattern);
     success = submit(local_accumulation,local_tensor_mapper); assert(success);
+    success = destroyTensor(output_tensor_name); assert(success);
    }
   }
   success = sync(*process_subgroup); assert(success);
@@ -1008,7 +998,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   success = sync(*process_subgroup); assert(success);
   success = sync(process_group); assert(success);
   success = scaleTensor(accumulator->getName(),1.0/static_cast<double>(my_subgroup_size)); assert(success);
-  success = destroyTensor(local_accumulator->getName()); assert(success);
+  success = destroyTensorSync(local_accumulator->getName()); assert(success);
   success = sync(process_group); assert(success);
   success = allreduceTensorSync(process_group,accumulator->getName()); assert(success);
  }
@@ -1425,7 +1415,7 @@ bool NumServer::createTensorsSync(const ProcessGroup & process_group,
 bool NumServer::destroyTensor(const std::string & name) //always synchronous
 {
  bool submitted = false;
- destroyOrphanedTensors(); //garbage collection
+ //destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   //std::cout << "#WARNING(exatn::NumServer::destroyTensor): Tensor " << name << " not found!" << std::endl;
@@ -1439,6 +1429,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   if(submitted){
    auto num_deleted = tensors_.erase(name); assert(num_deleted == 1);
    num_deleted = tensor_comms_.erase(name); assert(num_deleted == 1);
+   num_deleted = implicit_tensors_.erase(name);
   }
  }else{
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -1446,6 +1437,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
   submitted = submit(op,tensor_mapper);
   if(submitted){
    auto num_deleted = tensor_comms_.erase(name);
+   num_deleted = implicit_tensors_.erase(name);
   }
  }
  return submitted;
@@ -1454,7 +1446,7 @@ bool NumServer::destroyTensor(const std::string & name) //always synchronous
 bool NumServer::destroyTensorSync(const std::string & name)
 {
  bool submitted = false;
- destroyOrphanedTensors(); //garbage collection
+ //destroyOrphanedTensors(); //garbage collection
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()){
   //std::cout << "#WARNING(exatn::NumServer::destroyTensorSync): Tensor " << name << " not found!" << std::endl;
@@ -1473,6 +1465,7 @@ bool NumServer::destroyTensorSync(const std::string & name)
    if(submitted) submitted = sync(process_group);
 #endif
    num_deleted = tensor_comms_.erase(name); assert(num_deleted == 1);
+   num_deleted = implicit_tensors_.erase(name);
   }
  }else{
   std::shared_ptr<TensorOperation> op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
@@ -1484,6 +1477,7 @@ bool NumServer::destroyTensorSync(const std::string & name)
    if(submitted) submitted = sync(process_group);
 #endif
    auto num_deleted = tensor_comms_.erase(name);
+   num_deleted = implicit_tensors_.erase(name);
   }
  }
  return submitted;
