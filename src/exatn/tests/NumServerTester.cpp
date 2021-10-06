@@ -45,8 +45,8 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-#define EXATN_TEST27 //requires input file from source
-#define EXATN_TEST28 //requires input file from source
+//#define EXATN_TEST27 //requires input file from source
+//#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST30
 
 
@@ -3256,7 +3256,7 @@ TEST(NumServerTester, TensorComposite) {
  //          << exatn::withinTensorExistenceDomain("A","B","C") << std::endl; //debug
 
  //Initialize composite tensors:
- success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensor("A",std::complex<float>{1e-3,0.0}); assert(success);
  success = exatn::initTensor("B",std::complex<float>{0.0,0.0}); assert(success);
  success = exatn::initTensor("C",std::complex<float>{1e-4,0.0}); assert(success);
 
