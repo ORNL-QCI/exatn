@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2021/08/21
+REVISION: 2021/10/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -264,6 +264,16 @@ inline std::size_t tensor_element_type_size(TensorElementType tensor_element_typ
 /** Generates a unique name for a given tensor. **/
 std::string generateTensorName(const Tensor & tensor,       //in: tensor stored on heap
                                const std::string & prefix); //in: desired name prefix
+
+/** Compares a specific dimension of two tensors. **/
+inline bool tensor_dims_conform(const Tensor & tensor1,
+                                const Tensor & tensor2,
+                                unsigned int dim1,
+                                unsigned int dim2)
+{
+ return (tensor1.getDimSpaceAttr(dim1) == tensor2.getDimSpaceAttr(dim2)
+      && tensor1.getDimExtent(dim1) == tensor2.getDimExtent(dim2));
+}
 
 
 //TEMPLATES:

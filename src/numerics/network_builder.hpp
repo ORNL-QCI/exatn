@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder
-REVISION: 2021/06/25
+REVISION: 2021/10/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -45,9 +45,9 @@ public:
      network must only contain the output tensor with dummy legs.
      If tensor_operator = TRUE, the tensor network operator will
      be built instead of the tensor network vector. In that case,
-     the first half legs correspond to ket while the rest to bra. **/
+     the first half open legs correspond to ket while the rest to bra. **/
  virtual void build(TensorNetwork & network,           //inout: tensor network
-                    bool tensor_operator = false) = 0; //in: tensor network vector or operator
+                    bool tensor_operator = false) = 0; //in: tensor network vector or operator to build
 
 };
 

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/09/03
+REVISION: 2021/10/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -251,7 +251,8 @@ TensorNetwork::TensorNetwork(const std::string & name,
 
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
-                             NetworkBuilder & builder):
+                             NetworkBuilder & builder,
+                             bool tensor_operator):
  explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
@@ -264,7 +265,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
   assert(false);
  }
- builder.build(*this); //create and link input tensors of the tensor network
+ builder.build(*this,tensor_operator); //create and link input tensors of the tensor network
  finalized_ = 1;
  updateConnectionsFromInputTensors(); //update output tensor legs
 }

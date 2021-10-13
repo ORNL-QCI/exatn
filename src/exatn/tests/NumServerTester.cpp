@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -44,10 +44,11 @@
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-#define EXATN_TEST26
+#define EXATN_TEST26*/
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST30
+#define EXATN_TEST29
+//#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
@@ -3131,6 +3132,8 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  const int num_sites = 8;
  const int bond_dim_lim = 1;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
+ const int arity = 2;
+ const std::string tn_type = "MPS"; //MPS or TTN
 
  //Read the Hamiltonian in spin representation:
  auto hamiltonian_operator = exatn::quantum::readSpinHamiltonian("MCVQEHam",
@@ -3139,10 +3142,17 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  hamiltonian_operator->printIt();
 
  //Create tensor network ansatz:
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
- success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+ }else{
+  assert(false);
+ }
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
- auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*tn_builder);
  ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
  auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
  //ansatz->printIt(); //debug
@@ -3178,6 +3188,51 @@ TEST(NumServerTester, MCVQEHamiltonian) {
 
  //Destroy tensors:
  success = exatn::destroyTensorsSync(*ansatz_net); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST29
+TEST(NumServerTester, TensorOperatorReconstruction) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ const int num_sites = 8;
+ const int bond_dim_lim = 1;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
+ const int arity = 2;
+ const std::string tn_type = "MPS"; //MPS or TTN
+
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+ }else{
+  assert(false);
+ }
+
+ //Build a tensor network operator:
+ auto ansatz_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*tn_builder,true);
+ ansatz_net->printIt(); //debug
 
  //Synchronize:
  success = exatn::sync(); assert(success);

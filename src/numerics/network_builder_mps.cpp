@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2021/08/12
+REVISION: 2021/10/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -48,8 +48,16 @@ void NetworkBuilderMPS::build(TensorNetwork & network, bool tensor_operator)
  bool appended = true;
  //Inspect the output tensor:
  auto output_tensor = network.getTensor(0);
- const auto output_tensor_rank = output_tensor->getRank();
+ auto output_tensor_rank = output_tensor->getRank();
+ assert(output_tensor_rank > 0);
  const auto & output_dim_extents = output_tensor->getDimExtents();
+ if(tensor_operator){
+  assert(output_tensor_rank % 2 == 0); //tensor operators are assumed to be of even rank here
+  output_tensor_rank /= 2;
+  for(unsigned int i = 0; i < output_tensor_rank; ++i){
+   assert(output_dim_extents[i] == output_dim_extents[output_tensor_rank+i]);
+  }
+ }
  if(output_tensor_rank == 1){
   appended = network.placeTensor(1, //tensor id
                                  std::make_shared<Tensor>("_T"+std::to_string(1), //tensor name
@@ -147,6 +155,12 @@ void NetworkBuilderMPS::build(TensorNetwork & network, bool tensor_operator)
    assert(appended);
    auto & tensor = *(network.getTensor(1+i));
    tensor.rename(generateTensorName(tensor,"t"));
+  }
+ }
+ if(tensor_operator){
+  for(unsigned int i = 0; i < output_tensor_rank; ++i){
+   auto * tens_conn = network.getTensorConn(1+i);
+   tens_conn->appendLeg(output_dim_extents[output_tensor_rank+i],TensorLeg{0,output_tensor_rank+i});
   }
  }
  return;

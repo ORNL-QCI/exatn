@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/06/25
+REVISION: 2021/10/07
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <initializer_list>
 #include <vector>
+#include <algorithm>
 
 namespace exatn{
 
@@ -52,12 +53,20 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
 {
  //Inspect the output tensor:
  auto output_tensor = network.getTensor(0);
- const auto output_tensor_rank = output_tensor->getRank();
+ auto output_tensor_rank = output_tensor->getRank();
+ assert(output_tensor_rank > 0);
  const auto & output_dim_extents = output_tensor->getDimExtents();
+ if(tensor_operator){
+  assert(output_tensor_rank % 2 == 0); //tensor operators are assumed to be of even rank here
+  output_tensor_rank /= 2;
+  for(unsigned int i = 0; i < output_tensor_rank; ++i){
+   assert(output_dim_extents[i] == output_dim_extents[output_tensor_rank+i]);
+  }
+ }
  //Build tensor tree by layers:
- std::vector<DimExtent> extents(output_dim_extents);
- unsigned int num_dims = extents.size();
- assert(num_dims > 0);
+ std::vector<DimExtent> extents(output_tensor_rank);
+ std::copy(output_dim_extents.cbegin(),output_dim_extents.cbegin()+output_tensor_rank,extents.begin());
+ unsigned int num_dims = extents.size(); assert(num_dims > 0);
  unsigned int tensor_id_base = 1, layer = 0;
  //Loop over layers:
  bool not_done = true;
@@ -104,6 +113,13 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
                                        tens_legs,
                                        false,false);
    assert(appended);
+   if(tensor_operator && layer == 0){
+    auto * tens_conn = network.getTensorConn(tensor_id_base+num_dims_new);
+    for(unsigned int i = 0; i < (tens_rank - end_decr); ++i){
+     const unsigned int output_dim_id = output_tensor_rank + extent_id + i;
+     tens_conn->appendLeg(output_dim_extents[output_dim_id],TensorLeg{0,output_dim_id});
+    }
+   }
    network.getTensor(tensor_id_base + num_dims_new)->rename();
    ++num_dims_new; //next tensor within the layer (each tensor supplies one new dimension)
   }

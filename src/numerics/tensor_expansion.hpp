@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/09/20
+REVISION: 2021/10/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -128,8 +128,17 @@ public:
                  bool reset_output_tensors,          //in: whether or not to replace output tensors in all cloned tensor networks
                  const std::string & new_name = ""); //in: new name for the cloned tensor network expansion
 
- /** Generates a tensor network expansion from a tensor network operator. **/
- TensorExpansion(const TensorOperator & tensor_operator);
+ /** Generates a tensor network expansion from a tensor network operator by joining
+     its ket and bra legs together, bra legs following the ket legs. The shape/signature
+     of the ket and bra subspaces from the chosen tensor operator map must be explicitly
+     supplied in the form of tensors (they need to be compatible with the given
+     tensor network operator). The tensor network operator must have its
+     ket and bra ranks equal for each component separately. Note that explicit
+     identity tensors may be added to some components of the produced tensor
+     network expansion (for inactive dimensions). **/
+ TensorExpansion(const TensorOperator & tensor_operator, //in: tensor network operator
+                 const Tensor & ket_subspace,            //in: tensor defining the ket subspace from the tensor operator map
+                 const Tensor & bra_subspace);           //in: tensor defining the bra subspace from the tensor operator map
 
  TensorExpansion(const TensorExpansion &) = default;
  TensorExpansion & operator=(const TensorExpansion &) = default;

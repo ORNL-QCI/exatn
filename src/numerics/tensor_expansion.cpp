@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/09/20
+REVISION: 2021/10/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -122,11 +122,71 @@ TensorExpansion::TensorExpansion(const TensorExpansion & another,
 }
 
 
-TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator):
+TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
+                                 const Tensor & ket_subspace, const Tensor & bra_subspace):
  ket_(true)
 {
- //`Implement
- assert(false);
+ const auto ket_space_rank = ket_subspace.getRank();
+ const auto bra_space_rank = bra_subspace.getRank();
+ const auto space_rank = ket_space_rank + bra_space_rank;
+ if(ket_space_rank == bra_space_rank){
+  for(auto component = tensor_operator.cbegin(); component != tensor_operator.cend(); ++component){
+   auto network = makeSharedTensorNetwork(*(component->network));
+   network->rename("_" + component->network->getName());
+   const auto comp_ket_rank = component->ket_legs.size();
+   const auto comp_bra_rank = component->bra_legs.size();
+   const auto comp_rank = comp_ket_rank + comp_bra_rank;
+   assert(comp_rank == network->getRank());
+   if(comp_ket_rank == comp_bra_rank){
+    if(comp_rank <= space_rank){
+     auto output_tensor = network->getTensor(0);
+     std::vector<int> space_leg_ids(space_rank,-1);
+     for(unsigned int i = 0; i < comp_ket_rank; ++i){
+      const auto & ket_leg = component->ket_legs[i];
+      const auto & bra_leg = component->bra_legs[i];
+      if(ket_leg.first < ket_space_rank && bra_leg.first < bra_space_rank){
+       assert(space_leg_ids[ket_leg.first] < 0);
+       assert(space_leg_ids[ket_space_rank + bra_leg.first] < 0);
+       assert(tensor_dims_conform(ket_subspace,*output_tensor,ket_leg.first,ket_leg.second));
+       assert(tensor_dims_conform(bra_subspace,*output_tensor,bra_leg.first,bra_leg.second));
+       space_leg_ids[ket_leg.first] = ket_leg.second; //global leg id --> local network leg id
+       space_leg_ids[ket_space_rank + bra_leg.first] = bra_leg.second; //global leg id --> local network leg id
+      }else{
+       std::cout << "ERROR(exatn::TensorExpansion::ctor): The ranks of provided tensor subspaces are too low for the given tensor operator!" << std::endl;
+       assert(false);
+      }
+     }
+     unsigned int bi = 0, ki = 0, out_rank = comp_rank;
+     while(ki < ket_space_rank && bi < bra_space_rank){
+      if(space_leg_ids[ki] >= 0) ++ki;
+      if(space_leg_ids[ket_space_rank + bi] >= 0) ++bi;
+      if(space_leg_ids[ki] < 0 && space_leg_ids[ket_space_rank + bi] < 0){
+       space_leg_ids[ki] = out_rank++;
+       space_leg_ids[ket_space_rank + bi] = out_rank++;
+       auto identity_tensor = makeSharedTensor("_d",
+        std::initializer_list<DimExtent>{ket_subspace.getDimExtent(ki),bra_subspace.getDimExtent(bi)},
+        std::initializer_list<std::pair<SpaceId,SubspaceId>>{ket_subspace.getDimSpaceAttr(ki),bra_subspace.getDimSpaceAttr(bi)});
+       identity_tensor->rename(tensor_hex_name("_d",identity_tensor->getTensorHash()));
+       auto success = network->appendTensor(identity_tensor,{}); assert(success);
+       ++ki; ++bi;
+      }
+     }
+     assert(out_rank == space_rank);
+     auto success = this->appendComponent(network,component->coefficient); assert(success);
+    }else{
+     std::cout << "ERROR(exatn::TensorExpansion::ctor): The combined rank of provided tensor subspaces is too low for the given tensor operator!" << std::endl;
+     assert(false);
+    }
+   }else{
+    std::cout << "ERROR(exatn::TensorExpansion::ctor): A tensor operator component maps different bra and ket spaces!" << std::endl;
+    assert(false);
+   }
+  }
+ }else{
+  std::cout << "ERROR(exatn::TensorExpansion::ctor): Provided bra and ket tensor subspaces have different rank!" << std::endl;
+  assert(false);
+ }
+ this->rename("_" + tensor_operator.getName());
 }
 
 

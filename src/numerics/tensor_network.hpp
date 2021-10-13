@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/09/03
+REVISION: 2021/10/13
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -173,7 +173,8 @@ public:
  /** Builds a named tensor network from a template implemented by a custom tensor network builder. **/
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
-               NetworkBuilder & builder);                   //in: specific tensor network builder
+               NetworkBuilder & builder,                    //in: specific tensor network builder
+               bool tensor_operator = false);               //in: whether or not to build a tensor network operator instead of a vector
  /** Clones a tensor network with an optional replacement of the output tensor. **/
  TensorNetwork(const TensorNetwork & another,               //in: another tensor network
                bool replace_output,                         //in: whether or not to replace the output tensor
