@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: MPS: Matrix Product State
-REVISION: 2021/06/25
+REVISION: 2021/10/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,23 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
  (a) Builds a matrix product state tensor network:
      Parameters:
      * max_bond_dim: Maximal internal bond dimension;
+ (b) Leg numeration (tensor network vector):
+
+     [0]    [1]    [2]         [n-2]  [n-1]
+      0      1      1            1      1
+      |      |      |            |      |
+      X-1--0-X-2--0-X-2-- .. --0-X-2--0-X
+
+ (c) Leg numeration (tensor network operator):
+
+     [0]    [1]    [2]         [n-2]  [n-1]
+      0      1      1            1      1
+      |      |      |            |      |
+      X-1--0-X-2--0-X-2-- .. --0-X-2--0-X
+      |      |      |            |      |
+      2      3      3            3      2
+     [n]   [n+1]  [n+2]       [n*2-2][n*2-1]
+
 **/
 
 #ifndef EXATN_NUMERICS_NETWORK_BUILDER_MPS_HPP_

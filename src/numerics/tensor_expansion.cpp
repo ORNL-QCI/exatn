@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/13
+REVISION: 2021/10/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -166,7 +166,7 @@ TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
        auto identity_tensor = makeSharedTensor("_d",
         std::initializer_list<DimExtent>{ket_subspace.getDimExtent(ki),bra_subspace.getDimExtent(bi)},
         std::initializer_list<std::pair<SpaceId,SubspaceId>>{ket_subspace.getDimSpaceAttr(ki),bra_subspace.getDimSpaceAttr(bi)});
-       identity_tensor->rename(tensor_hex_name("_d",identity_tensor->getTensorHash()));
+       identity_tensor->rename(tensor_hex_name("d",identity_tensor->getTensorHash()));
        auto success = network->appendTensor(identity_tensor,{}); assert(success);
        ++ki; ++bi;
       }
@@ -187,6 +187,13 @@ TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
   assert(false);
  }
  this->rename("_" + tensor_operator.getName());
+}
+
+
+TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
+                                 const Tensor & ket_subspace):
+ TensorExpansion(tensor_operator,ket_subspace,ket_subspace)
+{
 }
 
 

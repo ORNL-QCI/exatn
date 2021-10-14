@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/06/25
+REVISION: 2021/10/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,29 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      Parameters:
      * max_bond_dim: Maximal internal bond dimension;
      * arity: Tree arity;
+ (b) Leg numeration (tensor network vector):
+
+    [0] [1]      [2] [3] ...
+     0   1        0   1
+      \ /          \ /
+       X            X
+        \          /
+         2        2
+         \       /
+          \     /
+           0   1
+            \ /
+             X
+              \
+               2
+                \
+                   ...
+
+ (c) Leg numeration (tensor network operator): Each tensor X in the layer
+     of tree leaves gets two more legs (#3,#4) for the bra space (that is,
+     legs #0 and #1 are mapped to legs #3 and #4). The bra legs will be
+     appended to the end of the output tensor of the tensor network.
+
 **/
 
 #ifndef EXATN_NUMERICS_NETWORK_BUILDER_TTN_HPP_

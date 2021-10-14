@@ -29,9 +29,9 @@
 #define EXATN_TEST8
 #define EXATN_TEST9
 #define EXATN_TEST10
-#define EXATN_TEST11
+#define EXATN_TEST11*/
 #define EXATN_TEST12
-#define EXATN_TEST13
+/*#define EXATN_TEST13
 #define EXATN_TEST14
 //#define EXATN_TEST15 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST16
@@ -47,7 +47,7 @@
 #define EXATN_TEST26*/
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29
+//#define EXATN_TEST29
 //#define EXATN_TEST30
 
 
@@ -1530,7 +1530,7 @@ TEST(NumServerTester, HamiltonianNumServer)
 #endif
 
 #ifdef EXATN_TEST12
-TEST(NumServerTester, EigenNumServer)
+TEST(NumServerTester, IsingTNO)
 {
  using exatn::Tensor;
  using exatn::TensorShape;
@@ -1540,7 +1540,16 @@ TEST(NumServerTester, EigenNumServer)
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+ const int num_sites = 4;
+ const int bond_dim_lim = 4;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
+ const int arity = 2;
+ const std::string tn_type = "TTN"; //MPS or TTN
+
+ bool success = true;
+
+ //exatn::resetLoggingLevel(2,2); //debug
 
  //Define Ising Hamiltonian constants:
  constexpr std::complex<double> ZERO{0.0,0.0};
@@ -1570,52 +1579,79 @@ TEST(NumServerTester, EigenNumServer)
 
  //Declare the Ising Hamiltonian operator:
  TensorOperator ham("Hamiltonian");
- auto appended = false;
- appended = ham.appendComponent(t01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(t12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(t23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(u00,{{0,0}},{{0,1}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(u11,{{1,0}},{{1,1}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(u22,{{2,0}},{{2,1}},{1.0,0.0}); assert(appended);
- appended = ham.appendComponent(u33,{{3,0}},{{3,1}},{1.0,0.0}); assert(appended);
+ success = ham.appendComponent(t01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(t12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(t23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(u00,{{0,0}},{{0,1}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(u11,{{1,0}},{{1,1}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(u22,{{2,0}},{{2,1}},{1.0,0.0}); assert(success);
+ success = ham.appendComponent(u33,{{3,0}},{{3,1}},{1.0,0.0}); assert(success);
+ ham.printIt(); //debug
+
+ //Configure the tensor network builder:
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+ }else{
+  assert(false);
+ }
+
+ //Build a tensor network operator:
+ auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_sites,2));
+ auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net->printIt(); //debug
+ auto space_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
+ auto ham_net = exatn::makeSharedTensorNetwork("HamiltonianNet",space_tensor,*tn_builder,true);
+ ham_net->printIt(); //debug
+ TensorOperator ham_tno("HamiltonianTNO");
+ success = ham_tno.appendComponent(ham_net,{{0,0},{1,1},{2,2},{3,3}},{{0,4},{1,5},{2,6},{3,7}},{1.0,0.0});
 
  {//Numerical evaluation:
   //Create Hamiltonian tensors:
-  auto created = false;
-  created = exatn::createTensorSync(t01,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(t12,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(t23,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(u00,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(u11,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(u22,TensorElementType::COMPLEX64); assert(created);
-  created = exatn::createTensorSync(u33,TensorElementType::COMPLEX64); assert(created);
+  success = exatn::createTensorSync(t01,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(t12,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(t23,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(u00,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(u11,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(u22,TENS_ELEM_TYPE); assert(success);
+  success = exatn::createTensorSync(u33,TENS_ELEM_TYPE); assert(success);
 
   //Initialize Hamiltonian tensors:
-  auto initialized = false;
-  initialized = exatn::initTensorDataSync("T01",hamt); assert(initialized);
-  initialized = exatn::initTensorDataSync("T12",hamt); assert(initialized);
-  initialized = exatn::initTensorDataSync("T23",hamt); assert(initialized);
-  initialized = exatn::initTensorDataSync("U00",hamu); assert(initialized);
-  initialized = exatn::initTensorDataSync("U11",hamu); assert(initialized);
-  initialized = exatn::initTensorDataSync("U22",hamu); assert(initialized);
-  initialized = exatn::initTensorDataSync("U33",hamu); assert(initialized);
+  success = exatn::initTensorDataSync("T01",hamt); assert(success);
+  success = exatn::initTensorDataSync("T12",hamt); assert(success);
+  success = exatn::initTensorDataSync("T23",hamt); assert(success);
+  success = exatn::initTensorDataSync("U00",hamu); assert(success);
+  success = exatn::initTensorDataSync("U11",hamu); assert(success);
+  success = exatn::initTensorDataSync("U22",hamu); assert(success);
+  success = exatn::initTensorDataSync("U33",hamu); assert(success);
 
-  //`Finish
+  //Remap the Ising Hamiltonian as a tensor network operator:
+  auto ham_expansion = makeSharedTensorExpansion(ham,*ket_tensor);
+  ham_expansion->printIt(); //debug
+  auto ham_tno_expansion = makeSharedTensorExpansion(ham_tno,*ket_tensor);
+  ham_tno_expansion->printIt(); //debug
+
+  //Reconstruct the Ising Hamiltonian as a tensor network operator:
+  
+
+  success = exatn::sync(); assert(success);
 
   //Destroy all tensors:
-  auto destroyed = false;
-  destroyed = exatn::destroyTensorSync("U33"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("U22"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("U11"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("U00"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("T23"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("T12"); assert(destroyed);
-  destroyed = exatn::destroyTensorSync("T01"); assert(destroyed);
+  success = exatn::destroyTensorSync("U33"); assert(success);
+  success = exatn::destroyTensorSync("U22"); assert(success);
+  success = exatn::destroyTensorSync("U11"); assert(success);
+  success = exatn::destroyTensorSync("U00"); assert(success);
+  success = exatn::destroyTensorSync("T23"); assert(success);
+  success = exatn::destroyTensorSync("T12"); assert(success);
+  success = exatn::destroyTensorSync("T01"); assert(success);
 
   //Synchronize:
-  exatn::sync();
+  success = exatn::sync(); assert(success);
  }
-
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -3230,9 +3266,9 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
  }
 
  //Build a tensor network operator:
- auto ansatz_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
- auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*tn_builder,true);
- ansatz_net->printIt(); //debug
+ auto space_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
+ auto ham_net = exatn::makeSharedTensorNetwork("HamiltonianNet",space_tensor,*tn_builder,true);
+ ham_net->printIt(); //debug
 
  //Synchronize:
  success = exatn::sync(); assert(success);

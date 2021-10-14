@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/13
+REVISION: 2021/10/14
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -139,6 +139,8 @@ public:
  TensorExpansion(const TensorOperator & tensor_operator, //in: tensor network operator
                  const Tensor & ket_subspace,            //in: tensor defining the ket subspace from the tensor operator map
                  const Tensor & bra_subspace);           //in: tensor defining the bra subspace from the tensor operator map
+ TensorExpansion(const TensorOperator & tensor_operator, //in: tensor network operator
+                 const Tensor & ket_subspace);           //in: tensor defining the ket and bra subspace from the tensor operator map
 
  TensorExpansion(const TensorExpansion &) = default;
  TensorExpansion & operator=(const TensorExpansion &) = default;
