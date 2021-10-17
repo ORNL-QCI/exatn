@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2021/08/20
+REVISION: 2021/10/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -31,6 +31,17 @@ constexpr SpaceId SOME_SPACE = 0; //any unregistered (anonymous) space (all regi
 constexpr SubspaceId FULL_SUBSPACE = 0; //every space has its trivial (full) subspace automatically registered as subspace 0
 constexpr SubspaceId UNREG_SUBSPACE = 0xFFFFFFFFFFFFFFFF; //id of any unregistered subspace
 
+//Possible types of tensor elements:
+enum class TensorElementType{
+ VOID,
+ REAL16,
+ REAL32,
+ REAL64,
+ COMPLEX16,
+ COMPLEX32,
+ COMPLEX64
+};
+
 //Direction of a leg (directed edge) in a tensor network:
 enum class LegDirection{
  UNDIRECT, //no direction
@@ -50,6 +61,7 @@ enum class IndexKind{
  RTRACE  //traced index in the right tensor operand
 };
 
+//Basic tensor operations:
 enum class TensorOpCode{
  NOOP,              //no operation
  CREATE,            //tensor creation
@@ -69,15 +81,6 @@ enum class TensorOpCode{
  ALLREDUCE          //tensor allreduce (parallel execution only)
 };
 
-enum class TensorElementType{
- VOID,
- REAL16,
- REAL32,
- REAL64,
- COMPLEX16,
- COMPLEX32,
- COMPLEX64
-};
 
 //TensorElementTypeSize<enum TensorElementType>() --> Size in bytes:
 template <TensorElementType> constexpr std::size_t TensorElementTypeSize();

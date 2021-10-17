@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/06
+REVISION: 2021/10/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -530,37 +530,43 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
 bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_ptr<TensorMapper> tensor_mapper)
 {
  bool success = true;
- //Determine tensor element type:
- const auto num_operands = operation->getNumOperands();
- auto elem_type = TensorElementType::VOID;
- for(unsigned int i = 0; i < num_operands; ++i){
-  auto operand = operation->getTensorOperand(i);
-  elem_type = operand->getElementType();
-  if(elem_type != TensorElementType::VOID) break;
- }
- //Create and initialize implicit Kronecker Delta tensors:
  std::stack<unsigned int> deltas;
- for(unsigned int i = 0; i < num_operands; ++i){
-  auto operand = operation->getTensorOperand(i);
-  const auto & tensor_name = operand->getName();
-  if(tensor_name.length() >= 2){
-   if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
-    assert(elem_type != TensorElementType::VOID);
-    std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-    op0->setTensorOperand(operand);
-    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
-    success = submitOp(op0);
-    if(success){
-     deltas.push(i);
-     std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
-     op1->setTensorOperand(operand);
-     std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
-      resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
-     success = submitOp(op1);
+ const auto opcode = operation->getOpcode();
+ const auto num_operands = operation->getNumOperands();
+ //Create and initialize implicit Kronecker Delta tensors:
+ if(opcode != TensorOpCode::CREATE && opcode != TensorOpCode::DESTROY){
+  auto elem_type = TensorElementType::VOID;
+  for(unsigned int i = 0; i < num_operands; ++i){
+   auto operand = operation->getTensorOperand(i);
+   elem_type = operand->getElementType();
+   if(elem_type != TensorElementType::VOID) break;
+  }
+  for(unsigned int i = 0; i < num_operands; ++i){
+   auto operand = operation->getTensorOperand(i);
+   const auto & tensor_name = operand->getName();
+   if(tensor_name.length() >= 2){
+    if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
+     if(!tensorAllocated(tensor_name)){
+      //std::cout << "#DEBUG(exatn::NumServer::submitOp): Kronecker Delta tensor creation: "
+      //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
+      assert(elem_type != TensorElementType::VOID);
+      std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+      op0->setTensorOperand(operand);
+      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
+      success = submitOp(op0);
+      if(success){
+       deltas.push(i);
+       std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+       op1->setTensorOperand(operand);
+       std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+        resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
+       success = submitOp(op1);
+      }
+     }
     }
    }
+   if(!success) break;
   }
-  if(!success) break;
  }
  if(success){
   //Submit the main tensor operation:
@@ -1595,6 +1601,50 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
  return success;
 }
 
+bool NumServer::initTensorsSpecial(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tens->first != 0){ //input tensor
+   if(tens_name.length() >= 2){
+    if(tens_name[0] == '_' && tens_name[1] == 'd'){
+     if(tensorAllocated(tens_name)){
+      success = transformTensor(tens_name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
+     }else{
+      success = false;
+     }
+    }
+   }
+  }
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::initTensorsSpecialSync(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tens->first != 0){ //input tensor
+   if(tens_name.length() >= 2){
+    if(tens_name[0] == '_' && tens_name[1] == 'd'){
+     if(tensorAllocated(tens_name)){
+      success = transformTensorSync(tens_name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
+     }else{
+      success = false;
+     }
+    }
+   }
+  }
+  if(!success) break;
+ }
+ return success;
+}
+
 bool NumServer::computeMaxAbsSync(const std::string & name,
                                   double & norm)
 {
@@ -1756,6 +1806,21 @@ bool NumServer::computePartialNormsSync(const std::string & name,            //i
   }
  }
  return submitted;
+}
+
+bool NumServer::computeNorms2Sync(const TensorNetwork & network,
+                                  std::map<std::string,double> & norms)
+{
+ bool success = true;
+ norms.clear();
+ for(auto tens = network.cbegin(); tens != network.cend(); ++tens){
+  auto res = norms.emplace(std::make_pair(tens->second.getName(),0.0));
+  if(res.second){
+   success = computeNorm2Sync(tens->second.getName(),res.first->second);
+   if(!success) break;
+  }
+ }
+ return success;
 }
 
 bool NumServer::replicateTensor(const std::string & name, int root_process_rank)
@@ -3108,7 +3173,8 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
        break;
       }
      }else{
-      std::cout << "#WARNING(exatn::balanceNorm2): Tensor has zero norm, thus cannot be renormalized!" << std::endl;
+      std::cout << "#WARNING(exatn::balanceNorm2): Tensor " << tens->second.getName()
+                << " has zero norm, thus cannot be renormalized!" << std::endl;
      }
     }else{
      std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "

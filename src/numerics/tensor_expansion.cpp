@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/14
+REVISION: 2021/10/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -140,13 +140,13 @@ TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
    if(comp_ket_rank == comp_bra_rank){
     if(comp_rank <= space_rank){
      auto output_tensor = network->getTensor(0);
-     std::vector<int> space_leg_ids(space_rank,-1);
+     std::vector<unsigned int> space_leg_ids(space_rank,space_rank);
      for(unsigned int i = 0; i < comp_ket_rank; ++i){
       const auto & ket_leg = component->ket_legs[i];
       const auto & bra_leg = component->bra_legs[i];
       if(ket_leg.first < ket_space_rank && bra_leg.first < bra_space_rank){
-       assert(space_leg_ids[ket_leg.first] < 0);
-       assert(space_leg_ids[ket_space_rank + bra_leg.first] < 0);
+       assert(space_leg_ids[ket_leg.first] >= space_rank);
+       assert(space_leg_ids[ket_space_rank + bra_leg.first] >= space_rank);
        assert(tensor_dims_conform(ket_subspace,*output_tensor,ket_leg.first,ket_leg.second));
        assert(tensor_dims_conform(bra_subspace,*output_tensor,bra_leg.first,bra_leg.second));
        space_leg_ids[ket_leg.first] = ket_leg.second; //global leg id --> local network leg id
@@ -158,9 +158,9 @@ TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
      }
      unsigned int bi = 0, ki = 0, out_rank = comp_rank;
      while(ki < ket_space_rank && bi < bra_space_rank){
-      if(space_leg_ids[ki] >= 0) ++ki;
-      if(space_leg_ids[ket_space_rank + bi] >= 0) ++bi;
-      if(space_leg_ids[ki] < 0 && space_leg_ids[ket_space_rank + bi] < 0){
+      if(space_leg_ids[ki] < space_rank) ++ki;
+      if(space_leg_ids[ket_space_rank + bi] < space_rank) ++bi;
+      if(space_leg_ids[ki] >= space_rank && space_leg_ids[ket_space_rank + bi] >= space_rank){
        space_leg_ids[ki] = out_rank++;
        space_leg_ids[ket_space_rank + bi] = out_rank++;
        auto identity_tensor = makeSharedTensor("_d",
@@ -172,7 +172,8 @@ TensorExpansion::TensorExpansion(const TensorOperator & tensor_operator,
       }
      }
      assert(out_rank == space_rank);
-     auto success = this->appendComponent(network,component->coefficient); assert(success);
+     auto success = network->reorderOutputModes(space_leg_ids); assert(success);
+     success = this->appendComponent(network,component->coefficient); assert(success);
     }else{
      std::cout << "ERROR(exatn::TensorExpansion::ctor): The combined rank of provided tensor subspaces is too low for the given tensor operator!" << std::endl;
      assert(false);

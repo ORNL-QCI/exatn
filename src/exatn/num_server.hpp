@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/09/30
+REVISION: 2021/10/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -664,6 +664,11 @@ public:
 
  bool initTensorsRndSync(TensorNetwork & tensor_network); //inout: tensor network
 
+ /** Initializes special tensors present in the tensor network. **/
+ bool initTensorsSpecial(TensorNetwork & tensor_network);     //inout: tensor network
+
+ bool initTensorsSpecialSync(TensorNetwork & tensor_network); //inout: tensor network
+
  /** Computes max-abs norm of a tensor. **/
  bool computeMaxAbsSync(const std::string & name, //in: tensor name
                         double & norm);           //out: tensor norm
@@ -680,6 +685,10 @@ public:
  bool computePartialNormsSync(const std::string & name,             //in: tensor name
                               unsigned int tensor_dimension,        //in: chosen tensor dimension
                               std::vector<double> & partial_norms); //out: partial 2-norms over the chosen tensor dimension
+
+ /** Computes 2-norms of all tensors in a tensor network. **/
+ bool computeNorms2Sync(const TensorNetwork & network,         //in: tensor network
+                        std::map<std::string,double> & norms); //out: tensor norms: tensor_name --> norm
 
  /** Replicates a tensor within the given process group, which defaults to all MPI processes.
      Only the root_process_rank within the given process group is required to have the tensor,

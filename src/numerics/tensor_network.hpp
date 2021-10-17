@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/10/13
+REVISION: 2021/10/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -598,6 +598,7 @@ protected:
      to the same edge in the tensor network. It will also assure the use of real tensor names.
      If the tensor operation list is empty, does nothing. **/
  void establishUniversalIndexNumeration();
+
 
 private:
 

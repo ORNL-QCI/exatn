@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/10/07
+REVISION: 2021/10/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -100,7 +100,11 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
    }else{
     for(unsigned int i = 0; i < (tens_rank - end_decr); ++i){
      unsigned int below_tensor_id = (tensor_id_base - num_dims + extent_id + i);
-     tens_legs[i] = TensorLeg(below_tensor_id,(network.getTensor(below_tensor_id)->getRank() - 1));
+     if(tensor_operator){
+      tens_legs[i] = TensorLeg(below_tensor_id,(network.getTensor(below_tensor_id)->getRank() / 2));
+     }else{
+      tens_legs[i] = TensorLeg(below_tensor_id,(network.getTensor(below_tensor_id)->getRank() - 1));
+     }
     }
     if(end_decr){
      tens_legs[tens_rank - 1] = TensorLeg(tensor_id_base + num_tensors_in_layer + (num_dims_new / arity_),
@@ -114,7 +118,7 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
                                        false,false);
    assert(appended);
    if(tensor_operator && layer == 0){
-    auto * tens_conn = network.getTensorConn(tensor_id_base+num_dims_new);
+    auto * tens_conn = network.getTensorConn(tensor_id_base + num_dims_new);
     for(unsigned int i = 0; i < (tens_rank - end_decr); ++i){
      const unsigned int output_dim_id = output_tensor_rank + extent_id + i;
      tens_conn->appendLeg(output_dim_extents[output_dim_id],TensorLeg{0,output_dim_id});
@@ -130,6 +134,7 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
    ++layer;
   }
  }
+ //std::cout << "#DEBUG(exatn::network_builder_ttn): Network built:\n"; network.printIt(); //debug
  return;
 }
 

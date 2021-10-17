@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/10/13
+REVISION: 2021/10/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -335,7 +335,7 @@ bool TensorNetwork::isValid()
 
 unsigned int TensorNetwork::getRank() const
 {
- assert(this->isFinalized());
+ //assert(this->isFinalized());
  return tensors_.at(0).getNumLegs(); //output tensor
 }
 
@@ -359,7 +359,10 @@ TensorElementType TensorNetwork::getTensorElementType() const
 {
  assert(this->isFinalized());
  for(const auto & tens: tensors_){
-  if(tens.first != 0) return tens.second.getElementType();
+  if(tens.first != 0){
+   const auto elem_type = tens.second.getElementType();
+   if(elem_type != TensorElementType::VOID) return elem_type;
+  }
  }
  return TensorElementType::VOID;
 }
@@ -2244,6 +2247,7 @@ double TensorNetwork::getContractionCost(unsigned int left_id, unsigned int righ
 std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(const std::string & contr_seq_opt_name,
                                                                               bool universal_indices)
 {
+ const auto default_elem_type = getTensorElementType();
  if(operations_.empty()){
   //Determine the pseudo-optimal sequence of tensor contractions:
   max_intermediate_presence_volume_ = 0.0;
@@ -2287,8 +2291,11 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      max_intermediate_presence_volume_ = std::max(max_intermediate_presence_volume_,static_cast<double>(intermediates_vol));
      auto op_create = tensor_op_factory.createTensorOpShared(TensorOpCode::CREATE); //create intermediate
      op_create->setTensorOperand(tensor0);
-     if(tensor0->getElementType() != TensorElementType::VOID)
+     if(tensor0->getElementType() != TensorElementType::VOID){
       std::dynamic_pointer_cast<TensorOpCreate>(op_create)->resetTensorElementType(tensor0->getElementType());
+     }else{
+      std::dynamic_pointer_cast<TensorOpCreate>(op_create)->resetTensorElementType(default_elem_type);
+     }
      operations_.emplace_back(op_create);
      intermediates.emplace_back(contr->result_id);
      if(ACCUMULATIVE_CONTRACTIONS){
@@ -2299,7 +2306,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
       operations_.emplace_back(op_init);
      }
     }else{ //make sure the output tensor has its type set
-     if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(tensor1->getElementType());
+     if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(default_elem_type);
     }
     auto op = tensor_op_factory.createTensorOpShared(TensorOpCode::CONTRACT);
     op->setTensorOperand(tensor0);
@@ -2343,7 +2350,7 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      left_tensor_id = iter->first;
     }
    }
-   if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(tensor1->getElementType());
+   if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(default_elem_type);
    auto op = tensor_op_factory.createTensorOp(TensorOpCode::ADD);
    op->setTensorOperand(tensor0);
    op->setTensorOperand(tensor1,conj1);

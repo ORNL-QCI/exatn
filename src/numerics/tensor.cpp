@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2021/08/21
+REVISION: 2021/10/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -102,8 +102,11 @@ name_(name), element_type_(TensorElementType::VOID)
  //Set the tensor element type:
  auto left_tensor_type = left_tensor.getElementType();
  auto right_tensor_type = right_tensor.getElementType();
- assert(left_tensor_type == right_tensor_type);
- this->setElementType(left_tensor_type);
+ if(static_cast<int>(left_tensor_type) <= static_cast<int>(right_tensor_type)){
+  this->setElementType(left_tensor_type);
+ }else{
+  this->setElementType(right_tensor_type);
+ }
 }
 
 Tensor::Tensor(BytePacket & byte_packet)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/09/30
+REVISION: 2021/10/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -476,6 +476,14 @@ inline bool initTensorsRndSync(TensorNetwork & tensor_network) //inout: tensor n
  {return numericalServer->initTensorsRndSync(tensor_network);}
 
 
+/** Initializes special tensors present in the tensor network. **/
+inline bool initTensorsSpecial(TensorNetwork & tensor_network)     //inout: tensor network
+ {return numericalServer->initTensorsSpecial(tensor_network);}
+
+inline bool initTensorsSpecialSync(TensorNetwork & tensor_network) //inout: tensor network
+ {return numericalServer->initTensorsSpecialSync(tensor_network);}
+
+
 /** Computes max-abs norm of a tensor. **/
 inline bool computeMaxAbsSync(const std::string & name, //in: tensor name
                               double & norm)            //out: tensor norm
@@ -499,6 +507,12 @@ inline bool computePartialNormsSync(const std::string & name,            //in: t
                                     unsigned int tensor_dimension,       //in: chosen tensor dimension
                                     std::vector<double> & partial_norms) //out: partial 2-norms over the chosen tensor dimension
  {return numericalServer->computePartialNormsSync(name,tensor_dimension,partial_norms);}
+
+
+/** Computes 2-norms of all tensors in a tensor network. **/
+inline bool computeNorms2Sync(const TensorNetwork & network,        //in: tensor network
+                              std::map<std::string,double> & norms) //out: tensor norms: tensor_name --> norm
+ {return numericalServer->computeNorms2Sync(network,norms);}
 
 
 /** Replicates a tensor within the given process group, which defaults to all MPI processes.
