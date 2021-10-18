@@ -1646,10 +1646,10 @@ TEST(NumServerTester, IsingTNO)
   }
 
   //Reconstruct the Ising Hamiltonian as a tensor network operator:
-  success = exatn::balanceNormalizeNorm2Sync(*ham_expansion,1.0,1.0,false); assert(success);
+  success = exatn::normalizeNorm2Sync(*ham_expansion,1.0); assert(success);
   success = exatn::balanceNorm2Sync(*ham_tno_expansion,1.0,true); assert(success);
   ham_tno_expansion->conjugate();
-  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+  exatn::TensorNetworkReconstructor::resetDebugLevel(1,0); //debug
   exatn::TensorNetworkReconstructor reconstructor(ham_expansion,ham_tno_expansion,1e-4);
   success = exatn::sync(); assert(success);
   double residual_norm, fidelity;

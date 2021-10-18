@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/10/02
+REVISION: 2021/10/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,7 +22,12 @@ TensorNetworkReconstructor::TensorNetworkReconstructor(std::shared_ptr<TensorExp
                                                        std::shared_ptr<TensorExpansion> approximant,
                                                        double tolerance):
  expansion_(expansion), approximant_(approximant),
- max_iterations_(DEFAULT_MAX_ITERATIONS), epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), parallel_(true),
+ max_iterations_(DEFAULT_MAX_ITERATIONS), epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance),
+#ifdef MPI_ENABLED
+ parallel_(true),
+#else
+ parallel_(false),
+#endif
  input_norm_(0.0), output_norm_(0.0), residual_norm_(0.0), fidelity_(0.0)
 {
  if(!expansion_->isKet()){
@@ -126,7 +131,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
- const auto num_procs = process_group.getSize();
+ unsigned int num_procs = 1;
+ if(parallel_) num_procs = process_group.getSize();
 
  assert(residual_norm != nullptr);
  assert(fidelity != nullptr);

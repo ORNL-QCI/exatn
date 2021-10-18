@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/02
+REVISION: 2021/10/18
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -22,7 +22,12 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
                                                double tolerance):
  tensor_operator_(tensor_operator), vector_expansion_(vector_expansion),
  max_iterations_(DEFAULT_MAX_ITERATIONS), micro_iterations_(DEFAULT_MICRO_ITERATIONS),
- epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance), parallel_(true)
+ epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance),
+#ifdef MPI_ENABLED
+ parallel_(true)
+#else
+ parallel_(false)
+#endif
 {
  if(!vector_expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkOptimizer): The tensor network vector expansion must be a ket!"
@@ -85,7 +90,8 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
- const auto num_procs = process_group.getSize();
+ unsigned int num_procs = 1;
+ if(parallel_) num_procs = process_group.getSize();
 
  if(TensorNetworkOptimizer::focus >= 0){
   if(getProcessRank() != TensorNetworkOptimizer::focus) TensorNetworkOptimizer::debug = 0;
