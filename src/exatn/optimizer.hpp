@@ -10,7 +10,9 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      vectors formed by the same tensor network expansion, this tensor network
      variational optimizer will optimize the tensor factors constituting the
      bra/ket tensor network vectors to arrive at an extremum of that functional,
-     specifically targeting its minimum.
+     specifically targeting its minimum:
+      E = <x|H|x> / <x|x>, where H is a tensor network operator, and x is a
+      tensor network expansion that delivers an extremum to the functional.
 **/
 
 #ifndef EXATN_OPTIMIZER_HPP_
@@ -93,7 +95,7 @@ private:
   std::complex<double> expect_value;    //current expectation value
  };
 
- std::shared_ptr<TensorOperator> tensor_operator_;   //tensor operator
+ std::shared_ptr<TensorOperator> tensor_operator_;   //tensor network operator
  std::shared_ptr<TensorExpansion> vector_expansion_; //tensor network expansion to optimize (bra/ket vector)
  unsigned int max_iterations_;                       //max number of macro-iterations
  unsigned int micro_iterations_;                     //number of microiterations per optimized tensor
