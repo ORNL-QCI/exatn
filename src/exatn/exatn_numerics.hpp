@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/10/17
+REVISION: 2021/10/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -902,22 +902,25 @@ inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI 
 
 
 /** Normalizes a tensor to a given 2-norm. **/
-inline bool normalizeNorm2Sync(const std::string & name, //in: tensor name
-                               double norm = 1.0)        //in: desired 2-norm
- {return numericalServer->normalizeNorm2Sync(name,norm);}
+inline bool normalizeNorm2Sync(const std::string & name,         //in: tensor name
+                               double norm = 1.0,                //in: desired 2-norm
+                               double * original_norm = nullptr) //out: original 2-norm
+ {return numericalServer->normalizeNorm2Sync(name,norm,original_norm);}
 
 
 /** Normalizes a tensor network expansion to a given 2-norm by rescaling
     all tensor network components by the same factor: Only the tensor
     network expansion coeffcients are affected, not tensors. **/
-inline bool normalizeNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
-                               double norm = 1.0)           //in: desired 2-norm
- {return numericalServer->normalizeNorm2Sync(expansion,norm);}
+inline bool normalizeNorm2Sync(TensorExpansion & expansion,      //inout: tensor network expansion
+                               double norm = 1.0,                //in: desired 2-norm
+                               double * original_norm = nullptr) //out: original 2-norm
+ {return numericalServer->normalizeNorm2Sync(expansion,norm,original_norm);}
 
 inline bool normalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                TensorExpansion & expansion,        //inout: tensor network expansion
-                               double norm = 1.0)                  //in: desired 2-norm
- {return numericalServer->normalizeNorm2Sync(process_group,expansion,norm);}
+                               double norm = 1.0,                  //in: desired 2-norm
+                               double * original_norm = nullptr)   //out: original 2-norm
+ {return numericalServer->normalizeNorm2Sync(process_group,expansion,norm,original_norm);}
 
 
 /** Normalizes all input tensors in a tensor network to a given 2-norm.

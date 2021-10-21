@@ -1552,9 +1552,9 @@ TEST(NumServerTester, IsingTNO)
  exatn::resetLoggingLevel(2,2); //debug
 
  //Define Ising Hamiltonian constants:
- constexpr std::complex<double> ZERO{0.0,0.0};
- constexpr std::complex<double> HAMT{-1.0,0.0};
- constexpr std::complex<double> HAMU{-2.0,0.0};
+ constexpr std::complex<double> ZERO{ 0.0, 0.0};
+ constexpr std::complex<double> HAMT{-1.0, 0.0};
+ constexpr std::complex<double> HAMU{-2.0, 0.0};
 
  //Declare Ising Hamiltonian tensors:
  auto t01 = std::make_shared<Tensor>("T01",TensorShape{2,2,2,2});
@@ -1578,15 +1578,15 @@ TEST(NumServerTester, IsingTNO)
  };
 
  //Declare the Ising Hamiltonian operator:
- TensorOperator ham("Hamiltonian");
- success = ham.appendComponent(t01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(t12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(t23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(u00,{{0,0}},{{0,1}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(u11,{{1,0}},{{1,1}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(u22,{{2,0}},{{2,1}},{1.0,0.0}); assert(success);
- success = ham.appendComponent(u33,{{3,0}},{{3,1}},{1.0,0.0}); assert(success);
- ham.printIt(); //debug
+ auto ham = exatn::makeSharedTensorOperator("Hamiltonian");
+ success = ham->appendComponent(t01,{{0,0},{1,1}},{{0,2},{1,3}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(t12,{{1,0},{2,1}},{{1,2},{2,3}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(t23,{{2,0},{3,1}},{{2,2},{3,3}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(u00,{{0,0}},{{0,1}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(u11,{{1,0}},{{1,1}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(u22,{{2,0}},{{2,1}},{1.0,0.0}); assert(success);
+ success = ham->appendComponent(u33,{{3,0}},{{3,1}},{1.0,0.0}); assert(success);
+ //ham->printIt(); //debug
 
  //Configure the tensor network builder:
  auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
@@ -1599,19 +1599,24 @@ TEST(NumServerTester, IsingTNO)
   assert(false);
  }
 
- //Build a tensor network operator:
+ //Build a tensor network vector:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_sites,2));
- //auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net->markOptimizableAllTensors();
  //vec_net->printIt(); //debug
+ auto vec_tns = exatn::makeSharedTensorExpansion("VectorTNS",vec_net,std::complex<double>{1.0,0.0});
+
+ //Build a tensor network operator:
  auto space_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
  auto ham_net = exatn::makeSharedTensorNetwork("HamiltonianNet",space_tensor,*tn_builder,true);
  ham_net->markOptimizableAllTensors();
- ham_net->printIt(); //debug
- TensorOperator ham_tno("HamiltonianTNO");
- success = ham_tno.appendComponent(ham_net,{{0,0},{1,1},{2,2},{3,3}},{{0,4},{1,5},{2,6},{3,7}},{1.0,0.0});
+ //ham_net->printIt(); //debug
+ auto ham_tno = exatn::makeSharedTensorOperator("HamiltonianTNO");
+ success = ham_tno->appendComponent(ham_net,{{0,0},{1,1},{2,2},{3,3}},{{0,4},{1,5},{2,6},{3,7}},{1.0,0.0}); assert(success);
 
  {//Numerical evaluation:
-  //Create Hamiltonian tensors:
+  //Create and initialize Hamiltonian tensors:
+  std::cout << "Creating Hamiltonian tensors ... ";
   success = exatn::createTensorSync(t01,TENS_ELEM_TYPE); assert(success);
   success = exatn::createTensorSync(t12,TENS_ELEM_TYPE); assert(success);
   success = exatn::createTensorSync(t23,TENS_ELEM_TYPE); assert(success);
@@ -1619,8 +1624,9 @@ TEST(NumServerTester, IsingTNO)
   success = exatn::createTensorSync(u11,TENS_ELEM_TYPE); assert(success);
   success = exatn::createTensorSync(u22,TENS_ELEM_TYPE); assert(success);
   success = exatn::createTensorSync(u33,TENS_ELEM_TYPE); assert(success);
+  std::cout << "Ok" << std::endl;
 
-  //Initialize Hamiltonian tensors:
+  std::cout << "Initializing Hamiltonian tensors ... ";
   success = exatn::initTensorDataSync("T01",hamt); assert(success);
   success = exatn::initTensorDataSync("T12",hamt); assert(success);
   success = exatn::initTensorDataSync("T23",hamt); assert(success);
@@ -1628,29 +1634,59 @@ TEST(NumServerTester, IsingTNO)
   success = exatn::initTensorDataSync("U11",hamu); assert(success);
   success = exatn::initTensorDataSync("U22",hamu); assert(success);
   success = exatn::initTensorDataSync("U33",hamu); assert(success);
+  std::cout << "Ok" << std::endl;
+
+  //Create and initialize tensor network vector tensors:
+  std::cout << "Creating and initializing tensor network vector tensors ... ";
+  success = exatn::createTensorsSync(*vec_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  std::cout << "Ok" << std::endl;
 
   //Create and initialize tensor network operator tensors:
+  std::cout << "Creating and initializing tensor network operator tensors ... ";
   success = exatn::createTensorsSync(*ham_net,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*ham_net); assert(success);
+  std::cout << "Ok" << std::endl;
 
   //Remap tensor operators as tensor expansions:
-  auto ham_expansion = makeSharedTensorExpansion(ham,*ket_tensor);
+  auto ham_expansion = exatn::makeSharedTensorExpansion(*ham,*ket_tensor);
   ham_expansion->printIt(); //debug
-  auto ham_tno_expansion = makeSharedTensorExpansion(ham_tno,*ket_tensor);
+  auto ham_tno_expansion = exatn::makeSharedTensorExpansion(*ham_tno,*ket_tensor);
   ham_tno_expansion->printIt(); //debug
 
   //Create and initialize special tensors in the Hamiltonian tensor expansion:
+  std::cout << "Creating and initializing special Hamiltonian tensors ... ";
   for(auto net = ham_expansion->begin(); net != ham_expansion->end(); ++net){
    success = exatn::createTensorsSync(*(net->network),TENS_ELEM_TYPE); assert(success);
    success = exatn::initTensorsSpecialSync(*(net->network)); assert(success);
   }
+  std::cout << "Ok" << std::endl;
+
+  //Ground state search for the original Hamiltonian:
+  std::cout << "Ground state search for the original Hamiltonian:" << std::endl;
+  //success = exatn::sync(); assert(success);
+  //success = exatn::balanceNorm2Sync(*vec_tns,1.0,true); assert(success);
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer1(ham,vec_tns,1e-5);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer1.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Search succeeded!" << std::endl;
+  }else{
+   std::cout << "Search failed!" << std::endl;
+   assert(false);
+  }
 
   //Reconstruct the Ising Hamiltonian as a tensor network operator:
-  success = exatn::normalizeNorm2Sync(*ham_expansion,1.0); assert(success);
-  success = exatn::balanceNorm2Sync(*ham_tno_expansion,1.0,true); assert(success);
+  std::cout << "Reconstructing Ising Hamiltonian with a tensor network operator:" << std::endl;
+  double ham_norm = 0.0;
+  success = exatn::normalizeNorm2Sync(*ham_expansion,1.0,&ham_norm); assert(success);
+  std::cout << "Original Hamiltonian operator norm = " << ham_norm << std::endl;
+  //success = exatn::balanceNorm2Sync(*ham_tno_expansion,1.0,true); assert(success);
   ham_tno_expansion->conjugate();
   exatn::TensorNetworkReconstructor::resetDebugLevel(1,0); //debug
-  exatn::TensorNetworkReconstructor reconstructor(ham_expansion,ham_tno_expansion,1e-4);
+  exatn::TensorNetworkReconstructor reconstructor(ham_expansion,ham_tno_expansion,1e-6);
   success = exatn::sync(); assert(success);
   double residual_norm, fidelity;
   bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
@@ -1659,12 +1695,31 @@ TEST(NumServerTester, IsingTNO)
    std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
              << "; Fidelity = " << fidelity << std::endl;
   }else{
-   std::cout << "Reconstruction failed!" << std::endl; assert(false);
+   std::cout << "Reconstruction failed!" << std::endl;
+   assert(false);
+  }
+  const auto tno_exp_coefs = ham_tno_expansion->getCoefficients();
+  assert(tno_exp_coefs.size() == 1);
+  std::cout << "Eigenvalue scaling coefficient = " << ham_norm * tno_exp_coefs[0] << std::endl;
+
+  //Ground state search for the tensor network Hamiltonian:
+  std::cout << "Ground state search for the tensor network Hamiltonian:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer2(ham_tno,vec_tns,1e-5);
+  success = exatn::sync(); assert(success);
+  converged = optimizer2.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Search succeeded!" << std::endl;
+  }else{
+   std::cout << "Search failed!" << std::endl;
+   assert(false);
   }
 
   //Destroy all tensors:
   success = exatn::sync(); assert(success);
   success = exatn::destroyTensorsSync(*ham_net); assert(success);
+  success = exatn::destroyTensorsSync(*vec_net); assert(success);
   success = exatn::destroyTensorSync("U33"); assert(success);
   success = exatn::destroyTensorSync("U22"); assert(success);
   success = exatn::destroyTensorSync("U11"); assert(success);

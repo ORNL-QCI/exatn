@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/17
+REVISION: 2021/10/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -907,18 +907,21 @@ public:
                                 const std::string & network);       //in: symbolic tensor network specification
 
  /** Normalizes a tensor to a given 2-norm. **/
- bool normalizeNorm2Sync(const std::string & name, //in: tensor name
-                         double norm);             //in: desired 2-norm
+ bool normalizeNorm2Sync(const std::string & name,          //in: tensor name
+                         double norm = 1.0,                 //in: desired 2-norm
+                         double * original_norm = nullptr); //out: original 2-norm
 
  /** Normalizes a tensor network expansion to a given 2-norm by rescaling
      all tensor network components by the same factor: Only the tensor
      network expansion coefficients are affected. **/
- bool normalizeNorm2Sync(TensorExpansion & expansion, //inout: tensor network expansion
-                         double norm);                //in: desired 2-norm
+ bool normalizeNorm2Sync(TensorExpansion & expansion,       //inout: tensor network expansion
+                         double norm = 1.0,                 //in: desired 2-norm
+                         double * original_norm = nullptr); //out: original 2-norm
 
  bool normalizeNorm2Sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                          TensorExpansion & expansion,        //inout: tensor network expansion
-                         double norm);                       //in: desired 2-norm
+                         double norm = 1.0,                  //in: desired 2-norm
+                         double * original_norm = nullptr);  //out: original 2-norm
 
  /** Normalizes all input tensors in a tensor network to a given 2-norm.
      If only_optimizable is TRUE, only optimizable tensors will be normalized. **/

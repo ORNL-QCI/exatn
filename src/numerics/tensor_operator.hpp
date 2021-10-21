@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/09/20
+REVISION: 2021/10/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -142,6 +142,9 @@ public:
      all tensor legs reverse their direction, bra legs and ket legs are swapped,
      complex linear expansion coefficients are complex conjugated. **/
  void conjugate();
+
+ /** Returns linear combination coefficients for all components. **/
+ std::vector<std::complex<double>> getCoefficients() const;
 
  /** Prints. **/
  void printIt() const;

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/17
+REVISION: 2021/10/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -3076,23 +3076,25 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
  return parsed;
 }
 
-bool NumServer::normalizeNorm2Sync(const std::string & name, double norm)
+bool NumServer::normalizeNorm2Sync(const std::string & name, double norm, double * original_norm)
 {
  double old_norm = 0.0;
  bool success = computeNorm2Sync(name,old_norm);
+ if(original_norm != nullptr) *original_norm = old_norm;
  if(success) success = scaleTensorSync(name,norm/old_norm);
  return success;
 }
 
 bool NumServer::normalizeNorm2Sync(TensorExpansion & expansion,
-                                   double norm)
+                                   double norm, double * original_norm)
 {
- return normalizeNorm2Sync(getDefaultProcessGroup(),expansion,norm);
+ return normalizeNorm2Sync(getDefaultProcessGroup(),expansion,norm,original_norm);
 }
 
 bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
                                    TensorExpansion & expansion,
-                                   double norm)
+                                   double norm,
+                                   double * original_norm)
 {
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
@@ -3121,6 +3123,7 @@ bool NumServer::normalizeNorm2Sync(const ProcessGroup & process_group,
      if(success){
       //std::cout << "#DEBUG(exatn::NormalizeNorm2Sync): Original squared 2-norm = " << original_norm2 << std::endl; //debug
       if(original_norm2 > 0.0){
+       if(original_norm != nullptr) *original_norm = std::sqrt(original_norm2);
        expansion.rescale(std::complex<double>(norm/std::sqrt(original_norm2)));
       }else{
        std::cout << "#WARNING(exatn::normalizeNorm2): Tensor expansion has zero norm, thus cannot be normalized!" << std::endl;

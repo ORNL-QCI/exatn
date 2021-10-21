@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/15
+REVISION: 2021/10/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -343,6 +343,15 @@ void TensorExpansion::markOptimizableAllTensors()
 {
  for(auto net = begin(); net != end(); ++net) net->network->markOptimizableAllTensors();
  return;
+}
+
+
+std::vector<std::complex<double>> TensorExpansion::getCoefficients() const
+{
+ std::vector<std::complex<double>> coefs(components_.size(),{0.0,0.0});
+ std::size_t i = 0;
+ for(const auto & component: components_) coefs[i++] = component.coefficient;
+ return coefs;
 }
 
 
