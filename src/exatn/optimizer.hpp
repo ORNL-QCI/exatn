@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/02
+REVISION: 2021/10/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -64,7 +64,10 @@ public:
  bool optimize(const ProcessGroup & process_group); //in: executing process group
 
  /** Returns the optimized tensor network expansion forming the optimal bra/ket vectors. **/
- std::shared_ptr<TensorExpansion> getSolution() const;
+ std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * average_expect_val = nullptr) const;
+
+ /** Returns the achieved expectation value. **/
+ std::complex<double> getExpectationValue() const;
 
  /** Enables/disables coarse-grain parallelization over tensor networks. **/
  void enableParallelization(bool parallel = true);
@@ -97,6 +100,8 @@ private:
  double epsilon_;                                    //learning rate for the gradient descent based tensor update
  double tolerance_;                                  //numerical convergence tolerance (for the gradient)
  bool parallel_;                                     //enables/disables coarse-grain parallelization over tensor networks
+
+ std::complex<double> average_expect_val_;           //average expectation value (across all optimized tensor factors)
 
  std::vector<Environment> environments_;             //optimization environments for each optimizable tensor
 };

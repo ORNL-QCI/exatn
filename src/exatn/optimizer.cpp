@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/18
+REVISION: 2021/10/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -24,10 +24,11 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
  max_iterations_(DEFAULT_MAX_ITERATIONS), micro_iterations_(DEFAULT_MICRO_ITERATIONS),
  epsilon_(DEFAULT_LEARN_RATE), tolerance_(tolerance),
 #ifdef MPI_ENABLED
- parallel_(true)
+ parallel_(true),
 #else
- parallel_(false)
+ parallel_(false),
 #endif
+ average_expect_val_({0.0,0.0})
 {
  if(!vector_expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkOptimizer): The tensor network vector expansion must be a ket!"
@@ -65,9 +66,16 @@ void TensorNetworkOptimizer::resetMicroIterations(unsigned int micro_iterations)
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution() const
+std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(std::complex<double> * average_expect_val) const
 {
+ if(average_expect_val != nullptr) *average_expect_val = average_expect_val_;
  return vector_expansion_;
+}
+
+
+std::complex<double> TensorNetworkOptimizer::getExpectationValue() const
+{
+ return average_expect_val_;
 }
 
 
@@ -206,7 +214,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Iteration " << iteration << std::endl;
    converged = true;
    double max_convergence = 0.0;
-   std::complex<double> average_expect_val{0.0,0.0};
+   average_expect_val_ = std::complex<double>{0.0,0.0};
    for(auto & environment: environments_){
     //Create the gradient tensors:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
@@ -241,7 +249,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
       default:
        assert(false);
      }
-     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val += expect_val;
+     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val_ += expect_val;
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
      //Update the expectation value in the gradient expansion:
@@ -361,9 +369,9 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
-   average_expect_val /= static_cast<double>(environments_.size());
+   average_expect_val_ /= static_cast<double>(environments_.size());
    if(TensorNetworkOptimizer::debug > 0){
-    std::cout << "Average expectation value = " << average_expect_val
+    std::cout << "Average expectation value = " << average_expect_val_
               << "; Max convergence residual = " << max_convergence << std::endl;
    }
    ++iteration;
