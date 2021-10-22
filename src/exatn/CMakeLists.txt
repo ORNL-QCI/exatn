@@ -7,6 +7,7 @@ add_library(${LIBRARY_NAME}
             quantum.cpp
             num_server.cpp
             reconstructor.cpp
+            remapper.cpp
             linear_solver.cpp
             optimizer.cpp
             eigensolver.cpp)

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/10/21
+REVISION: 2021/10/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -175,6 +175,13 @@ void TensorOperator::conjugate()
   component.ket_legs.swap(component.bra_legs);
   component.coefficient = std::conj(component.coefficient);
  }
+ return;
+}
+
+
+void TensorOperator::rescale(std::complex<double> scaling_factor)
+{
+ for(auto & component: components_) component.coefficient *= scaling_factor;
  return;
 }
 

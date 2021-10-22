@@ -1,5 +1,5 @@
 /** ExaTN:: Linear solver over tensor network manifolds
-REVISION: 2021/10/21
+REVISION: 2021/10/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -15,7 +15,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "exatn_numerics.hpp"
 
-#include <vector>
+#include <memory>
 #include <complex>
 
 #include "errors.hpp"
@@ -50,11 +50,15 @@ public:
  void resetMaxIterations(unsigned int max_iterations = DEFAULT_MAX_ITERATIONS);
 
  /** Solves the linear system over tensor network manifolds. **/
- bool solve();
- bool solve(const ProcessGroup & process_group); //in: executing process group
+ bool solve(double * residual_norm,             //out: 2-norm of the residual tensor (error)
+            double * fidelity);                 //out: squared normalized overlap (fidelity)
+ bool solve(const ProcessGroup & process_group, //in: executing process group
+            double * residual_norm,             //out: 2-norm of the residual tensor (error)
+            double * fidelity);                 //out: squared normalized overlap (fidelity)
 
  /** Returns the found tensor network expansion. **/
- std::shared_ptr<TensorExpansion> getSolution() const;
+ std::shared_ptr<TensorExpansion> getSolution(double * residual_norm,   //out: 2-norm of the residual tensor (error)
+                                              double * fidelity) const; //out: squared normalized overlap (fidelity)
 
  /** Enables/disables coarse-grain parallelization over tensor networks. **/
  void enableParallelization(bool parallel = true);
@@ -70,6 +74,9 @@ private:
  unsigned int max_iterations_;                       //max number of macro-iterations
  double tolerance_;                                  //numerical convergence tolerance (for the gradient)
  bool parallel_;                                     //enables/disables coarse-grain parallelization over tensor networks
+
+ double residual_norm_;                              //2-norm of the residual tensor after optimization (error)
+ double fidelity_;                                   //achieved reconstruction fidelity (normalized squared overlap)
 
  std::shared_ptr<TensorExpansion> opvec_expansion_;  //A * x tensor network expansion
 };

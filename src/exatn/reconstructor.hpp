@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/10/02
+REVISION: 2021/10/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -119,7 +119,7 @@ private:
  double input_norm_;                            //2-norm of the input tensor expansion
  double output_norm_;                           //2-norm of the approximant tensor expansion
  double residual_norm_;                         //2-norm of the residual tensor after optimization (error)
- double fidelity_;                              //achieved reconstruction fidelity (squared overlap)
+ double fidelity_;                              //achieved reconstruction fidelity (normalized squared overlap)
 
  std::vector<Environment> environments_;        //optimization environments for each optimizable tensor
 };

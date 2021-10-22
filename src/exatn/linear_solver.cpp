@@ -1,11 +1,13 @@
 /** ExaTN:: Linear solver over tensor network manifolds
-REVISION: 2021/10/21
+REVISION: 2021/10/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "linear_solver.hpp"
 #include "reconstructor.hpp"
+
+#include <iostream>
 
 namespace exatn{
 
@@ -20,10 +22,11 @@ TensorNetworkLinearSolver::TensorNetworkLinearSolver(std::shared_ptr<TensorOpera
  tensor_operator_(tensor_operator), rhs_expansion_(rhs_expansion), vector_expansion_(vector_expansion),
  max_iterations_(DEFAULT_MAX_ITERATIONS), tolerance_(tolerance),
 #ifdef MPI_ENABLED
- parallel_(true)
+ parallel_(true),
 #else
- parallel_(false)
+ parallel_(false),
 #endif
+ residual_norm_(0.0), fidelity_(0.0)
 {
  if(!rhs_expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkLinearSolver): The rhs tensor network vector expansion must be a ket!"
@@ -52,20 +55,26 @@ void TensorNetworkLinearSolver::resetMaxIterations(unsigned int max_iterations)
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkLinearSolver::getSolution() const
+std::shared_ptr<TensorExpansion> TensorNetworkLinearSolver::getSolution(double * residual_norm,
+                                                                        double * fidelity) const
 {
+ if(residual_norm != nullptr) *residual_norm = residual_norm_;
+ if(fidelity != nullptr) *fidelity = fidelity_;
  return vector_expansion_;
 }
 
 
-bool TensorNetworkLinearSolver::solve()
+bool TensorNetworkLinearSolver::solve(double * residual_norm, double * fidelity)
 {
- return solve(exatn::getDefaultProcessGroup());
+ return solve(exatn::getDefaultProcessGroup(),residual_norm,fidelity);
 }
 
 
-bool TensorNetworkLinearSolver::solve(const ProcessGroup & process_group)
+bool TensorNetworkLinearSolver::solve(const ProcessGroup & process_group, double * residual_norm, double * fidelity)
 {
+ if(residual_norm != nullptr) *residual_norm = 0.0;
+ if(fidelity != nullptr) *fidelity = 0.0;
+
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
  unsigned int num_procs = 1;
@@ -90,24 +99,26 @@ bool TensorNetworkLinearSolver::solve(const ProcessGroup & process_group)
  //Solve for <x| via reconstruction (<x||A*|b>):
  vector_expansion_->conjugate();
  vector_expansion_->markOptimizableAllTensors();
- exatn::TensorNetworkReconstructor::resetDebugLevel(1,0); //debug
+ exatn::TensorNetworkReconstructor::resetDebugLevel(TensorNetworkLinearSolver::debug,
+                                                    TensorNetworkLinearSolver::focus);
  exatn::TensorNetworkReconstructor reconstructor(opvec_expansion_,vector_expansion_,tolerance_);
  success = exatn::sync(); assert(success);
- double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(process_group,&residual_norm,&fidelity,true,true);
+ bool reconstructed = reconstructor.reconstruct(process_group,&residual_norm_,&fidelity_,true,true);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   if(TensorNetworkLinearSolver::debug > 0)
-   std::cout << "Linear solve reconstruction succeeded: Residual norm = " << residual_norm
-             << "; Fidelity = " << fidelity << std::endl;
-
+   std::cout << "Linear solve reconstruction succeeded: Residual norm = " << residual_norm_
+             << "; Fidelity = " << fidelity_ << std::endl;
  }else{
   std::cout << "#ERROR(exatn::TensorNetworkLinearSolver): Reconstruction failed!" << std::endl;
  }
 
  //Rescale the solution:
+ vector_expansion_->conjugate();
  vector_expansion_->rescale(std::complex<double>{original_norm,0.0});
 
+ if(residual_norm != nullptr) *residual_norm = residual_norm_;
+ if(fidelity != nullptr) *fidelity = fidelity_;
  return reconstructed;
 }
 

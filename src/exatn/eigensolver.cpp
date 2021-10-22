@@ -1,10 +1,12 @@
 /** ExaTN:: Extreme eigenvalue/eigenvector Krylov solver over tensor networks
-REVISION: 2021/01/16
+REVISION: 2021/10/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "eigensolver.hpp"
+
+#include <iostream>
 
 namespace exatn{
 

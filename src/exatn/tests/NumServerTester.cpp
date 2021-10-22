@@ -1699,10 +1699,13 @@ TEST(NumServerTester, IsingTNO)
    std::cout << "Reconstruction failed!" << std::endl;
    assert(false);
   }
-  const auto tno_exp_coefs = ham_tno_expansion->getCoefficients();
-  assert(tno_exp_coefs.size() == 1);
-  const auto eig_scaling = ham_norm * tno_exp_coefs[0];
-  std::cout << "Eigenvalue scaling coefficient = " << eig_scaling << std::endl;
+  ham_tno_expansion->conjugate();
+  ham_tno_expansion->rescale(std::complex<double>{ham_norm,0.0});
+  const auto num_components = ham_tno->getNumComponents();
+  assert(ham_tno_expansion->getNumComponents() == num_components);
+  for(std::size_t i = 0; i < num_components; ++i){
+   (*ham_tno)[i].coefficient = (*ham_tno_expansion)[i].coefficient;
+  }
 
   //Ground state search for the tensor network Hamiltonian:
   std::cout << "Ground state search for the tensor network Hamiltonian:" << std::endl;
@@ -1719,7 +1722,7 @@ TEST(NumServerTester, IsingTNO)
   }
   const auto expect_val2 = optimizer2.getExpectationValue();
   std::cout << "Relative eigenvalue error due to reconstruction is "
-            << std::abs(expect_val1 - (expect_val2 * eig_scaling)) / std::abs(expect_val1) * 1e2 << " %\n";
+            << std::abs(expect_val1 - expect_val2) / std::abs(expect_val1) * 1e2 << " %\n";
 
   //Destroy all tensors:
   success = exatn::sync(); assert(success);
