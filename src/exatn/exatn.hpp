@@ -4,6 +4,8 @@
 #include "exatn_service.hpp"
 #include "exatn_numerics.hpp"
 #include "reconstructor.hpp"
+#include "remapper.hpp"
+#include "linear_solver.hpp"
 #include "optimizer.hpp"
 #include "eigensolver.hpp"
 #include "param_conf.hpp"

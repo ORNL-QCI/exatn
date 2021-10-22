@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -29,9 +29,9 @@
 #define EXATN_TEST8
 #define EXATN_TEST9
 #define EXATN_TEST10
-#define EXATN_TEST11*/
+#define EXATN_TEST11
 #define EXATN_TEST12
-/*#define EXATN_TEST13
+#define EXATN_TEST13
 #define EXATN_TEST14
 //#define EXATN_TEST15 //buggy (parsed named spaces/subspaces)
 #define EXATN_TEST16
@@ -45,10 +45,10 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-#define EXATN_TEST27 //requires input file from source
-#define EXATN_TEST28 //requires input file from source
+//#define EXATN_TEST27 //requires input file from source
+//#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30*/
+#define EXATN_TEST30
 
 
 #ifdef EXATN_TEST0
@@ -1605,6 +1605,8 @@ TEST(NumServerTester, IsingTNO)
  vec_net->markOptimizableAllTensors();
  //vec_net->printIt(); //debug
  auto vec_tns = exatn::makeSharedTensorExpansion("VectorTNS",vec_net,std::complex<double>{1.0,0.0});
+ auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
+ auto rhs_tns = exatn::makeSharedTensorExpansion("RightHandSideTNS",rhs_net,std::complex<double>{1.0,0.0});
 
  //Build a tensor network operator:
  auto space_tensor = exatn::makeSharedTensor("TensorSpaceMap",std::vector<int>(num_sites*2,2));
@@ -1640,6 +1642,8 @@ TEST(NumServerTester, IsingTNO)
   std::cout << "Creating and initializing tensor network vector tensors ... ";
   success = exatn::createTensorsSync(*vec_net,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  success = exatn::createTensorsSync(*rhs_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*rhs_net); assert(success);
   std::cout << "Ok" << std::endl;
 
   //Create and initialize tensor network operator tensors:
@@ -1724,9 +1728,26 @@ TEST(NumServerTester, IsingTNO)
   std::cout << "Relative eigenvalue error due to reconstruction is "
             << std::abs(expect_val1 - expect_val2) / std::abs(expect_val1) * 1e2 << " %\n";
 
+  //Linear system solver for the tensor network Hamiltonian:
+  std::cout << "Linear solver for the tensor network Hamiltonian:" << std::endl;
+  success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  exatn::TensorNetworkLinearSolver::resetDebugLevel(1,0);
+  exatn::TensorNetworkLinearSolver linsolver(ham_tno,rhs_tns,vec_tns,1e-5);
+  success = exatn::sync(); assert(success);
+  converged = linsolver.solve(&residual_norm,&fidelity);
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Linear solver succeeded: Residual norm = " << residual_norm
+             << "; Fidelity = " << fidelity << std::endl;
+  }else{
+   std::cout << "Linear solver failed!" << std::endl;
+   assert(false);
+  }
+
   //Destroy all tensors:
   success = exatn::sync(); assert(success);
   success = exatn::destroyTensorsSync(*ham_net); assert(success);
+  success = exatn::destroyTensorsSync(*rhs_net); assert(success);
   success = exatn::destroyTensorsSync(*vec_net); assert(success);
   success = exatn::destroyTensorSync("U33"); assert(success);
   success = exatn::destroyTensorSync("U22"); assert(success);
