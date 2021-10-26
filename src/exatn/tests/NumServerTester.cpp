@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "exatn.hpp"
-#include "talshxx.hpp"
 #include "quantum.hpp"
+#include "talshxx.hpp"
 
 #ifdef MPI_ENABLED
 #include "mpi.h"
@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -47,8 +47,9 @@
 #define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29
+#define EXATN_TEST29*/
 #define EXATN_TEST30
+//#define EXATN_TEST31
 
 
 #ifdef EXATN_TEST0
@@ -1549,7 +1550,7 @@ TEST(NumServerTester, IsingTNO)
 
  bool success = true;
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  //Define Ising Hamiltonian constants:
  constexpr std::complex<double> ZERO{ 0.0, 0.0};
@@ -3387,6 +3388,117 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
 #endif
 
 #ifdef EXATN_TEST30
+TEST(NumServerTester, SpinHamiltonians) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorComposite;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+ using exatn::TensorRange;
+ using exatn::quantum::Gate;
+ using exatn::quantum::PauliMap;
+ using exatn::quantum::PauliProduct;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ const std::complex<double> j_param {-1.0,0.0};
+ const std::complex<double> h_param {-0.1,0.0};
+ const int num_spin_sites = 4;
+ const int bond_dim_lim = 4;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
+ const int arity = 2;
+ const std::string tn_type = "TTN"; //MPS or TTN
+
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ bool success = true;
+
+ //Define the 1D-Ising Hamiltonian generator:
+ TensorRange spin_sites({num_spin_sites});
+ auto ising_generator = [j_param,
+                         spin_sites,
+                         num_sites = spin_sites.localVolume(),
+                         finished = false] () mutable -> PauliProduct {
+  assert(num_sites > 1);
+  PauliProduct pauli_product;
+  if(!finished){
+   const auto spin_site = spin_sites.localOffset();
+   pauli_product.product.emplace_back(PauliMap{Gate::gate_Z,spin_site});
+   pauli_product.product.emplace_back(PauliMap{Gate::gate_Z,spin_site+1});
+   pauli_product.coefficient = j_param;
+   if(spin_site < (num_sites - 2)){
+    spin_sites.next();
+   }else{
+    finished = true;
+   }
+  }
+  return pauli_product;
+ };
+
+ //Construct the 1D-Ising Hamiltonian using the generator:
+ auto ising_hamiltonian = exatn::quantum::generateSpinHamiltonian("IsingHamiltonian",
+                                                                  ising_generator,
+                                                                  TENS_ELEM_TYPE);
+ //ising_hamiltonian->printIt(); //debug
+
+ //Configure the tensor network builder:
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+ }else{
+  assert(false);
+ }
+
+ //Build tensor network vectors:
+ auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
+ auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net->markOptimizableAllTensors();
+ //vec_net->printIt(); //debug
+ auto vec_tns = exatn::makeSharedTensorExpansion("VectorTNS",vec_net,std::complex<double>{1.0,0.0});
+ auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
+ auto rhs_tns = exatn::makeSharedTensorExpansion("RightHandSideTNS",rhs_net,std::complex<double>{1.0,0.0});
+
+ //Numerical processing:
+ {
+  //Create and initialize tensor network vector tensors:
+  std::cout << "Creating and initializing tensor network vector tensors ... ";
+  success = exatn::createTensorsSync(*vec_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  success = exatn::createTensorsSync(*rhs_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*rhs_net); assert(success);
+  std::cout << "Ok" << std::endl;
+
+  //Ground state search for the original Hamiltonian:
+  std::cout << "Ground state search for the original Hamiltonian:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer(ising_hamiltonian,vec_tns,1e-5);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Search succeeded: ";
+  }else{
+   std::cout << "Search failed!" << std::endl;
+   assert(false);
+  }
+  const auto expect_val = optimizer.getExpectationValue();
+  std::cout << "Expectation value = " << expect_val << std::endl;
+ }
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST31
 TEST(NumServerTester, TensorComposite) {
  using exatn::TensorShape;
  using exatn::TensorSignature;

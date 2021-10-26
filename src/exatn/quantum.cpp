@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/09/25
+REVISION: 2021/10/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -177,6 +177,41 @@ std::shared_ptr<exatn::numerics::TensorOperator> readSpinHamiltonian(const std::
  }
  input_file.close();
  return tens_oper;
+}
+
+
+std::shared_ptr<exatn::numerics::TensorOperator> generateSpinHamiltonian(const std::string & operator_name,
+                                                  std::function<PauliProduct ()> hamiltonian_generator,
+                                                  TensorElementType precision)
+{
+ auto hamiltonian = exatn::makeSharedTensorOperator(operator_name);
+ while(true){
+  const auto pauli_prod = hamiltonian_generator();
+  if(pauli_prod.product.size() == 0 && pauli_prod.coefficient == std::complex<double>{0.0,0.0}) break;
+  std::string paulis = "[";
+  bool not_first = false;
+  for(const auto & pauli: pauli_prod.product){
+   if(not_first) paulis += " ";
+   if(pauli.pauli_gate == Gate::gate_I){
+    paulis += "I";
+   }else if(pauli.pauli_gate == Gate::gate_X){
+    paulis += "X";
+   }else if(pauli.pauli_gate == Gate::gate_Y){
+    paulis += "Y";
+   }else if(pauli.pauli_gate == Gate::gate_Z){
+    paulis += "Z";
+   }else{
+    std::cout << "#ERROR(exatn::quantum::generateSpinHamiltonian): Invalid gate returned by the generator: "
+              << static_cast<int>(pauli.pauli_gate) << std::endl;
+    assert(false);
+   }
+   paulis += std::to_string(pauli.qubit);
+   not_first = true;
+  }
+  paulis += "]";
+  auto success = appendPauliComponent(*hamiltonian,paulis,pauli_prod.coefficient,precision); assert(success);
+ }
+ return hamiltonian;
 }
 
 } //namespace quantum

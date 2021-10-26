@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/10/22
+REVISION: 2021/10/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -60,7 +60,26 @@ public:
  using Iterator = typename std::vector<OperatorComponent>::iterator;
  using ConstIterator = typename std::vector<OperatorComponent>::const_iterator;
 
- TensorOperator(const std::string & name): name_(name) {}
+ /** Creates an empty named tensor network operator. **/
+ TensorOperator(const std::string & name): name_(name) {} //in: tensor operator name
+
+ /** Creates a named tensor network operator from a single tensor network whose
+     legs are distributed among the ket and bra dimensions of the operator space map. **/
+ TensorOperator(const std::string & name,                                               //in: tensor operator name
+                std::shared_ptr<TensorNetwork> network,                                 //in: tensor network (or single tensor as a tensor network)
+                const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
+                const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg
+                const std::complex<double> coefficient);                                //in: expansion coefficient
+
+ /** Creates a named tensor network operator from an outer product of two
+     tensor networks: |BraNetwork><KetNetwork|, where the KetNetwork connects
+     to the ket space and BraNetwork connects to the bra space. **/
+ TensorOperator(const std::string & name,                                               //in: tensor operator name
+                std::shared_ptr<TensorNetwork> ket_network,                             //in: ket tensor network (or single tensor as a tensor network)
+                std::shared_ptr<TensorNetwork> bra_network,                             //in: bra tensor network (or single tensor as a tensor network)
+                const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg (from the ket network)
+                const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg (from the bra network)
+                const std::complex<double> coefficient);                                //in: expansion coefficient
 
  TensorOperator(const TensorOperator &) = default;
  TensorOperator & operator=(const TensorOperator &) = default;

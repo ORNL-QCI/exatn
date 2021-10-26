@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/10/22
+REVISION: 2021/10/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,6 +10,37 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 namespace exatn{
 
 namespace numerics{
+
+TensorOperator::TensorOperator(const std::string & name,
+                               std::shared_ptr<TensorNetwork> network,
+                               const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing,
+                               const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing,
+                               const std::complex<double> coefficient):
+ name_(name)
+{
+ auto success = appendComponent(network,ket_pairing,bra_pairing,coefficient);
+ assert(success);
+}
+
+
+TensorOperator::TensorOperator(const std::string & name,
+                               std::shared_ptr<TensorNetwork> ket_network,
+                               std::shared_ptr<TensorNetwork> bra_network,
+                               const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing,
+                               const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing,
+                               const std::complex<double> coefficient):
+ name_(name)
+{
+ auto shifted_bra_pairing = bra_pairing;
+ const auto shift = ket_network->getRank();
+ for(auto & pairing: shifted_bra_pairing) pairing.second += shift;
+ auto combined_network = makeSharedTensorNetwork(*ket_network,true,ket_network->getName());
+ auto success = combined_network->appendTensorNetwork(TensorNetwork(*bra_network,true,bra_network->getName()),{});
+ assert(success);
+ success = appendComponent(combined_network,ket_pairing,shifted_bra_pairing,coefficient);
+ assert(success);
+}
+
 
 bool TensorOperator::appendComponent(std::shared_ptr<TensorNetwork> network, //in: tensor network (or single tensor as a tensor network)
      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg
