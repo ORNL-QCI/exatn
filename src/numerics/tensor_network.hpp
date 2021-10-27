@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/10/17
+REVISION: 2021/10/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -441,6 +441,7 @@ public:
      will become subject to optimization when optimizing the tensor network. **/
  void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
  void markOptimizableAllTensors(); //marks all input tensors as optimizable
+ void markOptimizableNoTensors(); //marks no input tensors as optimizable
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the volume difference. Optionally also returns

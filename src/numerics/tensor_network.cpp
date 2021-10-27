@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/10/17
+REVISION: 2021/10/26
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2217,6 +2217,12 @@ void TensorNetwork::markOptimizableTensors(std::function<bool (const Tensor &)> 
 void TensorNetwork::markOptimizableAllTensors()
 {
  return markOptimizableTensors([](const Tensor &){return true;});
+}
+
+
+void TensorNetwork::markOptimizableNoTensors()
+{
+ return markOptimizableTensors([](const Tensor &){return false;});
 }
 
 

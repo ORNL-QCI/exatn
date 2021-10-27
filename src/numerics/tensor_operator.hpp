@@ -186,6 +186,10 @@ inline std::shared_ptr<numerics::TensorOperator> makeSharedTensorOperator(Args&&
  return std::make_shared<numerics::TensorOperator>(std::forward<Args>(args)...);
 }
 
+/** Combines two tensor network operators together. **/
+std::shared_ptr<numerics::TensorOperator> combineTensorOperators(const numerics::TensorOperator & operator1,
+                                                                 const numerics::TensorOperator & operator2);
+
 } //namespace exatn
 
 #endif //EXATN_NUMERICS_TENSOR_OPERATOR_HPP_

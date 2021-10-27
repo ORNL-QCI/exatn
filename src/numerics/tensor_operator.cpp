@@ -35,6 +35,7 @@ TensorOperator::TensorOperator(const std::string & name,
  const auto shift = ket_network->getRank();
  for(auto & pairing: shifted_bra_pairing) pairing.second += shift;
  auto combined_network = makeSharedTensorNetwork(*ket_network,true,ket_network->getName());
+ combined_network->conjugate();
  auto success = combined_network->appendTensorNetwork(TensorNetwork(*bra_network,true,bra_network->getName()),{});
  assert(success);
  success = appendComponent(combined_network,ket_pairing,shifted_bra_pairing,coefficient);
@@ -246,5 +247,23 @@ void TensorOperator::printIt() const
 }
 
 } //namespace numerics
+
+
+std::shared_ptr<numerics::TensorOperator> combineTensorOperators(const numerics::TensorOperator & operator1,
+                                                                 const numerics::TensorOperator & operator2)
+{
+ auto operator_result = makeSharedTensorOperator(operator1.getName() + "+" + operator2.getName());
+ for(auto component = operator1.cbegin(); component != operator1.cend(); ++component){
+  auto success = operator_result->appendComponent(component->network,
+                                   component->ket_legs,component->bra_legs,component->coefficient);
+  assert(success);
+ }
+ for(auto component = operator2.cbegin(); component != operator2.cend(); ++component){
+  auto success = operator_result->appendComponent(component->network,
+                                   component->ket_legs,component->bra_legs,component->coefficient);
+  assert(success);
+ }
+ return operator_result;
+}
 
 } //namespace exatn

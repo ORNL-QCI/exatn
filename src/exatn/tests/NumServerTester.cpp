@@ -3416,7 +3416,7 @@ TEST(NumServerTester, SpinHamiltonians) {
 
  bool success = true;
 
- //Define the 1D-Ising Hamiltonian generator:
+ //Define the 1D Ising Hamiltonian generator:
  TensorRange spin_sites({num_spin_sites});
  auto ising_generator = [j_param,
                          spin_sites,
@@ -3438,11 +3438,38 @@ TEST(NumServerTester, SpinHamiltonians) {
   return pauli_product;
  };
 
- //Construct the 1D-Ising Hamiltonian using the generator:
- auto ising_hamiltonian = exatn::quantum::generateSpinHamiltonian("IsingHamiltonian",
-                                                                  ising_generator,
-                                                                  TENS_ELEM_TYPE);
- //ising_hamiltonian->printIt(); //debug
+ //Construct the 1D Ising Hamiltonian using the generator:
+ auto ising_hamiltonian0 = exatn::quantum::generateSpinHamiltonian("IsingHamiltonian",
+                                                                   ising_generator,
+                                                                   TENS_ELEM_TYPE);
+ //ising_hamiltonian0->printIt(); //debug
+
+ //Define the 1D transverse field generator:
+ spin_sites.reset();
+ auto transverse_generator = [h_param,
+                              spin_sites,
+                              num_sites = spin_sites.localVolume(),
+                              finished = false] () mutable -> PauliProduct {
+  assert(num_sites > 1);
+  PauliProduct pauli_product;
+  if(!finished){
+   const auto spin_site = spin_sites.localOffset();
+   pauli_product.product.emplace_back(PauliMap{Gate::gate_X,spin_site});
+   pauli_product.coefficient = h_param;
+   if(spin_site < (num_sites - 1)){
+    spin_sites.next();
+   }else{
+    finished = true;
+   }
+  }
+  return pauli_product;
+ };
+
+ //Construct the 1D transverse field Hamiltonian using the generator:
+ auto transverse_field = exatn::quantum::generateSpinHamiltonian("TransverseField",
+                                                                 transverse_generator,
+                                                                 TENS_ELEM_TYPE);
+ //transverse_field->printIt(); //debug
 
  //Configure the tensor network builder:
  auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
@@ -3457,10 +3484,15 @@ TEST(NumServerTester, SpinHamiltonians) {
 
  //Build tensor network vectors:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
- auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
- vec_net->markOptimizableAllTensors();
- //vec_net->printIt(); //debug
- auto vec_tns = exatn::makeSharedTensorExpansion("VectorTNS",vec_net,std::complex<double>{1.0,0.0});
+ auto vec_net0 = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net0->markOptimizableAllTensors();
+ auto vec_tns0 = exatn::makeSharedTensorExpansion("VectorTNS",vec_net0,std::complex<double>{1.0,0.0});
+ auto vec_net1 = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net1->markOptimizableAllTensors();
+ auto vec_tns1 = exatn::makeSharedTensorExpansion("VectorTNS",vec_net1,std::complex<double>{1.0,0.0});
+ auto vec_net2 = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
+ vec_net2->markOptimizableAllTensors();
+ auto vec_tns2 = exatn::makeSharedTensorExpansion("VectorTNS",vec_net2,std::complex<double>{1.0,0.0});
  auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
  auto rhs_tns = exatn::makeSharedTensorExpansion("RightHandSideTNS",rhs_net,std::complex<double>{1.0,0.0});
 
@@ -3468,8 +3500,12 @@ TEST(NumServerTester, SpinHamiltonians) {
  {
   //Create and initialize tensor network vector tensors:
   std::cout << "Creating and initializing tensor network vector tensors ... ";
-  success = exatn::createTensorsSync(*vec_net,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  success = exatn::createTensorsSync(*vec_net0,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*vec_net0); assert(success);
+  success = exatn::createTensorsSync(*vec_net1,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*vec_net1); assert(success);
+  success = exatn::createTensorsSync(*vec_net2,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*vec_net2); assert(success);
   success = exatn::createTensorsSync(*rhs_net,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*rhs_net); assert(success);
   std::cout << "Ok" << std::endl;
@@ -3477,9 +3513,9 @@ TEST(NumServerTester, SpinHamiltonians) {
   //Ground state search for the original Hamiltonian:
   std::cout << "Ground state search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer(ising_hamiltonian,vec_tns,1e-5);
+  exatn::TensorNetworkOptimizer optimizer0(ising_hamiltonian0,vec_tns0,1e-4);
   success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize();
+  bool converged = optimizer0.optimize();
   success = exatn::sync(); assert(success);
   if(converged){
    std::cout << "Search succeeded: ";
@@ -3487,8 +3523,54 @@ TEST(NumServerTester, SpinHamiltonians) {
    std::cout << "Search failed!" << std::endl;
    assert(false);
   }
-  const auto expect_val = optimizer.getExpectationValue();
-  std::cout << "Expectation value = " << expect_val << std::endl;
+  const auto expect_val0 = optimizer0.getExpectationValue();
+  std::cout << "Expectation value = " << expect_val0 << std::endl;
+
+  //First excited state search for the projected Hamiltonian:
+  std::cout << "1st excited state search for the projected Hamiltonian:" << std::endl;
+  vec_net0->markOptimizableNoTensors();
+  std::vector<std::pair<unsigned int, unsigned int>> ket_pairing(num_spin_sites);
+  for(unsigned int i = 0; i < num_spin_sites; ++i) ket_pairing[i] = std::make_pair(i,i);
+  std::vector<std::pair<unsigned int, unsigned int>> bra_pairing(num_spin_sites);
+  for(unsigned int i = 0; i < num_spin_sites; ++i) bra_pairing[i] = std::make_pair(i,i);
+  auto projector0 = exatn::makeSharedTensorOperator("Projector0",vec_net0,vec_net0,
+                                                    ket_pairing,bra_pairing,-expect_val0);
+  auto ising_hamiltonian1 = exatn::combineTensorOperators(*ising_hamiltonian0,*projector0);
+  //ising_hamiltonian1->printIt(); //debug
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer1(ising_hamiltonian1,vec_tns1,1e-4);
+  success = exatn::sync(); assert(success);
+  converged = optimizer1.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Search succeeded: ";
+  }else{
+   std::cout << "Search failed!" << std::endl;
+   assert(false);
+  }
+  const auto expect_val1 = optimizer1.getExpectationValue();
+  std::cout << "Expectation value = " << expect_val1 << std::endl;
+
+  //Second excited state search for the projected Hamiltonian:
+  std::cout << "2nd excited state search for the projected Hamiltonian:" << std::endl;
+  vec_net1->markOptimizableNoTensors();
+  auto projector1 = exatn::makeSharedTensorOperator("Projector1",vec_net1,vec_net1,
+                                                    ket_pairing,bra_pairing,-expect_val1);
+  auto ising_hamiltonian2 = exatn::combineTensorOperators(*ising_hamiltonian1,*projector1);
+  //ising_hamiltonian2->printIt(); //debug
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer optimizer2(ising_hamiltonian2,vec_tns2,1e-4);
+  success = exatn::sync(); assert(success);
+  converged = optimizer2.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   std::cout << "Search succeeded: ";
+  }else{
+   std::cout << "Search failed!" << std::endl;
+   assert(false);
+  }
+  const auto expect_val2 = optimizer2.getExpectationValue();
+  std::cout << "Expectation value = " << expect_val2 << std::endl;
  }
 
  //Synchronize:
