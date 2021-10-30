@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -48,9 +48,9 @@
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30*/
-#define EXATN_TEST31
-//#define EXATN_TEST32
+#define EXATN_TEST30
+//#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST32
 
 
 #ifdef EXATN_TEST0
@@ -3603,6 +3603,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
+ const double accuracy = 2e-4;
 
  //exatn::resetLoggingLevel(2,2); //debug
 
@@ -3646,11 +3647,11 @@ TEST(NumServerTester, ExcitedMCVQE) {
   success = exatn::createTensorsSync(*vec_net2,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*vec_net2); assert(success);
   std::cout << "Ok" << std::endl;
-
+#if 0
   //Ground state search for the original Hamiltonian:
   std::cout << "Ground state search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer0(hamiltonian0,vec_tns0,5e-4);
+  exatn::TensorNetworkOptimizer optimizer0(hamiltonian0,vec_tns0,accuracy);
   success = exatn::sync(); assert(success);
   bool converged = optimizer0.optimize();
   success = exatn::sync(); assert(success);
@@ -3674,7 +3675,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
                                                     ket_pairing,bra_pairing,-expect_val0);
   auto hamiltonian1 = exatn::combineTensorOperators(*hamiltonian0,*projector0);
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer1(hamiltonian1,vec_tns1,5e-4);
+  exatn::TensorNetworkOptimizer optimizer1(hamiltonian1,vec_tns1,accuracy);
   success = exatn::sync(); assert(success);
   converged = optimizer1.optimize();
   success = exatn::sync(); assert(success);
@@ -3694,7 +3695,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
                                                     ket_pairing,bra_pairing,-expect_val1);
   auto hamiltonian2 = exatn::combineTensorOperators(*hamiltonian1,*projector1);
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer2(hamiltonian2,vec_tns2,5e-4);
+  exatn::TensorNetworkOptimizer optimizer2(hamiltonian2,vec_tns2,accuracy);
   success = exatn::sync(); assert(success);
   converged = optimizer2.optimize();
   success = exatn::sync(); assert(success);
@@ -3706,6 +3707,28 @@ TEST(NumServerTester, ExcitedMCVQE) {
   }
   const auto expect_val2 = optimizer2.getExpectationValue();
   std::cout << "Expectation value = " << expect_val2 << std::endl;
+#endif
+  //Ground and three excited states in one call:
+  std::cout << "Ground and three excited states search for the original Hamiltonian:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  vec_net0->markOptimizableAllTensors();
+  success = exatn::initTensorsRndSync(*vec_tns0); assert(success);
+  exatn::TensorNetworkOptimizer optimizer3(hamiltonian0,vec_tns0,accuracy);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer3.optimize(4);
+  success = exatn::sync(); assert(success);
+  if(exatn::getProcessRank() == 0){
+   if(converged){
+    std::cout << "Search succeeded:" << std::endl;
+    for(unsigned int root_id = 0; root_id < 4; ++root_id){
+     std::cout << "Expectation value " << root_id << " = "
+               << optimizer3.getExpectationValue(root_id) << std::endl;
+    }
+   }else{
+    std::cout << "Search failed!" << std::endl;
+    assert(false);
+   }
+  }
  }
 
  //Synchronize:

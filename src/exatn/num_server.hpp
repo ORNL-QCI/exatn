@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/19
+REVISION: 2021/10/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -664,6 +664,11 @@ public:
 
  bool initTensorsRndSync(TensorNetwork & tensor_network); //inout: tensor network
 
+ /** Initializes all input tensors in a given tensor network expansion to a random value. **/
+ bool initTensorsRnd(TensorExpansion & tensor_expansion);     //inout: tensor network expansion
+
+ bool initTensorsRndSync(TensorExpansion & tensor_expansion); //inout: tensor network expansion
+
  /** Initializes special tensors present in the tensor network. **/
  bool initTensorsSpecial(TensorNetwork & tensor_network);     //inout: tensor network
 
@@ -962,14 +967,15 @@ public:
 
  /** Duplicates a given tensor network as a new tensor network copy.
      The name of the tensor network copy will be prepended with an underscore
-     whereas all copies of the input tensors will be renamed with their unique hashes. **/
+     whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
  std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network); //in: tensor network
 
  std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                                               const TensorNetwork & network);     //in: tensor network
 
  /** Duplicates a given tensor network expansion as a new tensor network expansion copy.
-     The new tensor network expansion copy will have no name. **/
+     The name of the tensor network expansion copy will be prepended with an underscore
+     whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
  std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion); //in: tensor expansion
 
  std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes

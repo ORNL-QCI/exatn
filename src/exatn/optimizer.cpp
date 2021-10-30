@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/22
+REVISION: 2021/10/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -74,9 +74,25 @@ std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(std::comple
 }
 
 
+std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(unsigned int root_id,
+                                                                     std::complex<double> * average_expect_val) const
+{
+ assert(root_id < eigenvalues_.size());
+ if(average_expect_val != nullptr) *average_expect_val = eigenvalues_[root_id];
+ return eigenvectors_[root_id];
+}
+
+
 std::complex<double> TensorNetworkOptimizer::getExpectationValue() const
 {
  return average_expect_val_;
+}
+
+
+std::complex<double> TensorNetworkOptimizer::getExpectationValue(unsigned int root_id) const
+{
+ assert(root_id < eigenvalues_.size());
+ return eigenvalues_[root_id];
 }
 
 
@@ -89,6 +105,54 @@ bool TensorNetworkOptimizer::optimize()
 bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
 {
  return optimize_sd(process_group);
+}
+
+
+bool TensorNetworkOptimizer::optimize(unsigned int num_roots)
+{
+ return optimize(exatn::getDefaultProcessGroup(),num_roots);
+}
+
+
+bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group,
+                                      unsigned int num_roots)
+{
+ bool success = true;
+ auto original_operator = tensor_operator_;
+ for(unsigned int root_id = 0; root_id < num_roots; ++root_id){
+  success = initTensorsRndSync(*vector_expansion_); assert(success);
+  bool synced = sync(process_group); assert(synced);
+  success = optimize(process_group);
+  synced = sync(process_group); assert(synced);
+  if(!success) break;
+  const auto expect_val = getExpectationValue();
+  eigenvalues_.emplace_back(expect_val);
+  auto solution_vector = duplicateSync(process_group,*vector_expansion_);
+  assert(solution_vector);
+  success = normalizeNorm2Sync(*solution_vector,1.0); assert(success);
+  eigenvectors_.emplace_back(solution_vector);
+  for(auto ket_net = solution_vector->begin(); ket_net != solution_vector->end(); ++ket_net){
+   ket_net->network->markOptimizableNoTensors();
+  }
+  const auto num_legs = solution_vector->getRank();
+  std::vector<std::pair<unsigned int, unsigned int>> ket_pairing(num_legs);
+  for(unsigned int i = 0; i < num_legs; ++i) ket_pairing[i] = std::make_pair(i,i);
+  std::vector<std::pair<unsigned int, unsigned int>> bra_pairing(num_legs);
+  for(unsigned int i = 0; i < num_legs; ++i) bra_pairing[i] = std::make_pair(i,i);
+  auto projector = makeSharedTensorOperator("EigenProjector" + std::to_string(root_id));
+  for(auto ket_net = solution_vector->cbegin(); ket_net != solution_vector->cend(); ++ket_net){
+   for(auto bra_net = solution_vector->cbegin(); bra_net != solution_vector->cend(); ++bra_net){
+    success = projector->appendComponent(ket_net->network,bra_net->network,ket_pairing,bra_pairing,
+                                         (-expect_val) * std::conj(ket_net->coefficient) * (bra_net->coefficient));
+    assert(success);
+   }
+  }
+  auto proj_hamiltonian = combineTensorOperators(*tensor_operator_,*projector);
+  assert(proj_hamiltonian);
+  tensor_operator_ = proj_hamiltonian;
+ }
+ tensor_operator_ = original_operator;
+ return success;
 }
 
 
@@ -160,6 +224,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
  }
 
  //Prepare derivative environments for all optimizable tensors in the vector expansion:
+ environments_.clear();
  std::unordered_set<std::string> tensor_names;
  // Loop over the tensor networks constituting the tensor network vector expansion:
  for(auto network = vector_expansion_->cbegin(); network != vector_expansion_->cend(); ++network){

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/10/19
+REVISION: 2021/10/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -474,6 +474,14 @@ inline bool initTensorsRnd(TensorNetwork & tensor_network)     //inout: tensor n
 
 inline bool initTensorsRndSync(TensorNetwork & tensor_network) //inout: tensor network
  {return numericalServer->initTensorsRndSync(tensor_network);}
+
+
+/** Initializes all input tensors in a given tensor network expansion to a random value. **/
+inline bool initTensorsRnd(TensorExpansion & tensor_expansion)     //inout: tensor network expansion
+ {return numericalServer->initTensorsRnd(tensor_expansion);}
+
+inline bool initTensorsRndSync(TensorExpansion & tensor_expansion) //inout: tensor network expansion
+ {return numericalServer->initTensorsRndSync(tensor_expansion);}
 
 
 /** Initializes special tensors present in the tensor network. **/
@@ -971,7 +979,7 @@ inline bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: 
 
 /** Duplicates a given tensor network as a new tensor network copy.
     The name of the tensor network copy will be prepended with an underscore
-    whereas all copies of the input tensors will be renamed with their unique hashes. **/
+    whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
 inline std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network) //in: tensor network
  {return numericalServer->duplicateSync(network);}
 
@@ -981,7 +989,8 @@ inline std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process
 
 
 /** Duplicates a given tensor network expansion as a new tensor network expansion copy.
-    The new tensor network expansion copy will have no name. **/
+    The name of the tensor network expnasion copy will be prepended with an underscore
+    whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
 inline std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion) //in: tensor expansion
  {return numericalServer->duplicateSync(expansion);}
 

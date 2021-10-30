@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/21
+REVISION: 2021/10/27
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -10,7 +10,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      vectors formed by the same tensor network expansion, this tensor network
      variational optimizer will optimize the tensor factors constituting the
      bra/ket tensor network vectors to arrive at an extremum of that functional,
-     specifically targeting its minimum:
+     targeting its minimum (or maximum):
       E = <x|H|x> / <x|x>, where H is a tensor network operator, and x is a
       tensor network expansion that delivers an extremum to the functional.
 **/
@@ -61,15 +61,32 @@ public:
  /** Resets the number of micro-iterations. **/
  void resetMicroIterations(unsigned int micro_iterations = DEFAULT_MICRO_ITERATIONS);
 
- /** Optimizes the given closed symmetric tensor network expansion functional. **/
+ /** Optimizes the given closed symmetric tensor network expansion
+     functional for its minimum (or maximum). **/
  bool optimize();
+
  bool optimize(const ProcessGroup & process_group); //in: executing process group
 
- /** Returns the optimized tensor network expansion forming the optimal bra/ket vectors. **/
+ /** Returns the optimized tensor network expansion forming the optimal
+     bra/ket vectors delivering an extremum to the functional. **/
  std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * average_expect_val = nullptr) const;
 
- /** Returns the achieved expectation value. **/
+ /** Returns the achieved expectation value of the optimized functional. **/
  std::complex<double> getExpectationValue() const;
+
+ /** Performs a consecutive tensor network functional optimization
+     delivering multiple extreme eigenvalues/eigenvectors. **/
+ bool optimize(unsigned int num_roots);            //in: number of extreme roots to find
+
+ bool optimize(const ProcessGroup & process_group, //in: executing process group
+               unsigned int num_roots);            //in: number of extreme roots to find
+
+ /** Returns a specific extreme root (eigenvalue/eigenvector pair). **/
+ std::shared_ptr<TensorExpansion> getSolution(unsigned int root_id,
+                                              std::complex<double> * average_expect_val = nullptr) const;
+
+ /** Returns a specific extreme eigenvalue. **/
+ std::complex<double> getExpectationValue(unsigned int root_id) const;
 
  /** Enables/disables coarse-grain parallelization over tensor networks. **/
  void enableParallelization(bool parallel = true);
@@ -94,6 +111,9 @@ private:
   TensorExpansion hessian_expansion;    //hessian-gradient tensor network expansion: <g|H|g> - E*<g|S|g>
   std::complex<double> expect_value;    //current expectation value
  };
+
+ std::vector<std::shared_ptr<TensorExpansion>> eigenvectors_; //extreme eigenvectors
+ std::vector<std::complex<double>> eigenvalues_;              //extreme eigenvalues
 
  std::shared_ptr<TensorOperator> tensor_operator_;   //tensor network operator
  std::shared_ptr<TensorExpansion> vector_expansion_; //tensor network expansion to optimize (bra/ket vector)

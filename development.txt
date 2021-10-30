@@ -1,8 +1,29 @@
+ISSUES:
+
+- Automatically generated unique tensor names have local scope,
+  thus the corresponding tensors with automatically generated
+  names will have their names differ accross different processes.
+  The only way to ensure proper tensor correspondence in global
+  tensor operations is to make sure all participating processes
+  execute the same algorithm in a consistent fashion, like SIMD.
+  That is, the order of tensor operations across all participating
+  processes must be consistent such that every encountered global
+  tensor operation will receive the same tensor operand irrespective
+  of the difference in the locally generated tensor name. Special
+  care needs to be taken in iterating over associative tensor containers,
+  to ensure that the keys are consistent accross all participating
+  processes. For example, automatically generated tensor names
+  cannot serve as keys in an iteration procedure since they are
+  inconsistent accross different processes whereas tensor Ids
+  can serve as keys since they are normally consistent accross
+  different processes because the container was built with the
+  same structure accross all processes.
+
 BUGS:
 
 - 32-bit integer MPI message chunking issue in the backend.
 
-- Fix the bug(s) in the tensor order reduction mechanism in the backend.
+- Fix the bug(s) in the tensor order reduction mechanism in the TalshExecutor backend.
 
 
 FEATURES:
@@ -14,42 +35,32 @@ FEATURES:
   4. Limit the Host buffer size to be similar to the combined devices buffer size;
   5. Introduce manual knobs to keep tensors on GPU;
 
-
-- Implement tensor operator builders.
-
-
-- TensorExpansion: Constructor that converts a TensorOperator
-  into a TensorExpansion.
-
-
 - TensorNetwork: Subnetwork replacement method:
   Contract replaced tensors, then replace the contracted
   tensor with a new tensor (sub)network.
 
+- Implement SAVE/LOAD API for TensorExpansion.
 
-- Introduce parallelization over tensor networks within a tensor expansion.
+- Implement TensorNetwork slice computing Generator.
 
-
-- Implement constrained optimization for isometric tensors.
-
-
-- Tensor network bond dimension adaptivity in solvers.
-
-
-- Implement parameterized non-linear optimization:
-  dTensorFunctional/dParameter = dTensorFunctional/dTensor * dTensor/dParameter
-
+- Implement b-D procedure.
 
 - Implement conjugate gradient optimization procedure.
 
+- Implement DIIS convergence accelerator.
+
+- Tensor network bond dimension adaptivity in solvers.
+
+- Implement constrained optimization for isometric tensors.
 
 - Fix index slicing logic (switch to two passes):
   Pass 1: Compute the throughout volume (TH) for all indices;
           TH(index) = Sum of tensor volumes for all tensors containing the index.
   Pass 2: Slice indices with maximal throughout volume;
 
+- Implement parameterized non-linear optimization:
+  dTensorFunctional/dParameter = dTensorFunctional/dTensor * dTensor/dParameter
 
 - Introduce DAG nodes/dependencies with multiple output operands.
-
 
 - Implement the guided k-way partitioning algorithm.

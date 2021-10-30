@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/10/26
+REVISION: 2021/10/29
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -153,6 +153,14 @@ public:
                                 unsigned int bra_space_rank,                   //in: rank of the global bra tensor space
                                 const std::complex<double> coefficient,        //in: expansion coefficient
                                 bool antisymmetrize = false);                  //in: whether or not to negate the coefficient for odd permutations
+
+ /** Appends an outer product of two tensor networks: |BraNetwork><KetNetwork|,
+     where the KetNetwork connects to the ket space and BraNetwork connects to the bra space. **/
+ bool appendComponent(std::shared_ptr<TensorNetwork> ket_network,                             //in: ket tensor network (or single tensor as a tensor network)
+                      std::shared_ptr<TensorNetwork> bra_network,                             //in: bra tensor network (or single tensor as a tensor network)
+                      const std::vector<std::pair<unsigned int, unsigned int>> & ket_pairing, //in: ket pairing: Global tensor mode id <-- Output tensor leg (from the ket network)
+                      const std::vector<std::pair<unsigned int, unsigned int>> & bra_pairing, //in: bra pairing: Global tensor mode id <-- Output tensor leg (from the bra network)
+                      const std::complex<double> coefficient);                                //in: expansion coefficient
 
  /** Deletes the specified component of the tensor operator. **/
  bool deleteComponent(std::size_t component_num);

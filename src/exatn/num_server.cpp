@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/19
+REVISION: 2021/10/30
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -8,6 +8,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_range.hpp"
 #include "timers.hpp"
 
+#include <unordered_set>
 #include <complex>
 #include <vector>
 #include <stack>
@@ -1564,11 +1565,13 @@ bool NumServer::initTensorRndSync(const std::string & name)
 bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
 {
  bool success = true;
- for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+ std::unordered_set<std::string> tensor_names;
+ for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
+    //auto res = tensor_names.emplace(tens_name);
     success = initTensorRnd(tens_name);
    }else{
     success = false;
@@ -1578,17 +1581,24 @@ bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
   }
   if(!success) break;
  }
+ if(success){
+  for(const auto & tens_name: tensor_names){
+   success = initTensorRnd(tens_name); if(!success) break;
+  }
+ }
  return success;
 }
 
 bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
 {
  bool success = true;
- for(auto tens = tensor_network.begin(); tens != tensor_network.end(); ++tens){
+ std::unordered_set<std::string> tensor_names;
+ for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
+    //auto res = tensor_names.emplace(tens_name);
     success = initTensorRndSync(tens_name);
    }else{
     success = false;
@@ -1597,6 +1607,69 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
    if(tensorAllocated(tens_name)) success = initTensorSync(tens_name,0.0);
   }
   if(!success) break;
+ }
+ if(success){
+  for(const auto & tens_name: tensor_names){
+   success = initTensorRndSync(tens_name); if(!success) break;
+  }
+ }
+ return success;
+}
+
+bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
+{
+ bool success = true;
+ std::unordered_set<std::string> tensor_names;
+ for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
+  for(auto tens = tensor_network->network->cbegin(); tens != tensor_network->network->cend(); ++tens){
+   auto tensor = tens->second.getTensor();
+   const auto & tens_name = tensor->getName();
+   if(tens->first != 0){ //input tensor
+    if(tensorAllocated(tens_name)){
+     //auto res = tensor_names.emplace(tens_name);
+     success = initTensorRnd(tens_name);
+    }else{
+     success = false;
+    }
+   }else{ //output tensor
+    if(tensorAllocated(tens_name)) success = initTensor(tens_name,0.0);
+   }
+   if(!success) break;
+  }
+ }
+ if(success){
+  for(const auto & tens_name: tensor_names){
+   success = initTensorRnd(tens_name); if(!success) break;
+  }
+ }
+ return success;
+}
+
+bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion)
+{
+ bool success = true;
+ std::unordered_set<std::string> tensor_names;
+ for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
+  for(auto tens = tensor_network->network->cbegin(); tens != tensor_network->network->cend(); ++tens){
+   auto tensor = tens->second.getTensor();
+   const auto & tens_name = tensor->getName();
+   if(tens->first != 0){ //input tensor
+    if(tensorAllocated(tens_name)){
+     //auto res = tensor_names.emplace(tens_name);
+     success = initTensorRndSync(tens_name);
+    }else{
+     success = false;
+    }
+   }else{ //output tensor
+    if(tensorAllocated(tens_name)) success = initTensorSync(tens_name,0.0);
+   }
+   if(!success) break;
+  }
+ }
+ if(success){
+  for(const auto & tens_name: tensor_names){
+   success = initTensorRndSync(tens_name); if(!success) break;
+  }
  }
  return success;
 }
@@ -3241,23 +3314,27 @@ std::shared_ptr<TensorNetwork> NumServer::duplicateSync(const ProcessGroup & pro
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return std::shared_ptr<TensorNetwork>(nullptr); //process is not in the group: Do nothing
+ bool success = true;
+ const auto tens_elem_type = network.getTensorElementType();
  auto network_copy = makeSharedTensorNetwork(network,true); assert(network_copy);
+ network_copy->rename("_"+network.getName());
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensor_copies;
  for(auto tensor = network_copy->begin(); tensor != network_copy->end(); ++tensor){ //replace input tensors by their copies
   if(tensor->first != 0){
-   const auto & tensor_name = tensor->second.getName();
+   const auto & tensor_name = tensor->second.getName(); //original tensor name
    auto iter = tensor_copies.find(tensor_name);
    if(iter == tensor_copies.end()){
     auto res = tensor_copies.emplace(std::make_pair(tensor_name,makeSharedTensor(*(tensor->second.getTensor()))));
     assert(res.second);
     iter = res.first;
-    iter->second->rename();
+    iter->second->rename(); //new (automatically generated) tensor name
+    success = createTensor(iter->second,tens_elem_type); assert(success);
+    success = copyTensor(iter->second->getName(),tensor_name); assert(success);
    }
    tensor->second.replaceStoredTensor(iter->second);
   }
  }
- network_copy->rename("_" + network.getName());
- auto success = createTensorsSync(process_group,*network_copy,network.getTensorElementType()); assert(success);
+ success = sync(process_group); assert(success);
  return network_copy;
 }
 
@@ -3271,11 +3348,13 @@ std::shared_ptr<TensorExpansion> NumServer::duplicateSync(const ProcessGroup & p
 {
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return std::shared_ptr<TensorExpansion>(nullptr); //process is not in the group: Do nothing
- auto expansion_copy = makeSharedTensorExpansion(expansion.isKet()); assert(expansion_copy);
+ auto expansion_copy = makeSharedTensorExpansion("_"+expansion.getName(),expansion.isKet());
+ assert(expansion_copy);
  for(auto component = expansion.cbegin(); component != expansion.cend(); ++component){
-  auto success = expansion_copy->appendComponent(duplicateSync(process_group,*(component->network)),
-                                                 component->coefficient);
-  if(!success) return std::shared_ptr<TensorExpansion>(nullptr);
+  auto dup_network = duplicateSync(process_group,*(component->network));
+  assert(dup_network);
+  auto success = expansion_copy->appendComponent(dup_network,component->coefficient);
+  assert(success);
  }
  return expansion_copy;
 }
