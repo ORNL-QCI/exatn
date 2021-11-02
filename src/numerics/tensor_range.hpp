@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2021/09/21
+REVISION: 2021/11/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -72,6 +72,9 @@ public:
  /** Resets the current multi-index value to the beginning. **/
  inline void reset();
 
+ /** Resets the current multi-index value to a given flattened local offset. **/
+ inline void reset(DimOffset offset);
+
  /** Resets the current multi-index for a number of concurrent progress agents,
      each given an exclusive subrange of this range to iterate within. Returns
      TRUE on success, FALSE if the subrange is empty for the current progress agent. **/
@@ -116,19 +119,23 @@ public:
      each is in a monotonically non-increasing order. **/
  inline bool nonincreasingOrderDiag() const;
 
- /** Returns the flat offset produced by the current multi-index value per se. **/
+ /** Returns the flattened offset produced by the current multi-index value per se. **/
  inline DimOffset localOffset() const; //little endian
 
- /** Returns the flat offset produced by the current multi-index value within the global tensor range. **/
+ /** Returns the flattened offset produced by the current multi-index value within the global tensor range. **/
  inline DimOffset globalOffset() const; //based on strides
 
  /** Increments the current multi-index value.
-     If the tensor range is over, return false. **/
+     If the tensor range (or subrange) is over, return false. **/
  inline bool next(DimOffset increment = 1); //increment value
 
  /** Decrements the current multi-index value.
-     If the tensor range is over, return false. **/
+     If the tensor range (or subrange) is over, return false. **/
  inline bool prev(DimOffset increment = 1); //increment value
+
+ /** Shifts the current multi-index value by a given flattend local offset.
+     If the tensor range (or subrange) is over, return false. **/
+ inline bool shift(long long offset);
 
  /** Prints the current multi-index value. **/
  void printCurrent() const{
@@ -246,6 +253,15 @@ inline void TensorRange::reset()
  for(auto & ind: mlndx_) ind = 0;
  subrange_begin_ = volume_;
  subrange_end_ = 0;
+ return;
+}
+
+
+inline void TensorRange::reset(DimOffset offset)
+{
+ assert(offset < volume_);
+ reset();
+ shift(static_cast<long long>(offset));
  return;
 }
 
@@ -481,6 +497,29 @@ inline bool TensorRange::prev(DimOffset increment)
  }
  reset();
  return false;
+}
+
+
+inline bool TensorRange::shift(long long offset)
+{
+ long long local_offset = localOffset();
+ long long range_begin = 0;
+ long long range_end = volume_;
+ if(subrange_end_ > 0){
+  range_begin = subrange_begin_;
+  range_end = subrange_end_;
+ }
+ local_offset += offset;
+ if(local_offset >= range_begin && local_offset < range_end){
+  for(unsigned int i = 0; i < extents_.size(); ++i){
+   mlndx_[i] = local_offset % extents_[i];
+   local_offset /= extents_[i];
+  }
+ }else{
+  reset();
+  return false;
+ }
+ return true;
 }
 
 } //namespace numerics
