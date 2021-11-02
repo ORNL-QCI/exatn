@@ -1,5 +1,5 @@
 /** ExaTN: Quantum computing related
-REVISION: 2021/10/26
+REVISION: 2021/11/02
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -49,11 +49,15 @@ enum class Gate{
  gate_H,
  gate_S,
  gate_T,
+ gate_Rx,
+ gate_Ry,
+ gate_Rz,
  gate_CX,
  gate_CY,
  gate_CZ,
  gate_SWAP,
- gate_ISWAP
+ gate_ISWAP,
+ gate_CR
 };
 
 //Pauli gate acting on a specific qubit:
