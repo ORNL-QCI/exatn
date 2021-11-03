@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation: Contracts two tensors and accumulates the result into another tensor
-REVISION: 2021/09/24
+REVISION: 2021/11/03
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -152,6 +152,7 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
                                                const std::vector<PosIndexLabel> & contr_indices,
                                                const std::vector<PosIndexLabel> & hyper_indices)
 {
+ if(!this->isComposite()) return;
  //std::cout << "#DEBUG(TensorOpContract::introduceOptTemporaries): Parallel parameters: "
  // << num_processes << " " << mem_per_process << std::endl; //debug
  assert(num_processes > 0);
@@ -305,15 +306,19 @@ void TensorOpContract::introduceOptTemporaries(unsigned int num_processes,
 
 void TensorOpContract::introduceOptTemporaries(unsigned int num_processes, std::size_t mem_per_process)
 {
- std::vector<std::string> tensors;
- std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
- auto parsed = parse_tensor_contraction(getIndexPattern(),tensors,left_inds,right_inds,contr_inds,hyper_inds);
- if(!parsed){
-  std::cout << "#ERROR(TensorOpContract:introduceOptTemporaries): Invalid tensor contraction specification: "
-            << getIndexPattern() << std::endl << std::flush;
-  assert(false);
+ if(this->isComposite()){
+  std::vector<std::string> tensors;
+  std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
+  auto parsed = parse_tensor_contraction(getIndexPattern(),tensors,left_inds,right_inds,contr_inds,hyper_inds);
+  if(!parsed){
+   std::cout << "#ERROR(TensorOpContract:introduceOptTemporaries): Invalid tensor contraction specification: "
+             << getIndexPattern() << std::endl << std::flush;
+   assert(false);
+  }
+  //std::cout << "#DEBUG(TensorOpContract:introduceOptTemporaries): Composite tensor contraction detected\n" << std::flush; //debug
+  return introduceOptTemporaries(num_processes,mem_per_process,left_inds,right_inds,contr_inds,hyper_inds);
  }
- return introduceOptTemporaries(num_processes,mem_per_process,left_inds,right_inds,contr_inds,hyper_inds);
+ return;
 }
 
 std::size_t TensorOpContract::decompose(const TensorMapper & tensor_mapper)

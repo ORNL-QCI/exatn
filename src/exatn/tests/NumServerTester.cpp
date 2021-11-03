@@ -223,12 +223,12 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Contract tensors:
  std::cout << " Case 5: C=A*B out-of-core small dims: ";
- exatn::sync();
+ success = exatn::sync(); assert(success);
  time_start = exatn::Timer::timeInSecHR();
  success = exatn::contractTensors("C(c49,c40,c13,c50,c47,c14,c15,c41,c16,c17,c18,c19,c20,c21,c22,c23,c24,c25,c26,c27,c28,c29,c45,c30,c44,c43,c31,c32,c33,c34,c48,c35,c36,c42,c37,c39,c38,c46)+="
   "A(c49,c40,c13,c50,c62,c47,c14,c15,c63,c41,c64,c65,c16,c66,c67,c68,c69,c17,c18,c19,c70,c71,c72,c73,c74,c75)*"
   "B(c20,c21,c64,c22,c69,c67,c23,c24,c25,c26,c27,c28,c29,c45,c30,c44,c68,c43,c31,c73,c72,c32,c33,c66,c34,c75,c74,c71,c65,c48,c70,c35,c63,c36,c42,c37,c39,c38,c46,c62)",1.0); assert(success);
- exatn::sync();
+ success = exatn::sync(); assert(success);
  duration = exatn::Timer::timeInSecHR(time_start);
  std::cout << "Average performance (GFlop/s) = " << 8.0*1.099512e3/duration << std::endl;
 
@@ -237,7 +237,7 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
 
- exatn::sync(); */
+ success = exatn::sync(); assert(success); */
 
  std::cout << "Tensor decomposition:" << std::endl;
  //Create tensors:
@@ -269,7 +269,7 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("D"); assert(success);
 
  //Synchronize ExaTN server:
- exatn::sync();
+ success = exatn::sync(); assert(success);
  exatn::resetLoggingLevel(0,0);
 }
 #endif
@@ -305,7 +305,7 @@ TEST(NumServerTester, ExamplarExaTN)
   color = (global_rank + 1) / 2; if(global_rank == 0) color = -1;
   auto me_plus_prev = all_processes.split(color);
  }
- exatn::sync();
+ success = exatn::sync(); assert(success);
 
  //Declare and then create (allocate) a tensor (in two steps):
  auto z2 = exatn::makeSharedTensor("Z2",TensorShape{VI_RANGE,VI_RANGE,OC_RANGE,OC_RANGE}); //declares tensor Z2 with no storage
@@ -335,7 +335,7 @@ TEST(NumServerTester, ExamplarExaTN)
  success = exatn::contractTensors("ENERGY()+=Y2(a,b,i,j)*Y2(a,b,i,j)",0.25); assert(success);
 
  //Synchronize ExaTN server:
- exatn::sync();
+ success = exatn::sync(); assert(success);
 
  //Compute 2-norms (synchronously):
  double norm2 = 0.0;
@@ -369,7 +369,7 @@ TEST(NumServerTester, ExamplarExaTN)
  local_copy.reset();
 
  //Synchronize ExaTN server:
- exatn::sync();
+ success = exatn::sync(); assert(success);
 
  //Destroy all tensors:
  success = exatn::destroyTensor("ENERGY"); assert(success);
@@ -382,7 +382,7 @@ TEST(NumServerTester, ExamplarExaTN)
  z2.reset();
 
  //Synchronize ExaTN server:
- exatn::sync(all_processes);
+ success = exatn::sync(all_processes); assert(success);
  exatn::resetLoggingLevel(0,0);
 }
 #endif
