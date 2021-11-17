@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/10/27
+REVISION: 2021/11/17
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -19,6 +19,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
 #define EXATN_OPTIMIZER_HPP_
 
 #include "exatn_numerics.hpp"
+#include "reconstructor.hpp"
 
 #include <vector>
 #include <complex>
@@ -38,6 +39,10 @@ public:
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
  static constexpr const unsigned int DEFAULT_MICRO_ITERATIONS = 1;
+ static constexpr const bool PREOPTIMIZE_INITIAL_GUESS = true;
+ static constexpr const unsigned int DEFAULT_KRYLOV_GUESS_DIM = 8;
+ static constexpr const unsigned int DEFAULT_GUESS_MAX_BOND_DIM = DEFAULT_KRYLOV_GUESS_DIM;
+ static constexpr const double DEFAULT_GUESS_TOLERANCE = 1e-2;
 
  TensorNetworkOptimizer(std::shared_ptr<TensorOperator> tensor_operator,   //in: hermitian tensor network operator
                         std::shared_ptr<TensorExpansion> vector_expansion, //inout: tensor network expansion forming the bra/ket vectors
@@ -95,6 +100,11 @@ public:
                              int focus_process = -1); //in: process to focus on (-1: all)
 
 protected:
+
+ //Generates a pre-optimized initial guess for the extreme eigen-root (lowest by default):
+ void computeInitialGuess(const ProcessGroup & process_group,
+                          bool highest = false,
+                          unsigned int guess_dim = DEFAULT_KRYLOV_GUESS_DIM);
 
  //Implementation based on the steepest descent algorithm:
  bool optimize_sd(const ProcessGroup & process_group); //in: executing process group

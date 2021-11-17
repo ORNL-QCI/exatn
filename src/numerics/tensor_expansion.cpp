@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/21
+REVISION: 2021/11/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -343,6 +343,15 @@ void TensorExpansion::markOptimizableAllTensors()
 {
  for(auto net = begin(); net != end(); ++net) net->network->markOptimizableAllTensors();
  return;
+}
+
+
+std::shared_ptr<Tensor> TensorExpansion::getSpaceTensor() const
+{
+ assert(getNumComponents() > 0);
+ auto space_tensor = makeSharedTensor(*(cbegin()->network->getTensor(0)));
+ space_tensor->rename();
+ return space_tensor;
 }
 
 

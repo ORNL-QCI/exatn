@@ -19,7 +19,7 @@
 
 //Test activation:
 #define EXATN_TEST0
-#define EXATN_TEST1
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -48,9 +48,9 @@
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30
-//#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32
+#define EXATN_TEST30*/
+#define EXATN_TEST31 //requires input file from source
+//#define EXATN_TEST32
 
 
 #ifdef EXATN_TEST0
@@ -3605,15 +3605,16 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const double accuracy = 2e-4;
+ const double accuracy = 1e-4;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
 
  //Read the MCVQE Hamiltonian in spin representation:
- auto hamiltonian0 = exatn::quantum::readSpinHamiltonian("MCVQEHamiltonian","mcvqe_8q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
+ auto hamiltonian0 = exatn::quantum::readSpinHamiltonian("MCVQEHamiltonian",
+  "mcvqe_"+std::to_string(num_spin_sites)+"q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
  success = hamiltonian0->deleteComponent(0); assert(success);
 
  //Configure the tensor network builder:

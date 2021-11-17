@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/10/21
+REVISION: 2021/11/15
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -245,6 +245,9 @@ public:
      will become subject to optimization when optimizing the tensor network. **/
  void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
  void markOptimizableAllTensors(); //marks all input tensors as optimizable
+
+ /** Returns the (unnamed) defining space tensor. **/
+ std::shared_ptr<Tensor> getSpaceTensor() const;
 
  /** Returns linear combination coefficients for all components. **/
  std::vector<std::complex<double>> getCoefficients() const;
