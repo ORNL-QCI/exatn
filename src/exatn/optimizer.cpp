@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/11/17
+REVISION: 2021/11/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -478,6 +478,14 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
 {
  assert(tensor_operator_ && vector_expansion_);
  assert(guess_dim > 1);
+
+ unsigned int num_procs = 1;
+ if(parallel_) num_procs = process_group.getSize();
+
+ if(TensorNetworkOptimizer::focus >= 0){
+  if(getProcessRank() != TensorNetworkOptimizer::focus) TensorNetworkOptimizer::debug = 0;
+ }
+
  bool success = true;
  //Generate a random non-orthogonal tensor network basis:
  auto tn_builder = exatn::getTensorNetworkBuilder("MPS");
@@ -489,14 +497,19 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
  std::vector<std::shared_ptr<TensorExpansion>> basis_bra(guess_dim);
  success = exatn::sync(process_group); assert(success);
  for(unsigned int i = 0; i < guess_dim; ++i){
-  basis_ket[i]->rename("_BasisVector"+std::to_string(i));
+  basis_ket[i] = makeSharedTensorExpansion("_BasisVector"+std::to_string(i));
   auto basis_vector = makeSharedTensorNetwork("_VectorNet"+std::to_string(i),ket_tensor,*tn_builder,false);
   success = basis_ket[i]->appendComponent(basis_vector,std::complex<double>{1.0,0.0}); assert(success);
-  basis_bra[i] = makeSharedTensorExpansion(*(basis_ket[i]));
-  basis_bra[i]->conjugate();
-  basis_bra[i]->rename("_ConjVectorNet"+std::to_string(i));
   success = exatn::createTensors(process_group,*basis_vector,elem_type); assert(success);
   success = exatn::initTensorsRnd(*basis_vector); assert(success);
+ }
+ success = exatn::sync(process_group); assert(success);
+ //Normalize the non-orthogonal tensor network basis:
+ for(unsigned int i = 0; i < guess_dim; ++i){
+  success = normalizeNorm2Sync(process_group,*(basis_ket[i]),1.0); assert(success);
+  basis_bra[i] = makeSharedTensorExpansion(*(basis_ket[i]));
+  basis_bra[i]->conjugate();
+  basis_bra[i]->rename("_ConjBasisVector"+std::to_string(i));
  }
  success = exatn::sync(process_group); assert(success);
  //Build the operator matrix:
@@ -510,7 +523,7 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
    oper_scalar[j*guess_dim + i]->rename("_OperScalarElem_"+std::to_string(i)+"_"+std::to_string(j));
    success = exatn::createTensor(process_group,oper_scalar[j*guess_dim + i],elem_type); assert(success);
    success = exatn::initTensor(oper_scalar[j*guess_dim + i]->getName(),0.0); assert(success);
-   success = exatn::evaluate(process_group,*(oper_elems[j*guess_dim + i]),oper_scalar[j*guess_dim + i]); assert(success);
+   success = exatn::evaluate(process_group,*(oper_elems[j*guess_dim + i]),oper_scalar[j*guess_dim + i],num_procs); assert(success);
   }
  }
  //Build the metric matrix:
@@ -524,7 +537,7 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
    metr_scalar[j*guess_dim + i]->rename("_MetrScalarElem_"+std::to_string(i)+"_"+std::to_string(j));
    success = exatn::createTensor(process_group,metr_scalar[j*guess_dim + i],elem_type); assert(success);
    success = exatn::initTensor(metr_scalar[j*guess_dim + i]->getName(),0.0); assert(success);
-   success = exatn::evaluate(process_group,*(metr_elems[j*guess_dim + i]),metr_scalar[j*guess_dim + i]); assert(success);
+   success = exatn::evaluate(process_group,*(metr_elems[j*guess_dim + i]),metr_scalar[j*guess_dim + i],num_procs); assert(success);
   }
  }
  success = exatn::sync(process_group); assert(success);
@@ -561,19 +574,21 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
   }
  }
  //Print matrices (debug):
- std::cout << "#DEBUG(exatn::TensorNetworkOptimizer::getInitialGuess): Operator matrix:\n" << std::scientific;
- for(unsigned int i = 0; i < guess_dim; ++i){
-  for(unsigned int j = 0; j < guess_dim; ++j){
-   std::cout << " " << oper_matrix[j*guess_dim + i];
+ if(TensorNetworkOptimizer::debug > 0){
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer::computeInitialGuess): Operator matrix:\n" << std::scientific;
+  for(unsigned int i = 0; i < guess_dim; ++i){
+   for(unsigned int j = 0; j < guess_dim; ++j){
+    std::cout << " " << oper_matrix[j*guess_dim + i];
+   }
+   std::cout << std::endl;
   }
-  std::cout << std::endl;
- }
- std::cout << "#DEBUG(exatn::TensorNetworkOptimizer::getInitialGuess): Metric matrix:\n" << std::scientific;
- for(unsigned int i = 0; i < guess_dim; ++i){
-  for(unsigned int j = 0; j < guess_dim; ++j){
-   std::cout << " " << metr_matrix[j*guess_dim + i];
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer::computeInitialGuess): Metric matrix:\n" << std::scientific;
+  for(unsigned int i = 0; i < guess_dim; ++i){
+   for(unsigned int j = 0; j < guess_dim; ++j){
+    std::cout << " " << metr_matrix[j*guess_dim + i];
+   }
+   std::cout << std::endl;
   }
-  std::cout << std::endl;
  }
  //Solve the projected eigen-problem:
  int info = 0;
@@ -595,6 +610,14 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
         (void*)work_space.data(),&lwork,
         (void*)rwork_space.data(),&info);
  if(info == 0){
+  //Print eigenvalues (debug):
+  if(TensorNetworkOptimizer::debug > 0){
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer::computeInitialGuess): Eigenvalues:\n" << std::scientific;
+   for(unsigned int i = 0; i < guess_dim; ++i){
+    std::cout << alpha[i] << " / " << beta[i] << " = ";
+    if(std::abs(beta[i]) != 0.0) std::cout << (alpha[i]/beta[i]) << std::endl;
+   }
+  }
   //Find the min/max eigenvalue:
   int min_entry = 0, max_entry = 0;
   for(int i = 0; i < matrix_dim; ++i){
@@ -624,15 +647,18 @@ void TensorNetworkOptimizer::computeInitialGuess(const ProcessGroup & process_gr
     success = root_expansion->appendComponent(net->network,coef*(net->coefficient)); assert(success);
    }
   }
+  success = normalizeNorm2Sync(process_group,*root_expansion,1.0); assert(success);
   //Reconstruct the eigen-expansion as an initial guess:
   vector_expansion_->conjugate();
   TensorNetworkReconstructor::resetDebugLevel(1,0); //debug
   TensorNetworkReconstructor reconstructor(root_expansion,vector_expansion_,DEFAULT_GUESS_TOLERANCE);
+  reconstructor.resetMaxIterations(10);
   success = exatn::sync(process_group); assert(success);
   double residual_norm, fidelity;
   bool reconstructed = reconstructor.reconstruct(process_group,&residual_norm,&fidelity);
   success = exatn::sync(process_group); assert(success);
   vector_expansion_->conjugate();
+  //success = balanceNormalizeNorm2Sync(process_group,*vector_expansion_,1.0,1.0,true); assert(success); //debug
  }
  //Destroy temporaries:
  for(unsigned int j = 0; j < guess_dim; ++j){

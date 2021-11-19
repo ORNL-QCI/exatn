@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/10/22
+REVISION: 2021/11/19
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -414,6 +414,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   }
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Check the necessity to restart iterations:
+  if(iteration >= max_iterations_) break;
   if(converged && fidelity_ < acceptable_fidelity && tolerance_ > 1e-6){
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Insufficient fidelity, iterations will be restarted\n";
