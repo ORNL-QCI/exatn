@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/11/19
+REVISION: 2021/11/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -282,7 +282,9 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   unsigned int iteration = 0;
   while((!converged) && (iteration < max_iterations_)){
    if(TensorNetworkReconstructor::debug > 0)
-    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Iteration " << iteration << std::endl;
+    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor)["
+              << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
+              << "]: Iteration " << iteration << std::endl;
    double max_grad_norm = 0.0;
    for(auto & environment: environments_){
     //Nesterov extrapolation:

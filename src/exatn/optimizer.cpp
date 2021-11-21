@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/11/19
+REVISION: 2021/11/21
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -296,7 +296,9 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
   unsigned int iteration = 0;
   while((!converged) && (iteration < max_iterations_)){
    if(TensorNetworkOptimizer::debug > 0)
-    std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Iteration " << iteration << std::endl;
+    std::cout << "#DEBUG(exatn::TensorNetworkOptimizer)["
+              << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
+              << "]: Iteration " << iteration << std::endl;
    converged = true;
    double max_convergence = 0.0;
    average_expect_val_ = std::complex<double>{0.0,0.0};

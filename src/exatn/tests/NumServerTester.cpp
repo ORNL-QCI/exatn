@@ -3607,7 +3607,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const std::string tn_type = "TTN"; //MPS or TTN
  const double accuracy = 1e-4;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
