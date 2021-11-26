@@ -3524,6 +3524,7 @@ TEST(NumServerTester, SpinHamiltonians) {
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
   exatn::TensorNetworkOptimizer optimizer(transverse_ising,vec_tns0,accuracy);
+  optimizer.enableParallelization(true);
   success = exatn::sync(); assert(success);
   bool converged = optimizer.optimize(num_states);
   success = exatn::sync(); assert(success);
@@ -3747,6 +3748,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
   vec_net0->markOptimizableAllTensors();
   success = exatn::initTensorsRndSync(*vec_tns0); assert(success);
   exatn::TensorNetworkOptimizer optimizer3(hamiltonian0,vec_tns0,accuracy);
+  optimizer3.enableParallelization(true);
   success = exatn::sync(); assert(success);
   bool converged = optimizer3.optimize(num_states);
   success = exatn::sync(); assert(success);
