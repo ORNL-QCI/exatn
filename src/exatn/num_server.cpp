@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/10/30
+REVISION: 2021/12/10
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1565,14 +1565,12 @@ bool NumServer::initTensorRndSync(const std::string & name)
 bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
 {
  bool success = true;
- std::unordered_set<std::string> tensor_names;
  for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
-    //auto res = tensor_names.emplace(tens_name);
-    success = initTensorRnd(tens_name);
+    if(tens->second.isOptimizable()) success = initTensorRnd(tens_name);
    }else{
     success = false;
    }
@@ -1581,25 +1579,18 @@ bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
   }
   if(!success) break;
  }
- if(success){
-  for(const auto & tens_name: tensor_names){
-   success = initTensorRnd(tens_name); if(!success) break;
-  }
- }
  return success;
 }
 
 bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
 {
  bool success = true;
- std::unordered_set<std::string> tensor_names;
  for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
-    //auto res = tensor_names.emplace(tens_name);
-    success = initTensorRndSync(tens_name);
+    if(tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
    }else{
     success = false;
    }
@@ -1608,26 +1599,19 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
   }
   if(!success) break;
  }
- if(success){
-  for(const auto & tens_name: tensor_names){
-   success = initTensorRndSync(tens_name); if(!success) break;
-  }
- }
  return success;
 }
 
 bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
 {
  bool success = true;
- std::unordered_set<std::string> tensor_names;
  for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
   for(auto tens = tensor_network->network->cbegin(); tens != tensor_network->network->cend(); ++tens){
    auto tensor = tens->second.getTensor();
    const auto & tens_name = tensor->getName();
    if(tens->first != 0){ //input tensor
     if(tensorAllocated(tens_name)){
-     //auto res = tensor_names.emplace(tens_name);
-     success = initTensorRnd(tens_name);
+     if(tens->second.isOptimizable()) success = initTensorRnd(tens_name);
     }else{
      success = false;
     }
@@ -1637,26 +1621,19 @@ bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
    if(!success) break;
   }
  }
- if(success){
-  for(const auto & tens_name: tensor_names){
-   success = initTensorRnd(tens_name); if(!success) break;
-  }
- }
  return success;
 }
 
 bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion)
 {
  bool success = true;
- std::unordered_set<std::string> tensor_names;
  for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
   for(auto tens = tensor_network->network->cbegin(); tens != tensor_network->network->cend(); ++tens){
    auto tensor = tens->second.getTensor();
    const auto & tens_name = tensor->getName();
    if(tens->first != 0){ //input tensor
     if(tensorAllocated(tens_name)){
-     //auto res = tensor_names.emplace(tens_name);
-     success = initTensorRndSync(tens_name);
+     if(tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
     }else{
      success = false;
     }
@@ -1664,11 +1641,6 @@ bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion)
     if(tensorAllocated(tens_name)) success = initTensorSync(tens_name,0.0);
    }
    if(!success) break;
-  }
- }
- if(success){
-  for(const auto & tens_name: tensor_names){
-   success = initTensorRndSync(tens_name); if(!success) break;
   }
  }
  return success;
