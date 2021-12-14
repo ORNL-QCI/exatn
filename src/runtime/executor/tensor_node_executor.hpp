@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2021/07/02
+REVISION: 2021/12/14
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -30,6 +30,8 @@ Rationale:
 
 #include <vector>
 #include <memory>
+
+#include "errors.hpp"
 
 namespace talsh{
 class Tensor;

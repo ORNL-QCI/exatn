@@ -10,25 +10,24 @@ file(GLOB SRC
 usfunctiongetresourcesource(TARGET ${LIBRARY_NAME} OUT SRC)
 usfunctiongeneratebundleinit(TARGET ${LIBRARY_NAME} OUT SRC)
 
-add_library(${LIBRARY_NAME}
-            SHARED
-            ${SRC}
-            )
+add_library(${LIBRARY_NAME} SHARED ${SRC})
 
-target_include_directories(
-  ${LIBRARY_NAME}
+target_include_directories(${LIBRARY_NAME}
   PUBLIC . ..
-         node_executors/talsh node_executors/exatensor
-         graph_executors/eager graph_executors/lazy
-         ../graph ${CMAKE_SOURCE_DIR}/src/exatn
-  )
+  node_executors/talsh
+  node_executors/exatensor
+  graph_executors/eager
+  graph_executors/lazy
+  ../graph
+  ${CMAKE_SOURCE_DIR}/src/exatn
+)
 
 set(_bundle_name exatn_runtime_executor)
 set_target_properties(${LIBRARY_NAME}
                       PROPERTIES COMPILE_DEFINITIONS
-                                 US_BUNDLE_NAME=${_bundle_name}
-                                 US_BUNDLE_NAME
-                                 ${_bundle_name})
+                      US_BUNDLE_NAME=${_bundle_name}
+                      US_BUNDLE_NAME
+                      ${_bundle_name})
 
 usfunctionembedresources(TARGET
                          ${LIBRARY_NAME}
@@ -37,12 +36,15 @@ usfunctionembedresources(TARGET
                          FILES
                          manifest.json)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC CppMicroServices exatn-numerics exatn-runtime PRIVATE ExaTensor::ExaTensor)
+target_link_libraries(${LIBRARY_NAME}
+  PUBLIC CppMicroServices exatn-numerics exatn-runtime exatn_runtime_cuquantum
+  PRIVATE ExaTensor::ExaTensor
+)
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
-if(EXATN_BUILD_TESTS)
-  #add_subdirectory(boost/tests)
+if(CUQUANTUM)
+  add_subdirectory(cuquantum)
 endif()
 
 file (GLOB HEADERS *.hpp)

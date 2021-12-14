@@ -1,7 +1,7 @@
 set(BUILD_SHARED_LIBS TRUE)
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/include)
 include_directories(${CMAKE_BINARY_DIR}/tpls/cppmicroservices/framework/include)
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.0.0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=deprecated-copy")
   endif()
@@ -23,10 +23,7 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   RESULT_VARIABLE GIT_SUBMOD_RESULT)
   if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-    message(
-      FATAL_ERROR
-        "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules"
-      )
+    message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
   endif()
 endif()
 
@@ -93,8 +90,8 @@ set(ExaTensor_WITH_LAPACK NO)
 
 if(WITH_LAPACK)
   set(LAPACK_LIBRARIES "")
-  set (ExaTensor_WITH_LAPACK YES)
-  if (BLAS_LIB STREQUAL "ATLAS")
+  set(ExaTensor_WITH_LAPACK YES)
+  if(BLAS_LIB STREQUAL "ATLAS")
     set(LAPACK_LIBRARIES "-llapack")
   elseif(BLAS_LIB STREQUAL "MKL")
   elseif(BLAS_LIB STREQUAL "OPENBLAS")
@@ -111,8 +108,24 @@ message(STATUS "The MPI bin path is set to ${MPI_BIN_PATH}")
 message(STATUS "The BLAS implementation is set to ${BLAS_LIB}")
 message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
 message(STATUS "The BLAS library must also have LAPACK: ${WITH_LAPACK}, ${LAPACK_LIBRARIES}, ${ExaTensor_WITH_LAPACK}")
+message(STATUS "TAL-SH only build: ${EXA_TALSH_ONLY}")
 message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
-message(STATUS "Solely TAL-SH backend build: ${EXA_TALSH_ONLY}")
+if(CUTENSOR)
+  message(STATUS "With cuTensor: YES")
+  if(CUTENSOR_PATH)
+    message(STATUS "The cuTensor library path is set to ${CUTENSOR_PATH}")
+  endif()
+  if(CUQUANTUM)
+    message(STATUS "With cuQuantum: YES")
+    if(CUQUANTUM_PATH)
+      message(STATUS "The cuQuantum library path is set to ${CUQUANTUM_PATH}")
+    endif()
+  else()
+    message(STATUS "With cuQuantum: NO")
+  endif()
+else()
+  message(STATUS "With cuTensor: NO")
+endif()
 
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
@@ -124,7 +137,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Cray")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "IBM")
   set(TOOLKIT "IBM")
 else()
-  message(FATAL_ERROR "Your discovered compiler suite ${CMAKE_CXX_COMPILER_ID} is not supported. CMake is exiting.")
+  message(FATAL_ERROR "Your discovered compiler suite ${CMAKE_CXX_COMPILER_ID} is not supported! CMake is exiting.")
 endif()
 
 
@@ -138,7 +151,7 @@ if(APPLE)
   message(STATUS "This is Mac OS build, building the TAL-SH CPU backend only")
 
   if(BLAS_LIB STREQUAL "ACML" OR BLAS_LIB STREQUAL "ESSL")
-    message(FATAL_ERROR "Mac OS build does not support ACML or ESSL BLAS libraries. CMake is exiting.")
+    message(FATAL_ERROR "Mac OS build does not support ACML or ESSL BLAS libraries! CMake is exiting.")
   endif()
 
   if(NOT MPI_LIB OR MPI_LIB STREQUAL "NONE")
@@ -257,6 +270,8 @@ else()
                               WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
+                              WITH_CUTENSOR="${WITH_CUTENSOR}"
+                              PATH_CUTENSOR="${CUTENSOR_PATH}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "OPENMPI")
@@ -288,6 +303,8 @@ else()
                               WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
+                              WITH_CUTENSOR="${WITH_CUTENSOR}"
+                              PATH_CUTENSOR="${CUTENSOR_PATH}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     elseif(MPI_LIB STREQUAL "MPICH")
@@ -319,6 +336,8 @@ else()
                               WITH_LAPACK=${ExaTensor_WITH_LAPACK}
                               PATH_LAPACK_LIB=${BLAS_PATH}
                               LAPACK_LIBS="${LAPACK_LIBRARIES}"
+                              WITH_CUTENSOR="${WITH_CUTENSOR}"
+                              PATH_CUTENSOR="${CUTENSOR_PATH}"
                               make
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ExaTensor)
     endif()
@@ -420,10 +439,7 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU"
                   OUTPUT_VARIABLE GCC_VERSION)
   # Just g++-5.0 and greater contain <codecvt> header. (test in ubuntu)
   if(NOT (GCC_VERSION VERSION_GREATER 5.0 OR GCC_VERSION VERSION_EQUAL 5.0))
-    message(
-      WARNING
-        "${PROJECT_NAME} requires g++ 5.0 or greater. ExaTN will not build ANTLR support."
-      )
+    message(FATAL_ERROR "${PROJECT_NAME} requires g++ 5.0 or greater! ExaTN will not build ANTLR support.")
   else()
     add_subdirectory(antlr)
   endif()
@@ -436,10 +452,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"
                   OUTPUT_VARIABLE CLANG_VERSION)
   if(NOT
      (CLANG_VERSION VERSION_GREATER 4.2.1 OR CLANG_VERSION VERSION_EQUAL 4.2.1))
-    message(
-      WARNING
-        "${PROJECT_NAME} requires clang 4.2.1 or greater. ExaTN will not build ANTLR support."
-      )
+    message(FATAL_ERROR "${PROJECT_NAME} requires clang 4.2.1 or greater! ExaTN will not build ANTLR support.")
   else()
     add_subdirectory(antlr)
   endif()
