@@ -8,7 +8,7 @@ Rationale:
 
 **/
 
-//#ifdef CUQUANTUM
+#ifdef CUQUANTUM
 
 #include "cuquantum_executor.hpp"
 
@@ -26,4 +26,4 @@ CuQuantumExecutor::CuQuantumExecutor()
 } //namespace runtime
 } //namespace exatn
 
-//#endif //CUQUANTUM
+#endif //CUQUANTUM

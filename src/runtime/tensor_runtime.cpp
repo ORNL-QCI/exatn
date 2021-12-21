@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/09/22
+REVISION: 2021/12/14
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -9,6 +9,10 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 #include "exatn_service.hpp"
 
 #include "talshxx.hpp"
+
+#ifdef CUQUANTUM
+#include "cuquantum_executor.hpp"
+#endif
 
 #ifdef MPI_ENABLED
 #include "mpi.h"

@@ -37,9 +37,13 @@ usfunctionembedresources(TARGET
                          manifest.json)
 
 target_link_libraries(${LIBRARY_NAME}
-  PUBLIC CppMicroServices exatn-numerics exatn-runtime exatn_runtime_cuquantum
+  PUBLIC CppMicroServices exatn-numerics exatn-runtime
   PRIVATE ExaTensor::ExaTensor
 )
+
+if(CUQUANTUM)
+  target_link_libraries(${LIBRARY_NAME} PUBLIC exatn_runtime_cuquantum)
+endif()
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 
