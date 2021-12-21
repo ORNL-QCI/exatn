@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/03/29
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -8,6 +8,10 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 #include "graph_executor_lazy.hpp"
 
 #include "talshxx.hpp"
+
+#ifdef CUQUANTUM
+#include "cuquantum_executor.hpp"
+#endif
 
 #include <iostream>
 #include <iomanip>
@@ -246,6 +250,12 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
     //Find the next idle DAG node:
     not_done = find_next_idle_node() || (progress.front < progress.num_nodes);
   }
+  return;
+}
+
+
+void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
+
   return;
 }
 

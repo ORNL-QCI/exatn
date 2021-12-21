@@ -19,12 +19,12 @@ target_include_directories(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME} PUBLIC exatn-numerics)
 
 if(CUQUANTUM)
-  target_include_directories(${LIBRARY_NAME} PUBLIC ${CUQUANTUM_PATH}/include)
+  target_include_directories(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/include)
   target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/lib64/libcutensornet.so)
 endif()
 
 if(CUTENSOR AND NOT CUTENSOR_PATH STREQUAL ".")
-  target_include_directories(${LIBRARY_NAME} PUBLIC ${CUTENSOR_PATH}/include)
+  target_include_directories(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/include)
   target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/11/libcutensor.so)
 endif()
 

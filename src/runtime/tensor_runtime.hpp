@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/14
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -44,8 +44,9 @@ Rationale:
 #ifndef EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 #define EXATN_RUNTIME_TENSOR_RUNTIME_HPP_
 
-#include "tensor_graph_executor.hpp"
 #include "tensor_graph.hpp"
+#include "tensor_network_queue.hpp"
+#include "tensor_graph_executor.hpp"
 #include "tensor_operation.hpp"
 #include "tensor_method.hpp"
 
@@ -199,6 +200,8 @@ private:
   std::shared_ptr<TensorGraph> current_dag_; //pointer to the current DAG
   /** Tensor data request queue **/
   std::list<TensorDataReq> data_req_queue_;
+  /** List of tensor networks submitted for processing as a whole **/
+  TensorNetworkQueue tensor_network_queue_;
   /** Logging level (0:none) **/
   int logging_;
   /** Current executing status (whether or not the execution thread is active) **/

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2021/03/29
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -29,6 +29,9 @@ public:
 
   /** Traverses the DAG and executes all its nodes. **/
   virtual void execute(TensorGraph & dag) override;
+
+  /** Traverses the list of tensor networks and executes them as a whole. **/
+  virtual void execute(TensorNetworkQueue & tensor_network_queue) override;
 
   /** Regulates the tensor prefetch depth (0 turns prefetch off). **/
   virtual void setPrefetchDepth(unsigned int depth) override {

@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2020/09/02
+REVISION: 2021/12/21
 
-Copyright (C) 2018-2020 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2021 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
+Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "graph_executor_eager.hpp"
@@ -85,6 +85,11 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
     num_nodes = dag.getNumNodes();
   }
   return;
+}
+
+
+void EagerGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
+  assert(false);
 }
 
 } //namespace runtime

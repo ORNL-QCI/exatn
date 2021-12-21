@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/14
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -9,10 +9,6 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 #include "exatn_service.hpp"
 
 #include "talshxx.hpp"
-
-#ifdef CUQUANTUM
-#include "cuquantum_executor.hpp"
-#endif
 
 #ifdef MPI_ENABLED
 #include "mpi.h"
@@ -110,9 +106,10 @@ void TensorRuntime::executionThreadWorkflow()
       graph_executor_->execute(*current_dag_);
       processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
       if(current_dag_->hasUnexecutedNodes()){
-       executing_.store(true); //reaffirm that DAG is still executing
+        executing_.store(true); //reaffirm that DAG is still executing
       }else{
-       executing_.store(false); //executing_ is set to FALSE by the execution thread
+        graph_executor_->execute(tensor_network_queue_);
+        executing_.store(false); //executing_ is set to FALSE by the execution thread
       }
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)

@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/20
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -16,34 +16,31 @@ Rationale:
 #ifndef EXATN_RUNTIME_CUQUANTUM_EXECUTOR_HPP_
 #define EXATN_RUNTIME_CUQUANTUM_EXECUTOR_HPP_
 
-#include "tensor_network.hpp"
-#include "tensor_operation.hpp"
-
-#include <cutensornet.h>
-#include <cutensor.h>
-#include <cuda_runtime.h>
-
 #include <unordered_map>
-#include <vector>
-#include <cassert>
 
-#include "errors.hpp"
+#include "tensor_network_queue.hpp"
 
 namespace exatn {
 namespace runtime {
+
+struct TensorNetworkReq;
+
 
 class CuQuantumExecutor {
 
 public:
 
  CuQuantumExecutor();
-
+ CuQuantumExecutor(const CuQuantumExecutor &) = delete;
+ CuQuantumExecutor & operator=(CuQuantumExecutor &) = delete;
+ CuQuantumExecutor(CuQuantumExecutor &&) noexcept = delete;
+ CuQuantumExecutor & operator=(CuQuantumExecutor &&) noexcept = delete;
  virtual ~CuQuantumExecutor() = default;
 
- int execute(numerics::TensorNetwork & network,
+ int execute(std::shared_ptr<numerics::TensorNetwork> network,
              TensorOpExecHandle * exec_handle);
 
- bool sync(TensorOpExecHandle op_handle,
+ bool sync(TensorOpExecHandle exec_handle,
            int * error_code,
            bool wait = true);
 
@@ -51,6 +48,8 @@ public:
 
 protected:
 
+ /** Currently processed tensor networks **/
+ std::unordered_map<TensorOpExecHandle,std::unique_ptr<TensorNetworkReq>> active_networks_;
 };
 
 } //namespace runtime

@@ -20,6 +20,7 @@ target_include_directories(${LIBRARY_NAME}
   graph_executors/lazy
   ../graph
   ${CMAKE_SOURCE_DIR}/src/exatn
+  cuquantum
 )
 
 set(_bundle_name exatn_runtime_executor)

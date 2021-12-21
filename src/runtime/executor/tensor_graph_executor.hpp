@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2021/04/01
+REVISION: 2021/12/21
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -19,6 +19,7 @@ Rationale:
 #include "Identifiable.hpp"
 
 #include "tensor_graph.hpp"
+#include "tensor_network_queue.hpp"
 #include "tensor_node_executor.hpp"
 #include "tensor_operation.hpp"
 
@@ -128,6 +129,10 @@ public:
   /** Traverses the DAG and executes all its nodes (operations).
       [THREAD: This function is executed by the execution thread] **/
   virtual void execute(TensorGraph & dag) = 0;
+
+  /** Traverses the list of tensor networks and executes them as a whole.
+      [THREAD: This function is executed by the execution thread] **/
+  virtual void execute(TensorNetworkQueue & tensor_network_queue) = 0;
 
   /** Regulates the tensor prefetch depth (0 turns prefetch off). **/
   virtual void setPrefetchDepth(unsigned int depth) = 0;
