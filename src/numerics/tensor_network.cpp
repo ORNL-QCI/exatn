@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/10/26
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2778,5 +2778,11 @@ bool TensorNetwork::printTensorNetwork(std::string & network)
 }
 
 } //namespace numerics
+
+
+numerics::TensorHashType getTensorNetworkHash(std::shared_ptr<numerics::TensorNetwork> network)
+{
+ return reinterpret_cast<numerics::TensorHashType>((void*)(network.get()));
+}
 
 } //namespace exatn

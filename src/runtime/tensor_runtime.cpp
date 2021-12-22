@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/21
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -240,6 +240,17 @@ VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   executing_.store(true); //signal to the execution thread to execute the DAG
   return node_id;
 }
+
+
+#ifdef CUQUANTUM
+bool TensorRuntime::submit(std::shared_ptr<numerics::TensorNetwork> network,
+                           TensorOpExecHandle * exec_handle)
+{
+  assert(exec_handle != nullptr);
+  *exec_handle = tensor_network_queue_.append(network);
+  return true;
+}
+#endif
 
 
 bool TensorRuntime::sync(TensorOperation & op, bool wait) {

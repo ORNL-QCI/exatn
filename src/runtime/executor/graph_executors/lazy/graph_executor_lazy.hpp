@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/12/21
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -16,6 +16,10 @@ Rationale:
 namespace exatn {
 namespace runtime {
 
+#ifdef CUQUANTUM
+class CuQuantumExecutor;
+#endif
+
 class LazyGraphExecutor : public TensorGraphExecutor {
 
 public:
@@ -25,7 +29,8 @@ public:
 
   LazyGraphExecutor(): pipeline_depth_(DEFAULT_PIPELINE_DEPTH),
                        prefetch_depth_(DEFAULT_PREFETCH_DEPTH)
-  {}
+  {
+  }
 
   //LazyGraphExecutor(const LazyGraphExecutor &) = delete;
   //LazyGraphExecutor & operator=(const LazyGraphExecutor &) = delete;
@@ -33,6 +38,12 @@ public:
   //LazyGraphExecutor & operator=(LazyGraphExecutor &&) = delete;
 
   virtual ~LazyGraphExecutor() = default;
+
+  /** Sets/resets the DAG node executor (tensor operation executor). **/
+  virtual void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
+                                 const ParamConf & parameters,
+                                 unsigned int process_rank,
+                                 unsigned int global_process_rank) override;
 
   /** Traverses the DAG and executes all its nodes. **/
   virtual void execute(TensorGraph & dag) override;
@@ -62,8 +73,11 @@ public:
 
 protected:
 
- unsigned int pipeline_depth_; //max number of active tensor operations in flight
- unsigned int prefetch_depth_; //max number of tensor operations with active prefetch in flight
+  unsigned int pipeline_depth_; //max number of active tensor operations in flight
+  unsigned int prefetch_depth_; //max number of tensor operations with active prefetch in flight
+#ifdef CUQUANTUM
+  std::shared_ptr<CuQuantumExecutor> cuquantum_executor_; //cuQuantum executor
+#endif
 };
 
 } //namespace runtime

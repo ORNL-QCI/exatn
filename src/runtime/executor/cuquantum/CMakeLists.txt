@@ -25,7 +25,7 @@ endif()
 
 if(CUTENSOR AND NOT CUTENSOR_PATH STREQUAL ".")
   target_include_directories(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/include)
-  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/11/libcutensor.so)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/11/libcutensor.so ExaTensor::ExaTensor)
 endif()
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})

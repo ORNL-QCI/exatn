@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/21
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -125,8 +125,14 @@ public:
   /** Returns TRUE if there is the current scope is set. **/
   inline bool currentScopeIsSet() const {return scope_set_.load();}
 
-  /** Submits a tensor operation into the current execution graph and returns its integer id.  **/
-  VertexIdType submit(std::shared_ptr<TensorOperation> op);
+  /** Submits a tensor operation into the current execution graph and returns its integer id. **/
+  VertexIdType submit(std::shared_ptr<TensorOperation> op); //in: tensor operation
+
+#ifdef CUQUANTUM
+  /** Submits an entire tensor network for processing as a whole. **/
+  bool submit(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
+              TensorOpExecHandle * exec_handle = nullptr);      //out: assigned execution handle
+#endif
 
   /** Tests for completion of a given tensor operation.
       If wait = TRUE, it will block until completion. **/
@@ -138,7 +144,7 @@ public:
   bool sync(const Tensor & tensor,
             bool wait = true);
 
-  /** Tests for completion of all tensor operations in the current DAG.
+  /** Tests for completion of all previously submitted tensor operations.
       If wait = TRUE, it will block until completion. **/
   bool sync(bool wait = true);
 

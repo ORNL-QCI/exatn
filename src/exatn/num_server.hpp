@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/11/03
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -84,6 +84,7 @@ namespace exatn{
 //Primary numerics:: types exposed to the user:
 using numerics::VectorSpace;
 using numerics::Subspace;
+using numerics::TensorHashType;
 using numerics::TensorRange;
 using numerics::TensorShape;
 using numerics::TensorSignature;

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Eager
-REVISION: 2021/12/21
+REVISION: 2021/12/22
 
 Copyright (C) 2018-2021 Tiffany Mintz, Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -89,6 +89,7 @@ void EagerGraphExecutor::execute(TensorGraph & dag) {
 
 
 void EagerGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
+  std::cout << "#FATAL(exatn::runtime::EagerGraphExecutor::execute): Processing of entire tensor networks is not implemented!\n";
   assert(false);
 }
 
