@@ -18,14 +18,14 @@
 #include "errors.hpp"
 
 //Test activation:
-//#define EXATN_TEST0
-/*#define EXATN_TEST1
+/*#define EXATN_TEST0
+#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
-#define EXATN_TEST5
+#define EXATN_TEST5*/
 #define EXATN_TEST6
-#define EXATN_TEST7
+/*#define EXATN_TEST7
 #define EXATN_TEST8
 #define EXATN_TEST9
 #define EXATN_TEST10
@@ -47,7 +47,7 @@
 #define EXATN_TEST26*/
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29
+//#define EXATN_TEST29
 //#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
 //#define EXATN_TEST32
@@ -852,7 +852,7 @@ TEST(NumServerTester, largeCircuitNumServer)
   auto talsh_tensor = exatn::getLocalTensor(inverse.getTensor(0)->getName());
   const std::complex<double>* body_ptr;
   if (talsh_tensor->getDataAccessHostConst(&body_ptr)) {
-   std::cout << "Fina result is " << *body_ptr << "\n";
+   std::cout << "Final result is " << *body_ptr << "\n";
   }
  }
 

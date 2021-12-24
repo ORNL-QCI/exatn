@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/22
+REVISION: 2021/12/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -40,6 +40,8 @@ public:
  int execute(std::shared_ptr<numerics::TensorNetwork> network,
              TensorOpExecHandle exec_handle);
 
+ bool executing(TensorOpExecHandle exec_handle);
+
  bool sync(TensorOpExecHandle exec_handle,
            int * error_code,
            bool wait = true);
@@ -53,7 +55,7 @@ protected:
  /** GPU Ids available to the current process **/
  std::vector<int> gpus;
  /** cuTensorNet contexts for all available GPUs **/
- std::vector<void*> ctn_handles; //cutensornetHandle_t
+ std::vector<void*> ctn_handles; //cutensornetHandle_t = void*
 };
 
 } //namespace runtime

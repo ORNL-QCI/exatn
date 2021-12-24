@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/22
+REVISION: 2021/12/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -23,9 +23,16 @@ Rationale:
 
 #include "cuquantum_executor.hpp"
 
-#define HANDLE_CTN_ERROR(x)                                          \
-{ const auto err = x;                                                 \
-  if( err != CUTENSORNET_STATUS_SUCCESS )                              \
+
+#define HANDLE_CUDA_ERROR(x) \
+{ const auto err = x; \
+  if( err != cudaSuccess ) \
+{ printf("Error: %s in line %d\n", cudaGetErrorString(err), __LINE__); std::abort(); } \
+};
+
+#define HANDLE_CTN_ERROR(x) \
+{ const auto err = x; \
+  if( err != CUTENSORNET_STATUS_SUCCESS ) \
 { printf("Error: %s in line %d\n", cutensornetGetErrorString(err), __LINE__); std::abort(); } \
 };
 
@@ -64,7 +71,7 @@ CuQuantumExecutor::CuQuantumExecutor()
 
  ctn_handles.resize(gpus.size());
  for(const auto & gpu_id: gpus){
-  auto cuda_error = cudaSetDevice(gpu_id); assert(cuda_error == cudaSuccess);
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
   HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&ctn_handles[gpu_id])));
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
@@ -76,19 +83,50 @@ CuQuantumExecutor::~CuQuantumExecutor()
 {
  bool success = sync(); assert(success);
  for(const auto & gpu_id: gpus){
-  auto cuda_error = cudaSetDevice(gpu_id); assert(cuda_error == cudaSuccess);
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
   HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(ctn_handles[gpu_id])));
  }
+ std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
  ctn_handles.clear();
  gpus.clear();
 }
 
 
+int CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
+                               TensorOpExecHandle exec_handle)
+{
+ int error_code = 0;
+ //`Finish
+ return error_code;
+}
+
+
+bool CuQuantumExecutor::executing(TensorOpExecHandle exec_handle)
+{
+ auto iter = active_networks_.find(exec_handle);
+ return (iter != active_networks_.end());
+}
+
+
+bool CuQuantumExecutor::sync(TensorOpExecHandle exec_handle,
+                             int * error_code,
+                             bool wait)
+{
+ bool synced = true;
+ *error_code = 0;
+ auto iter = active_networks_.find(exec_handle);
+ if(iter != active_networks_.end()){
+  //`Finish
+ }
+ return synced;
+}
+
+
 bool CuQuantumExecutor::sync()
 {
- bool success = true;
+ bool synced = true;
  //`Finish
- return success;
+ return synced;
 }
 
 } //namespace runtime

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2021/12/14
+REVISION: 2021/12/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -109,6 +109,9 @@ public:
 
   /** Initiates tensor operand prefetch for a given tensor operation. **/
   virtual bool prefetch(const numerics::TensorOperation & op) = 0;
+
+  /** Clears all internal node executor caches **/
+  virtual void clearCache() = 0;
 
   /** Returns a local copy of a given tensor slice. **/
   virtual std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,

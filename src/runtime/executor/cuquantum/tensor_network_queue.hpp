@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Execution queue
-REVISION: 2021/12/22
+REVISION: 2021/12/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -51,11 +51,18 @@ public:
  ConstTensorNetworkQueueIterator cbegin() {return networks_.cbegin();}
  ConstTensorNetworkQueueIterator cend() {return networks_.cend();}
 
- bool is_empty() {
+ bool isEmpty() {
   lock();
   bool empt = networks_.empty();
   unlock();
   return empt;
+ }
+
+ std::size_t getSize() {
+  lock();
+  const std::size_t current_size = networks_.size();
+  unlock();
+  return current_size;
  }
 
  TensorOpExecHandle append(std::shared_ptr<numerics::TensorNetwork> network) {
@@ -64,6 +71,14 @@ public:
   networks_.emplace_back(std::make_pair(network,tn_hash));
   unlock();
   return tn_hash;
+ }
+
+ void remove() {
+  lock();
+  assert(current_network_ != networks_.end());
+  current_network_ = networks_.erase(current_network_);
+  unlock();
+  return;
  }
 
  ConstTensorNetworkQueueIterator getCurrent() {
@@ -77,7 +92,7 @@ public:
   return;
  }
 
- bool is_over() {
+ bool isOver() {
   lock();
   bool over = (current_network_ == networks_.end());
   unlock();
@@ -88,8 +103,9 @@ public:
   lock();
   assert(current_network_ != networks_.end());
   ++current_network_;
+  bool not_over = (current_network_ != networks_.end());
   unlock();
-  return (current_network_ != networks_.end());
+  return not_over;
  }
 
  inline void lock(){queue_lock_.lock();}

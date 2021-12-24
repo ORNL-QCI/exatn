@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/09/24
+REVISION: 2021/12/24
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -1395,6 +1395,13 @@ bool TalshNodeExecutor::prefetch(const numerics::TensorOperation & op)
   }
  }
  return prefetching;
+}
+
+
+void TalshNodeExecutor::clearCache()
+{
+ bool evicted = evictMovedTensors();
+ return;
 }
 
 
