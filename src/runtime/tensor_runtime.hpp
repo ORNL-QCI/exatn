@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/22
+REVISION: 2021/12/27
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -128,12 +128,6 @@ public:
   /** Submits a tensor operation into the current execution graph and returns its integer id. **/
   VertexIdType submit(std::shared_ptr<TensorOperation> op); //in: tensor operation
 
-#ifdef CUQUANTUM
-  /** Submits an entire tensor network for processing as a whole. **/
-  bool submit(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
-              TensorOpExecHandle * exec_handle = nullptr);      //out: assigned execution handle
-#endif
-
   /** Tests for completion of a given tensor operation.
       If wait = TRUE, it will block until completion. **/
   bool sync(TensorOperation & op,
@@ -147,6 +141,19 @@ public:
   /** Tests for completion of all previously submitted tensor operations.
       If wait = TRUE, it will block until completion. **/
   bool sync(bool wait = true);
+
+#ifdef CUQUANTUM
+  /** Submits an entire tensor network for processing as a whole.
+      The returned execution handle can be used for checking the status
+      of the tensor network execution. Zero on return means unsuccessful submission. **/
+  TensorOpExecHandle submit(std::shared_ptr<numerics::TensorNetwork> network); //in: tensor network
+
+  /** Tests for completion of processing of a whole tensor network.
+      A valid execution handle obtained during tensor network
+      submission must be positive. **/
+  bool syncNetwork(const TensorOpExecHandle exec_handle,
+                   bool wait = true);
+#endif
 
   /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
       This slice will be extracted from the exatn::numerics::Tensor implementation as a copy.

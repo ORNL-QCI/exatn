@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/12/24
+REVISION: 2021/12/27
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -1456,6 +1456,15 @@ std::shared_ptr<talsh::Tensor> TalshNodeExecutor::getLocalTensor(const numerics:
   std::cout << std::endl;
  }
  return slice;
+}
+
+
+const void * TalshNodeExecutor::getTensorImage(const numerics::Tensor & tensor,
+                                               int device_kind, int device_id,
+                                               std::size_t * size) const
+{
+ //`Implement
+ return nullptr;
 }
 
 

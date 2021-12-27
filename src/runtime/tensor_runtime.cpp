@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/22
+REVISION: 2021/12/27
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -242,17 +242,6 @@ VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
 }
 
 
-#ifdef CUQUANTUM
-bool TensorRuntime::submit(std::shared_ptr<numerics::TensorNetwork> network,
-                           TensorOpExecHandle * exec_handle)
-{
-  assert(exec_handle != nullptr);
-  *exec_handle = tensor_network_queue_.append(network);
-  return true;
-}
-#endif
-
-
 bool TensorRuntime::sync(TensorOperation & op, bool wait) {
   assert(currentScopeIsSet());
   executing_.store(true); //reactivate the execution thread to execute the DAG in case it was not active
@@ -299,6 +288,28 @@ bool TensorRuntime::sync(bool wait) {
   //if(wait) std::cout << "Synced\n" << std::flush; //debug
   return !still_working;
 }
+
+
+#ifdef CUQUANTUM
+TensorOpExecHandle TensorRuntime::submit(std::shared_ptr<numerics::TensorNetwork> network)
+{
+  return tensor_network_queue_.append(network);
+}
+
+
+bool TensorRuntime::syncNetwork(const TensorOpExecHandle exec_handle, bool wait)
+{
+  assert(exec_handle != 0);
+  bool synced = false;
+  while(!synced){
+    const auto exec_stat = tensor_network_queue_.checkExecStatus(exec_handle);
+    synced = (exec_stat == TensorNetworkQueue::ExecStat::None ||
+              exec_stat == TensorNetworkQueue::ExecStat::Completed);
+    if(!wait) break;
+  };
+  return synced;
+}
+#endif
 
 
 std::future<std::shared_ptr<talsh::Tensor>> TensorRuntime::getLocalTensor(std::shared_ptr<Tensor> tensor,
