@@ -42,8 +42,11 @@ namespace exatn {
 namespace runtime {
 
 struct TensorDescriptor {
- std::vector<int32_t> modes;
- std::vector<int64_t> extents;
+ std::vector<int32_t> modes;   //indices associated with tensor dimensions
+ std::vector<int64_t> extents; //tensor dimension extents
+ void * body_ptr = nullptr;    //pointer to the tensor body image
+ std::size_t volume = 0;       //tensor body volume
+ cudaDataType_t data_type;     //tensor element data type
 };
 
 struct TensorNetworkReq {
@@ -55,6 +58,8 @@ struct TensorNetworkReq {
  cutensornetContractionOptimizerInfo_t opt_info;
  cutensornetContractionPlan_t comp_plan;
  cudaStream_t stream;
+ cutensornetComputeType_t compute_type;
+ TensorNetworkQueue::ExecStat exec_status = TensorNetworkQueue::ExecStat::Idle;
 };
 
 
@@ -69,14 +74,13 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func):
  int num_gpus = 0;
  auto error_code = talshDeviceCount(DEV_NVIDIA_GPU,&num_gpus); assert(error_code == TALSH_SUCCESS);
  for(int i = 0; i < num_gpus; ++i){
-  if(talshDeviceState(i,DEV_NVIDIA_GPU) >= DEV_ON) gpus_.emplace_back(i);
+  if(talshDeviceState(i,DEV_NVIDIA_GPU) >= DEV_ON) gpu_attr_.emplace_back(std::make_pair(i,DeviceAttr{}));
  }
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpus_.size() << std::endl;
+ std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
 
- ctn_handles_.resize(gpus_.size());
- for(const auto & gpu_id: gpus_){
-  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
-  HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&ctn_handles_[gpu_id])));
+ for(const auto & gpu: gpu_attr_){
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
+  HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&gpu.second.cutn_handle)));
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
 }
@@ -85,43 +89,46 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func):
 CuQuantumExecutor::~CuQuantumExecutor()
 {
  bool success = sync(); assert(success);
- for(const auto & gpu_id: gpus_){
-  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
-  HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(ctn_handles_[gpu_id])));
+ for(const auto & gpu: gpu_attr_){
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
+  HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(gpu.second.cutn_handle)));
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
- ctn_handles_.clear();
- gpus_.clear();
+ gpu_attr_.clear();
 }
 
 
-int CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
-                               const TensorOpExecHandle exec_handle)
+TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
+                                                        const TensorOpExecHandle exec_handle)
 {
- int error_code = 0;
- //`Finish
- return error_code;
+ assert(network);
+ TensorNetworkQueue::ExecStat exec_stat = TensorNetworkQueue::ExecStat::None;
+ auto res = active_networks_.emplace(std::make_pair(exec_handle, new TensorNetworkReq{}));
+ if(res.second){
+  auto tn_req = res.first->second;
+  tn_req->network = network;
+  exec_stat = tn_req->exec_status;
+  //`Finish
+ }else{
+  std::cout << "#WARNING(exatn::runtime::CuQuantumExecutor): execute: Repeated tensor network submission detected!\n";
+ }
+ return exec_stat;
 }
 
 
-bool CuQuantumExecutor::executing(const TensorOpExecHandle exec_handle)
+TensorNetworkQueue::ExecStat CuQuantumExecutor::sync(const TensorOpExecHandle exec_handle,
+                                                     int * error_code,
+                                                     bool wait)
 {
- auto iter = active_networks_.find(exec_handle);
- return (iter != active_networks_.end());
-}
-
-
-bool CuQuantumExecutor::sync(const TensorOpExecHandle exec_handle,
-                             int * error_code,
-                             bool wait)
-{
- bool synced = true;
  *error_code = 0;
+ TensorNetworkQueue::ExecStat exec_stat = TensorNetworkQueue::ExecStat::None;
  auto iter = active_networks_.find(exec_handle);
  if(iter != active_networks_.end()){
+  auto tn_req = iter->second;
+  exec_stat = tn_req->exec_status;
   //`Finish
  }
- return synced;
+ return exec_stat;
 }
 
 

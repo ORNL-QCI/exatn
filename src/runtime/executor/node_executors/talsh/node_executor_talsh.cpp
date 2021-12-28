@@ -966,19 +966,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpFetch & op,
    switch(tens_elem_type){
     case(talsh::REAL32):
      assert(tens_body_r4 != nullptr);
-     error_code = MPI_Irecv((void*)(&(tens_body_r4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Irecv((void*)(&tens_body_r4[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::REAL64):
      assert(tens_body_r8 != nullptr);
-     error_code = MPI_Irecv((void*)(&(tens_body_r8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Irecv((void*)(&tens_body_r8[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::COMPLEX32):
      assert(tens_body_c4 != nullptr);
-     error_code = MPI_Irecv((void*)(&(tens_body_c4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Irecv((void*)(&tens_body_c4[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::COMPLEX64):
      assert(tens_body_c8 != nullptr);
-     error_code = MPI_Irecv((void*)(&(tens_body_c8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Irecv((void*)(&tens_body_c8[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
    }
    if(error_code != MPI_SUCCESS) break;
@@ -1055,19 +1055,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpUpload & op,
    switch(tens_elem_type){
     case(talsh::REAL32):
      assert(tens_body_r4 != nullptr);
-     error_code = MPI_Isend((const void*)(&(tens_body_r4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Isend((const void*)(&tens_body_r4[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::REAL64):
      assert(tens_body_r8 != nullptr);
-     error_code = MPI_Isend((const void*)(&(tens_body_r8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Isend((const void*)(&tens_body_r8[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::COMPLEX32):
      assert(tens_body_c4 != nullptr);
-     error_code = MPI_Isend((const void*)(&(tens_body_c4[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Isend((const void*)(&tens_body_c4[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
     case(talsh::COMPLEX64):
      assert(tens_body_c8 != nullptr);
-     error_code = MPI_Isend((const void*)(&(tens_body_c8[base])),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
+     error_code = MPI_Isend((const void*)(&tens_body_c8[base]),count,mpi_data_kind,remote_rank,mesg_tag,communicator,mpi_req);
      break;
    }
    if(error_code != MPI_SUCCESS) break;
@@ -1132,19 +1132,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpBroadcast & op,
    switch(tens_elem_type){
     case(talsh::REAL32):
      assert(tens_body_r4 != nullptr);
-     error_code = MPI_Bcast((void*)(&(tens_body_r4[base])),count,mpi_data_kind,root_rank,communicator);
+     error_code = MPI_Bcast((void*)(&tens_body_r4[base]),count,mpi_data_kind,root_rank,communicator);
      break;
     case(talsh::REAL64):
      assert(tens_body_r8 != nullptr);
-     error_code = MPI_Bcast((void*)(&(tens_body_r8[base])),count,mpi_data_kind,root_rank,communicator);
+     error_code = MPI_Bcast((void*)(&tens_body_r8[base]),count,mpi_data_kind,root_rank,communicator);
      break;
     case(talsh::COMPLEX32):
      assert(tens_body_c4 != nullptr);
-     error_code = MPI_Bcast((void*)(&(tens_body_c4[base])),count,mpi_data_kind,root_rank,communicator);
+     error_code = MPI_Bcast((void*)(&tens_body_c4[base]),count,mpi_data_kind,root_rank,communicator);
      break;
     case(talsh::COMPLEX64):
      assert(tens_body_c8 != nullptr);
-     error_code = MPI_Bcast((void*)(&(tens_body_c8[base])),count,mpi_data_kind,root_rank,communicator);
+     error_code = MPI_Bcast((void*)(&tens_body_c8[base]),count,mpi_data_kind,root_rank,communicator);
      break;
    }
    if(error_code != MPI_SUCCESS) break;
@@ -1209,19 +1209,19 @@ int TalshNodeExecutor::execute(numerics::TensorOpAllreduce & op,
    switch(tens_elem_type){
     case(talsh::REAL32):
      assert(tens_body_r4 != nullptr);
-     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_r4[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&tens_body_r4[base]),count,mpi_data_kind,MPI_SUM,communicator);
      break;
     case(talsh::REAL64):
      assert(tens_body_r8 != nullptr);
-     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_r8[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&tens_body_r8[base]),count,mpi_data_kind,MPI_SUM,communicator);
      break;
     case(talsh::COMPLEX32):
      assert(tens_body_c4 != nullptr);
-     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_c4[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&tens_body_c4[base]),count,mpi_data_kind,MPI_SUM,communicator);
      break;
     case(talsh::COMPLEX64):
      assert(tens_body_c8 != nullptr);
-     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&(tens_body_c8[base])),count,mpi_data_kind,MPI_SUM,communicator);
+     error_code = MPI_Allreduce(MPI_IN_PLACE,(void*)(&tens_body_c8[base]),count,mpi_data_kind,MPI_SUM,communicator);
      break;
    }
    if(error_code != MPI_SUCCESS) break;
@@ -1463,8 +1463,53 @@ const void * TalshNodeExecutor::getTensorImage(const numerics::Tensor & tensor,
                                                int device_kind, int device_id,
                                                std::size_t * size) const
 {
- //`Implement
- return nullptr;
+ const auto tensor_hash = tensor.getTensorHash();
+ auto tens_pos = tensors_.find(tensor_hash);
+ if(tens_pos == tensors_.end()){
+  std::cout << "#ERROR(exatn::runtime::node_executor_talsh): getTensorImage: Tensor not found:\n";
+  tensor.printIt();
+  assert(false);
+ }
+ //tens_pos->second.resetTensorShapeToReduced();
+ auto & tens = *(tens_pos->second.talsh_tensor);
+
+ assert(device_kind == DEV_HOST && device_id == 0); //`temporary
+ auto synced = tens.sync(device_kind,device_id,nullptr,true); assert(synced);
+ void * tens_body = nullptr;
+ float * tens_body_r4 = nullptr;
+ double * tens_body_r8 = nullptr;
+ std::complex<float> * tens_body_c4 = nullptr;
+ std::complex<double> * tens_body_c8 = nullptr;
+ bool access_granted = false;
+ const int tens_elem_type = tens.getElementType();
+ switch(tens_elem_type){
+  case(talsh::REAL32):
+   access_granted = tens.getDataAccessHost(&tens_body_r4);
+   if(access_granted) tens_body = static_cast<void*>(tens_body_r4);
+   break;
+  case(talsh::REAL64):
+   access_granted = tens.getDataAccessHost(&tens_body_r8);
+   if(access_granted) tens_body = static_cast<void*>(tens_body_r8);
+   break;
+  case(talsh::COMPLEX32):
+   access_granted = tens.getDataAccessHost(&tens_body_c4);
+   if(access_granted) tens_body = static_cast<void*>(tens_body_c4);
+   break;
+  case(talsh::COMPLEX64):
+   access_granted = tens.getDataAccessHost(&tens_body_c8);
+   if(access_granted) tens_body = static_cast<void*>(tens_body_c8);
+   break;
+  default:
+   std::cout << "#ERROR(exatn::runtime::node_executor_talsh): getTensorImage: Unknown TAL-SH data kind: "
+             << tens_elem_type << std::endl;
+   tens.print();
+   assert(false);
+ }
+ if(size != nullptr){
+  *size = tens.getSize();
+  assert(*size > 0);
+ }
+ return tens_body;
 }
 
 

@@ -36,7 +36,7 @@ public:
  enum class ExecStat {
   None,      //no execution status
   Idle,      //submitted but execution has not yet started
-  Preparing, //preparation for execution has started
+  Preparing, //preparation for execution has started (loading data, planning)
   Executing, //actual execution (numerical computation) has started
   Completed  //execution completed
  };
@@ -118,6 +118,22 @@ public:
   lock();
   auto iter = tn_exec_stat_.find(exec_handle);
   if(iter != tn_exec_stat_.cend()) exec_stat = iter->second;
+  unlock();
+  return exec_stat;
+ }
+
+ /** Updates the execution status associated with
+     the given tensor network execution handle.
+     Returns the previous execution status. **/
+ ExecStat updateExecStatus(const TensorOpExecHandle exec_handle,
+                           ExecStat new_exec_stat) {
+  auto exec_stat = ExecStat::None;
+  lock();
+  auto iter = tn_exec_stat_.find(exec_handle);
+  if(iter != tn_exec_stat_.cend()){
+   exec_stat = iter->second;
+   iter->second = new_exec_stat;
+  }
   unlock();
   return exec_stat;
  }
