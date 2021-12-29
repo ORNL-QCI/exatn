@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/12/27
+REVISION: 2021/12/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -290,13 +290,13 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
       int error_code = 0;
       const auto current = tensor_network_queue.getCurrent();
       const auto exec_handle = current->second;
-      auto exec_stat = cuquantum_executor_->sync(exec_handle,&error_code,false);
+      auto exec_stat = cuquantum_executor_->sync(exec_handle,&error_code,false); //this call will progress tensor network execution
       assert(error_code == 0);
       if(exec_stat == TensorNetworkQueue::ExecStat::None){
         exec_stat = cuquantum_executor_->execute(current->first,exec_handle);
         if(exec_stat != TensorNetworkQueue::ExecStat::None){
-         auto prev_exec_stat = tensor_network_queue.updateExecStatus(exec_handle,exec_stat);
-         std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Submitted tensor network to cuQuantum\n";
+          auto prev_exec_stat = tensor_network_queue.updateExecStatus(exec_handle,exec_stat);
+          std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Submitted tensor network to cuQuantum\n";
         }
         not_over = tensor_network_queue.next();
       }else if(exec_stat == TensorNetworkQueue::ExecStat::Completed){

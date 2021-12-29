@@ -46,6 +46,7 @@ namespace runtime {
 struct TensorDescriptor {
  std::vector<int32_t> modes;   //indices associated with tensor dimensions
  std::vector<int64_t> extents; //tensor dimension extents
+ std::vector<int64_t> strides; //tensor dimension strides (optional)
  void * body_ptr = nullptr;    //pointer to the tensor body image
  std::size_t volume = 0;       //tensor body volume
  cudaDataType_t data_type;     //tensor element data type
@@ -61,6 +62,7 @@ struct TensorNetworkReq {
  cutensornetContractionPlan_t comp_plan;
  cudaStream_t stream;
  cutensornetComputeType_t compute_type;
+ void * memory_window_ptr = nullptr;
  TensorNetworkQueue::ExecStat exec_status = TensorNetworkQueue::ExecStat::Idle;
 };
 
