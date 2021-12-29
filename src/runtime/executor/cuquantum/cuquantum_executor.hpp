@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/27
+REVISION: 2021/12/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -64,6 +64,9 @@ public:
  bool sync();
 
 protected:
+
+ static constexpr float WORKSPACE_FRACTION = 0.2;
+ static constexpr std::size_t MEM_ALIGNMENT = 256;
 
  struct DeviceAttr{
   void * buffer_ptr = nullptr;

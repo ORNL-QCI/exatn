@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/27
+REVISION: 2021/12/29
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -21,6 +21,8 @@ Rationale:
 #include <iostream>
 
 #include "talshxx.hpp"
+
+#include "linear_memory.hpp"
 
 #include "cuquantum_executor.hpp"
 
@@ -74,7 +76,17 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func):
  int num_gpus = 0;
  auto error_code = talshDeviceCount(DEV_NVIDIA_GPU,&num_gpus); assert(error_code == TALSH_SUCCESS);
  for(int i = 0; i < num_gpus; ++i){
-  if(talshDeviceState(i,DEV_NVIDIA_GPU) >= DEV_ON) gpu_attr_.emplace_back(std::make_pair(i,DeviceAttr{}));
+  if(talshDeviceState(i,DEV_NVIDIA_GPU) >= DEV_ON){
+   gpu_attr_.emplace_back(std::make_pair(i,DeviceAttr{}));
+   gpu_attr_.back().second.workspace_ptr = talsh::getDeviceBufferBasePtr(DEV_NVIDIA_GPU,i);
+   assert(reinterpret_cast<std::size_t>(gpu_attr_.back().second.workspace_ptr) % MEM_ALIGNMENT == 0);
+   gpu_attr_.back().second.buffer_size = talsh::getDeviceMaxBufferSize(DEV_NVIDIA_GPU,i);
+   std::size_t wrk_size = static_cast<float>(gpu_attr_.back().second.buffer_size) * WORKSPACE_FRACTION;
+   wrk_size -= wrk_size % MEM_ALIGNMENT;
+   gpu_attr_.back().second.workspace_size = wrk_size;
+   gpu_attr_.back().second.buffer_size -= wrk_size;
+   gpu_attr_.back().second.buffer_ptr = (void*)(((char*)(gpu_attr_.back().second.workspace_ptr)) + wrk_size);
+  }
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
 
@@ -83,6 +95,15 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func):
   HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&gpu.second.cutn_handle)));
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
+
+ std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): GPU configuration:\n";
+ for(const auto & gpu: gpu_attr_){
+  std::cout << " GPU #" << gpu.first
+            << ": wrk_ptr = " << gpu.second.workspace_ptr
+            << ", size = " << gpu.second.workspace_size
+            << "; buf_ptr = " << gpu.second.buffer_ptr
+            << ", size = " << gpu.second.buffer_size << std::endl;
+ }
 }
 
 
