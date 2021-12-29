@@ -52,7 +52,7 @@ if(CUQUANTUM)
   add_subdirectory(cuquantum)
 endif()
 
-file (GLOB HEADERS *.hpp)
+file (GLOB HEADERS *.hpp cuquantum/tensor_network_queue.hpp)
 
 install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION plugins)

@@ -16,11 +16,7 @@ add_library(${LIBRARY_NAME}
 add_dependencies(${LIBRARY_NAME} exatensor-build)
 
 target_include_directories(${LIBRARY_NAME}
-  PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn)
-
-if(CUQUANTUM)
-  target_include_directories(${LIBRARY_NAME} PUBLIC executor/cuquantum)
-endif()
+  PUBLIC . graph optimizer executor ${CMAKE_SOURCE_DIR}/src/exatn executor/cuquantum)
 
 target_link_libraries(${LIBRARY_NAME}
                       PUBLIC CppMicroServices exatn-utils exatn-numerics exatn-runtime-graph
