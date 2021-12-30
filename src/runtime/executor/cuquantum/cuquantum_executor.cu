@@ -44,9 +44,11 @@ namespace runtime {
 struct TensorDescriptor {
  std::vector<int64_t> extents; //tensor dimension extents
  std::vector<int64_t> strides; //tensor dimension strides (optional)
- void * body_ptr = nullptr;    //pointer to the tensor body image
- std::size_t volume = 0;       //tensor body volume
  cudaDataType_t data_type;     //tensor element data type
+ std::size_t volume = 0;       //tensor body volume
+ std::size_t size = 0;         //tensor body size (bytes)
+ void * src_ptr = nullptr;     //non-owning pointer to the tensor body source image
+ std::vector<void*> dst_ptr;   //non-owning pointer to the tensor body dest image (for all GPU)
 };
 
 struct TensorNetworkReq {
@@ -54,14 +56,25 @@ struct TensorNetworkReq {
  std::shared_ptr<numerics::TensorNetwork> network; //tensor network specification
  std::unordered_map<numerics::TensorHashType,TensorDescriptor> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key is the original tensor id)
- std::unordered_map<int32_t,int64_t> index_extents; //extent of each registered tensor mode
+ std::unordered_map<int32_t,int64_t> mode_extents; //extent of each registered tensor mode
+ int32_t * num_modes_in = nullptr;
+ int64_t ** extents_in = nullptr;
+ int64_t ** strides_in = nullptr;
+ int32_t ** modes_in = nullptr;
+ uint32_t * alignments_in = nullptr;
+ int32_t num_modes_out;
+ int64_t * extents_out = nullptr;
+ int64_t * strides_out = nullptr;
+ int32_t * modes_out = nullptr;
+ uint32_t alignment_out;
  std::vector<void*> memory_window_ptr; //end of the GPU memory segment allocated for the tensors
  cutensornetNetworkDescriptor_t net_descriptor;
  cutensornetContractionOptimizerConfig_t opt_config;
  cutensornetContractionOptimizerInfo_t opt_info;
  cutensornetContractionPlan_t comp_plan;
- cudaStream_t stream;
+ cudaDataType_t data_type;
  cutensornetComputeType_t compute_type;
+ cudaStream_t stream;
 };
 
 
@@ -188,9 +201,90 @@ void CuQuantumExecutor::sync()
 }
 
 
+cudaDataType_t getCudaDataType(const TensorElementType elem_type)
+{
+ cudaDataType_t cuda_data_type;
+ switch(elem_type){
+ case TensorElementType::REAL32: cuda_data_type = CUDA_R_32F; break;
+ case TensorElementType::REAL64: cuda_data_type = CUDA_R_64F; break;
+ case TensorElementType::COMPLEX32: cuda_data_type = CUDA_C_32F; break;
+ case TensorElementType::COMPLEX64: cuda_data_type = CUDA_C_64F; break;
+ default:
+  assert(false);
+ }
+ return cuda_data_type;
+}
+
+
 void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req)
 {
- 
+ const auto & net = *(tn_req->network);
+ const int32_t num_input_tensors = net.getNumTensors();
+ tn_req->num_modes_in = new int32_t[num_input_tensors];
+ tn_req->extents_in = new int64_t*[num_input_tensors];
+ tn_req->strides_in = new int64_t*[num_input_tensors];
+ tn_req->modes_in = new int32_t*[num_input_tensors];
+ tn_req->alignments_in = new uint32_t[num_input_tensors];
+
+ for(unsigned int i = 0; i < num_input_tensors; ++i) tn_req->strides_in[i] = NULL;
+ for(unsigned int i = 0; i < num_input_tensors; ++i) tn_req->alignments_in[i] = MEM_ALIGNMENT;
+ tn_req->strides_out = NULL;
+ tn_req->alignment_out = MEM_ALIGNMENT;
+
+ int32_t mode_id = 0, tens_num = 0;
+ for(auto iter = net.cbegin(); iter != net.cend(); ++iter){
+  const auto tens_id = iter->first;
+  const auto & tens = iter->second;
+  const auto tens_hash = tens.getTensor()->getTensorHash();
+  const auto tens_vol = tens.getTensor()->getVolume();
+  const auto tens_rank = tens.getRank();
+  const auto tens_type = tens.getElementType();
+  const auto & tens_legs = tens.getTensorLegs();
+  const auto & tens_dims = tens.getDimExtents();
+
+  auto res0 = tn_req->tensor_descriptors.emplace(std::make_pair(tens_hash,TensorDescriptor{}));
+  if(res0.second){
+   auto & descr = res0.first->second;
+   descr.extents.resize(tens_rank);
+   for(unsigned int i = 0; i < tens_rank; ++i) descr.extents[i] = tens_dims[i];
+   descr.data_type = getCudaDataType(tens_type);
+   descr.volume = tens_vol;
+   descr.src_ptr = tensor_data_access_func_(*(tens.getTensor()),DEV_HOST,0,&(descr.size));
+   assert(descr.src_ptr != nullptr);
+  }
+
+  auto res1 = tn_req->tensor_modes.emplace(std::make_pair(tens_id,std::vector<int32_t>(tens_rank)));
+  assert(res1.second);
+  for(unsigned int i = 0; i < tens_rank; ++i){
+   const auto other_tens_id = tens_legs[i].getTensorId();
+   const auto other_tens_leg_id = tens_legs[i].getDimensionId();
+   auto other_tens_iter = tn_req->tensor_modes.find(other_tens_id);
+   if(other_tens_iter == tn_req->tensor_modes.end()){
+    res1.first->second[i] = ++mode_id;
+    auto new_mode = tn_req->mode_extents.emplace(std::make_pair(mode_id,tens_dims[i]));
+   }else{
+    res1.first->second[i] = other_tens_iter->second[other_tens_leg_id];
+   }
+  }
+
+  if(tens_id == 0){ //output tensor
+   tn_req->num_modes_out = tens_rank;
+   tn_req->extents_out = res0.first->second.extents.data();
+   tn_req->modes_out = res1.first->second.data();
+  }else{ //input tensors
+   tn_req->num_modes_in[tens_num] = tens_rank;
+   tn_req->extents_in[tens_num] = res0.first->second.extents.data();
+   tn_req->modes_in[tens_num] = res1.first->second.data();
+   ++tens_num;
+  }
+ }
+
+ HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(gpu_attr_[0].second.cutn_handle,num_input_tensors,
+                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,
+                  tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
+                  tn_req->data_type,tn_req->compute_type,&(tn_req->net_descriptor)));
+
+ HANDLE_CUDA_ERROR(cudaStreamCreate(&(tn_req->stream)));
  return;
 }
 

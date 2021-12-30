@@ -33,7 +33,7 @@ void LazyGraphExecutor::resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> no
   if(node_executor){
     cuquantum_executor_ = std::make_shared<CuQuantumExecutor>(
       [this](const numerics::Tensor & tensor, int device_kind, int device_id, std::size_t * size){
-        const void * data_ptr = this->node_executor_->getTensorImage(tensor,device_kind,device_id,size);
+        void * data_ptr = this->node_executor_->getTensorImage(tensor,device_kind,device_id,size);
         return data_ptr;
       }
     );

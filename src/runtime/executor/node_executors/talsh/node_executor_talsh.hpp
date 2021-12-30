@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/12/27
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -99,10 +99,10 @@ public:
 
   /** Returns a non-owning pointer to a local tensor data image on a given device.
       If unsuccessful, returns nullptr. **/
-  const void * getTensorImage(const numerics::Tensor & tensor,        //in: tensor
-                              int device_kind,                        //in: device kind (implementation specific)
-                              int device_id,                          //in: device id: [0,1,2,..]
-                              std::size_t * size = nullptr) const override; //out: tensor data image size in bytes
+  void * getTensorImage(const numerics::Tensor & tensor,        //in: tensor
+                        int device_kind,                        //in: device kind (implementation specific)
+                        int device_id,                          //in: device id: [0,1,2,..]
+                        std::size_t * size = nullptr) const override; //out: tensor data image size in bytes
 
   /** Finishes tensor operand prefetching for a given tensor operation. **/
   bool finishPrefetching(const numerics::TensorOperation & op); //in: tensor operation

@@ -30,7 +30,7 @@ class Tensor;
 namespace exatn {
 namespace runtime {
 
-using TensorImplFunc = std::function<const void*(const numerics::Tensor &, int, int, std::size_t *)>;
+using TensorImplFunc = std::function<void*(const numerics::Tensor &, int, int, std::size_t *)>;
 using TensorImplTalshFunc = std::function<std::shared_ptr<talsh::Tensor>(const numerics::Tensor &, int, int)>;
 
 struct TensorNetworkReq;

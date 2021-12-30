@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2021/12/27
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -87,10 +87,10 @@ public:
   std::shared_ptr<talsh::Tensor> getLocalTensor(const numerics::Tensor & tensor,
                  const std::vector<std::pair<DimOffset,DimExtent>> & slice_spec) override;
 
-  const void * getTensorImage(const numerics::Tensor & tensor,
-                              int device_kind,
-                              int device_id,
-                              std::size_t * size = nullptr) const override {return nullptr;}
+  void * getTensorImage(const numerics::Tensor & tensor,
+                        int device_kind,
+                        int device_id,
+                        std::size_t * size = nullptr) const override {return nullptr;}
 
   const std::string name() const override {return "exatensor-node-executor";}
   const std::string description() const override {return "ExaTENSOR tensor graph node executor";}
