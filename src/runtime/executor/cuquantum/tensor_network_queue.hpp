@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Execution queue
-REVISION: 2021/12/27
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -36,7 +36,8 @@ public:
  enum class ExecStat {
   None,      //no execution status
   Idle,      //submitted but execution has not yet started
-  Preparing, //preparation for execution has started (loading data, planning)
+  Loading,   //started loading data
+  Planning,  //preparation for execution has started (planning)
   Executing, //actual execution (numerical computation) has started
   Completed  //execution completed
  };

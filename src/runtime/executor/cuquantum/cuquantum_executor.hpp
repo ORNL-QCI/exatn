@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/29
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -20,6 +20,7 @@ Rationale:
 #include <vector>
 #include <functional>
 
+#include "linear_memory.hpp"
 #include "tensor_network_queue.hpp"
 
 namespace talsh{
@@ -57,16 +58,21 @@ public:
      If wait = TRUE, waits until completion, otherwise just tests the progress.
      Returns the current status of the tensor network execution. **/
  TensorNetworkQueue::ExecStat sync(const TensorOpExecHandle exec_handle,
-                                   int * error_code,
-                                   bool wait = true);
+                                   int * error_code);
 
  /** Synchronizes execution of all submitted tensor networks to completion. **/
- bool sync();
+ void sync();
 
 protected:
 
  static constexpr float WORKSPACE_FRACTION = 0.2;
  static constexpr std::size_t MEM_ALIGNMENT = 256;
+
+ void parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req);
+ void loadTensors(std::shared_ptr<TensorNetworkReq> tn_req);
+ void planExecution(std::shared_ptr<TensorNetworkReq> tn_req);
+ void contractTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req);
+ void testCompletion(std::shared_ptr<TensorNetworkReq> tn_req);
 
  struct DeviceAttr{
   void * buffer_ptr = nullptr;
@@ -80,6 +86,8 @@ protected:
  std::unordered_map<TensorOpExecHandle,std::shared_ptr<TensorNetworkReq>> active_networks_;
  /** Attributes of all GPUs available to the current process **/
  std::vector<std::pair<int,DeviceAttr>> gpu_attr_; //{gpu_id, gpu_attributes}
+ /** Moving-window linear memory pool (in GPU RAM) **/
+ std::vector<LinearMemoryPool> mem_pool_;
  /** Tensor data access function **/
  TensorImplFunc tensor_data_access_func_; //numerics::Tensor --> {tensor_body_ptr, size_in_bytes}
 };

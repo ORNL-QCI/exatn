@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/12/29
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
@@ -290,7 +290,7 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
       int error_code = 0;
       const auto current = tensor_network_queue.getCurrent();
       const auto exec_handle = current->second;
-      auto exec_stat = cuquantum_executor_->sync(exec_handle,&error_code,false); //this call will progress tensor network execution
+      auto exec_stat = cuquantum_executor_->sync(exec_handle,&error_code); //this call will progress tensor network execution
       assert(error_code == 0);
       if(exec_stat == TensorNetworkQueue::ExecStat::None){
         exec_stat = cuquantum_executor_->execute(current->first,exec_handle);
@@ -310,7 +310,7 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
       }
     }
   }
-  synced = cuquantum_executor_->sync(); assert(synced);
+  cuquantum_executor_->sync();
 #else
   assert(tensor_network_queue.isEmpty());
 #endif

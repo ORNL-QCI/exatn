@@ -1,12 +1,12 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Linear memory allocator
-REVISION: 2021/12/29
+REVISION: 2021/12/30
 
 Copyright (C) 2018-2021 Dmitry Lyakh
 Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
- Linear memory moving window:
+ Linear memory moving window (----->):
 
  (a) front >= back:
  ____________________________________
@@ -28,6 +28,8 @@ Rationale:
 
 #ifndef EXATN_RUNTIME_LINEAR_MEMORY_HPP_
 #define EXATN_RUNTIME_LINEAR_MEMORY_HPP_
+
+#include "errors.hpp"
 
 class LinearMemoryPool {
 
