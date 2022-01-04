@@ -1,8 +1,8 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2021/12/30
+REVISION: 2022/01/03
 
-Copyright (C) 2018-2021 Dmitry Lyakh
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  - ExaTN graph executor may accept whole tensor networks for execution
@@ -82,11 +82,11 @@ protected:
   void * cutn_handle; //cutensornetHandle_t = void*
  };
 
- /** Currently processed tensor networks **/
+ /** Currently processed (progressing) tensor networks **/
  std::unordered_map<TensorOpExecHandle,std::shared_ptr<TensorNetworkReq>> active_networks_;
  /** Attributes of all GPUs available to the current process **/
  std::vector<std::pair<int,DeviceAttr>> gpu_attr_; //{gpu_id, gpu_attributes}
- /** Moving-window linear memory pool (in GPU RAM) **/
+ /** Moving-window linear memory pools for all GPUs of the current process **/
  std::vector<LinearMemoryPool> mem_pool_;
  /** Tensor data access function **/
  TensorImplFunc tensor_data_access_func_; //numerics::Tensor --> {tensor_body_ptr, size_in_bytes}

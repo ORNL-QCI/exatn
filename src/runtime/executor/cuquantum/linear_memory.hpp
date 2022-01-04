@@ -1,8 +1,8 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Linear memory allocator
-REVISION: 2021/12/30
+REVISION: 2022/01/03
 
-Copyright (C) 2018-2021 Dmitry Lyakh
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -70,6 +70,11 @@ public:
   const auto preceding_size = occupiedSize();
   back_ = back_ptr;
   assert(occupiedSize() < preceding_size);
+  return;
+ }
+
+ void restorePreviousFront(void * front) {
+  front_ = front;
   return;
  }
 

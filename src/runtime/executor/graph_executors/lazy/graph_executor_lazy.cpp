@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2021/12/30
+REVISION: 2022/01/03
 
-Copyright (C) 2018-2021 Dmitry Lyakh
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "graph_executor_lazy.hpp"
@@ -275,9 +275,9 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
 
 
 void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
+#ifdef CUQUANTUM
   std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Started executing the tensor network queue via cuQuantum: "
             << tensor_network_queue.getSize() << " elements detected" << std::endl;
-#ifdef CUQUANTUM
   assert(node_executor_);
   //Synchronize the node executor:
   bool synced = node_executor_->sync(); assert(synced);
@@ -311,10 +311,10 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
     }
   }
   cuquantum_executor_->sync();
+  std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Finished executing the tensor network queue via cuQuantum\n";
 #else
   assert(tensor_network_queue.isEmpty());
 #endif
-  std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Finished executing the tensor network queue via cuQuantum\n";
   return;
 }
 
