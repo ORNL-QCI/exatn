@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/03
+REVISION: 2022/01/04
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -66,6 +66,7 @@ public:
 protected:
 
  static constexpr float WORKSPACE_FRACTION = 0.2;
+ static constexpr unsigned int PIPELINE_DEPTH = 1;
  static constexpr std::size_t MEM_ALIGNMENT = 256;
 
  void parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req);

@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/03
+REVISION: 2022/01/04
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -62,11 +62,15 @@ struct TensorNetworkReq {
  int64_t ** strides_in = nullptr;
  int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
+ void ** data_in = nullptr;
  int32_t num_modes_out;
  int64_t * extents_out = nullptr;
  int64_t * strides_out = nullptr;
  int32_t * modes_out = nullptr;
  uint32_t alignment_out;
+ void * data_out = nullptr; //non-owning
+ void * workspace = nullptr; //non-owning
+ uint64_t worksize = 0;
  std::vector<void*> memory_window_ptr; //end of the GPU memory segment allocated for the tensors (on each GPU)
  cutensornetNetworkDescriptor_t net_descriptor;
  cutensornetContractionOptimizerConfig_t opt_config;
@@ -75,14 +79,23 @@ struct TensorNetworkReq {
  cudaDataType_t data_type;
  cutensornetComputeType_t compute_type;
  cudaStream_t stream;
+ cudaEvent_t data_start;
+ cudaEvent_t data_finish;
+ cudaEvent_t compute_start;
+ cudaEvent_t compute_finish;
 
  ~TensorNetworkReq() {
   cudaStreamSynchronize(stream);
+  cudaEventDestroy(compute_finish);
+  cudaEventDestroy(compute_start);
+  cudaEventDestroy(data_finish);
+  cudaEventDestroy(data_start);
   cudaStreamDestroy(stream);
   cutensornetDestroyNetworkDescriptor(net_descriptor);
   if(modes_out != nullptr) delete [] modes_out;
   if(strides_out != nullptr) delete [] strides_out;
   if(extents_out != nullptr) delete [] extents_out;
+  if(data_in != nullptr) delete [] data_in;
   if(alignments_in != nullptr) delete [] alignments_in;
   if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
@@ -316,7 +329,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
  tn_req->data_type = getCudaDataType(tens_elem_type);
  tn_req->compute_type = getCutensorComputeType(tens_elem_type);
 
- //Create a cuTensorNet network descriptor on one or all GPUs:
+ //Create a cuTensorNet network descriptor for one or all GPUs:
  for(int gpu = 0; gpu < 1; ++gpu){ //`Only one GPU for now
   const auto gpu_id = gpu_attr_[gpu].first;
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
@@ -324,8 +337,11 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
                    tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,
                    tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
                    tn_req->data_type,tn_req->compute_type,&(tn_req->net_descriptor)));
-
   HANDLE_CUDA_ERROR(cudaStreamCreate(&(tn_req->stream)));
+  HANDLE_CUDA_ERROR(cudaEventCreate(&(tn_req->data_start)));
+  HANDLE_CUDA_ERROR(cudaEventCreate(&(tn_req->data_finish)));
+  HANDLE_CUDA_ERROR(cudaEventCreate(&(tn_req->compute_start)));
+  HANDLE_CUDA_ERROR(cudaEventCreate(&(tn_req->compute_finish)));
  }
  return;
 }
@@ -337,6 +353,7 @@ void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
  for(int gpu = 0; gpu < 1; ++gpu){ //`Only one GPU for now
   const auto gpu_id = gpu_attr_[gpu].first;
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
+  HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->data_start,tn_req->stream));
   void * prev_front = mem_pool_[gpu].getFront();
   bool success = true;
   //Acquire device memory:
@@ -351,34 +368,76 @@ void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
     HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.second.dst_ptr.back(),descr.second.src_ptr,
                                       descr.second.size,cudaMemcpyDefault,tn_req->stream));
    }
-   tn_req->exec_status = TensorNetworkQueue::ExecStat::Loading;
+   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->data_finish,tn_req->stream));
+   tn_req->memory_window_ptr.emplace_back(mem_pool_[gpu].getFront());
   }else{
    //Restore previous memory front:
    mem_pool_[gpu].restorePreviousFront(prev_front);
-   break;
+   return;
   }
  }
+ tn_req->exec_status = TensorNetworkQueue::ExecStat::Loading;
  return;
 }
 
 
 void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
 {
- 
+ //Configure tensor network contraction on one or all GPUs:
+ for(int gpu = 0; gpu < 1; ++gpu){ //`Only one GPU for now
+  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerConfig(gpu_attr_[gpu].second.cutn_handle,&(tn_req->opt_config)));
+  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor,&(tn_req->opt_info)));
+  tn_req->worksize = gpu_attr_[gpu].second.workspace_size / PIPELINE_DEPTH;
+  tn_req->workspace = gpu_attr_[gpu].second.workspace_ptr; //`Need moving window (pipelining)
+  HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
+                                                       tn_req->net_descriptor,tn_req->opt_config,
+                                                       tn_req->worksize,tn_req->opt_info));
+  HANDLE_CTN_ERROR(cutensornetCreateContractionPlan(gpu_attr_[gpu].second.cutn_handle,
+                                                         tn_req->net_descriptor,tn_req->opt_info,
+                                                         tn_req->worksize,&(tn_req->comp_plan)));
+ }
+ tn_req->exec_status = TensorNetworkQueue::ExecStat::Planning;
  return;
 }
 
 
 void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req)
 {
- 
+ //Execute the contraction plan on one or all GPUs:
+ for(int gpu = 0; gpu < 1; ++gpu){ //`Only one GPU for now
+  const auto gpu_id = gpu_attr_[gpu].first;
+  int64_t num_slices = 0;
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
+                                                                        tn_req->opt_info,
+                                                                        CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
+                                                                        &num_slices,sizeof(num_slices)));
+  assert(num_slices > 0);
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
+  HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_start,tn_req->stream));
+  for(int64_t slice_id = 0; slice_id < num_slices; ++slice_id){
+   HANDLE_CTN_ERROR(cutensornetContraction(gpu_attr_[gpu].second.cutn_handle,
+                                                tn_req->comp_plan,
+                                                tn_req->data_in,tn_req->data_out,
+                                                tn_req->workspace,tn_req->worksize,
+                                                slice_id,tn_req->stream));
+  }
+  HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_finish,tn_req->stream));
+ }
+ tn_req->exec_status = TensorNetworkQueue::ExecStat::Executing;
  return;
 }
 
 
 void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
 {
- 
+ //Test work completion on one or all GPUs:
+ for(int gpu = 0; gpu < 1; ++gpu){ //`Only one GPU for now
+  cudaError_t cuda_error = cudaEventQuery(tn_req->compute_finish);
+  if(cuda_error == cudaSuccess){
+   //`Move MemPool back forward using tn_req->memory_window_ptr
+   tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
+  }
+ }
  return;
 }
 
