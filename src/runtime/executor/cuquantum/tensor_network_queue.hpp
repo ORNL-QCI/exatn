@@ -1,8 +1,8 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Execution queue
-REVISION: 2021/12/30
+REVISION: 2022/01/05
 
-Copyright (C) 2018-2021 Dmitry Lyakh
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  - ExaTN graph executor may accept whole tensor networks for execution
@@ -144,7 +144,7 @@ public:
   return current_network_;
  }
 
- /** Returns the current iterator to the beginning of the queue. **/
+ /** Resets the current iterator to the beginning of the queue. **/
  void reset() {
   lock();
   current_network_ = networks_.begin();
@@ -171,6 +171,12 @@ public:
   bool not_over = (current_network_ != networks_.end());
   unlock();
   return not_over;
+ }
+
+ /** Returns the distance from the current iterator
+     to the beginning of the queue. **/
+ auto getCurrentPos() {
+  return std::distance(networks_.begin(),current_network_);
  }
 
  /** Locks. **/

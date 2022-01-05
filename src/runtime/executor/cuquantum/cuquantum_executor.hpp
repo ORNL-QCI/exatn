@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/04
+REVISION: 2022/01/05
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -40,7 +40,8 @@ class CuQuantumExecutor {
 
 public:
 
- CuQuantumExecutor(TensorImplFunc tensor_data_access_func);
+ CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
+                   unsigned int pipeline_depth);
 
  CuQuantumExecutor(const CuQuantumExecutor &) = delete;
  CuQuantumExecutor & operator=(CuQuantumExecutor &) = delete;
@@ -65,9 +66,12 @@ public:
 
 protected:
 
- static constexpr float WORKSPACE_FRACTION = 0.2;
- static constexpr unsigned int PIPELINE_DEPTH = 1;
+ static constexpr float WORKSPACE_FRACTION = 0.6;
  static constexpr std::size_t MEM_ALIGNMENT = 256;
+
+ void acquireWorkspace(unsigned int dev,
+                       void ** workspace_ptr,
+                       uint64_t * workspace_size);
 
  void parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req);
  void loadTensors(std::shared_ptr<TensorNetworkReq> tn_req);
@@ -80,6 +84,7 @@ protected:
   std::size_t buffer_size = 0;
   void * workspace_ptr = nullptr;
   std::size_t workspace_size = 0;
+  unsigned int pipe_level = 0;
   void * cutn_handle; //cutensornetHandle_t = void*
  };
 
@@ -91,6 +96,8 @@ protected:
  std::vector<LinearMemoryPool> mem_pool_;
  /** Tensor data access function **/
  TensorImplFunc tensor_data_access_func_; //numerics::Tensor --> {tensor_body_ptr, size_in_bytes}
+ /** Pipeline depth **/
+ const unsigned int pipe_depth_;
 };
 
 } //namespace runtime
