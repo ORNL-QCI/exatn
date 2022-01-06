@@ -18,14 +18,15 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+/*
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
-#define EXATN_TEST5*/
+#define EXATN_TEST5
 #define EXATN_TEST6
-/*#define EXATN_TEST7
+#define EXATN_TEST7
 #define EXATN_TEST8
 #define EXATN_TEST9
 #define EXATN_TEST10
@@ -44,13 +45,15 @@
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
-#define EXATN_TEST26*/
+#define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-//#define EXATN_TEST29
-//#define EXATN_TEST30
+#define EXATN_TEST29
+#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-//#define EXATN_TEST32
+*/
+#define EXATN_TEST32
+//#define EXATN_TEST33
 
 
 #ifdef EXATN_TEST0
@@ -3774,6 +3777,65 @@ TEST(NumServerTester, ExcitedMCVQE) {
 #endif
 
 #ifdef EXATN_TEST32
+TEST(NumServerTester, CuTensorNet) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+ using exatn::TensorRange;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
+
+ const int NUM_REPEATS = 3;
+
+ //exatn::resetLoggingLevel(1,2); //debug
+
+ bool success = true;
+
+ //Create tensors:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{96,64,64,96}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{96,64,64}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{64,96,64}); assert(success);
+ success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{96,64,96,64}); assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensorRnd("B"); assert(success);
+ success = exatn::initTensorRnd("C"); assert(success);
+ success = exatn::initTensor("D",0.0); assert(success);
+
+ //Contract tensor network:
+ int num_repeats = NUM_REPEATS;
+ while(--num_repeats >= 0){
+  success = exatn::sync(); assert(success);
+  std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  auto flops = exatn::getTotalFlopCount();
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::evaluateTensorNetworkSync("cuNet","D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)");
+  assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Performance = " << (flops / (1e9 * duration)) << " Gflop/s" << std::endl;
+ }
+
+ //Destroy tensors:
+ success = exatn::sync(); assert(success);
+ success = exatn::destroyTensor("D"); assert(success);
+ success = exatn::destroyTensor("C"); assert(success);
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+
+ //Synchronize:
+ success = exatn::sync(); assert(success);
+ exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST33
 TEST(NumServerTester, TensorComposite) {
  using exatn::TensorShape;
  using exatn::TensorSignature;

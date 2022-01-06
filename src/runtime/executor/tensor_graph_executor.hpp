@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2021/12/22
+REVISION: 2022/01/06
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor graph executor traverses the tensor graph (DAG) and
@@ -44,7 +44,8 @@ class TensorGraphExecutor : public Identifiable, public Cloneable<TensorGraphExe
 public:
 
   TensorGraphExecutor():
-   node_executor_(nullptr), num_ops_issued_(0), process_rank_(-1), global_process_rank_(-1),
+   node_executor_(nullptr), num_ops_issued_(0),
+   num_processes_(0), process_rank_(-1), global_process_rank_(-1),
    logging_(0), stopping_(false), active_(false), serialize_(false), validation_tracing_(false),
    time_start_(exatn::Timer::timeInSecHR())
   {
@@ -62,8 +63,10 @@ public:
   /** Sets/resets the DAG node executor (tensor operation executor). **/
   virtual void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
                                  const ParamConf & parameters,
+                                 unsigned int num_processes,
                                  unsigned int process_rank,
                                  unsigned int global_process_rank) {
+    num_processes_.store(num_processes);
     process_rank_.store(process_rank);
     global_process_rank_.store(global_process_rank);
     node_executor_ = node_executor;
@@ -166,6 +169,7 @@ protected:
 
   std::shared_ptr<TensorNodeExecutor> node_executor_; //intr-node tensor operation executor
   std::atomic<std::size_t> num_ops_issued_; //total number of issued tensor operations
+  std::atomic<int> num_processes_; //number of parallel processes
   std::atomic<int> process_rank_; //current process rank
   std::atomic<int> global_process_rank_; //current global process rank (in MPI_COMM_WORLD)
   std::atomic<int> logging_;      //logging level (0:none)

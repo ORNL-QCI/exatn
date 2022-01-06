@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/05
+REVISION: 2022/01/06
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -41,7 +41,9 @@ class CuQuantumExecutor {
 public:
 
  CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
-                   unsigned int pipeline_depth);
+                   unsigned int pipeline_depth,
+                   unsigned int process_rank,
+                   unsigned int num_processes);
 
  CuQuantumExecutor(const CuQuantumExecutor &) = delete;
  CuQuantumExecutor & operator=(CuQuantumExecutor &) = delete;
@@ -98,6 +100,10 @@ protected:
  TensorImplFunc tensor_data_access_func_; //numerics::Tensor --> {tensor_body_ptr, size_in_bytes}
  /** Pipeline depth **/
  const unsigned int pipe_depth_;
+ /** Process rank **/
+ const unsigned int process_rank_;
+ /** Total number of parallel processes **/
+ const unsigned int num_processes_;
 };
 
 } //namespace runtime

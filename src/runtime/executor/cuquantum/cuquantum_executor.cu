@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/05
+REVISION: 2022/01/06
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -108,8 +108,11 @@ struct TensorNetworkReq {
 };
 
 
-CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func, unsigned int pipeline_depth):
- tensor_data_access_func_(std::move(tensor_data_access_func)), pipe_depth_(pipeline_depth)
+CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
+                                     unsigned int pipeline_depth,
+                                     unsigned int process_rank, unsigned int num_processes):
+ tensor_data_access_func_(std::move(tensor_data_access_func)),
+ pipe_depth_(pipeline_depth), process_rank_(process_rank), num_processes_(num_processes)
 {
  static_assert(std::is_same<cutensornetHandle_t,void*>::value,"#FATAL(exatn::runtime::CuQuantumExecutor): cutensornetHandle_t != (void*)");
 
@@ -452,7 +455,7 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
                                                                    &num_slices,sizeof(num_slices)));
   assert(num_slices > 0);
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_start,tn_req->stream));
-  for(int64_t slice_id = 0; slice_id < num_slices; ++slice_id){
+  for(int64_t slice_id = process_rank_; slice_id < num_slices; slice_id += num_processes_){
    HANDLE_CTN_ERROR(cutensornetContraction(gpu_attr_[gpu].second.cutn_handle,
                                            tn_req->comp_plan,
                                            tn_req->data_in,tn_req->data_out,

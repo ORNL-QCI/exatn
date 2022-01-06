@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/05
+REVISION: 2022/01/06
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -45,6 +45,7 @@ public:
   /** Sets/resets the DAG node executor (tensor operation executor). **/
   virtual void resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
                                  const ParamConf & parameters,
+                                 unsigned int num_processes,
                                  unsigned int process_rank,
                                  unsigned int global_process_rank) override;
 

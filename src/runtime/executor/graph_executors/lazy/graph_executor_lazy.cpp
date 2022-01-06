@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/05
+REVISION: 2022/01/06
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -25,10 +25,11 @@ namespace runtime {
 
 void LazyGraphExecutor::resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> node_executor,
                                           const ParamConf & parameters,
+                                          unsigned int num_processes,
                                           unsigned int process_rank,
                                           unsigned int global_process_rank)
 {
-  TensorGraphExecutor::resetNodeExecutor(node_executor,parameters,process_rank,global_process_rank);
+  TensorGraphExecutor::resetNodeExecutor(node_executor,parameters,num_processes,process_rank,global_process_rank);
 #ifdef CUQUANTUM
   if(node_executor){
     cuquantum_executor_ = std::make_shared<CuQuantumExecutor>(
@@ -36,7 +37,9 @@ void LazyGraphExecutor::resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> no
         void * data_ptr = this->node_executor_->getTensorImage(tensor,device_kind,device_id,size);
         return data_ptr;
       },
-      CUQUANTUM_PIPELINE_DEPTH
+      CUQUANTUM_PIPELINE_DEPTH,
+      process_rank,
+      num_processes
     );
   }
 #endif

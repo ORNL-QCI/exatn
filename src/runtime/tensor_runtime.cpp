@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/27
+REVISION: 2022/01/06
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "tensor_runtime.hpp"
@@ -98,7 +98,7 @@ void TensorRuntime::launchExecutionThread()
 void TensorRuntime::executionThreadWorkflow()
 {
   graph_executor_->resetNodeExecutor(exatn::getService<TensorNodeExecutor>(node_executor_name_),
-                                     parameters_,process_rank_,global_process_rank_);
+                                     parameters_,num_processes_,process_rank_,global_process_rank_);
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor set to "
             //<< node_executor_name_ << std::endl << std::flush;
   while(alive_.load()){ //alive_ is set by the main thread
@@ -114,7 +114,8 @@ void TensorRuntime::executionThreadWorkflow()
     }
     processTensorDataRequests(); //process all outstanding client requests for tensor data (synchronous)
   }
-  graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr),parameters_,process_rank_,global_process_rank_);
+  graph_executor_->resetNodeExecutor(std::shared_ptr<TensorNodeExecutor>(nullptr),
+                                     parameters_,num_processes_,process_rank_,global_process_rank_);
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
             //<< std::endl << std::flush;
   return; //end of execution thread life
