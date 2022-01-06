@@ -462,6 +462,12 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
                                            tn_req->workspace,tn_req->worksize,
                                            slice_id,tn_req->stream));
   }
+  const auto output_hash = tn_req->network->getTensor(0)->getTensorHash();
+  auto iter = tn_req->tensor_descriptors.find(output_hash);
+  assert(iter != tn_req->tensor_descriptors.cend());
+  const auto & descr = iter->second;
+  HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.src_ptr,descr.dst_ptr[gpu],
+                                    descr.size,cudaMemcpyDefault,tn_req->stream));
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_finish,tn_req->stream));
  }
  tn_req->exec_status = TensorNetworkQueue::ExecStat::Executing;
