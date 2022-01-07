@@ -3789,9 +3789,9 @@ TEST(NumServerTester, CuTensorNet) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- const int NUM_REPEATS = 3;
+ const int NUM_REPEATS = 1;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 

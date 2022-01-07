@@ -198,7 +198,11 @@ void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
 
 void NumServer::switchComputationalBackend(const std::string & backend_name)
 {
- bool success = sync(); assert(success);
+ bool success = tensor_rt_->sync(); assert(success);
+ if(logging_ > 0 && backend_name != comp_backend_){
+  logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+           << "]: Switching computational backend to " << backend_name << std::endl << std::flush;
+ }
  if(backend_name == "default"){
   comp_backend_ = backend_name;
 #ifdef CUQUANTUM
@@ -3124,7 +3128,7 @@ bool NumServer::evaluateTensorNetwork(const ProcessGroup & process_group,
    auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
   }
   if(parsed){
-   TensorNetwork tensnet(name,network,tensor_map);
+   auto tensnet = std::make_shared<TensorNetwork>(name,network,tensor_map);
    parsed = submit(process_group,tensnet);
   }
  }else{
@@ -3168,9 +3172,9 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
    auto res = tensor_map.emplace(std::make_pair(tensor_name,iter->second));
   }
   if(parsed){
-   TensorNetwork tensnet(name,network,tensor_map);
+   auto tensnet = std::make_shared<TensorNetwork>(name,network,tensor_map);
    parsed = submit(process_group,tensnet);
-   if(parsed) parsed = sync(process_group,tensnet);
+   if(parsed) parsed = sync(process_group,*tensnet);
   }
  }else{
   std::cout << "#ERROR(exatn::NumServer::evaluateTensorNetworkSync): Invalid tensor network: " << network << std::endl;
