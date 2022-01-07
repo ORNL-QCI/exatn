@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/12/10
+REVISION: 2022/01/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "num_server.hpp"
 #include "tensor_range.hpp"
@@ -89,7 +89,8 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), intra_comm_(communicator), validation_tracing_(false)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), comp_backend_("default"),
+ intra_comm_(communicator), validation_tracing_(false)
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
@@ -117,7 +118,8 @@ NumServer::NumServer(const MPICommProxy & communicator,
 NumServer::NumServer(const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), validation_tracing_(false)
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), comp_backend_("default"),
+ validation_tracing_(false)
 {
  num_processes_ = 1; process_rank_ = 0; global_process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
@@ -193,6 +195,22 @@ void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
  return;
 }
 #endif
+
+void NumServer::switchComputationalBackend(const std::string & backend_name)
+{
+ bool success = sync(); assert(success);
+ if(backend_name == "default"){
+  comp_backend_ = backend_name;
+#ifdef CUQUANTUM
+ }else if(backend_name == "cuquantum"){
+  comp_backend_ = backend_name;
+#endif
+ }else{
+  std::cout << "#ERROR(exatn::NumServer): switchComputationalBackend: Unknown backend: " << backend_name << std::endl;
+  std::abort();
+ }
+ return;
+}
 
 void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool caching)
 {
@@ -612,7 +630,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
- assert(network.isValid()); //debug
+ //assert(network.isValid()); //debug
  unsigned int num_procs = process_group.getSize(); //number of executing processes
  assert(local_rank < num_procs);
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
@@ -883,6 +901,30 @@ bool NumServer::submit(const ProcessGroup & process_group,
 bool NumServer::submit(const ProcessGroup & process_group,
                        std::shared_ptr<TensorNetwork> network)
 {
+#ifdef CUQUANTUM
+ //Try execution via an alternative computational backend:
+ if(comp_backend_ == "cuquantum"){
+  //Determine parallel execution configuration:
+  unsigned int local_rank; //local process rank within the process group
+  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
+  //assert(network->isValid()); //debug
+  unsigned int num_procs = process_group.getSize(); //number of executing processes
+  assert(local_rank < num_procs);
+  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                            << "]: Submitting tensor network <" << network->getName() << "> (" << network->getTensor(0)->getName()
+                            << ") for execution via cuQuantum by " << num_procs << " processes with memory limit "
+                            << process_group.getMemoryLimitPerProcess() << " bytes" << std::endl << std::flush;
+  if(logging_ > 0) network->printItFile(logfile_);
+  const auto exec_handle = tensor_rt_->submit(network,process_group.getMPICommProxy(),num_procs,local_rank);
+  bool success = (exec_handle != 0);
+  if(success){
+   auto res = tn_exec_handles_.emplace(std::make_pair(network->getTensor(0)->getTensorHash(),exec_handle));
+   success = res.second;
+   if(success && logging_ > 0) logfile_ << "Number of submitted networks via cuQuantum = 1" << std::endl << std::flush;
+  }
+  return success;
+ }
+#endif
  if(network) return submit(process_group,*network);
  return false;
 }
@@ -1030,6 +1072,14 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
 {
  bool success = true;
  if(!process_group.rankIsIn(process_rank_)) return success; //process is not in the group: Do nothing
+#ifdef CUQUANTUM
+ if(comp_backend_ == "cuquantum"){
+  auto iter = tn_exec_handles_.find(tensor.getTensorHash());
+  bool synced = (iter == tn_exec_handles_.end());
+  if(!synced) synced = tensor_rt_->syncNetwork(iter->second,wait);
+  return synced;
+ }
+#endif
  auto iter = tensors_.find(tensor.getName());
  if(iter != tensors_.end()){
   if(iter->second->isComposite()){
@@ -1081,7 +1131,11 @@ bool NumServer::sync(const ProcessGroup & process_group, TensorNetwork & network
 
 bool NumServer::sync(bool wait)
 {
- return sync(getCurrentProcessGroup(),wait);
+ bool success = sync(getCurrentProcessGroup(),wait);
+#ifdef CUQUANTUM
+ if(comp_backend_ == "cuquantum" && success) tn_exec_handles_.clear();
+#endif
+ return success;
 }
 
 bool NumServer::sync(const ProcessGroup & process_group, bool wait)
@@ -1092,6 +1146,9 @@ bool NumServer::sync(const ProcessGroup & process_group, bool wait)
  if(success){
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
    << "]: Locally synchronized all operations" << std::endl << std::flush;
+#ifdef CUQUANTUM
+  if(comp_backend_ == "cuquantum") tn_exec_handles_.clear();
+#endif
 #ifdef MPI_ENABLED
   if(wait){
    auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());

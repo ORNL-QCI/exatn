@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/06
+REVISION: 2022/01/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -53,6 +53,8 @@ struct TensorDescriptor {
 
 struct TensorNetworkReq {
  TensorNetworkQueue::ExecStat exec_status = TensorNetworkQueue::ExecStat::None; //tensor network execution status
+ int num_procs = 0; //total number of executing processes
+ int proc_id = -1; //id of the current executing process
  std::shared_ptr<numerics::TensorNetwork> network; //tensor network specification
  std::unordered_map<numerics::TensorHashType, TensorDescriptor> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
@@ -110,15 +112,16 @@ struct TensorNetworkReq {
 
 CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                                      unsigned int pipeline_depth,
-                                     unsigned int process_rank, unsigned int num_processes):
+                                     unsigned int num_processes, unsigned int process_rank):
  tensor_data_access_func_(std::move(tensor_data_access_func)),
- pipe_depth_(pipeline_depth), process_rank_(process_rank), num_processes_(num_processes)
+ pipe_depth_(pipeline_depth), num_processes_(num_processes), process_rank_(process_rank)
 {
  static_assert(std::is_same<cutensornetHandle_t,void*>::value,"#FATAL(exatn::runtime::CuQuantumExecutor): cutensornetHandle_t != (void*)");
 
  const size_t version = cutensornetGetVersion();
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): cuTensorNet backend version " << version << std::endl;
 
+ std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Total number of processes = " << num_processes_ << std::endl;
  int num_gpus = 0;
  auto error_code = talshDeviceCount(DEV_NVIDIA_GPU,&num_gpus); assert(error_code == TALSH_SUCCESS);
  for(int i = 0; i < num_gpus; ++i){
@@ -170,6 +173,7 @@ CuQuantumExecutor::~CuQuantumExecutor()
 
 
 TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
+                                                        unsigned int num_processes, unsigned int process_rank,
                                                         const TensorOpExecHandle exec_handle)
 {
  assert(network);
@@ -179,6 +183,8 @@ TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics
   auto tn_req = res.first->second;
   tn_req->network = network;
   tn_req->exec_status = TensorNetworkQueue::ExecStat::Idle;
+  tn_req->num_procs = num_processes;
+  tn_req->proc_id = process_rank;
   parseTensorNetwork(tn_req); //still Idle
   loadTensors(tn_req); //Idle --> Loading
   if(tn_req->exec_status == TensorNetworkQueue::ExecStat::Loading){
@@ -455,7 +461,7 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
                                                                    &num_slices,sizeof(num_slices)));
   assert(num_slices > 0);
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_start,tn_req->stream));
-  for(int64_t slice_id = process_rank_; slice_id < num_slices; slice_id += num_processes_){
+  for(int64_t slice_id = tn_req->proc_id; slice_id < num_slices; slice_id += tn_req->num_procs){
    HANDLE_CTN_ERROR(cutensornetContraction(gpu_attr_[gpu].second.cutn_handle,
                                            tn_req->comp_plan,
                                            tn_req->data_in,tn_req->data_out,

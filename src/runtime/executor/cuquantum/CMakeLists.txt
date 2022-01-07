@@ -14,6 +14,7 @@ set_target_properties(${LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "")
 target_include_directories(${LIBRARY_NAME}
   PUBLIC .
   ${CMAKE_SOURCE_DIR}/src/exatn
+  ${CMAKE_SOURCE_DIR}/src/utils
 )
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC exatn-numerics)

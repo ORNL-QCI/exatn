@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2021/10/30
+REVISION: 2022/01/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  1. Vector space and subspace registration [spaces.hpp, space_register.hpp]:
@@ -1085,6 +1085,12 @@ inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string
 //////////////////////////
 // INTERNAL CONTROL API //
 //////////////////////////
+
+ /** Switches the computational backend: {"default","cuquantum"}.
+     Only applies to tensor network execution. **/
+inline void switchComputationalBackend(const std::string & backend_name)
+ {return numericalServer->switchComputationalBackend(backend_name);}
+
 
 /** Resets the tensor contraction sequence optimizer that is invoked
     when evaluating tensor networks: {dummy,heuro,greed,metis}. **/

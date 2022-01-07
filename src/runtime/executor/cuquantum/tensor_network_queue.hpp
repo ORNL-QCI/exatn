@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Execution queue
-REVISION: 2022/01/05
+REVISION: 2022/01/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -42,6 +42,14 @@ public:
   Completed  //execution completed
  };
 
+ //Tensor network entry:
+ struct NetEntry {
+  ExecStat exec_status = ExecStat::None; //execution status
+  unsigned int num_procs = 0;            //number of executing processes
+  unsigned int proc_id = 0;              //id of the current executing process
+  MPICommProxy comm;                     //MPI communicator proxy
+ };
+
  using TensorNetworkQueueIterator =
   std::list<std::pair<std::shared_ptr<numerics::TensorNetwork>,TensorOpExecHandle>>::iterator;
 
@@ -80,10 +88,14 @@ public:
 
  /** Appends a new tensor network to the queue (no repeats allowed).
      Upon success, returns a positive execution handle, zero otherwise. **/
- TensorOpExecHandle append(std::shared_ptr<numerics::TensorNetwork> network) {
+ TensorOpExecHandle append(std::shared_ptr<numerics::TensorNetwork> network,
+                           const MPICommProxy & communicator,
+                           unsigned int num_processes,
+                           unsigned int process_rank) {
   lock();
   TensorOpExecHandle tn_hash = getTensorNetworkHash(network);
-  auto res = tn_exec_stat_.emplace(std::make_pair(tn_hash,ExecStat::Idle));
+  auto res = tn_exec_stat_.emplace(std::make_pair(tn_hash,
+              NetEntry{ExecStat::Idle,num_processes,process_rank,communicator}));
   if(res.second){
    networks_.emplace_back(std::make_pair(network,tn_hash));
   }else{
@@ -100,7 +112,7 @@ public:
   assert(current_network_ != networks_.end());
   auto iter = tn_exec_stat_.find(current_network_->second);
   if(iter != tn_exec_stat_.end()){
-   if(iter->second == ExecStat::Completed){
+   if(iter->second.exec_status == ExecStat::Completed){
     tn_exec_stat_.erase(iter);
    }else{
     std::cout << "#ERROR(exatn::runtime::TensorNetworkQueue): Attempt to delete an unfinished tensor network!\n";
@@ -118,7 +130,7 @@ public:
   auto exec_stat = ExecStat::None;
   lock();
   auto iter = tn_exec_stat_.find(exec_handle);
-  if(iter != tn_exec_stat_.cend()) exec_stat = iter->second;
+  if(iter != tn_exec_stat_.cend()) exec_stat = iter->second.exec_status;
   unlock();
   return exec_stat;
  }
@@ -131,12 +143,27 @@ public:
   auto exec_stat = ExecStat::None;
   lock();
   auto iter = tn_exec_stat_.find(exec_handle);
-  if(iter != tn_exec_stat_.cend()){
-   exec_stat = iter->second;
-   iter->second = new_exec_stat;
+  if(iter != tn_exec_stat_.end()){
+   exec_stat = iter->second.exec_status;
+   iter->second.exec_status = new_exec_stat;
   }
   unlock();
   return exec_stat;
+ }
+
+ /** Returns the parallel execution configuration associated
+     with the given tensor network execution handle. **/
+ std::pair<int,int> getExecConfiguration(const TensorOpExecHandle exec_handle,
+                                         MPICommProxy * communicator = nullptr) {
+  std::pair<int,int> exec_conf{0,-1};
+  lock();
+  auto iter = tn_exec_stat_.find(exec_handle);
+  if(iter != tn_exec_stat_.cend()){
+   exec_conf = std::make_pair(iter->second.num_procs,iter->second.proc_id);
+   if(communicator != nullptr) *communicator = iter->second.comm;
+  }
+  unlock();
+  return exec_conf;
  }
 
  /** Returns the constant iterator to the current tensor network. **/
@@ -186,7 +213,7 @@ public:
 protected:
 
  /** Tensor network execution status **/
- std::unordered_map<TensorOpExecHandle,ExecStat> tn_exec_stat_;
+ std::unordered_map<TensorOpExecHandle,NetEntry> tn_exec_stat_;
  /** Queue of tensor networks to be executed **/
  std::list<std::pair<std::shared_ptr<numerics::TensorNetwork>,
                      TensorOpExecHandle>> networks_;

@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2021/12/27
+REVISION: 2022/01/07
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) The execution space consists of one or more DAGs in which nodes
@@ -146,7 +146,10 @@ public:
   /** Submits an entire tensor network for processing as a whole.
       The returned execution handle can be used for checking the status
       of the tensor network execution. Zero on return means unsuccessful submission. **/
-  TensorOpExecHandle submit(std::shared_ptr<numerics::TensorNetwork> network); //in: tensor network
+  TensorOpExecHandle submit(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
+                            const MPICommProxy & communicator, //MPI communicator proxy
+                            unsigned int num_processes, //in: number of executing processes
+                            unsigned int process_rank); //in: rank of the current executing process
 
   /** Tests for completion of processing of a whole tensor network.
       A valid execution handle obtained during tensor network

@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2021/12/22
+REVISION: 2022/01/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Numerical server provides basic tensor network processing functionality:
@@ -269,6 +269,9 @@ public:
                                const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #endif
+
+ /** Switches the computational backend. **/
+ void switchComputationalBackend(const std::string & backend_name);
 
  /** Resets the tensor contraction sequence optimizer that is
      invoked when evaluating tensor networks. **/
@@ -1032,25 +1035,38 @@ protected:
 
 private:
 
+ //Spaces:
  std::shared_ptr<numerics::SpaceRegister> space_register_; //register of vector spaces and their named subspaces
  std::unordered_map<std::string,SpaceId> subname2id_; //maps a subspace name to its parental vector space id
 
+ //Tensors:
  std::unordered_map<std::string,std::shared_ptr<Tensor>> tensors_; //registered tensors (by CREATE operation)
  std::map<std::string,std::shared_ptr<Tensor>> implicit_tensors_; //tensors created implicitly by the runtime (for garbage collection)
  std::unordered_map<std::string,ProcessGroup> tensor_comms_; //process group associated with each tensor
 
+#ifdef CUQUANTUM
+ //Tensor network execution handles:
+ std::unordered_map<numerics::TensorHashType,runtime::TensorOpExecHandle> tn_exec_handles_;
+#endif
+
+ //Contraction path optimizer:
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
  bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse
 
+ //Registered external methods and data:
  std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods
  std::map<std::string,std::shared_ptr<BytePacket>> ext_data_; //external data
 
+ //Program scopes:
  std::stack<std::pair<std::string,ScopeId>> scopes_; //TAProL scope stack: {Scope name, Scope Id}
 
+ //Tensor operation factory:
  TensorOpFactory * tensor_op_factory_; //tensor operation factory (non-owning pointer)
 
+ //Configuration:
  int logging_; //logging level
  std::ofstream logfile_; //log file
+ std::string comp_backend_; //current computational backend
  int num_processes_; //total number of parallel processes in the dedicated MPI communicator
  int process_rank_; //rank of the current parallel process in the dedicated MPI communicator
  int global_process_rank_; //rank of the current parallel process in MPI_COMM_WORLD

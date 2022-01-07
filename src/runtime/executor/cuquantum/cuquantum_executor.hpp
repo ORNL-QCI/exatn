@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/06
+REVISION: 2022/01/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -42,8 +42,8 @@ public:
 
  CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                    unsigned int pipeline_depth,
-                   unsigned int process_rank,
-                   unsigned int num_processes);
+                   unsigned int num_processes,
+                   unsigned int process_rank);
 
  CuQuantumExecutor(const CuQuantumExecutor &) = delete;
  CuQuantumExecutor & operator=(CuQuantumExecutor &) = delete;
@@ -54,14 +54,16 @@ public:
  /** Submits a tensor network for execution via CuQuantumExecutor.
      The associated tensor network execution handle can be used
      for progressing and completing the tensor network execution. **/
- TensorNetworkQueue::ExecStat execute(std::shared_ptr<numerics::TensorNetwork> network,
-                                      const TensorOpExecHandle exec_handle);
+ TensorNetworkQueue::ExecStat execute(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
+                                      unsigned int num_processes, //in: total number of executing processes
+                                      unsigned int process_rank,  //in: rank of the current executing process
+                                      const TensorOpExecHandle exec_handle); //in: tensor network execution handle
 
  /** Synchronizes on the progress of the tensor network execution.
      If wait = TRUE, waits until completion, otherwise just tests the progress.
      Returns the current status of the tensor network execution. **/
- TensorNetworkQueue::ExecStat sync(const TensorOpExecHandle exec_handle,
-                                   int * error_code);
+ TensorNetworkQueue::ExecStat sync(const TensorOpExecHandle exec_handle, //in: tensor network execution handle
+                                   int * error_code); //out: error code (0:success)
 
  /** Synchronizes execution of all submitted tensor networks to completion. **/
  void sync();
@@ -100,10 +102,10 @@ protected:
  TensorImplFunc tensor_data_access_func_; //numerics::Tensor --> {tensor_body_ptr, size_in_bytes}
  /** Pipeline depth **/
  const unsigned int pipe_depth_;
- /** Process rank **/
- const unsigned int process_rank_;
  /** Total number of parallel processes **/
  const unsigned int num_processes_;
+ /** Current process rank **/
+ const unsigned int process_rank_;
 };
 
 } //namespace runtime

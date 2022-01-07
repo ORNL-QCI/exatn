@@ -9,7 +9,7 @@ ISSUES:
   That is, the order of tensor operations across all participating
   processes must be consistent such that every encountered global
   tensor operation will receive the same tensor operand irrespective
-  of the difference in the locally generated tensor name. Special
+  of the difference in the locally generated tensor names. Special
   care needs to be taken in iterating over associative tensor containers,
   to ensure that the keys are consistent accross all participating
   processes. For example, automatically generated tensor names
@@ -21,9 +21,7 @@ ISSUES:
 
 BUGS:
 
-- 32-bit integer MPI message chunking issue in the backend.
-
-- Fix the bug(s) in the tensor order reduction mechanism in the TalshExecutor backend.
+- Fix the bug(s) in the tensor order reduction mechanism in the TalshNodeExecutor backend.
 
 
 FEATURES:
@@ -39,11 +37,13 @@ FEATURES:
   Contract replaced tensors, then replace the contracted
   tensor with a new tensor (sub)network.
 
+- Implement the Renormalization procedure.
+
 - Implement SAVE/LOAD API for TensorExpansion.
 
 - Implement TensorNetwork slice computing Generator.
 
-- Implement b-D procedure.
+- Implement bl-D procedure.
 
 - Implement conjugate gradient optimization procedure.
 

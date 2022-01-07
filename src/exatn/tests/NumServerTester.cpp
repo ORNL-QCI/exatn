@@ -3807,6 +3807,8 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::initTensorRnd("C"); assert(success);
  success = exatn::initTensor("D",0.0); assert(success);
 
+ exatn::switchComputationalBackend("default");
+
  //Contract tensor network:
  int num_repeats = NUM_REPEATS;
  while(--num_repeats >= 0){
@@ -3814,8 +3816,9 @@ TEST(NumServerTester, CuTensorNet) {
   std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
   auto flops = exatn::getTotalFlopCount();
   auto time_start = exatn::Timer::timeInSecHR();
-  success = exatn::evaluateTensorNetworkSync("cuNet","D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)");
+  success = exatn::evaluateTensorNetwork("cuNet","D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)");
   assert(success);
+  success = exatn::sync("D"); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
   flops = exatn::getTotalFlopCount() - flops;
   std::cout << "Performance = " << (flops / (1e9 * duration)) << " Gflop/s" << std::endl;
