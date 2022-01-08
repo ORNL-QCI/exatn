@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -18,7 +18,9 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 #include "errors.hpp"
 
-//#define DEBUG
+#ifndef NDEBUG
+#define DEBUG
+#endif
 
 namespace exatn {
 namespace runtime {
@@ -37,7 +39,7 @@ void LazyGraphExecutor::resetNodeExecutor(std::shared_ptr<TensorNodeExecutor> no
         void * data_ptr = this->node_executor_->getTensorImage(tensor,device_kind,device_id,size);
         return data_ptr;
       },
-      CUQUANTUM_PIPELINE_DEPTH,
+      cuquantum_pipe_depth_,
       num_processes,
       process_rank
     );
@@ -280,8 +282,8 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
 
 void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
 #ifdef CUQUANTUM
-  std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Started executing the tensor network queue via cuQuantum: "
-            << tensor_network_queue.getSize() << " networks detected" << std::endl;
+  //std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Started executing the tensor network queue via cuQuantum: "
+  //          << tensor_network_queue.getSize() << " networks detected" << std::endl;
   assert(node_executor_);
   //Synchronize the node executor:
   bool synced = node_executor_->sync(); assert(synced);
@@ -292,7 +294,7 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
     bool not_over = !tensor_network_queue.isOver();
     while(not_over){
       const auto current_pos = tensor_network_queue.getCurrentPos();
-      if(current_pos < CUQUANTUM_PIPELINE_DEPTH){
+      if(current_pos < cuquantum_pipe_depth_){
         const auto current = tensor_network_queue.getCurrent();
         const auto exec_handle = current->second;
         int error_code = 0;
@@ -302,18 +304,40 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
           assert(error_code == 0);
         }
         if(exec_stat == TensorNetworkQueue::ExecStat::None){
+          if(logging_.load() != 0){
+            logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Submitting to cuQuantum tensor network "
+                     << exec_handle << ": Status = ";
+#ifdef DEBUG
+            logfile_.flush();
+#endif
+
+          }
           const auto exec_conf = tensor_network_queue.getExecConfiguration(exec_handle);
           exec_stat = cuquantum_executor_->execute(current->first,exec_conf.first,exec_conf.second,exec_handle);
+          if(logging_.load() != 0){
+            logfile_  << static_cast<int>(exec_stat) << std::endl;
+#ifdef DEBUG
+            logfile_.flush();
+#endif
+          }
           if(exec_stat != TensorNetworkQueue::ExecStat::None){
             auto prev_exec_stat = tensor_network_queue.updateExecStatus(exec_handle,exec_stat);
-            std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Submitted tensor network to cuQuantum\n";
+            //std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Submitted tensor network to cuQuantum\n";
           }
           not_over = tensor_network_queue.next();
         }else if(exec_stat == TensorNetworkQueue::ExecStat::Completed){
+          if(logging_.load() != 0){
+            logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Completed via cuQuantum tensor network " << exec_handle << std::endl;
+#ifdef DEBUG
+            logfile_.flush();
+#endif
+          }
           auto prev_exec_stat = tensor_network_queue.updateExecStatus(exec_handle,exec_stat);
           assert(current_pos == 0);
           tensor_network_queue.remove();
-          std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Completed tensor network execution via cuQuantum\n";
+          //std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Completed tensor network execution via cuQuantum\n";
           not_over = !tensor_network_queue.isOver();
         }else{
           auto prev_exec_stat = tensor_network_queue.updateExecStatus(exec_handle,exec_stat);
@@ -325,11 +349,22 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
     }
   }
   cuquantum_executor_->sync();
-  std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Finished executing the tensor network queue via cuQuantum\n";
+  //std::cout << "#DEBUG(exatn::runtime::LazyGraphExecutor::execute): Finished executing the tensor network queue via cuQuantum\n";
 #else
   assert(tensor_network_queue.isEmpty());
 #endif
   return;
+}
+
+double LazyGraphExecutor::getTotalFlopCount() const
+{
+  while(!node_executor_);
+  double flops = node_executor_->getTotalFlopCount();
+#ifdef CUQUANTUM
+  while(!cuquantum_executor_);
+  flops += cuquantum_executor_->getTotalFlopCount();
+#endif
+  return flops;
 }
 
 } //namespace runtime

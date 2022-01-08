@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -68,6 +68,9 @@ public:
  /** Synchronizes execution of all submitted tensor networks to completion. **/
  void sync();
 
+ /** Returns total executed flop count. **/
+ double getTotalFlopCount() const {return flops_;}
+
 protected:
 
  static constexpr float WORKSPACE_FRACTION = 0.6;
@@ -106,6 +109,8 @@ protected:
  const unsigned int num_processes_;
  /** Current process rank **/
  const unsigned int process_rank_;
+ /** Executed flops **/
+ double flops_;
 };
 
 } //namespace runtime

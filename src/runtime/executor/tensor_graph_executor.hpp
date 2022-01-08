@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2022/01/06
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -124,7 +124,7 @@ public:
   }
 
   /** Returns the current value of the total Flop count executed by the node executor. **/
-  double getTotalFlopCount() const {
+  virtual double getTotalFlopCount() const {
     while(!node_executor_);
     return node_executor_->getTotalFlopCount();
   }

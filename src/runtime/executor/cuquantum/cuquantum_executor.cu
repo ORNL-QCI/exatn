@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -114,7 +114,7 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                                      unsigned int pipeline_depth,
                                      unsigned int num_processes, unsigned int process_rank):
  tensor_data_access_func_(std::move(tensor_data_access_func)),
- pipe_depth_(pipeline_depth), num_processes_(num_processes), process_rank_(process_rank)
+ pipe_depth_(pipeline_depth), num_processes_(num_processes), process_rank_(process_rank), flops_(0.0)
 {
  static_assert(std::is_same<cutensornetHandle_t,void*>::value,"#FATAL(exatn::runtime::CuQuantumExecutor): cutensornetHandle_t != (void*)");
 
@@ -442,6 +442,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                                    tn_req->opt_info,
                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                    &flops,sizeof(flops)));
+  flops_ += flops;
  }
  tn_req->exec_status = TensorNetworkQueue::ExecStat::Planning;
  return;

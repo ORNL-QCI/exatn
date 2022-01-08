@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -866,12 +866,12 @@ inline bool evaluateSync(const ProcessGroup & process_group,  //in: chosen group
 /** Synchronizes all outstanding update operations on a given tensor specified by
     its symbolic name. If ProcessGroup is not provided, defaults to the local process.**/
 inline bool sync(const std::string & name, //in: tensor name
-                 bool wait = true)         //in: wait versus test for completion
+                 bool wait)                //in: wait versus test for completion
  {return numericalServer->sync(name,wait);}
 
 inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                  const std::string & name,           //in: tensor name
-                 bool wait = true)                   //in: wait versus test for completion
+                 bool wait)                          //in: wait versus test for completion
  {return numericalServer->sync(process_group,name,wait);}
 
 

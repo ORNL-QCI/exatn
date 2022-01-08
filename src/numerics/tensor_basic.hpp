@@ -1,8 +1,8 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2021/10/15
+REVISION: 2022/01/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef EXATN_NUMERICS_TENSOR_BASIC_HPP_
 #define EXATN_NUMERICS_TENSOR_BASIC_HPP_
@@ -63,22 +63,22 @@ enum class IndexKind{
 
 //Basic tensor operations:
 enum class TensorOpCode{
- NOOP,              //no operation
- CREATE,            //tensor creation
- DESTROY,           //tensor destruction
- TRANSFORM,         //tensor transformation/initialization
- SLICE,             //tensor slicing
- INSERT,            //tensor insertion
- ADD,               //tensor addition
- CONTRACT,          //tensor contraction
- DECOMPOSE_SVD3,    //tensor decomposition via SVD into three tensor factors
- DECOMPOSE_SVD2,    //tensor decomposition via SVD into two tensor factors
- ORTHOGONALIZE_SVD, //tensor orthogonalization via SVD
- ORTHOGONALIZE_MGS, //tensor orthogonalization via Modified Gram-Schmidt
- FETCH,             //fetch tensor data from another MPI process (parallel execution only)
- UPLOAD,            //upload tensor data to another MPI process (parallel execution only)
- BROADCAST,         //tensor broadcast (parallel execution only)
- ALLREDUCE          //tensor allreduce (parallel execution only)
+ NOOP,              //0: no operation
+ CREATE,            //1: tensor creation
+ DESTROY,           //2: tensor destruction
+ TRANSFORM,         //3: tensor transformation/initialization
+ SLICE,             //4: tensor slicing
+ INSERT,            //5: tensor insertion
+ ADD,               //6: tensor addition
+ CONTRACT,          //7: tensor contraction
+ DECOMPOSE_SVD3,    //8: tensor decomposition via SVD into three tensor factors
+ DECOMPOSE_SVD2,    //9: tensor decomposition via SVD into two tensor factors
+ ORTHOGONALIZE_SVD, //10: tensor orthogonalization via SVD
+ ORTHOGONALIZE_MGS, //11: tensor orthogonalization via Modified Gram-Schmidt
+ FETCH,             //12: fetch tensor data from another MPI process (parallel execution only)
+ UPLOAD,            //13: upload tensor data to another MPI process (parallel execution only)
+ BROADCAST,         //14: tensor broadcast (parallel execution only)
+ ALLREDUCE          //15: tensor allreduce (parallel execution only)
 };
 
 

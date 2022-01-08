@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/06
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -32,6 +32,9 @@ public:
 
   LazyGraphExecutor(): pipeline_depth_(DEFAULT_PIPELINE_DEPTH),
                        prefetch_depth_(DEFAULT_PREFETCH_DEPTH)
+#ifdef CUQUANTUM
+                      ,cuquantum_pipe_depth_(CUQUANTUM_PIPELINE_DEPTH)
+#endif
   {
   }
 
@@ -71,6 +74,9 @@ public:
     return pipeline_depth_;
   }
 
+  /** Returns the current value of the total Flop count executed by the node executor. **/
+  virtual double getTotalFlopCount() const override;
+
   const std::string name() const override {return "lazy-dag-executor";}
   const std::string description() const override {return "Lazy tensor graph executor";}
   std::shared_ptr<TensorGraphExecutor> clone() override {return std::make_shared<LazyGraphExecutor>();}
@@ -80,6 +86,7 @@ protected:
   unsigned int pipeline_depth_; //max number of active tensor operations in flight
   unsigned int prefetch_depth_; //max number of tensor operations with active prefetch in flight
 #ifdef CUQUANTUM
+  unsigned int cuquantum_pipe_depth_; //max number of actively executed tensor networks via cuQuantum
   std::shared_ptr<CuQuantumExecutor> cuquantum_executor_; //cuQuantum executor
 #endif
 };

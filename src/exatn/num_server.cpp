@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -198,10 +198,10 @@ void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
 
 void NumServer::switchComputationalBackend(const std::string & backend_name)
 {
- bool success = tensor_rt_->sync(); assert(success);
+ //bool success = sync(); assert(success);
  if(logging_ > 0 && backend_name != comp_backend_){
   logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-           << "]: Switching computational backend to " << backend_name << std::endl << std::flush;
+           << "]: Switched computational backend to " << backend_name << std::endl << std::flush;
  }
  if(backend_name == "default"){
   comp_backend_ = backend_name;
@@ -210,7 +210,8 @@ void NumServer::switchComputationalBackend(const std::string & backend_name)
   comp_backend_ = backend_name;
 #endif
  }else{
-  std::cout << "#ERROR(exatn::NumServer): switchComputationalBackend: Unknown backend: " << backend_name << std::endl;
+  std::cout << "#ERROR(exatn::NumServer): switchComputationalBackend: Unknown backend: "
+            << backend_name << std::endl << std::flush;
   std::abort();
  }
  return;
@@ -916,15 +917,16 @@ bool NumServer::submit(const ProcessGroup & process_group,
   assert(local_rank < num_procs);
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                             << "]: Submitting tensor network <" << network->getName() << "> (" << network->getTensor(0)->getName()
-                            << ") for execution via cuQuantum by " << num_procs << " processes with memory limit "
-                            << process_group.getMemoryLimitPerProcess() << " bytes" << std::endl << std::flush;
+                            << ":" << getTensorNetworkHash(network) << ") for execution via cuQuantum by " << num_procs
+                            << " processes with memory limit " << process_group.getMemoryLimitPerProcess() << " bytes\n" << std::flush;
   if(logging_ > 0) network->printItFile(logfile_);
   const auto exec_handle = tensor_rt_->submit(network,process_group.getMPICommProxy(),num_procs,local_rank);
   bool success = (exec_handle != 0);
   if(success){
    auto res = tn_exec_handles_.emplace(std::make_pair(network->getTensor(0)->getTensorHash(),exec_handle));
    success = res.second;
-   if(success && logging_ > 0) logfile_ << "Number of submitted networks via cuQuantum = 1" << std::endl << std::flush;
+   if(success && logging_ > 0) logfile_ << "Execution handle of the submitted network via cuQuantum is "
+                                        << exec_handle << std::endl << std::flush;
   }
   return success;
  }
@@ -1076,16 +1078,25 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
 {
  bool success = true;
  if(!process_group.rankIsIn(process_rank_)) return success; //process is not in the group: Do nothing
-#ifdef CUQUANTUM
- if(comp_backend_ == "cuquantum"){
-  auto iter = tn_exec_handles_.find(tensor.getTensorHash());
-  bool synced = (iter == tn_exec_handles_.end());
-  if(!synced) synced = tensor_rt_->syncNetwork(iter->second,wait);
-  return synced;
- }
-#endif
+
  auto iter = tensors_.find(tensor.getName());
  if(iter != tensors_.end()){
+#ifdef CUQUANTUM
+  if(comp_backend_ == "cuquantum"){
+   auto cuter = tn_exec_handles_.find(iter->second->getTensorHash());
+   success = (cuter == tn_exec_handles_.end());
+   if(!success){
+    success = tensor_rt_->syncNetwork(cuter->second,wait);
+    if(success){
+     if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+      << "]: Locally synchronized cuQuantum execution handle " << cuter->second << " via tensor <" << tensor.getName() << ">"
+      << std::endl << std::flush;
+     tn_exec_handles_.erase(cuter);
+    }
+   }
+   return success;
+  }
+#endif
   if(iter->second->isComposite()){
    auto composite_tensor = castTensorComposite(iter->second); assert(composite_tensor);
    for(auto subtens = composite_tensor->begin(); subtens != composite_tensor->end(); ++subtens){

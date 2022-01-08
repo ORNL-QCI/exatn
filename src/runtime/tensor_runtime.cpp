@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/01/07
+REVISION: 2022/01/08
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -296,13 +296,16 @@ TensorOpExecHandle TensorRuntime::submit(std::shared_ptr<numerics::TensorNetwork
                                          const MPICommProxy & communicator,
                                          unsigned int num_processes, unsigned int process_rank)
 {
-  return tensor_network_queue_.append(network,communicator,num_processes,process_rank);
+  const auto exec_handle = tensor_network_queue_.append(network,communicator,num_processes,process_rank);
+  executing_.store(true); //signal to the execution thread to execute the queue
+  return exec_handle;
 }
 
 
 bool TensorRuntime::syncNetwork(const TensorOpExecHandle exec_handle, bool wait)
 {
   assert(exec_handle != 0);
+  executing_.store(true); //reactivate the execution thread in case it was not active
   bool synced = false;
   while(!synced){
     const auto exec_stat = tensor_network_queue_.checkExecStatus(exec_handle);
