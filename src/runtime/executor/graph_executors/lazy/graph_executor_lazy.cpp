@@ -306,17 +306,17 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
         if(exec_stat == TensorNetworkQueue::ExecStat::None){
           if(logging_.load() != 0){
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
-                     << "](LazyGraphExecutor)[EXEC_THREAD]: Submitting to cuQuantum tensor network "
-                     << exec_handle << ": Status = ";
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Submitting to cuQuantum tensor network " << exec_handle << std::endl;
 #ifdef DEBUG
             logfile_.flush();
 #endif
-
           }
           const auto exec_conf = tensor_network_queue.getExecConfiguration(exec_handle);
           exec_stat = cuquantum_executor_->execute(current->first,exec_conf.first,exec_conf.second,exec_handle);
           if(logging_.load() != 0){
-            logfile_  << static_cast<int>(exec_stat) << std::endl;
+            logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+                     << "](LazyGraphExecutor)[EXEC_THREAD]: Submitted to cuQuantum tensor network " << exec_handle
+                     << ": Status = " << static_cast<int>(exec_stat) << std::endl;
 #ifdef DEBUG
             logfile_.flush();
 #endif

@@ -60,15 +60,15 @@ struct TensorNetworkReq {
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
  std::unordered_map<int32_t, int64_t> mode_extents; //extent of each registered tensor mode
  int32_t * num_modes_in = nullptr;
- int64_t ** extents_in = nullptr;
+ int64_t ** extents_in = nullptr; //non-owning
  int64_t ** strides_in = nullptr;
- int32_t ** modes_in = nullptr;
+ int32_t ** modes_in = nullptr; //non-owning
  uint32_t * alignments_in = nullptr;
  void ** data_in = nullptr;
  int32_t num_modes_out;
- int64_t * extents_out = nullptr;
+ int64_t * extents_out = nullptr; //non-owning
  int64_t * strides_out = nullptr;
- int32_t * modes_out = nullptr;
+ int32_t * modes_out = nullptr; //non-owning
  uint32_t alignment_out;
  void * data_out = nullptr; //non-owning
  void * workspace = nullptr; //non-owning
@@ -97,14 +97,14 @@ struct TensorNetworkReq {
   cutensornetDestroyContractionOptimizerConfig(opt_config);
   cutensornetDestroyContractionOptimizerInfo(opt_info);
   cutensornetDestroyNetworkDescriptor(net_descriptor);
-  if(modes_out != nullptr) delete [] modes_out;
+  //if(modes_out != nullptr) delete [] modes_out;
   if(strides_out != nullptr) delete [] strides_out;
-  if(extents_out != nullptr) delete [] extents_out;
+  //if(extents_out != nullptr) delete [] extents_out;
   if(data_in != nullptr) delete [] data_in;
   if(alignments_in != nullptr) delete [] alignments_in;
-  if(modes_in != nullptr) delete [] modes_in;
+  //if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
-  if(extents_in != nullptr) delete [] extents_in;
+  //if(extents_in != nullptr) delete [] extents_in;
   if(num_modes_in != nullptr) delete [] num_modes_in;
  }
 };
