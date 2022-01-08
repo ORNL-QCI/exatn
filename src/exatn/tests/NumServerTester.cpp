@@ -3789,9 +3789,9 @@ TEST(NumServerTester, CuTensorNet) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- const int NUM_REPEATS = 1;
+ const int NUM_REPEATS = 3;
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -3808,7 +3808,7 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::initTensor("D",0.0); assert(success);
 
  success = exatn::sync(); assert(success);
- exatn::switchComputationalBackend("cuquantum");
+ exatn::switchComputationalBackend("default"); //{default|cuquantum}
 
  //Contract tensor network:
  int num_repeats = NUM_REPEATS;
@@ -3820,7 +3820,8 @@ TEST(NumServerTester, CuTensorNet) {
   success = exatn::sync("D",true); assert(success);
   auto duration = exatn::Timer::timeInSecHR(time_start);
   flops = exatn::getTotalFlopCount() - flops;
-  std::cout << "Duration = " << duration << " s; Performance = " << (flops / (1e9 * duration)) << " Gflop/s\n";
+  std::cout << "Duration = " << duration << " s; GFlop count = " << flops/1e9
+            << "; Performance = " << (flops / (1e9 * duration)) << " Gflop/s\n";
  }
 
  //std::this_thread::sleep_for(std::chrono::microseconds(1000000));

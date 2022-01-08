@@ -168,6 +168,9 @@ CuQuantumExecutor::~CuQuantumExecutor()
   HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(gpu.second.cutn_handle)));
  }
  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
+ std::cout << "#MSG(exatn::cuQuantum): Statistics across all GPU devices:\n";
+ std::cout << " Number of Flops processed: " << flops_ << std::endl;
+ std::cout << "#END_MSG\n";
  gpu_attr_.clear();
 }
 
