@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/08
+REVISION: 2022/01/10
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -35,6 +35,13 @@ using TensorImplTalshFunc = std::function<std::shared_ptr<talsh::Tensor>(const n
 
 struct TensorNetworkReq;
 
+struct ExecutionTimings {
+ float prepare = 0.0;
+ float data_in = 0.0;
+ float data_out = 0.0;
+ float compute = 0.0;
+};
+
 
 class CuQuantumExecutor {
 
@@ -63,12 +70,14 @@ public:
      If wait = TRUE, waits until completion, otherwise just tests the progress.
      Returns the current status of the tensor network execution. **/
  TensorNetworkQueue::ExecStat sync(const TensorOpExecHandle exec_handle, //in: tensor network execution handle
-                                   int * error_code); //out: error code (0:success)
+                                   int * error_code, //out: error code (0:success)
+                                   int64_t * num_slices = nullptr, //out: number of tensor network slices
+                                   ExecutionTimings * timings = nullptr); //out: execution timings (ms)
 
  /** Synchronizes execution of all submitted tensor networks to completion. **/
  void sync();
 
- /** Returns total executed flop count. **/
+ /** Returns the total executed flop count. **/
  double getTotalFlopCount() const {return flops_;}
 
 protected:

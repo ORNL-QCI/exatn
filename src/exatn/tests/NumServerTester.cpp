@@ -3789,9 +3789,9 @@ TEST(NumServerTester, CuTensorNet) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- const int NUM_REPEATS = 3;
+ const int NUM_REPEATS = 10;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
@@ -3808,7 +3808,6 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::initTensor("D",0.0); assert(success);
 
  success = exatn::sync(); assert(success);
- exatn::switchComputationalBackend("default"); //{default|cuquantum}
 
  //Contract tensor network:
  int num_repeats = NUM_REPEATS;
@@ -3822,9 +3821,32 @@ TEST(NumServerTester, CuTensorNet) {
   flops = exatn::getTotalFlopCount() - flops;
   std::cout << "Duration = " << duration << " s; GFlop count = " << flops/1e9
             << "; Performance = " << (flops / (1e9 * duration)) << " Gflop/s\n";
+  double norm = 0.0;
+  success = exatn::computeNorm1Sync("D",norm); assert(success);
+  std::cout << "1-norm of tensor D = " << norm << std::endl;
  }
 
- //std::this_thread::sleep_for(std::chrono::microseconds(1000000));
+#ifdef CUQUANTUM
+ success = exatn::sync(); assert(success);
+ exatn::switchComputationalBackend("cuquantum"); //{default|cuquantum}
+
+ //Contract tensor network:
+ num_repeats = NUM_REPEATS;
+ while(--num_repeats >= 0){
+  std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  auto flops = exatn::getTotalFlopCount();
+  auto time_start = exatn::Timer::timeInSecHR();
+  success = exatn::evaluateTensorNetwork("cuNet","D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)"); assert(success);
+  success = exatn::sync("D",true); assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Duration = " << duration << " s; GFlop count = " << flops/1e9
+            << "; Performance = " << (flops / (1e9 * duration)) << " Gflop/s\n";
+  double norm = 0.0;
+  success = exatn::computeNorm1Sync("D",norm); assert(success);
+  std::cout << "1-norm of tensor D = " << norm << std::endl;
+ }
+#endif
 
  //Destroy tensors:
  success = exatn::sync(); assert(success);
