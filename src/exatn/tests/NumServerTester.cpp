@@ -3796,20 +3796,26 @@ TEST(NumServerTester, CuTensorNet) {
  bool success = true;
 
  //Create tensors:
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{96,64,64,96}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{96,64,64}); assert(success);
- success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{64,96,64}); assert(success);
- success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{96,64,96,64}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{64,64,64}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{64,64,64}); assert(success);
+ success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
+ success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
+ success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
+ success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
 
  //Init tensors:
  success = exatn::initTensorRnd("A"); assert(success);
  success = exatn::initTensorRnd("B"); assert(success);
  success = exatn::initTensorRnd("C"); assert(success);
  success = exatn::initTensor("D",0.0); assert(success);
+ success = exatn::initTensor("E",0.0); assert(success);
+ success = exatn::initTensor("F",0.0); assert(success);
+ success = exatn::initTensor("G",0.0); assert(success);
 
  success = exatn::sync(); assert(success);
 
- //Contract tensor network:
+ std::cout << "Testing individual tensor network execution via default backend ...\n";
  int num_repeats = NUM_REPEATS;
  while(--num_repeats >= 0){
   std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
@@ -3830,7 +3836,7 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::sync(); assert(success);
  exatn::switchComputationalBackend("cuquantum"); //{default|cuquantum}
 
- //Contract tensor network:
+ std::cout << "Testing individual tensor network execution via cuQuantum backend ...\n";
  num_repeats = NUM_REPEATS;
  while(--num_repeats >= 0){
   std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
@@ -3846,10 +3852,47 @@ TEST(NumServerTester, CuTensorNet) {
   success = exatn::computeNorm1Sync("D",norm); assert(success);
   std::cout << "1-norm of tensor D = " << norm << std::endl;
  }
+
+ success = exatn::sync(); assert(success);
+
+ std::cout << "Testing tensor network execution pipelining ...\n";
+ num_repeats = NUM_REPEATS;
+ while(--num_repeats >= 0){
+  auto flops = exatn::getTotalFlopCount();
+  auto time_start = exatn::Timer::timeInSecHR();
+  std::cout << "D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  success = exatn::evaluateTensorNetwork("cuNet","D(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)"); assert(success);
+  std::cout << "E(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  success = exatn::evaluateTensorNetwork("cuNet","E(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)"); assert(success);
+  std::cout << "F(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  success = exatn::evaluateTensorNetwork("cuNet","F(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)"); assert(success);
+  std::cout << "G(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y): ";
+  success = exatn::evaluateTensorNetwork("cuNet","G(m,x,n,y)+=A(m,h,k,n)*B(u,k,h)*C(x,u,y)"); assert(success);
+  success = exatn::sync(); assert(success);
+  auto duration = exatn::Timer::timeInSecHR(time_start);
+  flops = exatn::getTotalFlopCount() - flops;
+  std::cout << "Duration = " << duration << " s; GFlop count = " << flops/1e9
+            << "; Performance = " << (flops / (1e9 * duration)) << " Gflop/s\n";
+  double norm = 0.0;
+  success = exatn::computeNorm1Sync("D",norm); assert(success);
+  std::cout << "1-norm of tensor D = " << norm << std::endl;
+  norm = 0.0;
+  success = exatn::computeNorm1Sync("E",norm); assert(success);
+  std::cout << "1-norm of tensor E = " << norm << std::endl;
+  norm = 0.0;
+  success = exatn::computeNorm1Sync("F",norm); assert(success);
+  std::cout << "1-norm of tensor F = " << norm << std::endl;
+  norm = 0.0;
+  success = exatn::computeNorm1Sync("G",norm); assert(success);
+  std::cout << "1-norm of tensor G = " << norm << std::endl;
+ }
 #endif
 
  //Destroy tensors:
  success = exatn::sync(); assert(success);
+ success = exatn::destroyTensor("G"); assert(success);
+ success = exatn::destroyTensor("F"); assert(success);
+ success = exatn::destroyTensor("E"); assert(success);
  success = exatn::destroyTensor("D"); assert(success);
  success = exatn::destroyTensor("C"); assert(success);
  success = exatn::destroyTensor("B"); assert(success);
