@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/10
+REVISION: 2022/01/11
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -413,6 +413,9 @@ void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
    //Initiate data transfers:
    HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->data_in_start,tn_req->stream));
    for(auto & descr: tn_req->tensor_descriptors){
+    /*std::cout << "#DEBUG(exatn::CuQuantumExecutor): loadTensors: "
+              << descr.second.dst_ptr.back() << " " << descr.second.src_ptr << " "
+              << descr.second.size << std::endl << std::flush; //debug*/
     HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.second.dst_ptr.back(),descr.second.src_ptr,
                                       descr.second.size,cudaMemcpyDefault,tn_req->stream));
    }

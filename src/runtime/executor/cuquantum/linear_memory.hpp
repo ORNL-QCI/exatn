@@ -1,7 +1,7 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: Linear memory allocator
-REVISION: 2022/01/03
+REVISION: 2022/01/11
 
-Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2022 Dmitry I. Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
@@ -53,14 +53,35 @@ public:
 
  void * acquireMemory(std::size_t mem_size) {
   assert(mem_size > 0);
-  mem_size = (mem_size - (mem_size % alignment_)) + alignment_;
-  if(occupiedSize() + mem_size > total_size_) return nullptr;
-  void * mem_ptr = front_;
-  std::size_t left_forward = (total_size_ - reinterpret_cast<std::size_t>(front_));
-  if(left_forward > mem_size){
-   front_ = (void*)((char*)front_ + mem_size);
-  }else{
-   front_ = (void*)((char*)base_ptr_ + (mem_size - left_forward));
+  const auto unaligned = mem_size % alignment_;
+  if(unaligned > 0) mem_size += (alignment_ - unaligned);
+  void * mem_ptr = nullptr;
+  if(occupiedSize() + mem_size <= total_size_){
+   const std::size_t fptr = reinterpret_cast<std::size_t>(front_);
+   const std::size_t bptr = reinterpret_cast<std::size_t>(back_);
+   if(fptr >= bptr){
+    std::size_t left_forward = ((reinterpret_cast<std::size_t>(base_ptr_) + total_size_)
+                                - reinterpret_cast<std::size_t>(front_));
+    if(left_forward >= mem_size){
+     mem_ptr = front_;
+     if(left_forward == mem_size){
+      front_ = base_ptr_;
+     }else{
+      front_ = (void*)((char*)front_ + mem_size);
+     }
+    }else{
+     if((reinterpret_cast<std::size_t>(back_) - reinterpret_cast<std::size_t>(base_ptr_)) >= mem_size){
+      mem_ptr = base_ptr_;
+      front_ = (void*)((char*)base_ptr_ + mem_size);
+     }
+    }
+   }else{
+    std::size_t left_forward = (bptr - fptr);
+    if(left_forward >= mem_size){
+     mem_ptr = front_;
+     front_ = (void*)((char*)front_ + mem_size);
+    }
+   }
   }
   return mem_ptr;
  }
@@ -73,8 +94,9 @@ public:
   return;
  }
 
- void restorePreviousFront(void * front) {
-  front_ = front;
+ void restorePreviousFront(void * front_ptr) {
+  assert(reinterpret_cast<std::size_t>(front_ptr) % alignment_ == 0);
+  front_ = front_ptr;
   return;
  }
 

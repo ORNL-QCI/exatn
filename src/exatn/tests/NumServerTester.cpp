@@ -3791,7 +3791,7 @@ TEST(NumServerTester, CuTensorNet) {
 
  const int NUM_REPEATS = 10;
 
- exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
 
  bool success = true;
 
