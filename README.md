@@ -17,7 +17,7 @@ domain that relies heavily on numerical tensor algebra:
  * Quantum many-body theory in quantum chemistry;
  * Quantum computing simulations;
  * General relativity simulations;
- * Multivariate data analytics;
+ * Multivariate data analytics, tensor completion;
  * Tensor-based neural network algorithms.
 
 
@@ -96,11 +96,12 @@ For detailed class documentation, please see our [API Documentation](https://orn
 
 ## Dependencies
 ```
-Compiler (C++11, optional Fortran-2003 for multi-node execution with ExaTENSOR): GNU 8+, Intel 18+, IBM XL 16.1.1+
-MPI (optional): MPICH 3+ (recommended), OpenMPI 3+
-BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
-CUDA 9+ (optional for NVIDIA GPU)
 CMake 3.9+ (for build)
+Compilers (C++14, Fortran-2003): GNU 8+, Intel 18+, IBM XL 16.1.1+ (not tested)
+MPI (optional): MPICH 3+, OpenMPI 4+
+BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
+CUDA 9+ (optional, NVIDIA GPU only)
+cuTensor/cuQuantum (optional, NVIDIA GPU only)
 ```
 For TaProl Parser Development
 ```
@@ -110,11 +111,11 @@ ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/
 
 ## Linux Build instructions
 ```
-On Ubuntu 16+, for GCC 8+, OpenMPI 3+, and ATLAS BLAS, run the following:
+On Ubuntu, for GCC 8+, OpenMPI 4+, and ATLAS BLAS, run the following:
 ``` bash
 $ add-apt-repository ppa:ubuntu-toolchain-r/test
 $ apt-get update
-$ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev libopenmpi-dev
+$ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev liblapack-dev libopenmpi-dev
 $ python3 -m pip install --upgrade cmake
 ```
 
@@ -134,7 +135,8 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
   For execution on NVIDIA GPU:
   -DENABLE_CUDA=True
    You can adjust the NVIDIA GPU compute capability via setting
-   an environment variable GPU_SM_ARCH, for example GPU_SM_ARCH=70 (Volta).
+   an environment variable GPU_SM_ARCH, for example:
+   export GPU_SM_ARCH=70 (Volta).
   For GPU execution via very recent CUDA versions with the GNU compiler:
   -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
   For multi-node execution via MPI:
@@ -143,27 +145,35 @@ $ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
    also covers its derivatives, for example Spectrum MPI. The MPICH choice
    also covers its derivatives, for example, Cray-MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
+$ make -j install
+$ make rebuild_cache
 $ make install
 ```
 
 Note that simply typing `make` will be insufficient and running `make install` is
 mandatory, which will install all headers and libraries in the ExaTN install directory
 which defaults to ~/.exatn. The install directory is the one to refer to when linking
-your application with ExaTN. If you redefine the install directory via CMAKE_INSTALL_PREFIX,
-note that the install directory must reside outside the ExaTN source directory.
-If you want to link and use ExaTN as part of your application, the helper script
-located inside the ExaTN install directory `bin/exatn-config` can be used to
-retrieve the necessary C++ compiler flags (`bin/exatn-config --cxxflags`),
+your application with ExaTN. If you want to redefine the install directory via
+CMAKE_INSTALL_PREFIX, please note that the install directory must reside outside
+the ExaTN source directory. If you want to link and use ExaTN as part of your application,
+the helper script located inside the ExaTN install directory `bin/exatn-config` can be used
+to retrieve the necessary C++ compiler flags (`bin/exatn-config --cxxflags`),
 C++ include flags (`bin/exatn-config --includes`), and C++ library linking
-flags (`bin/exatn-config --libs`).
+flags (`bin/exatn-config --libs`). The latter sometimes includes corrupted
+references to some libraries, in which case you will need to examine the
+generated string and manually fix it. When linking your application with
+ExaTN, you should also add the generated C++ flags to the linking line.
 
-In order to fully clean the build, you will need to do the following:
+In order to fully clean the build, you will need to do the following
+(from the source root directory of ExaTN):
 ``` bash
-$ cd ../tpls/ExaTensor
-$ make clean
-$ cd ../../build
-$ make clean
 $ rm -r ~/.exatn
+$ cd ./tpls/ExaTensor
+$ make clean
+$ cd ../..
+$ rm -r build
+$ mkdir build && cd build
+$ make -j install
 $ make rebuild_cache
 $ make install
 ```
@@ -174,7 +184,7 @@ cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 
-Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib):
+Example of a typical workstation configuration with default Linux BLAS (e.g. found in /usr/lib):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -193,6 +203,7 @@ cmake ..
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
 Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib) and CUDA:
+export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -200,6 +211,7 @@ cmake ..
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib) and CUDA:
+export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -207,6 +219,7 @@ cmake ..
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
+export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -214,6 +227,7 @@ cmake ..
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 
 Example of an MPI-enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
+export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -222,6 +236,7 @@ cmake ..
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
 Example of an MPI-enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
+export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
@@ -229,29 +244,45 @@ cmake ..
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
+Example of a workstation configuration with OpenBLAS, CUDA and cuQuantum:
+export GPU_SM_ARCH=86
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor
+-DCUQUANTUM=TRUE -DCUQUANTUM_PATH=/usr/local/cuquantum
+
+Example of an MPI-enabled configuration with OpenBLAS, MPI, CUDA and cuQuantum:
+export GPU_SM_ARCH=80
+cmake ..
+-DCMAKE_BUILD_TYPE=Release
+-DEXATN_BUILD_TESTS=TRUE
+-DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor
+-DCUQUANTUM=TRUE -DCUQUANTUM_PATH=/usr/local/cuquantum
+-DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=/usr/local/mpi/openmpi/4.1.2
+
 Example of an MPI-enabled configuration with OpenBLAS and CUDA on Summit:
+export GPU_SM_ARCH=70
 CC=gcc CXX=g++ FC=gfortran cmake ..
 -DCMAKE_INSTALL_PREFIX=<PATH_TO_YOUR_HOME>/.exatn -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=<PATH_TO_YOUR_OPENBLAS>/lib
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++
 -DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=<PATH_TO_YOUR_SPECTRUM_MPI>
 
-On Summit, you can look up the location of libraries by "module show MODULE_NAME".
-```
+On Summit, you can look up the location of libraries by "module show <MODULE_NAME>".
 
+```
 For GPU builds, setting the CUDA_HOST_COMPILER is necessary if your default `g++` is
 not compatible with the CUDA nvcc compiler on your system. For example, CUDA 10 only
 supports up to GCC 7, so if your default `g++` is version 8, then you will need to
 point CMake to a compatible version (for example, g++-7 or lower, but no lower than 5).
 If the build process fails to link testers at the end, make sure that
 the g++ compiler used for linking tester executables is CUDA_HOST_COMPILER.
-
-To link the C++ ExaTN library with your application, use the following command which
-will show which libraries will need to be linked:
-```
-$ ~/.exatn/bin/exatn-config --libs
-```
 
 To use python capabilities after compilation, export the library to your `PYTHONPATH`:
 ```
@@ -269,8 +300,7 @@ Now continue with configuring and building ExaTN
 $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
-$ FC=gfortran-8 CXX=g++-8 cmake ..
-    -DEXATN_BUILD_TESTS=TRUE
+$ FC=gfortran-8 CXX=g++-8 cmake .. -DEXATN_BUILD_TESTS=TRUE
 $ make install
 ```
 
