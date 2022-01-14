@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/08
+REVISION: 2022/01/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -632,6 +632,13 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const bool debugging = false;
  const bool serialize = false;
 
+#ifdef CUQUANTUM
+ if(comp_backend_ == "cuquantum"){
+  auto sh_network = std::shared_ptr<TensorNetwork>(&network,[](TensorNetwork * net_ptr){});
+  return submit(process_group,sh_network);
+ }
+#endif
+
  //Determine parallel execution configuration:
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
@@ -915,13 +922,42 @@ bool NumServer::submit(const ProcessGroup & process_group,
   //assert(network->isValid()); //debug
   unsigned int num_procs = process_group.getSize(); //number of executing processes
   assert(local_rank < num_procs);
+  auto tensor_mapper = getTensorMapper(process_group);
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                             << "]: Submitting tensor network <" << network->getName() << "> (" << network->getTensor(0)->getName()
                             << ":" << getTensorNetworkHash(network) << ") for execution via cuQuantum by " << num_procs
                             << " processes with memory limit " << process_group.getMemoryLimitPerProcess() << " bytes\n" << std::flush;
   if(logging_ > 0) network->printItFile(logfile_);
+  bool success = true;
+
+  //Create the output tensor of the tensor network if needed:
+  auto output_tensor = network->getTensor(0);
+  auto iter = tensors_.find(output_tensor->getName());
+  if(iter == tensors_.end()){ //output tensor does not exist and needs to be created
+   output_tensor->setElementType(network->getTensorElementType());
+   implicit_tensors_.emplace(std::make_pair(output_tensor->getName(),output_tensor)); //list of implicitly created tensors (for garbage collection)
+   if(!(process_group == getDefaultProcessGroup())){
+    auto saved = tensor_comms_.emplace(std::make_pair(output_tensor->getName(),process_group));
+    assert(saved.second);
+   }
+   //Create output tensor:
+   std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+   op0->setTensorOperand(output_tensor);
+   std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->
+    resetTensorElementType(output_tensor->getElementType());
+   success = submit(op0,tensor_mapper); if(!success) return false; //this CREATE operation will also register the output tensor
+  }
+  //Initialize the output tensor to zero:
+  std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+  op1->setTensorOperand(output_tensor);
+  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
+  success = submit(op1,tensor_mapper); if(!success) return false;
+  success = sync(*op1); assert(success);
+
+  //Submit tensor network for execution as a whole:
   const auto exec_handle = tensor_rt_->submit(network,process_group.getMPICommProxy(),num_procs,local_rank);
-  bool success = (exec_handle != 0);
+  success = (exec_handle != 0);
   if(success){
    auto res = tn_exec_handles_.emplace(std::make_pair(network->getTensor(0)->getTensorHash(),exec_handle));
    success = res.second;
