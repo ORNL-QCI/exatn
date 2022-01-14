@@ -18,6 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
+/*
 #define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
@@ -48,10 +49,10 @@
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30
+#define EXATN_TEST30*/
 //#define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
-#define EXATN_TEST33
+//#define EXATN_TEST33
 
 
 #ifdef EXATN_TEST0
@@ -3673,6 +3674,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
 
  //Numerical processing:
  {
+  exatn::switchComputationalBackend("default");
   //Create and initialize tensor network vector tensors:
   if(root) std::cout << "Creating and initializing tensor network vector tensors ... ";
   success = exatn::createTensorsSync(*vec_net0,TENS_ELEM_TYPE); assert(success);

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/13
+REVISION: 2022/01/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -946,14 +946,14 @@ bool NumServer::submit(const ProcessGroup & process_group,
    std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->
     resetTensorElementType(output_tensor->getElementType());
    success = submit(op0,tensor_mapper); if(!success) return false; //this CREATE operation will also register the output tensor
+   //Initialize the output tensor to zero:
+   std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+   op1->setTensorOperand(output_tensor);
+   std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+    resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
+   success = submit(op1,tensor_mapper); if(!success) return false;
+   success = sync(*op1); assert(success);
   }
-  //Initialize the output tensor to zero:
-  std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
-  op1->setTensorOperand(output_tensor);
-  std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
-   resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(0.0)));
-  success = submit(op1,tensor_mapper); if(!success) return false;
-  success = sync(*op1); assert(success);
 
   //Submit tensor network for execution as a whole:
   const auto exec_handle = tensor_rt_->submit(network,process_group.getMPICommProxy(),num_procs,local_rank);

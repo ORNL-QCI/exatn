@@ -27,6 +27,8 @@ def main(argv=None):
                 exatnLibs[i] = '-ldl'
             if e == 'm':
                 exatnLibs[i] = '-lm'
+            if e == 'cutensor':
+                exatnLibs[i] = '-lcutensor'
 
         baseLibs += '@MPI_CXX_LIBRARIES@'.split(';') + exatnLibs
         output += baseLibs
