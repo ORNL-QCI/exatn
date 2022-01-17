@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/01/08
+REVISION: 2022/01/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1151,6 +1151,12 @@ inline void activateFastMath()
 /** Returns the Host memory buffer size in bytes provided by the runtime. **/
 inline std::size_t getMemoryBufferSize()
  {return numericalServer->getMemoryBufferSize();}
+
+
+/** Returns the current memory usage by all allocated tensors.
+    Note that the returned value includes buffer fragmentation overhead. **/
+inline std::size_t getMemoryUsage(std::size_t * free_mem)
+ {return numericalServer->getMemoryUsage(free_mem);}
 
 
 /** Returns the current value of the Flop counter. **/

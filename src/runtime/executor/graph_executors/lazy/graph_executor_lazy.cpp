@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/10
+REVISION: 2022/01/17
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -153,8 +153,11 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             if(logging_.load() != 0){
               logfile_ << "Success [" << std::fixed << std::setprecision(6)
                        << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl;
+              std::size_t free_mem = 0;
+              std::size_t used_mem = this->node_executor_->getMemoryUsage(&free_mem);
               logfile_ << "[" << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]"
-                       << " Total Flop count = " << getTotalFlopCount() << std::endl;
+                       << " Total Flop count = " << getTotalFlopCount()
+                       << "; Memory usage = " << used_mem << ", Free = " << free_mem << std::endl;
 #ifdef DEBUG
               logfile_.flush();
 #endif
@@ -222,8 +225,11 @@ void LazyGraphExecutor::execute(TensorGraph & dag) {
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Synced tensor operation "
                      << node << ": Opcode = " << static_cast<int>(op->getOpcode()) << std::endl;
+            std::size_t free_mem = 0;
+            std::size_t used_mem = this->node_executor_->getMemoryUsage(&free_mem);
             logfile_ << "[" << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]"
-                       << " Total Flop count = " << getTotalFlopCount() << std::endl;
+                     << " Total Flop count = " << getTotalFlopCount()
+                     << "; Memory usage = " << used_mem << ", Free = " << free_mem << std::endl;
 #ifdef DEBUG
             logfile_.flush();
 #endif

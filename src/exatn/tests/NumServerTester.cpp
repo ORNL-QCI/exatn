@@ -18,10 +18,10 @@
 #include "errors.hpp"
 
 //Test activation:
-/*
+
 #define EXATN_TEST0
 #define EXATN_TEST1
-#define EXATN_TEST2
+/*#define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
 #define EXATN_TEST5
@@ -40,19 +40,19 @@
 #define EXATN_TEST18
 #define EXATN_TEST19
 #define EXATN_TEST20
-#define EXATN_TEST21
+#define EXATN_TEST21*/
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-//#define EXATN_TEST27 //requires input file from source
-//#define EXATN_TEST28 //requires input file from source
+#define EXATN_TEST27 //requires input file from source
+#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30*/
-//#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST30
+#define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
-//#define EXATN_TEST33
+#define EXATN_TEST33
 
 
 #ifdef EXATN_TEST0
@@ -70,7 +70,7 @@ TEST(NumServerTester, PerformanceExaTN)
                                     //3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  //exatn::resetExecutionSerialization(true,true); //debug
 
@@ -273,7 +273,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Synchronize ExaTN server:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -386,7 +386,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  //Synchronize ExaTN server:
  success = exatn::sync(all_processes); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -476,7 +476,7 @@ TEST(NumServerTester, ParallelExaTN)
 
  //All processes: Synchronize ExaTN server:
  success = exatn::sync(all_processes); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -1554,7 +1554,7 @@ TEST(NumServerTester, IsingTNO)
 
  bool success = true;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  //Define Ising Hamiltonian constants:
  constexpr std::complex<double> ZERO{ 0.0, 0.0};
@@ -1765,7 +1765,7 @@ TEST(NumServerTester, IsingTNO)
   //Synchronize:
   success = exatn::sync(); assert(success);
  }
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -1930,7 +1930,7 @@ TEST(NumServerTester, testGarbage) {
  using exatn::TensorNetwork;
  using exatn::TensorElementType;
 
- //exatn::resetLoggingLevel(2,2); // debug
+ //exatn::resetLoggingLevel(1,2); // debug
 
  // Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero{
@@ -2069,7 +2069,7 @@ TEST(NumServerTester, testHyper) {
  const auto ltens_val = std::complex<double>{0.001,-0.0001};
  const auto rtens_val = std::complex<double>{0.002,-0.0002};
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2325,7 +2325,7 @@ TEST(NumServerTester, neurIPS) {
  //Synchronize:
  success = exatn::sync(); assert(success);
  exatn::deactivateContrSeqCaching();
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2340,7 +2340,7 @@ TEST(NumServerTester, MPSNorm) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2404,7 +2404,7 @@ TEST(NumServerTester, MPSNorm) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2423,7 +2423,7 @@ TEST(NumServerTester, UserDefinedMethod) {
  const unsigned int num_virtuals = 36;
  const unsigned int num_total = num_occupied + num_virtuals;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2497,7 +2497,7 @@ TEST(NumServerTester, UserDefinedMethod) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2512,7 +2512,7 @@ TEST(NumServerTester, PrintTensors) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2545,7 +2545,7 @@ TEST(NumServerTester, PrintTensors) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2560,7 +2560,7 @@ TEST(NumServerTester, CollapseTensors) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2599,7 +2599,7 @@ TEST(NumServerTester, CollapseTensors) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2615,7 +2615,7 @@ TEST(NumServerTester, Reconstructor) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -2683,7 +2683,7 @@ TEST(NumServerTester, Reconstructor) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2700,7 +2700,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
  double g_factor = 1e-1; // >0.0, 1e0 is critical state
@@ -2824,7 +2824,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2841,7 +2841,7 @@ TEST(NumServerTester, OptimizerHubbard) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3000,7 +3000,7 @@ TEST(NumServerTester, OptimizerHubbard) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3023,7 +3023,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const int max_layers = (num_sites - 1); //1 less CNOT gates
  bool EVALUATE_FULL_TENSOR = false;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3142,7 +3142,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3160,7 +3160,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3258,7 +3258,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3276,7 +3276,7 @@ TEST(NumServerTester, MCVQEHamiltonian) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3342,7 +3342,7 @@ TEST(NumServerTester, MCVQEHamiltonian) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3360,7 +3360,7 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3387,7 +3387,7 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3609,7 +3609,7 @@ TEST(NumServerTester, SpinHamiltonians) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3771,7 +3771,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3791,7 +3791,7 @@ TEST(NumServerTester, CuTensorNet) {
 
  const int NUM_REPEATS = 10;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -3900,7 +3900,7 @@ TEST(NumServerTester, CuTensorNet) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3918,7 +3918,7 @@ TEST(NumServerTester, TensorComposite) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  bool success = true;
 
@@ -4023,7 +4023,7 @@ TEST(NumServerTester, TensorComposite) {
 
  //Synchronize:
  success = exatn::sync(); assert(success);
- exatn::resetLoggingLevel(0,0);
+ //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif

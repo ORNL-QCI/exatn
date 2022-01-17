@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/01/07
+REVISION: 2022/01/17
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -103,6 +103,10 @@ public:
 
   /** Returns the Host memory buffer size in bytes provided by the executor. **/
   std::size_t getMemoryBufferSize() const;
+
+  /** Returns the current memory usage by all allocated tensors.
+      Note that the returned value includes buffer fragmentation overhead. **/
+  std::size_t getMemoryUsage(std::size_t * free_mem) const;
 
   /** Returns the current value of the total Flop count executed by the executor. **/
   double getTotalFlopCount() const;

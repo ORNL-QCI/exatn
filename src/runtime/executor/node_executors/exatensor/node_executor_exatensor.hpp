@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2021/12/30
+REVISION: 2022/01/17
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
 
@@ -38,6 +38,8 @@ public:
   void activateFastMath() override;
 
   std::size_t getMemoryBufferSize() const override;
+
+  std::size_t getMemoryUsage(std::size_t * free_mem) const override;
 
   double getTotalFlopCount() const override;
 

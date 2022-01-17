@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/14
+REVISION: 2022/01/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -307,6 +307,12 @@ std::size_t NumServer::getMemoryBufferSize() const
 {
  while(!tensor_rt_);
  return tensor_rt_->getMemoryBufferSize();
+}
+
+std::size_t NumServer::getMemoryUsage(std::size_t * free_mem) const
+{
+ while(!tensor_rt_);
+ return tensor_rt_->getMemoryUsage(free_mem);
 }
 
 double NumServer::getTotalFlopCount() const

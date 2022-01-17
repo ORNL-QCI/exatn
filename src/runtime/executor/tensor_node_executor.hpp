@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2021/12/30
+REVISION: 2022/01/17
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 
 Rationale:
  (a) Tensor node executor provides actual implementation of registered
@@ -57,6 +57,10 @@ public:
 
   /** Returns the Host memory buffer size in bytes provided by the node executor. **/
   virtual std::size_t getMemoryBufferSize() const = 0;
+
+  /** Returns the current memory usage by all allocated tensors.
+      Note that the returned value includes buffer fragmentation overhead. **/
+  virtual std::size_t getMemoryUsage(std::size_t * free_mem) const = 0;
 
   /** Returns the current value of the total Flop count executed by the node executor. **/
   virtual double getTotalFlopCount() const = 0;

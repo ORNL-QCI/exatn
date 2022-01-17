@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Talsh
-REVISION: 2021/12/30
+REVISION: 2022/01/17
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_talsh.hpp"
@@ -100,9 +100,21 @@ void TalshNodeExecutor::activateFastMath()
 std::size_t TalshNodeExecutor::getMemoryBufferSize() const
 {
  while(!(talsh_initialized_.load()));
- std::size_t buf_size = 0;
+ std::size_t buf_size = talsh_host_mem_buffer_size_.load();
  while(buf_size == 0) buf_size = talsh_host_mem_buffer_size_.load();
  return buf_size;
+}
+
+
+std::size_t TalshNodeExecutor::getMemoryUsage(std::size_t * free_mem) const
+{
+ while(!(talsh_initialized_.load()));
+ std::size_t total_size = talsh_host_mem_buffer_size_.load();
+ while(total_size == 0) total_size = talsh_host_mem_buffer_size_.load();
+ assert(free_mem != nullptr);
+ *free_mem = talshDeviceBufferFreeSize(0,DEV_HOST);
+ std::size_t used_size = total_size - (*free_mem);
+ return used_size;
 }
 
 

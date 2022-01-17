@@ -1,8 +1,8 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor: Exatensor
-REVISION: 2021/12/24
+REVISION: 2022/01/17
 
-Copyright (C) 2018-2021 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
 **/
 
 #include "node_executor_exatensor.hpp"
@@ -37,6 +37,14 @@ std::size_t ExatensorNodeExecutor::getMemoryBufferSize() const
  std::size_t buf_size = 0;
  while(buf_size == 0) buf_size = exatensor_host_mem_buffer_size_.load();
  return buf_size;
+}
+
+
+std::size_t ExatensorNodeExecutor::getMemoryUsage(std::size_t * free_mem) const
+{
+ //`Implement
+ *free_mem = 0;
+ return 0;
 }
 
 
