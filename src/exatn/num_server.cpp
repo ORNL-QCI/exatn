@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/17
+REVISION: 2022/01/25
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1186,19 +1186,19 @@ bool NumServer::sync(const ProcessGroup & process_group, TensorNetwork & network
  return sync(process_group,*(network.getTensor(0)),wait); //synchronization on the output tensor of the tensor network
 }
 
-bool NumServer::sync(bool wait)
+bool NumServer::sync(bool wait, bool clean_garbage)
 {
- bool success = sync(getCurrentProcessGroup(),wait);
+ bool success = sync(getCurrentProcessGroup(),wait,clean_garbage);
 #ifdef CUQUANTUM
  if(comp_backend_ == "cuquantum" && success) tn_exec_handles_.clear();
 #endif
  return success;
 }
 
-bool NumServer::sync(const ProcessGroup & process_group, bool wait)
+bool NumServer::sync(const ProcessGroup & process_group, bool wait, bool clean_garbage)
 {
  if(!process_group.rankIsIn(process_rank_)) return true; //process is not in the group: Do nothing
- destroyOrphanedTensors(); //garbage collection
+ destroyOrphanedTensors(clean_garbage); //garbage collection
  auto success = tensor_rt_->sync(wait);
  if(success){
   if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
@@ -1623,6 +1623,26 @@ bool NumServer::destroyTensorsSync(TensorNetwork & tensor_network)
   auto tensor = tens->second.getTensor();
   const auto & tens_name = tensor->getName();
   if(tensorAllocated(tens_name)) success = destroyTensorSync(tens_name);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::destroyTensors()
+{
+ bool success = true;
+ while(!tensors_.empty()){
+  success = destroyTensor(tensors_.begin()->first);
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::destroyTensorsSync()
+{
+ bool success = true;
+ while(!tensors_.empty()){
+  success = destroyTensorSync(tensors_.begin()->first);
   if(!success) break;
  }
  return success;
@@ -3502,17 +3522,21 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & nam
  return getLocalTensor(iter->second);
 }
 
-void NumServer::destroyOrphanedTensors()
+void NumServer::destroyOrphanedTensors(bool force)
 {
- //std::cout << "#DEBUG(exatn::NumServer): Destroying orphaned tensors ... "; //debug
+ //std::cout << "#DEBUG(exatn::NumServer): Destroying orphaned tensors:\n" << std::flush; //debug
  auto iter = implicit_tensors_.begin();
  while(iter != implicit_tensors_.end()){
   int ref_count = 1;
   auto tens = tensors_.find(iter->first);
   if(tens != tensors_.end()) ++ref_count;
-  if(iter->second.use_count() <= ref_count){
+  auto sh_use_count = iter->second.use_count();
+  //std::cout << "#DEBUG(exatn::NumServer::destroyOrphanedTensors): Orphan candidate found: ExaTN ref count "
+  //          << ref_count << " VS shared_ptr use count " << sh_use_count << ": "
+  //          << iter->first << std::endl << std::flush; //debug
+  if(force || sh_use_count <= ref_count){
    //std::cout << "#DEBUG(exatn::NumServer::destroyOrphanedTensors): Orphan found with ref count "
-   //          << ref_count << ": " << iter->first << std::endl; //debug
+   //          << ref_count << ": " << iter->first << std::endl << std::flush; //debug
    auto tensor_mapper = getTensorMapper(getTensorProcessGroup(iter->first));
    std::shared_ptr<TensorOperation> destroy_op = tensor_op_factory_->createTensorOp(TensorOpCode::DESTROY);
    destroy_op->setTensorOperand(iter->second);
@@ -3524,6 +3548,16 @@ void NumServer::destroyOrphanedTensors()
   }
  }
  //std::cout << "Done\n" << std::flush; //debug
+ return;
+}
+
+void NumServer::printAllocatedTensors() const
+{
+ std::cout << "#DEBUG(exatn::NumServer::printAllocatedTensors):" << std::endl;
+ for(const auto & tens: tensors_){
+  std::cout << tens.first << ": Reference count = " << tens.second.use_count() << std::endl;
+ }
+ std::cout << "#END" << std::endl << std::flush;
  return;
 }
 

@@ -40,7 +40,7 @@
 #define EXATN_TEST18
 #define EXATN_TEST19
 #define EXATN_TEST20
-#define EXATN_TEST21*/
+#define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
@@ -48,7 +48,7 @@
 #define EXATN_TEST26
 #define EXATN_TEST27 //requires input file from source
 #define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29
+#define EXATN_TEST29*/
 #define EXATN_TEST30
 #define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
@@ -70,11 +70,15 @@ TEST(NumServerTester, PerformanceExaTN)
                                     //3072 for Maxwell, 4096 for Pascal and Volta
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- exatn::resetLoggingLevel(1,2); //debug
-
+ //exatn::resetLoggingLevel(1,2); //debug
  //exatn::resetExecutionSerialization(true,true); //debug
-
  //exatn::activateFastMath(); //fast math (mixed-precision)
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -272,7 +276,7 @@ TEST(NumServerTester, PerformanceExaTN)
  success = exatn::destroyTensor("D"); assert(success);
 
  //Synchronize ExaTN server:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
 }
 #endif
@@ -293,6 +297,12 @@ TEST(NumServerTester, ExamplarExaTN)
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -385,7 +395,7 @@ TEST(NumServerTester, ExamplarExaTN)
  z2.reset();
 
  //Synchronize ExaTN server:
- success = exatn::sync(all_processes); assert(success);
+ success = exatn::syncClean(all_processes); assert(success);
  //exatn::resetLoggingLevel(0,0);
 }
 #endif
@@ -402,6 +412,12 @@ TEST(NumServerTester, ParallelExaTN)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -475,7 +491,7 @@ TEST(NumServerTester, ParallelExaTN)
  z0.reset();
 
  //All processes: Synchronize ExaTN server:
- success = exatn::sync(all_processes); assert(success);
+ success = exatn::syncClean(all_processes); assert(success);
  //exatn::resetLoggingLevel(0,0);
 }
 #endif
@@ -488,6 +504,12 @@ TEST(NumServerTester, superEasyNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Example of tensor network processing:
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -543,6 +565,7 @@ TEST(NumServerTester, superEasyNumServer)
  destroyed = exatn::destroyTensor("T1"); assert(destroyed);
  destroyed = exatn::destroyTensor("T0"); assert(destroyed);
  destroyed = exatn::destroyTensor("Z0"); assert(destroyed);
+ synced = exatn::syncClean(); assert(synced);
  //Grab a beer!
 }
 #endif
@@ -556,6 +579,12 @@ TEST(NumServerTester, circuitNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Quantum Circuit:
  //Q0----H---------
@@ -644,7 +673,7 @@ TEST(NumServerTester, circuitNumServer)
  destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
 
  //Synchronize:
- exatn::sync();
+ auto success = exatn::syncClean(); assert(success);
  //Grab a beer!
 }
 #endif
@@ -658,6 +687,12 @@ TEST(NumServerTester, circuitConjugateNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero {
@@ -725,7 +760,7 @@ TEST(NumServerTester, circuitConjugateNumServer)
  destroyed = exatn::destroyTensor("Q0"); assert(destroyed);
 
  //Synchronize:
- exatn::sync();
+ auto success = exatn::syncClean(); assert(success);
  //Grab a coffee!
 }
 #endif
@@ -739,6 +774,12 @@ TEST(NumServerTester, largeCircuitNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Quantum Circuit:
  //Q00---H-----
@@ -870,7 +911,7 @@ TEST(NumServerTester, largeCircuitNumServer)
  }
 
  //Synchronize:
- exatn::sync();
+ auto success = exatn::syncClean(); assert(success);
  //Grab a coffee!
 }
 #endif
@@ -884,6 +925,12 @@ TEST(NumServerTester, Sycamore8NumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 172; //total number of gates is 172
@@ -1011,6 +1058,12 @@ TEST(NumServerTester, Sycamore12NumServer)
 
  //exatn::resetLoggingLevel(1,2); //debug
 
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
+
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 258; //total number of gates is 258
  std::vector<std::pair<unsigned int, unsigned int>> sycamore_12_cnot
@@ -1127,6 +1180,12 @@ TEST(NumServerTester, rcsNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Configuration:
  const int NB_QUBITS = 52;
@@ -1299,7 +1358,7 @@ TEST(NumServerTester, rcsNumServer)
   assert(destroyed);
  }
  //Synchronize:
- exatn::sync();
+ auto success = exatn::syncClean(); assert(success);
  //Grab a coffee!
 }
 #endif
@@ -1316,6 +1375,12 @@ TEST(NumServerTester, BigMPSNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  const int nbQubits = 32;
  const std::vector<int> qubitTensorDim(nbQubits, 2);
@@ -1374,7 +1439,15 @@ TEST(NumServerTester, BigMPSNumServer)
  success = exatn::evaluateSync(ket);
  assert(success);
  std::cout << "Done\n" << std::flush;
- exatn::sync();
+
+ std::cout << "Destroying MPS tensors ... " << std::flush;
+ for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
+  auto tensor = iter->second.getTensor();
+  success = exatn::destroyTensor(tensor->getName()); assert(success);
+ }
+ std::cout << "Done\n" << std::flush;
+
+ success = exatn::syncClean(); assert(success);
 }
 #endif
 
@@ -1390,6 +1463,13 @@ TEST(NumServerTester, HamiltonianNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
+ assert(used_mem == 0);
 
  //Declare MPS tensors:
  auto q0 = std::make_shared<Tensor>("Q0",TensorShape{2,2});
@@ -1528,7 +1608,7 @@ TEST(NumServerTester, HamiltonianNumServer)
   destroyed = exatn::destroyTensorSync("Q0"); assert(destroyed);
 
   //Synchronize:
-  exatn::sync();
+  auto success = exatn::syncClean(); assert(success);
  }
  //Grab a beer!
 }
@@ -1552,9 +1632,15 @@ TEST(NumServerTester, IsingTNO)
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
 
- bool success = true;
-
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
+
+ bool success = true;
 
  //Define Ising Hamiltonian constants:
  constexpr std::complex<double> ZERO{ 0.0, 0.0};
@@ -1751,6 +1837,9 @@ TEST(NumServerTester, IsingTNO)
 
   //Destroy all tensors:
   success = exatn::sync(); assert(success);
+  for(auto net = ham_expansion->begin(); net != ham_expansion->end(); ++net){
+   success = exatn::destroyTensorsSync(*(net->network)); assert(success);
+  }
   success = exatn::destroyTensorsSync(*ham_net); assert(success);
   success = exatn::destroyTensorsSync(*rhs_net); assert(success);
   success = exatn::destroyTensorsSync(*vec_net); assert(success);
@@ -1763,7 +1852,7 @@ TEST(NumServerTester, IsingTNO)
   success = exatn::destroyTensorSync("T01"); assert(success);
 
   //Synchronize:
-  success = exatn::sync(); assert(success);
+  success = exatn::syncClean(); assert(success);
  }
  //exatn::resetLoggingLevel(0,0);
 }
@@ -1781,6 +1870,13 @@ TEST(NumServerTester, MPSBuilderNumServer)
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
+ assert(used_mem == 0);
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
@@ -1805,10 +1901,9 @@ TEST(NumServerTester, MPSBuilderNumServer)
    assert(success);
   }
  }
- success = exatn::evaluateSync(*tensorNetwork);
- assert(success);
- exatn::sync();
-
+ success = exatn::evaluateSync(*tensorNetwork); assert(success);
+ success = exatn::destroyTensorsSync(*tensorNetwork); assert(success);
+ success = exatn::syncClean(); assert(success);
 }
 #endif
 
@@ -1822,6 +1917,12 @@ TEST(NumServerTester, TestSVD)
  using exatn::TensorOperator;
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -1844,7 +1945,7 @@ TEST(NumServerTester, TestSVD)
  success = exatn::destroyTensor("L"); assert(success);
  success = exatn::destroyTensor("D"); assert(success);
 
- exatn::sync();
+ success = exatn::syncClean(); assert(success);
 }
 #endif
 
@@ -1858,6 +1959,12 @@ TEST(NumServerTester, ParserExaTN)
  using exatn::TensorOperator;
  using exatn::TensorExpansion;
  using exatn::TensorElementType;
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  //Register a user-defined tensor method (simply performs random initialization):
  exatn::registerTensorMethod("ComputeTwoBodyHamiltonian",
@@ -1920,6 +2027,7 @@ TEST(NumServerTester, ParserExaTN)
  exatn::destroyTensor("T2");
  exatn::destroyTensor("H2");
  exatn::closeScope();
+ exatn::syncClean();
 }
 #endif
 
@@ -1931,6 +2039,12 @@ TEST(NumServerTester, testGarbage) {
  using exatn::TensorElementType;
 
  //exatn::resetLoggingLevel(1,2); // debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  // Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero{
@@ -2051,7 +2165,7 @@ TEST(NumServerTester, testGarbage) {
  }
 
  // Synchronize:
- exatn::sync();
+ exatn::syncClean();
  // Grab a beer!
 }
 #endif
@@ -2070,6 +2184,12 @@ TEST(NumServerTester, testHyper) {
  const auto rtens_val = std::complex<double>{0.002,-0.0002};
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2134,7 +2254,7 @@ TEST(NumServerTester, testHyper) {
   success = exatn::destroyTensor("D"); assert(success);
 
   //Synchronize:
-  success = exatn::sync(); assert(success);
+  success = exatn::syncClean(); assert(success);
  }
  //Grab a beer!
 }
@@ -2154,6 +2274,12 @@ TEST(NumServerTester, neurIPS) {
  //exatn::resetLoggingLevel(1,2); //debug
  exatn::activateContrSeqCaching(true);
  //exatn::activateFastMath();
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -2323,7 +2449,7 @@ TEST(NumServerTester, neurIPS) {
  }
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  exatn::deactivateContrSeqCaching();
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
@@ -2341,6 +2467,12 @@ TEST(NumServerTester, MPSNorm) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2403,7 +2535,7 @@ TEST(NumServerTester, MPSNorm) {
  std::cout << "Done" << std::endl << std::flush;
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2424,6 +2556,12 @@ TEST(NumServerTester, UserDefinedMethod) {
  const unsigned int num_total = num_occupied + num_virtuals;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2496,7 +2634,7 @@ TEST(NumServerTester, UserDefinedMethod) {
  success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2513,6 +2651,12 @@ TEST(NumServerTester, PrintTensors) {
  const auto TENS_ELEM_TYPE = TensorElementType::REAL64;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2544,7 +2688,7 @@ TEST(NumServerTester, PrintTensors) {
  success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2561,6 +2705,12 @@ TEST(NumServerTester, CollapseTensors) {
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2598,7 +2748,7 @@ TEST(NumServerTester, CollapseTensors) {
  uninet.printIt();
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2615,7 +2765,13 @@ TEST(NumServerTester, Reconstructor) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(2,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2660,11 +2816,12 @@ TEST(NumServerTester, Reconstructor) {
  //success = exatn::balanceNorm2Sync(*approximant,1.0,true); assert(success);
 
  //Construct the reconstructor (solver):
- exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor::resetDebugLevel(0); //debug
  exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-5);
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
+ reconstructor.resetMaxIterations(1); //debug
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
@@ -2672,7 +2829,7 @@ TEST(NumServerTester, Reconstructor) {
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
             << "; Fidelity = " << fidelity << std::endl;
  }else{
-  std::cout << "Reconstruction failed!" << std::endl; assert(false);
+  std::cout << "Reconstruction failed!" << std::endl;
  }
 
  //Destroy tensors:
@@ -2682,7 +2839,7 @@ TEST(NumServerTester, Reconstructor) {
  success = exatn::destroyTensor("T"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2701,6 +2858,12 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
  double g_factor = 1e-1; // >0.0, 1e0 is critical state
@@ -2823,7 +2986,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
  success = exatn::destroyTensor("PauliX"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -2842,6 +3005,12 @@ TEST(NumServerTester, OptimizerHubbard) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -2999,7 +3168,7 @@ TEST(NumServerTester, OptimizerHubbard) {
  success = exatn::destroyTensor("PauliX"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3024,6 +3193,12 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  bool EVALUATE_FULL_TENSOR = false;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -3141,7 +3316,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  success = exatn::destroyTensors(*circuit_net); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3161,6 +3336,12 @@ TEST(NumServerTester, HubbardHamiltonian) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -3255,9 +3436,12 @@ TEST(NumServerTester, HubbardHamiltonian) {
  //Destroy tensors:
  success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);
+ for(auto iter = hubbard_operator->begin(); iter != hubbard_operator->end(); ++iter){
+  success = exatn::destroyTensorsSync(*(iter->network)); assert(success);
+ }
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3277,6 +3461,13 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -3339,9 +3530,12 @@ TEST(NumServerTester, MCVQEHamiltonian) {
 
  //Destroy tensors:
  success = exatn::destroyTensorsSync(*ansatz_net); assert(success);
+ for(auto iter = hamiltonian_operator->begin(); iter != hamiltonian_operator->end(); ++iter){
+  success = exatn::destroyTensorsSync(*(iter->network)); assert(success);
+ }
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3361,6 +3555,13 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -3386,7 +3587,7 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
  ham_net->printIt(); //debug
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3419,7 +3620,13 @@ TEST(NumServerTester, SpinHamiltonians) {
  const unsigned int num_states = 8;
  const double accuracy = 1e-4;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(2,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -3608,7 +3815,8 @@ TEST(NumServerTester, SpinHamiltonians) {
  }
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::destroyTensorsSync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3640,6 +3848,12 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const double accuracy = 1e-4;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -3770,7 +3984,8 @@ TEST(NumServerTester, ExcitedMCVQE) {
  }
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::destroyTensorsSync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3792,6 +4007,12 @@ TEST(NumServerTester, CuTensorNet) {
  const int NUM_REPEATS = 10;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -3899,7 +4120,7 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -3919,6 +4140,12 @@ TEST(NumServerTester, TensorComposite) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
 
  bool success = true;
 
@@ -4017,12 +4244,13 @@ TEST(NumServerTester, TensorComposite) {
 #endif
  //Destroy composite tensors:
  success = exatn::sync(); assert(success);
- //success = exatn::destroyTensorSync("C"); assert(success); //let the garbage collector do it
- //success = exatn::destroyTensorSync("B"); assert(success); //let the garbage collector do it
- success = exatn::destroyTensorSync("A"); assert(success); //destroy explicitly
+ success = exatn::destroyTensorSync("C"); assert(success);
+ success = exatn::destroyTensorSync("B"); assert(success);
+ success = exatn::destroyTensorSync("A"); assert(success);
 
  //Synchronize:
- success = exatn::sync(); assert(success);
+ success = exatn::destroyTensorsSync(); assert(success);
+ success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
@@ -4046,6 +4274,13 @@ int main(int argc, char **argv) {
 
   ::testing::InitGoogleTest(&argc, argv);
   auto ret = RUN_ALL_TESTS();
+
+  bool success = exatn::syncClean(); assert(success);
+  std::size_t free_mem = 0;
+  std::size_t used_mem = exatn::getMemoryUsage(&free_mem);
+  std::cout << "Global backend tensor memory usage on exit = "
+            << used_mem << std::endl << std::flush;
+  assert(used_mem == 0);
 
   exatn::finalize();
 #ifdef MPI_ENABLED

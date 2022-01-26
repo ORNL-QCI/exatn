@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/17
+REVISION: 2022/01/25
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -446,9 +446,11 @@ public:
  /** Synchronizes execution of all outstanding tensor operations.
      Changing wait to FALSE, only tests for completion.
      If ProcessGroup is not provided, defaults to the local process. **/
- bool sync(bool wait = true);
+ bool sync(bool wait = true,
+           bool clean_garbage = false);
  bool sync(const ProcessGroup & process_group,
-           bool wait = true);
+           bool wait = true,
+           bool clean_garbage = false);
 
  /** HIGHER-LEVEL WRAPPERS **/
 
@@ -627,6 +629,11 @@ public:
  bool destroyTensors(TensorNetwork & tensor_network);     //inout: tensor network
 
  bool destroyTensorsSync(TensorNetwork & tensor_network); //inout: tensor network
+
+ /** Destroys all currently allocated tensors. **/
+ bool destroyTensors();
+
+ bool destroyTensorsSync();
 
  /** Initializes a tensor to some scalar value. **/
  template<typename NumericType>
@@ -1020,7 +1027,10 @@ public:
 
  inline double getTimeStampStart() const {return time_start_;}
 
- /** DEBUG: Prints all currently existing tensors created implicitly. **/
+ /** DEBUG: Prints all currently existing (allocated) tensors. **/
+ void printAllocatedTensors() const;
+
+ /** DEBUG: Prints all currently existing (allocated) tensors created implicitly. **/
  void printImplicitTensors() const;
 
 protected:
@@ -1034,8 +1044,9 @@ protected:
  bool sync(TensorOperation & operation, //in: previously submitted tensor operation
            bool wait = true);
 
- /** Destroys orphaned tensors (garbage collection). **/
- void destroyOrphanedTensors();
+ /** Destroys orphaned tensors (garbage collection). Setting <force> to TRUE
+     will force destruction regardless of the use count. **/
+ void destroyOrphanedTensors(bool force = false);
 
 private:
 

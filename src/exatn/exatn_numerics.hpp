@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/01/17
+REVISION: 2022/01/25
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -416,6 +416,13 @@ inline bool destroyTensors(TensorNetwork & tensor_network)     //inout: tensor n
 
 inline bool destroyTensorsSync(TensorNetwork & tensor_network) //inout: tensor network
  {return numericalServer->destroyTensorsSync(tensor_network);}
+
+/** Destroys all currently allocated tensors. **/
+inline bool destroyTensors()
+ {return numericalServer->destroyTensors();}
+
+inline bool destroyTensorsSync()
+ {return numericalServer->destroyTensorsSync();}
 
 
 /** Initializes a tensor to some scalar value. **/
@@ -901,12 +908,20 @@ inline bool sync(const ProcessGroup & process_group, //in: chosen group of MPI p
 
 /** Synchronizes all outstanding tensor operations in the current scope (barrier).
     If ProcessGroup is not provided, defaults to the local process. **/
-inline bool sync(bool wait = true)                    //in: wait versus test for completion
- {return numericalServer->sync(wait);}
+inline bool sync(bool wait = true,                    //in: wait versus test for completion
+                 bool clean_garbage = false)          //in: activates garbage collection
+ {return numericalServer->sync(wait,clean_garbage);}
 
 inline bool sync(const ProcessGroup & process_group,  //in: chosen group of MPI processes
-                 bool wait = true)                    //in: wait versus test for completion
- {return numericalServer->sync(process_group,wait);}
+                 bool wait = true,                    //in: wait versus test for completion
+                 bool clean_garbage = false)          //in: activates garbage collection
+ {return numericalServer->sync(process_group,wait,clean_garbage);}
+
+inline bool syncClean()
+ {return numericalServer->sync(true,true);}
+
+inline bool syncClean(const ProcessGroup & process_group)
+ {return numericalServer->sync(process_group,true,true);}
 
 
 /** Normalizes a tensor to a given 2-norm. **/
