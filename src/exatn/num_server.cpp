@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/25
+REVISION: 2022/01/26
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -518,6 +518,9 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
     std::cout << "#ERROR(exatn::NumServer::submitOp): Attempt to CREATE an already existing tensor "
               << tensor->getName() << std::endl << std::flush;
     submitted = false;
+   //}else{ //debug
+    //const auto & tens_name = tensor->getName();
+    //std::cout << "#DEBUG(exatn::NumServer::submitOp): Created tensor " << tens_name << std::endl << std::flush;
    }
   }else if(operation->getOpcode() == TensorOpCode::DESTROY){
    auto tensor = operation->getTensorOperand(0);
@@ -526,6 +529,9 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
     std::cout << "#ERROR(exatn::NumServer::submitOp): Attempt to DESTROY a non-existing tensor "
               << tensor->getName() << std::endl << std::flush;
     submitted = false;
+   //}else{ //debug
+    //const auto & tens_name = tensor->getName();
+    //std::cout << "#DEBUG(exatn::NumServer::submitOp): Destroyed tensor " << tens_name << std::endl << std::flush;
    }
   }
   //Submit tensor operation to tensor runtime:
@@ -1632,7 +1638,8 @@ bool NumServer::destroyTensors()
 {
  bool success = true;
  while(!tensors_.empty()){
-  success = destroyTensor(tensors_.begin()->first);
+  const auto tens_name = tensors_.begin()->first;
+  success = destroyTensor(tens_name);
   if(!success) break;
  }
  return success;
@@ -1642,7 +1649,8 @@ bool NumServer::destroyTensorsSync()
 {
  bool success = true;
  while(!tensors_.empty()){
-  success = destroyTensorSync(tensors_.begin()->first);
+  const auto tens_name = tensors_.begin()->first;
+  success = destroyTensorSync(tens_name);
   if(!success) break;
  }
  return success;

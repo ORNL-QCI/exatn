@@ -673,6 +673,7 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
  }
 
  //std::cout << "#DEBUG(exatn::runtime::node_executor_talsh): Tensor contraction " << op.getIndexPattern() << std::endl; //debug
+ //const auto host_buf_free_mem = talshDeviceBufferFreeSize(0,DEV_HOST); //debug
  auto error_code = tens0.contractAccumulate((task_res.first)->second.get(),
                                             op.getIndexPatternReduced(),
                                             tens1,tens2,
@@ -720,6 +721,11 @@ int TalshNodeExecutor::execute(numerics::TensorOpContract & op,
   double flop_count = talsh_submitted_flops_.load() + op.getFlopEstimate() * tensorElementTypeOpFactor(tensor1.getElementType());
   talsh_submitted_flops_.store(flop_count);
  }
+ /*if(talshDeviceBufferFreeSize(0,DEV_HOST) < host_buf_free_mem){ //debug
+  std::cout << "#FATAL(exatn::runtime::TalshNodeExecutor): Host buffer leak detected for tensor contraction:\n";
+  op.printIt();
+  std::abort();
+ }*/
  return error_code;
 }
 

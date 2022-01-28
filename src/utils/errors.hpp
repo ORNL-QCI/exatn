@@ -1,11 +1,16 @@
 /** ExaTN: Error handling
-REVISION: 2021/09/27
+REVISION: 2022/01/26
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #ifndef EXATN_ERRORS_HPP_
 #define EXATN_ERRORS_HPP_
+
+#ifndef NO_LINUX
+#include <execinfo.h> //Linux only
+#include <stdio.h>
+#endif
 
 #include <iostream>
 #include <string>
@@ -56,6 +61,25 @@ inline void print_variadic_pack(Arg&& arg, Args&&... args)
  std::cout << std::forward<Arg>(arg) << " ";
  return print_variadic_pack(std::forward<Args>(args)...);
 }
+
+#ifndef NO_LINUX
+inline void print_backtrace() //Linux only
+{
+ int MAX_CALLSTACK_DEPTH = 256;
+ int callstack_depth = 0;
+ void * addresses[MAX_CALLSTACK_DEPTH];
+ char ** funcs;
+ callstack_depth = backtrace(addresses,MAX_CALLSTACK_DEPTH);
+ funcs = backtrace_symbols(addresses,callstack_depth);
+ if(funcs != nullptr){
+  for(int i = 0; i < callstack_depth; ++i){
+   printf("%s\n",funcs[i]);
+  }
+  free(funcs);
+ }
+ return;
+}
+#endif
 
 } //namespace exatn
 

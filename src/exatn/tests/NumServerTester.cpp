@@ -21,7 +21,7 @@
 
 #define EXATN_TEST0
 #define EXATN_TEST1
-/*#define EXATN_TEST2
+#define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
 #define EXATN_TEST5
@@ -48,11 +48,12 @@
 #define EXATN_TEST26
 #define EXATN_TEST27 //requires input file from source
 #define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29*/
+#define EXATN_TEST29
 #define EXATN_TEST30
 #define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
 #define EXATN_TEST33
+#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -4127,6 +4128,55 @@ TEST(NumServerTester, CuTensorNet) {
 #endif
 
 #ifdef EXATN_TEST33
+TEST(NumServerTester, IsometricAIEM) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+ using exatn::TensorRange;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ //exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
+
+ bool success = true;
+
+ //Create tensors:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{4,4}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{4,4}); assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensorRnd("B"); assert(success);
+ success = exatn::initTensor("C",0.0); assert(success);
+
+ //Contract tensors:
+ success = exatn::contractTensors("C(u1,u0)+=A()*B(u0,u1)",1.0); assert(success);
+
+ //Destroy tensors:
+ success = exatn::sync(); assert(success);
+ success = exatn::destroyTensor("C"); assert(success);
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+
+ //Synchronize:
+ success = exatn::syncClean(); assert(success);
+ //exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST34
 TEST(NumServerTester, TensorComposite) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
