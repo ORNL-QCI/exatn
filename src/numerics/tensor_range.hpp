@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2021/11/02
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Tensor range is a Cartesian product of one or more ranges.
@@ -22,6 +22,7 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      global offset in the parental flattened 1d super-range, which
      is equal to the local offset when the tensor range does not
      contain subranges (tensor range = parental tensor range).
+     Note that only generalized column-wise strides are allowed.
  (e) A tensor range can also be split into disjoint chunks such
      that each chunk can be iterated over by a concurrent agent.
 **/
@@ -55,7 +56,7 @@ public:
 
  template <typename IntegralType>
  inline TensorRange(const unsigned int num_dims,   //in: number of dimensions
-                    const IntegralType extents[]); //in: dimension extents
+                    const IntegralType extents[]); //in: dimension extents (base offsets = 0)
 
  TensorRange(const TensorRange &) = default;
  TensorRange & operator=(const TensorRange &) = default;
@@ -67,7 +68,7 @@ public:
  inline DimExtent localVolume() const;
 
  /** Returns the parental tensor range volume (global volume). **/
- inline DimExtent globalVolume() const;
+ //inline DimExtent globalVolume() const;
 
  /** Resets the current multi-index value to the beginning. **/
  inline void reset();
@@ -169,13 +170,12 @@ private:
 inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                                 const std::vector<DimExtent> & extents,  //in: extent of each dimension (on top of the base offset)
                                 const std::vector<DimExtent> & strides): //in: stride of each dimension
- bases_(bases), extents_(extents), strides_(strides), mlndx_(extents.size())
+ bases_(bases), extents_(extents), strides_(strides), mlndx_(extents.size()), volume_(0)
 {
  assert(bases_.size() == extents_.size() && strides_.size() == extents_.size());
  if(extents_.size() > 0){
+  for(unsigned int i = 1; i < extents_.size(); ++i) assert(strides_[i] >= strides_[i-1]);
   volume_ = 1; for(const auto & extent: extents_) volume_ *= extent;
- }else{
-  volume_ = 0;
  }
  reset();
 }
@@ -183,24 +183,24 @@ inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: b
 
 inline TensorRange::TensorRange(const std::vector<DimOffset> & bases,    //in: base offset of each dimension (0 is min)
                                 const std::vector<DimExtent> & extents): //in: extent of each dimension (on top of the base offset)
- bases_(bases), extents_(extents), strides_(extents.size()), mlndx_(extents.size())
+ bases_(bases), extents_(extents), strides_(extents.size()), mlndx_(extents.size()), volume_(0)
 {
  assert(bases_.size() == extents_.size());
  if(extents_.size() > 0){
+  DimExtent global_volume = 1;
   volume_ = 1;
   for(unsigned int i = 0; i < extents_.size(); ++i){
-   strides_[i] = volume_;
-   volume_ *= (bases_[i] + extents_[i]);
+   strides_[i] = global_volume;
+   global_volume *= (bases_[i] + extents_[i]);
+   volume_ *= extents_[i];
   }
- }else{
-  volume_ = 0;
  }
  reset();
 }
 
 
 inline TensorRange::TensorRange(const std::vector<DimExtent> & extents): //in: extent of each dimension (base offset = 0)
- bases_(extents.size(),0), extents_(extents), strides_(extents.size()), mlndx_(extents.size())
+ bases_(extents.size(),0), extents_(extents), strides_(extents.size()), mlndx_(extents.size()), volume_(0)
 {
  if(extents_.size() > 0){
   volume_ = 1;
@@ -208,8 +208,6 @@ inline TensorRange::TensorRange(const std::vector<DimExtent> & extents): //in: e
    strides_[i] = volume_;
    volume_ *= extents_[i];
   }
- }else{
-  volume_ = 0;
  }
  reset();
 }
@@ -217,8 +215,8 @@ inline TensorRange::TensorRange(const std::vector<DimExtent> & extents): //in: e
 
 template <typename IntegralType>
 inline TensorRange::TensorRange(const unsigned int num_dims,   //in: number of dimensions
-                                const IntegralType extents[]): //in: dimension extents
- bases_(num_dims,0), extents_(num_dims,0), strides_(num_dims), mlndx_(num_dims)
+                                const IntegralType extents[]): //in: dimension extents (base offsets = 0)
+ bases_(num_dims,0), extents_(num_dims,0), strides_(num_dims), mlndx_(num_dims), volume_(0)
 {
  if(num_dims > 0){
   for(unsigned int i = 0; i < num_dims; ++i) extents_[i] = extents[i];
@@ -227,8 +225,6 @@ inline TensorRange::TensorRange(const unsigned int num_dims,   //in: number of d
    strides_[i] = volume_;
    volume_ *= extents_[i];
   }
- }else{
-  volume_ = 0;
  }
  reset();
 }
@@ -237,14 +233,6 @@ inline TensorRange::TensorRange(const unsigned int num_dims,   //in: number of d
 inline DimExtent TensorRange::localVolume() const
 {
  return volume_;
-}
-
-
-inline DimExtent TensorRange::globalVolume() const
-{
- const auto range_rank = extents_.size();
- if(range_rank == 0) return 0;
- return strides_[range_rank-1] * extents_[range_rank-1];
 }
 
 
