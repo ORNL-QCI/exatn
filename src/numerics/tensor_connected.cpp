@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2021/04/27
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_connected.hpp"
 #include "tensor_symbol.hpp"
@@ -220,6 +220,11 @@ void TensorConn::replaceStoredTensor(std::shared_ptr<Tensor> tensor)
  assert(tensor);
  tensor_ = tensor;
  return;
+}
+
+bool TensorConn::hasIsometries() const
+{
+ return tensor_->hasIsometries();
 }
 
 const std::list<std::vector<unsigned int>> & TensorConn::retrieveIsometries() const

@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization of Ordering Projection tensors
-REVISION: 2021/09/21
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "functor_init_proj.hpp"
 
@@ -16,12 +16,14 @@ namespace numerics{
 
 void FunctorInitProj::pack(BytePacket & packet)
 {
+ //`Finish
  return;
 }
 
 
 void FunctorInitProj::unpack(BytePacket & packet)
 {
+ //`Finish
  return;
 }
 

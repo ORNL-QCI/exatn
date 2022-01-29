@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2021/10/15
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor.hpp"
 #include "tensor_symbol.hpp"
@@ -419,6 +419,11 @@ void Tensor::registerIsometry(const std::vector<unsigned int> & isometry)
  for(const auto & dim: isometry) assert(dim < tensor_rank);
  if(isometry.size() > 0) isometries_.emplace_back(isometry);
  return;
+}
+
+bool Tensor::hasIsometries() const
+{
+ return !(isometries_.empty());
 }
 
 const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const

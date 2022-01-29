@@ -19,7 +19,7 @@
 
 //Test activation:
 
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -51,7 +51,7 @@
 #define EXATN_TEST29
 #define EXATN_TEST30
 #define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32
+#define EXATN_TEST32*/
 #define EXATN_TEST33
 #define EXATN_TEST34
 
@@ -4140,7 +4140,7 @@ TEST(NumServerTester, IsometricAIEM) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(2,2); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -4151,21 +4151,26 @@ TEST(NumServerTester, IsometricAIEM) {
  bool success = true;
 
  //Create tensors:
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{4,4}); assert(success);
- success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{4,4}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{4,2,8,2,4}); assert(success);
+ exatn::getTensor("A")->registerIsometry({0,2,4});
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
 
  //Init tensors:
  success = exatn::initTensorRnd("A"); assert(success);
- success = exatn::initTensorRnd("B"); assert(success);
- success = exatn::initTensor("C",0.0); assert(success);
+ //success = exatn::transformTensor("A",std::shared_ptr<exatn::TensorMethod>(
+ //                                      new exatn::FunctorIsometrize(std::vector<unsigned int>{0,2,4})));
+ //assert(success);
+ success = exatn::initTensor("B",0.0); assert(success);
 
  //Contract tensors:
- success = exatn::contractTensors("C(u1,u0)+=A()*B(u0,u1)",1.0); assert(success);
+ success = exatn::contractTensorsSync("B(j1,j2,j3,j4)+=A(i1,j1,i2,j2,i3)*A+(i1,j3,i2,j4,i3)",1.0); assert(success);
+ //success = exatn::printTensor("B"); assert(success);
+ double nrm1 = 0.0;
+ success = exatn::computeNorm1Sync("B",nrm1); assert(success);
+ std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
 
  //Destroy tensors:
  success = exatn::sync(); assert(success);
- success = exatn::destroyTensor("C"); assert(success);
  success = exatn::destroyTensor("B"); assert(success);
  success = exatn::destroyTensor("A"); assert(success);
 

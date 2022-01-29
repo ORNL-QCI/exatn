@@ -1,14 +1,15 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/10/14
+REVISION: 2022/01/29
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) Builds a tree tensor network.
      Parameters:
-     * max_bond_dim: Maximal internal bond dimension;
-     * arity: Tree arity;
+     * max_bond_dim: >0: Maximal internal bond dimension;
+     * arity: >1: Tree arity;
+     * isometric: {0/1}: Whether or not all tensor factors except the root are isometric;
  (b) Leg numeration (tensor network vector):
 
     [0] [1]      [2] [3] ...
@@ -80,6 +81,7 @@ private:
 
  long long max_bond_dim_; //maximal internal bond dimension
  long long arity_;        //tree arity
+ int isometric_;          //isometry
 };
 
 } //namespace numerics

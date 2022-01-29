@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2021/10/15
+REVISION: 2022/01/29
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "network_builder_ttn.hpp"
 #include "tensor_network.hpp"
@@ -16,7 +16,7 @@ namespace exatn{
 namespace numerics{
 
 NetworkBuilderTTN::NetworkBuilderTTN():
- max_bond_dim_(1), arity_(2)
+ max_bond_dim_(1), arity_(2), isometric_(0)
 {
 }
 
@@ -28,6 +28,8 @@ bool NetworkBuilderTTN::getParameter(const std::string & name, long long * value
   *value = max_bond_dim_;
  }else if(name == "arity"){
   *value = arity_;
+ }else if(name == "isometric"){
+  *value = isometric_;
  }else{
   found = false;
  }
@@ -42,6 +44,8 @@ bool NetworkBuilderTTN::setParameter(const std::string & name, long long value)
   max_bond_dim_ = value;
  }else if(name == "arity"){
   arity_ = value;
+ }else if(name == "isometric"){
+  isometric_ = value;
  }else{
   found = false;
  }
@@ -124,7 +128,15 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
      tens_conn->appendLeg(output_dim_extents[output_dim_id],TensorLeg{0,output_dim_id});
     }
    }
-   network.getTensor(tensor_id_base + num_dims_new)->rename();
+   auto tens = network.getTensor(tensor_id_base + num_dims_new);
+   tens->rename();
+   if(isometric_ != 0){
+    if(tens->getRank() == arity_ + 1){ //TTN vector
+     tens->registerIsometry({0,1});
+    }else if(tens->getRank() == arity_ + 3){ //TTN operator
+     tens->registerIsometry({0,1,3,4});
+    }
+   }
    ++num_dims_new; //next tensor within the layer (each tensor supplies one new dimension)
   }
   tensor_id_base += num_tensors_in_layer;

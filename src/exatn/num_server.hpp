@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/25
+REVISION: 2022/01/28
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -59,6 +59,7 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "functor_init_delta.hpp"
 #include "functor_init_proj.hpp"
 #include "functor_init_file.hpp"
+#include "functor_isometrize.hpp"
 #include "functor_scale.hpp"
 #include "functor_maxabs.hpp"
 #include "functor_norm1.hpp"
@@ -109,6 +110,7 @@ using numerics::FunctorInitDat;
 using numerics::FunctorInitDelta;
 using numerics::FunctorInitProj;
 using numerics::FunctorInitFile;
+using numerics::FunctorIsometrize;
 using numerics::FunctorScale;
 using numerics::FunctorMaxAbs;
 using numerics::FunctorNorm1;

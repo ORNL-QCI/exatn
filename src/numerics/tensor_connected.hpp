@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2021/04/27
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor inside a tensor network is generally connected
@@ -152,6 +152,9 @@ public:
                           const std::string & name = ""); //in: tensor name (if empty, will be automatically generated)
  /** Replaces the stored tensor with a new one provided explicitly. **/
  void replaceStoredTensor(std::shared_ptr<Tensor> tensor);
+
+ /** Queries whether the tensor has any isometries. **/
+ bool hasIsometries() const;
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;

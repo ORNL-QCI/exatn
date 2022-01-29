@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/12/22
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
@@ -121,7 +121,7 @@ void printContractionSequence(std::ofstream & output_file, const std::list<numer
 
 //Main:
 TensorNetwork::TensorNetwork():
- explicit_output_(0), finalized_(1), max_tensor_id_(0),
+ explicit_output_(0), finalized_(1), has_isometries_(0), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
@@ -136,7 +136,7 @@ TensorNetwork::TensorNetwork():
 
 
 TensorNetwork::TensorNetwork(const std::string & name):
- explicit_output_(0), finalized_(1), name_(name), max_tensor_id_(0),
+ explicit_output_(0), finalized_(1), name_(name), has_isometries_(0), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
@@ -153,7 +153,7 @@ TensorNetwork::TensorNetwork(const std::string & name):
 TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              const std::vector<TensorLeg> & output_legs):
- explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
+ explicit_output_(1), finalized_(0), name_(name), has_isometries_(0), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
@@ -170,7 +170,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
 TensorNetwork::TensorNetwork(const std::string & name,
                              const std::string & tensor_network,
                              const std::map<std::string,std::shared_ptr<Tensor>> & tensors):
- explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
+ explicit_output_(1), finalized_(0), name_(name), has_isometries_(0), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
@@ -253,7 +253,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
                              std::shared_ptr<Tensor> output_tensor,
                              NetworkBuilder & builder,
                              bool tensor_operator):
- explicit_output_(1), finalized_(0), name_(name), max_tensor_id_(0),
+ explicit_output_(1), finalized_(0), name_(name), has_isometries_(0), max_tensor_id_(0),
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {

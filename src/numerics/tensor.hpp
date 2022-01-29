@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2021/10/13
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** NOTES:
  Tensor specification requires:
@@ -224,6 +224,9 @@ public:
 
  /** Registers an isometry in the tensor. **/
  void registerIsometry(const std::vector<unsigned int> & isometry);
+
+ /** Queries whether the tensor has any isometries. **/
+ bool hasIsometries() const;
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;

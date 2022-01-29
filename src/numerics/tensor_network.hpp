@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2021/12/22
+REVISION: 2022/01/28
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network is a set of connected tensors.
@@ -621,6 +621,7 @@ private:
  int explicit_output_;                                  //whether or not the output tensor has been fully specified during construction
  int finalized_;                                        //finalization status of the tensor network
  std::string name_;                                     //tensor network name
+ int has_isometries_;                                   //whether or not the tensor network contains tensors with isometries
  std::unordered_map<unsigned int, TensorConn> tensors_; //tensors connected to each other via legs (tensor connections)
                                                         //map: Non-negative tensor id --> Connected tensor
  /** Data members: Tensor id management: **/
@@ -656,6 +657,7 @@ inline bool TensorNetwork::emplaceTensorConn(unsigned int tensor_id,
  if(res.second){
   res.first->second.resetTensorId(tensor_id);
   updateMaxTensorIdOnAppend(tensor_id);
+  if(tensor_conn.hasIsometries()) ++has_isometries_;
  }
  return res.second;
 }
@@ -674,6 +676,7 @@ inline bool TensorNetwork::emplaceTensorConn(bool dynamic_id_enabled,
  if(res.second){
   res.first->second.resetTensorId(tensor_id);
   updateMaxTensorIdOnAppend(tensor_id);
+  if(tensor_conn.hasIsometries()) ++has_isometries_;
  }
  return res.second;
 }
@@ -693,6 +696,7 @@ inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_id_enabled,
  if(res.second){
   res.first->second.resetTensorId(tensor_id);
   updateMaxTensorIdOnAppend(tensor_id);
+  if(res.first->second.hasIsometries()) ++has_isometries_;
  }
  return res.second;
 }
@@ -717,6 +721,7 @@ inline bool TensorNetwork::emplaceTensorConnDirect(bool dynamic_name_enabled,
    auto & stored_tensor = *(res.first->second.getTensor());
    stored_tensor.rename(generateTensorName(stored_tensor,"x")); //intermediate tensor prefix "x": _xHASH
   }
+  if(res.first->second.hasIsometries()) ++has_isometries_;
  }
  return res.second;
 }
@@ -742,6 +747,7 @@ inline bool TensorNetwork::emplaceTensorConnPrefDirect(bool dynamic_name_enabled
    auto & stored_tensor = *(res.first->second.getTensor());
    stored_tensor.rename(generateTensorName(stored_tensor,name_prefix));
   }
+  if(res.first->second.hasIsometries()) ++has_isometries_;
  }
  return res.second;
 }
@@ -749,6 +755,11 @@ inline bool TensorNetwork::emplaceTensorConnPrefDirect(bool dynamic_name_enabled
 
 inline bool TensorNetwork::eraseTensorConn(unsigned int tensor_id)
 {
+ if(has_isometries_ > 0){
+  auto iter = tensors_.find(tensor_id);
+  assert(iter != tensors_.cend());
+  if(iter->second.hasIsometries()) --has_isometries_;
+ }
  auto num_deleted = tensors_.erase(tensor_id);
  if(num_deleted == 1) updateMaxTensorIdOnRemove(tensor_id);
  return (num_deleted == 1);

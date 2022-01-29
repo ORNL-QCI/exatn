@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/26
+REVISION: 2022/01/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1678,8 +1678,14 @@ bool NumServer::initTensorRnd(const std::string & name)
     std::cout << "#ERROR(exatn::initTensorRnd): Random initialization of composite tensors is not implemented yet!\n";
     assert(false);
    }else{
-    const auto & process_group = getTensorProcessGroup(name);
-    success = broadcastTensor(process_group,name,0);
+    if(tensor->hasIsometries()){
+     const auto & isometries = tensor->retrieveIsometries();
+     success = transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+    }
+    if(success){
+     const auto & process_group = getTensorProcessGroup(name);
+     success = broadcastTensor(process_group,name,0);
+    }
    }
   }
  }
@@ -1696,8 +1702,14 @@ bool NumServer::initTensorRndSync(const std::string & name)
     std::cout << "#ERROR(exatn::initTensorRndSync): Random initialization of composite tensors is not implemented yet!\n";
     assert(false);
    }else{
-    const auto & process_group = getTensorProcessGroup(name);
-    success = broadcastTensorSync(process_group,name,0);
+    if(tensor->hasIsometries()){
+     const auto & isometries = tensor->retrieveIsometries();
+     success = transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+    }
+    if(success){
+     const auto & process_group = getTensorProcessGroup(name);
+     success = broadcastTensorSync(process_group,name,0);
+    }
    }
   }
  }
