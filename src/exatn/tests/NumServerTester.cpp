@@ -19,8 +19,8 @@
 
 //Test activation:
 
-/*#define EXATN_TEST0
-#define EXATN_TEST1
+#define EXATN_TEST0
+/*#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -50,10 +50,10 @@
 #define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30
-#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32*/
-#define EXATN_TEST33
-#define EXATN_TEST34
+#define EXATN_TEST31*/ //requires input file from source
+#define EXATN_TEST32
+//#define EXATN_TEST33
+//#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -75,11 +75,12 @@ TEST(NumServerTester, PerformanceExaTN)
  //exatn::resetExecutionSerialization(true,true); //debug
  //exatn::activateFastMath(); //fast math (mixed-precision)
 
- std::size_t free_mem = 0;
+ /*std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+ */
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);

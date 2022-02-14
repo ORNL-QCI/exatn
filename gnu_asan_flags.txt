@@ -1,0 +1,2 @@
+Prepend the binary execution command with ASAN flags:
+ASAN_OPTIONS="protect_shadow_gap=0:replace_intrin=0:detect_leaks=0"

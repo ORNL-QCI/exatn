@@ -4,7 +4,7 @@ file(GLOB SRC cuquantum_executor.cu)
 
 set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 
-set(CUDA_ARCH_BIN 86)
+#set(CUDA_ARCH_BIN 86)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -shared -std c++17 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC")
 
 cuda_add_library(${LIBRARY_NAME} SHARED ${SRC})
@@ -26,7 +26,7 @@ endif()
 
 if(CUTENSOR AND NOT CUTENSOR_PATH STREQUAL ".")
   target_include_directories(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/include)
-  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/11/libcutensor.so ExaTensor::ExaTensor)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/libcutensor.so ExaTensor::ExaTensor)
 endif()
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})

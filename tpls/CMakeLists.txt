@@ -109,22 +109,25 @@ message(STATUS "The BLAS implementation is set to ${BLAS_LIB}")
 message(STATUS "The BLAS library path is set to ${BLAS_PATH}")
 message(STATUS "The BLAS library must also have LAPACK: ${WITH_LAPACK}, ${LAPACK_LIBRARIES}, ${ExaTensor_WITH_LAPACK}")
 message(STATUS "TAL-SH only build: ${EXA_TALSH_ONLY}")
-message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
-if(CUTENSOR)
-  message(STATUS "With cuTensor: YES")
-  if(CUTENSOR_PATH)
-    message(STATUS "The cuTensor library path is set to ${CUTENSOR_PATH}")
-  endif()
-  if(CUQUANTUM)
-    message(STATUS "With cuQuantum: YES")
-    if(CUQUANTUM_PATH)
-      message(STATUS "The cuQuantum library path is set to ${CUQUANTUM_PATH}")
+if(CUDA_FOUND)
+  message(STATUS "CUDA-enabled build for GPU compute capability ${CUDA_ARCH_BIN}")
+  message(STATUS "The CUDA Host compiler is set to ${CUDA_HOST_COMPILER}")
+  if(CUTENSOR)
+    message(STATUS "With cuTensor: YES")
+    if(CUTENSOR_PATH)
+      message(STATUS "The cuTensor library path is set to ${CUTENSOR_PATH}")
+    endif()
+    if(CUQUANTUM)
+      message(STATUS "With cuQuantum: YES")
+      if(CUQUANTUM_PATH)
+        message(STATUS "The cuQuantum library path is set to ${CUQUANTUM_PATH}")
+      endif()
+    else()
+      message(STATUS "With cuQuantum: NO")
     endif()
   else()
-    message(STATUS "With cuQuantum: NO")
+    message(STATUS "With cuTensor: NO")
   endif()
-else()
-  message(STATUS "With cuTensor: NO")
 endif()
 
 
@@ -263,6 +266,7 @@ else()
                               GPU_CUDA=CUDA
                               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
                               CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                              GPU_SM_ARCH=${CUDA_ARCH_BIN}
                               MPILIB=NONE
                               BLASLIB=${BLAS_LIB}
                               PATH_BLAS_${BLAS_LIB}=${BLAS_PATH}
@@ -294,6 +298,7 @@ else()
                               GPU_CUDA=CUDA
                               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
                               CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                              GPU_SM_ARCH=${CUDA_ARCH_BIN}
                               MPILIB=${MPI_LIB}
                               PATH_${MPI_LIB}=${MPI_ROOT_DIR}
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
@@ -327,6 +332,7 @@ else()
                               GPU_CUDA=CUDA
                               PATH_CUDA=${CUDA_TOOLKIT_ROOT_DIR}
                               CUDA_HOST_COMPILER=${CUDA_HOST_COMPILER}
+                              GPU_SM_ARCH=${CUDA_ARCH_BIN}
                               MPILIB=${MPI_LIB}
                               PATH_${MPI_LIB}=${MPI_ROOT_DIR}
                               PATH_${MPI_LIB}_BIN=${MPI_BIN_PATH}
