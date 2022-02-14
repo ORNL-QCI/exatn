@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/28
+REVISION: 2022/02/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -928,14 +928,15 @@ public:
                                 const std::string & name,           //in: tensor network name
                                 const std::string & network);       //in: symbolic tensor network specification
 
- /** Normalizes a tensor to a given 2-norm. **/
+ /** Normalizes a tensor to a given 2-norm, unless
+     the tensor has isometries, in which case does nothing. **/
  bool normalizeNorm2Sync(const std::string & name,          //in: tensor name
                          double norm = 1.0,                 //in: desired 2-norm
                          double * original_norm = nullptr); //out: original 2-norm
 
  /** Normalizes a tensor network expansion to a given 2-norm by rescaling
      all tensor network components by the same factor: Only the tensor
-     network expansion coefficients are affected. **/
+     network expansion coefficients are affected, not the tensors. **/
  bool normalizeNorm2Sync(TensorExpansion & expansion,       //inout: tensor network expansion
                          double norm = 1.0,                 //in: desired 2-norm
                          double * original_norm = nullptr); //out: original 2-norm
@@ -946,7 +947,8 @@ public:
                          double * original_norm = nullptr);  //out: original 2-norm
 
  /** Normalizes all input tensors in a tensor network to a given 2-norm.
-     If only_optimizable is TRUE, only optimizable tensors will be normalized. **/
+     If only_optimizable is TRUE, only optimizable tensors will be normalized.
+     Tensors with isometries will not undergo normalization. **/
  bool balanceNorm2Sync(TensorNetwork & network,        //inout: tensor network
                        double norm,                    //in: desired 2-norm
                        bool only_optimizable = false); //in: whether to normalize only optimizable tensors
@@ -957,7 +959,8 @@ public:
                        bool only_optimizable = false);     //in: whether to normalize only optimizable tensors
 
  /** Normalizes all input tensors in a tensor network expansion to a given 2-norm.
-     If only_optimizable is TRUE, only optimizable tensors will be normalized. **/
+     If only_optimizable is TRUE, only optimizable tensors will be normalized.
+     Tensors with isometries will not undergo normalization. **/
  bool balanceNorm2Sync(TensorExpansion & expansion,    //inout: tensor network expansion
                        double norm,                    //in: desired 2-norm
                        bool only_optimizable = false); //in: whether to normalize only optimizable tensors
@@ -969,8 +972,9 @@ public:
 
  /** Normalizes all input tensors in a tensor network expansion to a given 2-norm
      and rescales tensor network expansion coefficients to normalize the entire
-     tensor network expansion to another given 2-norm. If only_optimizable is TRUE,
-     only optimizable tensors will be normalized. **/
+     tensor network expansion to another given 2-norm. If only_optimizable
+     is TRUE, only optimizable tensors will be normalized. Tensors with
+     isometries will not undergo normalization. **/
  bool balanceNormalizeNorm2Sync(TensorExpansion & expansion,    //inout: tensor network expansion
                                 double tensor_norm = 1.0,       //in: desired 2-norm of each input tensor
                                 double expansion_norm = 1.0,    //in: desired 2-norm of the tensor network expansion

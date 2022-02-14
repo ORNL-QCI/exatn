@@ -1,16 +1,16 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2022/01/29
+REVISION: 2022/02/04
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
- (a) Builds a tree tensor network.
-     Parameters:
+ (a) Builds a tree tensor network. Parameters:
      * max_bond_dim: >0: Maximal internal bond dimension;
      * arity: >1: Tree arity;
-     * isometric: {0/1}: Whether or not all tensor factors except the root are isometric;
- (b) Leg numeration (tensor network vector):
+     * num_states: >0: Number of quantum states to represent;
+     * isometric: {0/1}: Whether or not all tensor factors should be isometric;
+ (b) Leg numeration with arity 2 (tensor network vector):
 
     [0] [1]      [2] [3] ...
      0   1        0   1
@@ -28,11 +28,14 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
                 \
                    ...
 
- (c) Leg numeration (tensor network operator): Each tensor X in the layer
-     of tree leaves gets two more legs (#3,#4) for the bra space (that is,
-     legs #0 and #1 are mapped to legs #3 and #4). The bra legs will be
-     appended to the end of the output tensor of the tensor network.
-
+ (c) Leg numeration with arity 2 (tensor network operator): Each tensor X
+     in the layer of tree leaves gets two more legs (#3,#4) for the bra space
+     (that is, legs #0 and #1 are mapped to legs #3 and #4, respectively).
+     The bra legs will be appended to the end of the output tensor of the
+     tensor network in the same order as ket legs.
+ (d) If the desired number of represented quantum states is greater than 1,
+     an open leg will be added to the root tensor as well, with dimension equal
+     to the number of states. It will be appended to the end of the output tensor.
 **/
 
 #ifndef EXATN_NUMERICS_NETWORK_BUILDER_TTN_HPP_
@@ -79,9 +82,10 @@ public:
 
 private:
 
- long long max_bond_dim_; //maximal internal bond dimension
- long long arity_;        //tree arity
- int isometric_;          //isometry
+ long long max_bond_dim_;  //maximal internal bond dimension
+ long long arity_;         //tree arity
+ unsigned int num_states_; //number of quantum states to represent
+ int isometric_;           //isometry
 };
 
 } //namespace numerics

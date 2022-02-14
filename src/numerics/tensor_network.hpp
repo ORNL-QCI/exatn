@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/01/28
+REVISION: 2022/02/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -401,6 +401,9 @@ public:
  /** Conjugates the tensor network, which includes complex conjugation of
      all tensors as well as reversal of the direction of all tensor legs. **/
  bool conjugate();
+
+ /** Returns TRUE if the tensor network contains tensors with isometries. **/
+ int hasIsometries() const {return has_isometries_;}
 
  /** Collapses all isometric tensor pairs, thus simplifying the tensor network.
      Returns TRUE if at least one isometric tensor pair has been collapsed.

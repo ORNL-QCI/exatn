@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/01/29
+REVISION: 2022/02/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -3277,10 +3277,19 @@ bool NumServer::evaluateTensorNetworkSync(const ProcessGroup & process_group,
 
 bool NumServer::normalizeNorm2Sync(const std::string & name, double norm, double * original_norm)
 {
- double old_norm = 0.0;
- bool success = computeNorm2Sync(name,old_norm);
- if(original_norm != nullptr) *original_norm = old_norm;
- if(success) success = scaleTensorSync(name,norm/old_norm);
+ bool success = true;
+ auto tensor = getTensor(name);
+ if(tensor){
+  if(!(tensor->hasIsometries())){
+   double old_norm = 0.0;
+   success = computeNorm2Sync(name,old_norm);
+   if(original_norm != nullptr) *original_norm = old_norm;
+   if(success) success = scaleTensorSync(name,norm/old_norm);
+  }
+ }else{
+  std::cout << "#ERROR(exatn::normalizeNorm2Sync): Tensor " << name << " not found!\n";
+  assert(false);
+ }
  return success;
 }
 
@@ -3363,25 +3372,27 @@ bool NumServer::balanceNorm2Sync(const ProcessGroup & process_group,
  bool success = true;
  for(auto tens = network.begin(); tens != network.end(); ++tens){
   if(tens->first != 0){ //output tensor is ignored
-   if(!only_optimizable || tens->second.isOptimizable()){ //only optimizable tensors may be renormalized
-    double tens_norm;
-    success = computeNorm2Sync(tens->second.getName(),tens_norm);
-    if(success){
-     if(tens_norm > 0.0){
-      success = scaleTensorSync(tens->second.getName(),norm/tens_norm);
-      if(!success){
-       std::cout << "#ERROR(exatn::balanceNorm2): Unable to rescale input tensor "
-                 << tens->second.getName() << std::endl;
-       break;
+   if(!only_optimizable || tens->second.isOptimizable()){
+    if(!(tens->second.hasIsometries())){
+     double tens_norm;
+     success = computeNorm2Sync(tens->second.getName(),tens_norm);
+     if(success){
+      if(tens_norm > 0.0){
+       success = scaleTensorSync(tens->second.getName(),norm/tens_norm);
+       if(!success){
+        std::cout << "#ERROR(exatn::balanceNorm2): Unable to rescale input tensor "
+                  << tens->second.getName() << std::endl;
+        break;
+       }
+      }else{
+       std::cout << "#WARNING(exatn::balanceNorm2): Tensor " << tens->second.getName()
+                 << " has zero norm, thus cannot be renormalized!" << std::endl;
       }
      }else{
-      std::cout << "#WARNING(exatn::balanceNorm2): Tensor " << tens->second.getName()
-                << " has zero norm, thus cannot be renormalized!" << std::endl;
+      std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "
+                << tens->second.getName() << std::endl;
+      break;
      }
-    }else{
-     std::cout << "#ERROR(exatn::balanceNorm2): Unable to compute the norm of input tensor "
-               << tens->second.getName() << std::endl;
-     break;
     }
    }
   }
