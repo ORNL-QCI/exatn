@@ -19,8 +19,8 @@
 
 //Test activation:
 
-#define EXATN_TEST0
-/*#define EXATN_TEST1
+/*#define EXATN_TEST0
+#define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
 #define EXATN_TEST4
@@ -50,10 +50,10 @@
 #define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30
-#define EXATN_TEST31*/ //requires input file from source
-#define EXATN_TEST32
-//#define EXATN_TEST33
-//#define EXATN_TEST34
+#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST32*/
+#define EXATN_TEST33
+#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -4166,18 +4166,18 @@ TEST(NumServerTester, IsometricAIEM) {
  success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
 
  //Init tensors:
- success = exatn::initTensorRnd("A"); assert(success);
+ success = exatn::initTensorRnd("A"); assert(success); //random initialization will respect isometry
  //success = exatn::transformTensor("A",std::shared_ptr<exatn::TensorMethod>(
  //           new exatn::FunctorIsometrize(std::vector<unsigned int>{0,2,4})));
  //assert(success);
  success = exatn::initTensor("B",0.0); assert(success);
 
- //Contract tensors:
+ //Contract tensors (to produce identity):
  success = exatn::contractTensorsSync("B(j1,j2,j3,j4)+=A(i1,j1,i2,j2,i3)*A+(i1,j3,i2,j4,i3)",1.0); assert(success);
  //success = exatn::printTensor("B"); assert(success);
  double nrm1 = 0.0;
  success = exatn::computeNorm1Sync("B",nrm1); assert(success);
- std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
+ if(root) std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
 
  //Destroy tensors:
  success = exatn::sync(); assert(success);
@@ -4207,26 +4207,43 @@ TEST(NumServerTester, IsometricAIEM) {
 
  //Construct the tensor network ansatz:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
- auto vec_net = exatn::makeSharedTensorNetwork("VectorNet",ket_tensor,*tn_builder,false);
- auto vec_tns = exatn::makeSharedTensorExpansion("VectorTNS",vec_net,std::complex<double>{1.0,0.0});
+ auto ket_net = exatn::makeSharedTensorNetwork("KetNet",ket_tensor,*tn_builder,false);
+ auto ket_tns = exatn::makeSharedTensorExpansion("KetTNS",ket_net,std::complex<double>{1.0,0.0});
  if(root) std::cout << "Done" << std::endl;
- vec_net->printIt(); //debug
+ if(root) ket_tns->printIt(); //debug
+
+ //Checking the Hamiltonian functional structure:
+ if(root) std::cout << "Checking the Hamiltonian functional structure:\n";
+ if(root) std::cout << " Conjugated (bra) TNS:\n";
+ auto bra_tns = exatn::makeSharedTensorExpansion(*ket_tns);
+ bra_tns->conjugate();
+ bra_tns->rename("BraTNS");
+ if(root) bra_tns->printIt(); //debug
+ if(root) std::cout << " Full Hamiltonian functional:\n";
+ auto func_tns = exatn::makeSharedTensorExpansion(*bra_tns,*ket_tns,*hamiltonian);
+ if(root) func_tns->printIt(); //debug
+ if(root) std::cout << " Collapsed Hamiltonian functional: ";
+ bool deltas = false;
+ auto collapsed = func_tns->collapseIsometries(&deltas);
+ if(root) std::cout << "Collapsed = " << collapsed << "; Deltas appended = " << deltas << std::endl;
+ if(root) func_tns->printIt(); //debug
+ if(root) std::cout << "Done" << std::endl;
  assert(false);
 
- { //Numerical processing:
+ {//Numerical processing:
   if(root) std::cout << "Allocating and initializing the tensor network ansatz ... ";
-  success = exatn::createTensorsSync(*vec_net,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*vec_net); assert(success);
+  success = exatn::createTensorsSync(*ket_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*ket_net); assert(success);
   if(root) std::cout << "Done" << std::endl;
 
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  vec_net->markOptimizableAllTensors();
-  success = exatn::initTensorsRndSync(*vec_tns); assert(success);
-  exatn::TensorNetworkOptimizer optimizer(hamiltonian,vec_tns,accuracy);
+  ket_net->markOptimizableAllTensors();
+  success = exatn::initTensorsRndSync(*ket_tns); assert(success);
+  exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
   optimizer.enableParallelization(true);
   success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize(num_states);
+  bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);
   if(converged){
    if(root){

@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/11/15
+REVISION: 2022/02/15
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor network expansion is an ordered linear expansion
@@ -251,6 +251,18 @@ public:
 
  /** Returns linear combination coefficients for all components. **/
  std::vector<std::complex<double>> getCoefficients() const;
+
+ /** Collapses all isometric tensor pairs, thus simplifying all tensor networks.
+     Returns TRUE if at least one isometric tensor pair has been collapsed.
+     An isometric tensor pair is a pair of a tensor and its conjugate which
+     are contracted over at least one of their isometric dimension groups.
+     Note that an isometric collapse may introduce trace legs in the remaining
+     tensors of the tensor network in case both tensors from the isometric tensor
+     pair were contracted with the same tensor via the same subset of tensor dimensions.
+     In this case, make sure that the tensor processing runtime of your choice supports
+     tensor tracing, or, in case of the output tensor, it should be able to handle spectators
+     (orphaned tensor legs) which are currently replaced by the rank-2 Kronecker deltas. **/
+ bool collapseIsometries(bool * deltas_appended = nullptr); //out: set to true if Kronecker deltas were appended to the tensor network
 
  /** Prints. **/
  void printIt() const;

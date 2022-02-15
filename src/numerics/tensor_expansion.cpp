@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2021/11/15
+REVISION: 2022/02/15
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_expansion.hpp"
 
@@ -361,6 +361,20 @@ std::vector<std::complex<double>> TensorExpansion::getCoefficients() const
  std::size_t i = 0;
  for(const auto & component: components_) coefs[i++] = component.coefficient;
  return coefs;
+}
+
+
+bool TensorExpansion::collapseIsometries(bool * deltas_appended)
+{
+ bool collapsed = false, deltas_inserted = false;
+ for(auto net = begin(); net != end(); ++net){
+  bool deltas = false;
+  auto clps = net->network->collapseIsometries(&deltas);
+  collapsed = collapsed || clps;
+  deltas_inserted = deltas_inserted || deltas;
+ }
+ if(deltas_appended != nullptr) *deltas_appended = deltas_inserted;
+ return collapsed;
 }
 
 
