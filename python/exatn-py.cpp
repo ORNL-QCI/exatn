@@ -31,8 +31,7 @@ void create_exatn_py_module(py::module &m) {
              std::shared_ptr<exatn::numerics::TensorOperator>>(
       m, "TensorOperator", "")
       .def(py::init<std::string>())
-      .def(
-          "appendComponent",
+      .def("appendComponent",
           [](TensorOperator &_operator, std::shared_ptr<Tensor> tensor,
              const std::vector<std::pair<unsigned int, unsigned int>>
                  &ket_pairing,
@@ -77,8 +76,7 @@ py::class_<exatn::numerics::TensorExpansion,
            "check_validity"_a = false, "")
       .def("isFinalized", &exatn::numerics::TensorNetwork::isFinalized, "")
       .def("getNumTensors", &exatn::numerics::TensorNetwork::getNumTensors, "")
-      .def(
-          "getTensor",
+      .def("getTensor",
           [](TensorNetwork &network, const unsigned int id) {
             return network.getTensor(id);
           },
@@ -92,8 +90,7 @@ py::class_<exatn::numerics::TensorExpansion,
                bool leg_matching_check)) &
                exatn::numerics::TensorNetwork::placeTensor,
            "")
-      .def(
-          "appendTensor",
+      .def("appendTensor",
           [](TensorNetwork &network, unsigned int tensor_id,
              const std::string &name) {
             if (!network.appendTensor(tensor_id, exatn::getTensor(name), {})) {
@@ -103,8 +100,7 @@ py::class_<exatn::numerics::TensorExpansion,
             }
           },
           "")
-      .def(
-          "appendTensor",
+      .def("appendTensor",
           [](TensorNetwork &network, unsigned int tensor_id,
              const std::string &name,
              const std::vector<std::pair<unsigned int, unsigned int>>
@@ -117,8 +113,7 @@ py::class_<exatn::numerics::TensorExpansion,
             }
           },
           "")
-      .def(
-          "appendTensorGate",
+      .def("appendTensorGate",
           [](TensorNetwork &network, unsigned int tensor_id,
              const std::string &name,
              const std::vector<unsigned int> leg_pairing) {
@@ -130,8 +125,7 @@ py::class_<exatn::numerics::TensorExpansion,
             }
           },
           "")
-      .def(
-          "appendTensorGate",
+      .def("appendTensorGate",
           [](TensorNetwork &network, unsigned int tensor_id,
              const std::string &name,
              const std::vector<unsigned int> leg_pairing, bool conjugate) {
@@ -143,8 +137,7 @@ py::class_<exatn::numerics::TensorExpansion,
             }
           },
           "")
-      .def(
-          "appendTensorNetwork",
+      .def("appendTensorNetwork",
           [](TensorNetwork &network, TensorNetwork &otherNetwork,
              const std::vector<std::pair<unsigned int, unsigned int>>
                  &pairing) {
@@ -155,10 +148,9 @@ py::class_<exatn::numerics::TensorExpansion,
       .def("reorderOutputModes",
            &exatn::numerics::TensorNetwork::reorderOutputModes, "")
       .def("deleteTensor", &exatn::numerics::TensorNetwork::deleteTensor, "")
-      .def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "")
+    /*.def("mergeTensors", &exatn::numerics::TensorNetwork::mergeTensors, "")
       // Returns the merge pattern if valid. Otherwise, returns an empty string.
-      .def(
-          "mergeTensors",
+      .def("mergeTensors",
           [](TensorNetwork &network, unsigned int left_id, unsigned int right_id, unsigned int result_id) {
             std::string pattern;
             if (network.mergeTensors(left_id, right_id, result_id, &pattern)) {
@@ -166,7 +158,7 @@ py::class_<exatn::numerics::TensorExpansion,
             }
             return std::string();
           },
-          "");
+          "")*/;
   py::enum_<exatn::TensorElementType>(m, "DataType", py::arithmetic(), "")
       .value("float32", exatn::TensorElementType::REAL32, "")
       .value("float64", exatn::TensorElementType::REAL64, "")

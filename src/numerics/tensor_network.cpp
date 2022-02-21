@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/01/28
+REVISION: 2022/02/20
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -12,6 +12,7 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "metis_graph.hpp"
 
 #include <iostream>
+#include <unordered_set>
 #include <string>
 #include <vector>
 #include <list>
@@ -277,6 +278,69 @@ TensorNetwork::TensorNetwork(const TensorNetwork & another,
 {
  *this = another;
  if(replace_output) this->resetOutputTensor(new_output_name);
+}
+
+
+TensorNetwork::TensorNetwork(const std::string & name,
+                             const TensorNetwork & another,
+                             const std::vector<unsigned int> & tensor_ids):
+ TensorNetwork(name)
+{
+ //Check tensor ids:
+ std::unordered_set<unsigned int> ids;
+ for(const auto tens_id: tensor_ids){
+  assert(tens_id != 0);
+  auto res = ids.emplace(tens_id);
+  assert(res.second);
+ }
+ //Copy the original output tensor:
+ auto success = emplaceTensorConn(0,*(const_cast<TensorNetwork&>(another).getTensorConn(0)));
+ assert(success);
+ auto * out_tens_conn = getTensorConn(0);
+ out_tens_conn->replaceStoredTensor();
+ //Append input tensors of the sub-network:
+ for(const auto tens_id: tensor_ids){
+  auto * tens_conn = const_cast<TensorNetwork&>(another).getTensorConn(tens_id);
+  assert(tens_conn != nullptr);
+  success = emplaceTensorConn(tens_id,*tens_conn); assert(success);
+ }
+ //Delete output tensor legs not associated with the chosen sub-network:
+ int leg_id = 0;
+ while(leg_id < out_tens_conn->getNumLegs()){
+  auto leg = out_tens_conn->getTensorLeg(leg_id);
+  auto it = ids.find(leg.getTensorId());
+  if(it == ids.cend()){
+   out_tens_conn->deleteLeg(leg_id);
+  }else{
+   ++leg_id;
+  }
+ }
+ finalized_ = 1;
+ updateConnections(0);
+ //Append boundary legs of the sub-network to the output tensor:
+ unsigned int n = out_tens_conn->getNumLegs();
+ for(const auto tens_id: tensor_ids){
+  auto * tens_conn = getTensorConn(tens_id);
+  const unsigned int num_legs = tens_conn->getNumLegs();
+  for(unsigned int i = 0; i < num_legs; ++i){
+   auto leg = tens_conn->getTensorLeg(i);
+   auto other_tensor_id = leg.getTensorId();
+   if(other_tensor_id != 0){
+    auto it = ids.find(other_tensor_id);
+    if(it == ids.cend()){ //boundary leg
+     leg.resetTensorId(0);
+     leg.resetDimensionId(n++);
+     tens_conn->resetLeg(i,leg);
+     leg.resetTensorId(tens_id);
+     leg.resetDimensionId(i);
+     leg.reverseDirection();
+     out_tens_conn->appendLeg(tens_conn->getDimSpaceAttr(i),
+                              tens_conn->getDimExtent(i),
+                              leg);
+    }
+   }
+  }
+ }
 }
 
 
@@ -1755,6 +1819,48 @@ bool TensorNetwork::mergeTensors(unsigned int left_id, unsigned int right_id, un
 }
 
 
+bool TensorNetwork::mergeTensors(const std::vector<unsigned int> & tensor_ids,
+                                 unsigned int result_id)
+{
+ bool success = true;
+ //Check tensor ids:
+ std::unordered_set<unsigned int> ids;
+ for(const auto tens_id: tensor_ids){
+  assert(tens_id != 0);
+  auto res = ids.emplace(tens_id);
+  assert(res.second);
+ }
+ //Extract the tensor sub-network:
+ TensorNetwork subnetwork("_SubNetwork",*this,tensor_ids);
+ //Replace the sub-network with a single tensor:
+ TensorConn repl_tens_conn(*(subnetwork.getTensorConn(0)));
+ repl_tens_conn.replaceStoredTensor();
+ const auto repl_tens_rank = repl_tens_conn.getRank();
+ for(unsigned int i = 0; i < repl_tens_rank; ++i){
+  const auto & repl_tens_leg = repl_tens_conn.getTensorLeg(i);
+  const auto tens_id = repl_tens_leg.getTensorId();
+  const auto dim_id = repl_tens_leg.getDimensionId();
+  auto * orig_tens_conn = getTensorConn(tens_id); assert(orig_tens_conn);
+  const auto other_tens_leg = orig_tens_conn->getTensorLeg(dim_id);
+  repl_tens_conn.resetLeg(i,other_tens_leg);
+ }
+ success = emplaceTensorConn(result_id,repl_tens_conn);
+ //Erase merged tensors:
+ if(success){
+  for(const auto tens_id: tensor_ids){
+   success = eraseTensorConn(tens_id);
+   if(!success) break;
+  }
+  //Update connections:
+  if(success){
+   updateConnections(result_id);
+   invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+  }
+ }
+ return success;
+}
+
+
 bool TensorNetwork::splitTensor(unsigned int tensor_id,
                                 unsigned int left_tensor_id,
                                 const std::string & left_tensor_name,
@@ -1853,15 +1959,14 @@ bool TensorNetwork::substituteTensor(unsigned int tensor_id, std::shared_ptr<Ten
 bool TensorNetwork::substituteTensor(const std::string & name, std::shared_ptr<Tensor> tensor)
 {
  assert(name.length() > 0);
- int tensor_id = -1;
- for(const auto & kv: tensors_){
-  if(kv.second.getName() == name){
-   tensor_id = static_cast<int>(kv.first);
-   break;
+ bool success = true;
+ for(auto & tens: tensors_){
+  if(tens.second.getName() == name){
+   success = substituteTensor(tens.first,tensor);
+   if(!success) break;
   }
  }
- if(tensor_id < 0) return false; //tensor name not found
- return substituteTensor(tensor_id,tensor);
+ return success;
 }
 
 
@@ -1872,6 +1977,41 @@ bool TensorNetwork::substituteTensor(std::shared_ptr<Tensor> original,
  for(auto & tens: tensors_){
   auto net_tensor = tens.second.getTensor();
   if(net_tensor == original) tens.second.replaceStoredTensor(tensor);
+ }
+ return true;
+}
+
+
+bool TensorNetwork::substituteTensor(unsigned int tensor_id,
+                                     const TensorNetwork & network)
+{
+ //`Implement
+ return false;
+}
+
+
+bool TensorNetwork::substituteTensor(const std::string & name,
+                                     const TensorNetwork & network)
+{
+ assert(name.length() > 0);
+ bool success = true;
+ for(auto & tens: tensors_){
+  if(tens.second.getName() == name){
+   success = substituteTensor(tens.first,network);
+   if(!success) break;
+  }
+ }
+ return success;
+}
+
+
+bool TensorNetwork::substituteTensor(std::shared_ptr<Tensor> original,
+                                     const TensorNetwork & network)
+{
+ if(!(original->isCongruentTo(*(network.getTensor(0))))) return false;
+ for(auto & tens: tensors_){
+  auto net_tensor = tens.second.getTensor();
+  if(net_tensor == original) substituteTensor(tens.first,network);
  }
  return true;
 }

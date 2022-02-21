@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/02/07
+REVISION: 2022/02/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -179,6 +179,10 @@ public:
  TensorNetwork(const TensorNetwork & another,               //in: another tensor network
                bool replace_output,                         //in: whether or not to replace the output tensor
                const std::string & new_output_name = "");   //in: new name of the output tensor (if empty, will be generated)
+ /** Extracts a tensor sub-network from another tensor network. **/
+ TensorNetwork(const std::string & name,                      //in: new tensor network name (sub-network name)
+               const TensorNetwork & another,                 //in: another tensor network
+               const std::vector<unsigned int> & tensor_ids); //in: ids of the tensors forming a chosen tensor sub-network
 
  TensorNetwork(const TensorNetwork &) = default;
  TensorNetwork & operator=(const TensorNetwork &) = default;
@@ -370,6 +374,11 @@ public:
                    unsigned int result_id, //in: result tensor id (absent in the tensor network, to be appended)
                    std::string * contr_pattern = nullptr); //inout: corresponding tensor contraction pattern (owned by the caller)
 
+ /** Merges two or more tensors in a finalized tensor network
+     by replacing them by their contracted product (single tensor). **/
+ bool mergeTensors(const std::vector<unsigned int> & tensor_ids, //in: ids of the tensors to be merged
+                   unsigned int result_id); //in: result tensor id (absent in the tensor network, to be appended)
+
  /** Splits a given tensor in a finalized tensor network into two tensors by introducing new dimensions
      across the cutting boundary. The original tensor dimensions are then assigned to either left or
      right tensor. The new dimensions are then appended to both tensors at the end. The two tensors
@@ -382,13 +391,24 @@ public:
                   const TensorShape & contracted_dims,   //in: dimension extents of the contracted (new) dimensions connecting two tensors after splitting
                   const std::vector<int> & right_dims);  //in: assignment of original tensor dimensions to new tensors (0: left, 1: right tensor)
 
- /** Substitutes a tensor in the tensor network with another congruent tensor. **/
+ /** Substitutes a tensor in the tensor network with another congruent tensor.
+     The second and third overloads will substitute all matching tensors. **/
  bool substituteTensor(unsigned int tensor_id,           //in: id of the tensor to be substituted
                        std::shared_ptr<Tensor> tensor);  //in: substituting tensor
  bool substituteTensor(const std::string & name,         //in: name of the tensor to be substituted
                        std::shared_ptr<Tensor> tensor);  //in: substituting tensor
- bool substituteTensor(std::shared_ptr<Tensor> original, //in: original tensor
+ bool substituteTensor(std::shared_ptr<Tensor> original, //in: original tensor to be substituted
                        std::shared_ptr<Tensor> tensor);  //in: substituting tensor
+
+ /** Substitutes a tensor in the tensor network with another tensor network.
+     The ids of the newly added tensors will be adjusted to be unique.
+     The second and third overloads will substitute all matching tensors. **/
+ bool substituteTensor(unsigned int tensor_id,           //in: id of the tensor to be substituted
+                       const TensorNetwork & network);   //in: substituting tensor network
+ bool substituteTensor(const std::string & name,         //in: name of the tensor to be substituted
+                       const TensorNetwork & network);   //in: substituting tensor network
+ bool substituteTensor(std::shared_ptr<Tensor> original, //in: original tensor to be substituted
+                       const TensorNetwork & network);   //in: substituting tensor network
 
  /** Returns the list of in-network id's the given tensor enters the tensor network with.
      Note that the tensor conjugation status in the tensor network matters here. **/
