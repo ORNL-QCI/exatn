@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/02/20
+REVISION: 2022/02/21
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1985,8 +1985,51 @@ bool TensorNetwork::substituteTensor(std::shared_ptr<Tensor> original,
 bool TensorNetwork::substituteTensor(unsigned int tensor_id,
                                      const TensorNetwork & network)
 {
- //`Implement
- return false;
+ bool success = true;
+ const auto * out_tens_conn = const_cast<TensorNetwork&>(network).getTensorConn(0);
+ assert(out_tens_conn != nullptr);
+ const auto * repl_tens_conn = getTensorConn(tensor_id);
+ if(repl_tens_conn != nullptr){
+  if(repl_tens_conn->getTensor()->isCongruentTo(*(out_tens_conn->getTensor()))){
+   //Establish tensor id renumeration map:
+   unsigned int n = getMaxTensorId();
+   std::unordered_map<unsigned int, unsigned int> id_map; //old id --> new id
+   for(auto tens_entry = network.cbegin(); tens_entry != network.cend(); ++tens_entry){
+    auto res = id_map.emplace(std::make_pair(tens_entry->first,++n)); assert(res.second);
+   }
+   //Emplace sub-network into the tensor network:
+   for(auto tens_entry = network.cbegin(); tens_entry != network.cend(); ++tens_entry){
+    TensorConn tens_conn(tens_entry->second);
+    const auto tens_conn_rank = tens_conn.getRank();
+    for(unsigned int i = 0; i < tens_conn_rank; ++i){
+     auto tens_conn_leg = tens_conn.getTensorLeg(i);
+     const auto other_tens_id = tens_conn_leg.getTensorId();
+     const auto other_tens_dim = tens_conn_leg.getDimensionId();
+     if(other_tens_id == 0){ //boundary leg
+      tens_conn_leg.resetTensorId(repl_tens_conn->getTensorLeg(other_tens_dim).getTensorId());
+      tens_conn_leg.resetDimensionId(repl_tens_conn->getTensorLeg(other_tens_dim).getDimensionId());
+     }else{ //internal leg
+      tens_conn_leg.resetTensorId(id_map[other_tens_id]);
+     }
+     tens_conn.resetLeg(i,tens_conn_leg);
+    }
+    success = emplaceTensorConn(id_map[tens_entry->first],tens_conn);
+    if(!success) return false;
+   }
+   success = eraseTensorConn(tensor_id);
+   if(success){
+    for(auto tens_entry = network.cbegin(); tens_entry != network.cend(); ++tens_entry){
+     updateConnections(id_map[tens_entry->first]);
+    }
+   }
+   invalidateContractionSequence(); //invalidate previously cached tensor contraction sequence
+  }else{
+   success = false;
+  }
+ }else{
+  success = false;
+ }
+ return success;
 }
 
 
@@ -1994,26 +2037,20 @@ bool TensorNetwork::substituteTensor(const std::string & name,
                                      const TensorNetwork & network)
 {
  assert(name.length() > 0);
+
+ auto matcher = [&name] (const Tensor & tensor) {
+  bool matched = false;
+  if(tensor.getName() == name) matched = true;
+  return matched;
+ };
+
  bool success = true;
- for(auto & tens: tensors_){
-  if(tens.second.getName() == name){
-   success = substituteTensor(tens.first,network);
-   if(!success) break;
-  }
+ const auto ids = getTensorIdsInNetwork(matcher);
+ for(const auto id: ids){
+  success = substituteTensor(id,network);
+  if(!success) break;
  }
  return success;
-}
-
-
-bool TensorNetwork::substituteTensor(std::shared_ptr<Tensor> original,
-                                     const TensorNetwork & network)
-{
- if(!(original->isCongruentTo(*(network.getTensor(0))))) return false;
- for(auto & tens: tensors_){
-  auto net_tensor = tens.second.getTensor();
-  if(net_tensor == original) substituteTensor(tens.first,network);
- }
- return true;
 }
 
 

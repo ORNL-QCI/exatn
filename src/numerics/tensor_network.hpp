@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/02/18
+REVISION: 2022/02/21
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -402,12 +402,10 @@ public:
 
  /** Substitutes a tensor in the tensor network with another tensor network.
      The ids of the newly added tensors will be adjusted to be unique.
-     The second and third overloads will substitute all matching tensors. **/
+     The second overload will substitute all matching tensors. **/
  bool substituteTensor(unsigned int tensor_id,           //in: id of the tensor to be substituted
                        const TensorNetwork & network);   //in: substituting tensor network
  bool substituteTensor(const std::string & name,         //in: name of the tensor to be substituted
-                       const TensorNetwork & network);   //in: substituting tensor network
- bool substituteTensor(std::shared_ptr<Tensor> original, //in: original tensor to be substituted
                        const TensorNetwork & network);   //in: substituting tensor network
 
  /** Returns the list of in-network id's the given tensor enters the tensor network with.
