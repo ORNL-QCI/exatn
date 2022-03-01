@@ -135,8 +135,9 @@ TEST(NumericsTester, checkNetworkBuilders)
  //Get tensor network builders:
  auto & network_build_factory = *(numerics::NetworkBuildFactory::get());
  auto builder_mps = network_build_factory.createNetworkBuilderShared("MPS");
- auto builder_ttn = network_build_factory.createNetworkBuilderShared("Tree");
-
+ auto builder_ttn = network_build_factory.createNetworkBuilderShared("TTN");
+ assert(builder_mps);
+ assert(builder_ttn);
  //Building an MPS tensor network with 8 sites and max bond dimension of 6:
  //  O-O-O-O-O-O-O-O
  //  | | | | | | | |
