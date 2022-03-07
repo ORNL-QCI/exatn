@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor
-REVISION: 2022/01/17
+REVISION: 2022/03/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -46,7 +46,8 @@ public:
   TensorGraphExecutor():
    node_executor_(nullptr), num_ops_issued_(0),
    num_processes_(0), process_rank_(-1), global_process_rank_(-1),
-   logging_(0), stopping_(false), active_(false), serialize_(false), validation_tracing_(false),
+   logging_(0), initialized_(false), stopping_(false), active_(false),
+   serialize_(false), validation_tracing_(false),
    time_start_(exatn::Timer::timeInSecHR())
   {
   }
@@ -56,7 +57,8 @@ public:
   TensorGraphExecutor(TensorGraphExecutor &&) = delete;
   TensorGraphExecutor & operator=(TensorGraphExecutor &&) = delete;
 
-  virtual ~TensorGraphExecutor(){
+  virtual ~TensorGraphExecutor() {
+    initialized_.store(false);
     resetLoggingLevel();
   }
 
@@ -66,23 +68,31 @@ public:
                                  unsigned int num_processes,
                                  unsigned int process_rank,
                                  unsigned int global_process_rank) {
+    initialized_.store(false);
     num_processes_.store(num_processes);
     process_rank_.store(process_rank);
     global_process_rank_.store(global_process_rank);
-    node_executor_ = node_executor;
-    if(node_executor_){
+    bool executor_on = false;
+    if(node_executor){
       if(logging_.load() != 0){
         logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                  << "](TensorGraphExecutor)[EXEC_THREAD]: Initializing the node executor ... "; //debug
       }
-      node_executor_->initialize(parameters);
+      node_executor->initialize(parameters);
       if(logging_.load() != 0){
         logfile_ << "Successfully initialized [" << std::fixed << std::setprecision(6)
                  << exatn::Timer::timeInSecHR(getTimeStampStart()) << "]" << std::endl; //debug
         logfile_.flush();
       }
+      executor_on = true;
     }
+    node_executor_ = node_executor;
+    initialized_.store(executor_on);
     return;
+  }
+
+  bool nodeExecutorInitialized() const {
+    return initialized_.load();
   }
 
   /** Resets the logging level (0:none). **/
@@ -107,32 +117,33 @@ public:
 
   /** Activates/deactivates dry run (no actual computations). **/
   void activateDryRun(bool dry_run) {
-   while(!node_executor_);
+   while(!nodeExecutorInitialized());
    return node_executor_->activateDryRun(dry_run);
   }
 
   /** Activates mixed-precision fast math on all devices (if available). **/
   void activateFastMath() {
-    while(!node_executor_);
+    while(!nodeExecutorInitialized());
     return node_executor_->activateFastMath();
   }
 
   /** Returns the Host memory buffer size in bytes provided by the node executor. **/
   std::size_t getMemoryBufferSize() const {
-    while(!node_executor_);
+    while(!nodeExecutorInitialized());
     return node_executor_->getMemoryBufferSize();
   }
 
   /** Returns the current memory usage by all allocated tensors.
       Note that the returned value includes buffer fragmentation overhead. **/
   std::size_t getMemoryUsage(std::size_t * free_mem) const {
-    while(!node_executor_);
+    assert(free_mem != nullptr);
+    while(!nodeExecutorInitialized());
     return node_executor_->getMemoryUsage(free_mem);
   }
 
   /** Returns the current value of the total Flop count executed by the node executor. **/
   virtual double getTotalFlopCount() const {
-    while(!node_executor_);
+    while(!nodeExecutorInitialized());
     return node_executor_->getTotalFlopCount();
   }
 
@@ -180,6 +191,7 @@ protected:
   std::atomic<int> process_rank_; //current process rank
   std::atomic<int> global_process_rank_; //current global process rank (in MPI_COMM_WORLD)
   std::atomic<int> logging_;      //logging level (0:none)
+  std::atomic<bool> initialized_; //initialization status of the node executor
   std::atomic<bool> stopping_;    //signal to pause the execution thread
   std::atomic<bool> active_;      //TRUE while the execution thread is executing DAG operations
   std::atomic<bool> serialize_;   //serialization of the DAG execution

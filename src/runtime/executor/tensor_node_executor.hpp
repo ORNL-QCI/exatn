@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph node executor
-REVISION: 2022/01/17
+REVISION: 2022/03/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -43,6 +43,11 @@ namespace runtime {
 class TensorNodeExecutor : public Identifiable, public Cloneable<TensorNodeExecutor> {
 
 public:
+
+  //TensorNodeExecutor(const TensorNodeExecutor &) = delete;
+  //TensorNodeExecutor & operator=(const TensorNodeExecutor &) = delete;
+  //TensorNodeExecutor(TensorNodeExecutor &&) = delete;
+  //TensorNodeExecutor & operator=(TensorNodeExecutor &&) = delete;
 
   virtual ~TensorNodeExecutor() = default;
 

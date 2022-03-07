@@ -18,8 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -46,13 +45,13 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-#define EXATN_TEST27 //requires input file from source
-#define EXATN_TEST28 //requires input file from source
+//#define EXATN_TEST27 //requires input file from source
+//#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30
-#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32*/
-#define EXATN_TEST33
+//#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST32
+//#define EXATN_TEST33 //requires input file from source
 #define EXATN_TEST34
 
 
@@ -75,12 +74,11 @@ TEST(NumServerTester, PerformanceExaTN)
  //exatn::resetExecutionSerialization(true,true); //debug
  //exatn::activateFastMath(); //fast math (mixed-precision)
 
- /*std::size_t free_mem = 0;
+ std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
- */
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -1390,9 +1388,8 @@ TEST(NumServerTester, BigMPSNumServer)
  auto rootTensor = std::make_shared<Tensor>(ROOT_TENSOR_NAME, qubitTensorDim);
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
- auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
- bool success = builder->setParameter("max_bond_dim", 1);
- assert(success);
+ auto builder = networkBuildFactory.createNetworkBuilderShared("MPS"); assert(builder);
+ bool success = builder->setParameter("max_bond_dim", 1); assert(success);
 
  std::cout << "Building MPS tensor network ... " << std::flush;
  auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
@@ -1682,7 +1679,7 @@ TEST(NumServerTester, IsingTNO)
  //ham->printIt(); //debug
 
  //Configure the tensor network builder:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
@@ -1881,7 +1878,7 @@ TEST(NumServerTester, MPSBuilderNumServer)
  assert(used_mem == 0);
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
- auto builder = networkBuildFactory.createNetworkBuilderShared("MPS");
+ auto builder = networkBuildFactory.createNetworkBuilderShared("MPS"); assert(builder);
  bool success = builder->setParameter("max_bond_dim",1);
  assert(success);
  const std::string ROOT_TENSOR_NAME = "Root";
@@ -2285,8 +2282,8 @@ TEST(NumServerTester, neurIPS) {
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
- auto builder_mps = exatn::getTensorNetworkBuilder("MPS");
- auto builder_ttn = exatn::getTensorNetworkBuilder("TTN");
+ auto builder_mps = exatn::getTensorNetworkBuilder("MPS"); assert(builder_mps);
+ auto builder_ttn = exatn::getTensorNetworkBuilder("TTN"); assert(builder_ttn);
 
  //3:1 1D MERA:
  {
@@ -2482,7 +2479,7 @@ TEST(NumServerTester, MPSNorm) {
  auto output_tensor = std::make_shared<Tensor>("Z0", std::vector<unsigned int>(num_qubits, 2));
 
  std::cout << "Building MPS tensor network ... " << std::flush;
- auto builder = exatn::getTensorNetworkBuilder("MPS");
+ auto builder = exatn::getTensorNetworkBuilder("MPS"); assert(builder);
  success = builder->setParameter("max_bond_dim", 256); assert(success);
  TensorNetwork mps("QubitRegister", output_tensor, *builder);
  std::cout << "Done" << std::endl << std::flush;
@@ -2902,7 +2899,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
 
  //Create tensor network ansatz:
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS"); assert(mps_builder);
  success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
  ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
@@ -3095,7 +3092,7 @@ TEST(NumServerTester, OptimizerHubbard) {
 
  //Create tensor network ansatz:
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS"); assert(mps_builder);
  success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
  ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
@@ -3244,7 +3241,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  }
 
  //Create tensor network ansatz:
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS"); assert(mps_builder);
  success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
@@ -3357,7 +3354,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
  hubbard_operator->printIt();
 
  //Create tensor network ansatz:
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS");
+ auto mps_builder = exatn::getTensorNetworkBuilder("MPS"); assert(mps_builder);
  success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
  auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
@@ -3486,7 +3483,7 @@ TEST(NumServerTester, MCVQEHamiltonian) {
  hamiltonian_operator->printIt();
 
  //Create tensor network ansatz:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
@@ -3573,7 +3570,7 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
  const int arity = 2;
  const std::string tn_type = "MPS"; //MPS or TTN
 
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
@@ -3693,7 +3690,7 @@ TEST(NumServerTester, SpinHamiltonians) {
  //transverse_ising->printIt(); //debug
 
  //Configure the tensor network builder:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
@@ -3866,7 +3863,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
  success = hamiltonian0->deleteComponent(0); assert(success);
 
  //Configure the tensor network builder:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
@@ -4193,7 +4190,7 @@ TEST(NumServerTester, IsometricAIEM) {
 
  if(root) std::cout << "Constructing the tensor network ansatz ... ";
  //Configure the tensor network builder:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
  if(tn_type == "MPS"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
  }else if(tn_type == "TTN"){
