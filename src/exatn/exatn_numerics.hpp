@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/02/07
+REVISION: 2022/03/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -616,7 +616,8 @@ inline bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen
  {return numericalServer->allreduceTensorSync(process_group,name);}
 
 
-/** Scales a tensor by a scalar value. **/
+/** Scales a tensor by a scalar value. If the tensor has isometries,
+    they will be lost, unless abs(value) = 1. **/
 template<typename NumericType>
 inline bool scaleTensor(const std::string & name,       //in: tensor name
                         NumericType value)              //in: scalar value
@@ -681,7 +682,8 @@ inline bool copyTensorSync(const std::string & output_name, //in: output tensor 
  {return numericalServer->copyTensorSync(output_name,input_name);}
 
 
-/** Performs tensor addition: tensor0 += tensor1 * alpha **/
+/** Performs tensor addition: tensor0 += tensor1 * alpha
+    If tensor0 has isometries, they will be automatically enforced afterwards. **/
 template<typename NumericType>
 inline bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
                        NumericType alpha)            //in: alpha prefactor
@@ -693,7 +695,8 @@ inline bool addTensorsSync(const std::string & addition, //in: symbolic tensor a
  {return numericalServer->addTensorsSync(addition,alpha);}
 
 
-/** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
+/** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha
+    If tensor0 has isometries, they will be automatically enforced afterwards. **/
 template<typename NumericType>
 inline bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
                             NumericType alpha)               //in: alpha prefactor
@@ -1105,8 +1108,8 @@ inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string
 // INTERNAL CONTROL API //
 //////////////////////////
 
- /** Switches the computational backend: {"default","cuquantum"}.
-     Only applies to tensor network execution. **/
+/** Switches the computational backend: {"default","cuquantum"}.
+    Only applies to tensor network execution. **/
 inline void switchComputationalBackend(const std::string & backend_name)
  {return numericalServer->switchComputationalBackend(backend_name);}
 

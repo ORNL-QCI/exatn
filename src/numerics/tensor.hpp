@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2022/01/28
+REVISION: 2022/03/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -230,6 +230,9 @@ public:
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
+
+ /** Unregisters all isometries in the tensor. **/
+ void unregisterIsometries();
 
  /** Returns TRUE if the given tensor dimension belongs to a registered isometry group. **/
  bool withIsometricDimension(unsigned int dim_id,                                           //in: tensor dimension id

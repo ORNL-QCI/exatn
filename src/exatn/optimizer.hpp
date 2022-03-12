@@ -1,8 +1,8 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/11/19
+REVISION: 2022/03/12
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) Given a closed symmetric tensor network expansion functional, composed
@@ -13,6 +13,17 @@ Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
      targeting its minimum (or maximum):
       E = <x|H|x> / <x|x>, where H is a tensor network operator, and x is a
       tensor network expansion that delivers an extremum to the functional.
+ (B) Algorithm:
+     for i = 0 .. N-1
+      for all optimizable x:
+       |x_i> = |x_i> / norm_S(|x_i>)
+       E_i = <x_i|H|x_i>
+       |r_i> = H|x_i> - E_i*S|x_i>
+       if norm_2(|r_i>) / (norm_2(H|x_i>) + abs(E_i)*norm_2(S|x_i>)) <= tolerance: Break
+       t = - <r_i|r_i> / (<r_i|H|r_i> - E_i*<r_i|S|r_i>)
+       |x_(i+1)> = |x_i> + t*|r_i>
+      end for
+     end for
 **/
 
 #ifndef EXATN_OPTIMIZER_HPP_
@@ -74,7 +85,7 @@ public:
 
  /** Returns the optimized tensor network expansion forming the optimal
      bra/ket vectors delivering an extremum to the functional. **/
- std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * average_expect_val = nullptr) const;
+ std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * expect_val = nullptr) const;
 
  /** Returns the achieved expectation value of the optimized functional. **/
  std::complex<double> getExpectationValue() const;
@@ -88,7 +99,7 @@ public:
 
  /** Returns a specific extreme root (eigenvalue/eigenvector pair). **/
  std::shared_ptr<TensorExpansion> getSolution(unsigned int root_id,
-                                              std::complex<double> * average_expect_val = nullptr) const;
+                                              std::complex<double> * expect_val = nullptr) const;
 
  /** Returns a specific extreme eigenvalue. **/
  std::complex<double> getExpectationValue(unsigned int root_id) const;

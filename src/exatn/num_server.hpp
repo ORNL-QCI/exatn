@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/02/07
+REVISION: 2022/03/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -272,7 +272,8 @@ public:
                                const std::string & node_executor_name);
 #endif
 
- /** Switches the computational backend. **/
+ /** Switches the computational backend: {"default","cuquantum"}.
+     Only applies to tensor network execution. **/
  void switchComputationalBackend(const std::string & backend_name);
 
  /** Resets the tensor contraction sequence optimizer that is
@@ -532,7 +533,8 @@ public:
  const ProcessGroup & getTensorProcessGroup(const std::string & tensor_name) const; //tensor name
 
  /** Declares, registers, and actually creates a tensor via the processing backend.
-     See numerics::Tensor constructors for different creation options. **/
+     See numerics::Tensor constructors for different creation options.
+     No initialization is performed on the tensor body. **/
  template <typename... Args>
  bool createTensor(const std::string & name,       //in: tensor name
                    TensorElementType element_type, //in: tensor element type
@@ -574,7 +576,8 @@ public:
                        TensorElementType element_type);    //in: tensor element type
 
  /** Creates and allocates storage for a composite tensor distributed over a given process group.
-     The distribution of tensor blocks is dictated by its split dimensions. **/
+     The distribution of tensor blocks is dictated by its split dimensions.
+     No initialization is performed on the tensor body. **/
  template <typename... Args>
  bool createTensor(const ProcessGroup & process_group,                      //in: chosen group of MPI processes
                    const std::string & name,                                //in: tensor name
@@ -591,7 +594,8 @@ public:
                        TensorElementType element_type,                          //in: tensor element type
                        Args&&... args);                                         //in: other arguments for Tensor ctor
 
- /** Creates all input tensors in a given tensor network that are still unallocated. **/
+ /** Creates all input tensors in a given tensor network that are still unallocated.
+     No initialization is performed on the tensor bodies. **/
  bool createTensors(TensorNetwork & tensor_network,         //inout: tensor network
                     TensorElementType element_type);        //in: tensor element type
 
@@ -606,7 +610,8 @@ public:
                         TensorNetwork & tensor_network,     //inout: tensor network
                         TensorElementType element_type);    //in: tensor element type
 
- /** Creates all input tensors in a given tensor network expansion that are still unallocated. **/
+ /** Creates all input tensors in a given tensor network expansion that are still unallocated.
+     No initialization is performed on the tensor bodies. **/
  bool createTensors(TensorExpansion & tensor_expansion,     //inout: tensor expansion
                     TensorElementType element_type);        //in: tensor element type
 
@@ -778,7 +783,8 @@ public:
  bool allreduceTensorSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
                           const std::string & name);          //in: tensor name
 
- /** Scales a tensor by a scalar value. **/
+ /** Scales a tensor by a scalar value. If the tensor has isometries,
+     they will be lost, unless abs(value) = 1. **/
  template<typename NumericType>
  bool scaleTensor(const std::string & name, //in: tensor name
                   NumericType value);       //in: scalar value
@@ -826,7 +832,8 @@ public:
  bool copyTensorSync(const std::string & output_name, //in: output tensor name
                      const std::string & input_name); //in: input tensor name
 
- /** Performs tensor addition: tensor0 += tensor1 * alpha **/
+ /** Performs tensor addition: tensor0 += tensor1 * alpha
+     If tensor0 has isometries, they will be automatically enforced afterwards. **/
  template<typename NumericType>
  bool addTensors(const std::string & addition, //in: symbolic tensor addition specification
                  NumericType alpha);           //in: alpha prefactor
@@ -835,7 +842,8 @@ public:
  bool addTensorsSync(const std::string & addition, //in: symbolic tensor addition specification
                      NumericType alpha);           //in: alpha prefactor
 
- /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha **/
+ /** Performs tensor contraction: tensor0 += tensor1 * tensor2 * alpha
+     If tensor0 has isometries, they will be automatically enforced afterwards. **/
  template<typename NumericType>
  bool contractTensors(const std::string & contraction, //in: symbolic tensor contraction specification
                       NumericType alpha);              //in: alpha prefactor
@@ -1202,6 +1210,7 @@ template<typename NumericType>
 bool NumServer::initTensor(const std::string & name,
                            NumericType value)
 {
+ getTensorRef(name).unregisterIsometries();
  return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
 }
 
@@ -1209,6 +1218,7 @@ template<typename NumericType>
 bool NumServer::initTensorSync(const std::string & name,
                                NumericType value)
 {
+ getTensorRef(name).unregisterIsometries();
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
 }
 
@@ -1236,6 +1246,7 @@ template<typename NumericType>
 bool NumServer::scaleTensor(const std::string & name,
                             NumericType value)
 {
+ if(std::abs(value) != 1.0) getTensorRef(name).unregisterIsometries();
  return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
 }
 
@@ -1243,6 +1254,7 @@ template<typename NumericType>
 bool NumServer::scaleTensorSync(const std::string & name,
                                 NumericType value)
 {
+ if(std::abs(value) != 1.0) getTensorRef(name).unregisterIsometries();
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
 }
 
@@ -1254,7 +1266,7 @@ bool NumServer::addTensors(const std::string & addition,
  auto parsed = parse_tensor_network(addition,tensors);
  if(parsed){
   if(tensors.size() == 2){
-   std::string tensor_name;
+   std::string tensor_name, tensor0_name;
    std::vector<IndexLabel> indices;
    bool complex_conj0,complex_conj1;
    parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
@@ -1263,6 +1275,7 @@ bool NumServer::addTensors(const std::string & addition,
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
+     tensor0_name = tensor_name;
      parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
@@ -1275,6 +1288,12 @@ bool NumServer::addTensors(const std::string & addition,
        op->setIndexPattern(addition);
        op->setScalar(0,std::complex<double>(alpha));
        parsed = submit(op,getTensorMapper(process_group));
+       if(parsed){
+        if(tensor0->hasIsometries()){
+         const auto & isometries = tensor0->retrieveIsometries();
+         parsed = transformTensor(tensor0_name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+        }
+       }
       }else{
        parsed = true;
        //std::cout << "#ERROR(exatn::NumServer::addTensors): Tensor " << tensor_name << " not found in tensor addition: "
@@ -1312,7 +1331,7 @@ bool NumServer::addTensorsSync(const std::string & addition,
  auto parsed = parse_tensor_network(addition,tensors);
  if(parsed){
   if(tensors.size() == 2){
-   std::string tensor_name;
+   std::string tensor_name, tensor0_name;
    std::vector<IndexLabel> indices;
    bool complex_conj0,complex_conj1;
    parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
@@ -1321,6 +1340,7 @@ bool NumServer::addTensorsSync(const std::string & addition,
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
+     tensor0_name = tensor_name;
      parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
@@ -1338,6 +1358,12 @@ bool NumServer::addTensorsSync(const std::string & addition,
 #ifdef MPI_ENABLED
         if(parsed) parsed = sync(process_group);
 #endif
+        if(parsed){
+         if(tensor0->hasIsometries()){
+          const auto & isometries = tensor0->retrieveIsometries();
+          parsed = transformTensorSync(tensor0_name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+         }
+        }
        }
       }else{
        parsed = true;
@@ -1377,7 +1403,7 @@ bool NumServer::contractTensors(const std::string & contraction,
  auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);
  if(parsed){
   if(tensors.size() == 3){
-   std::string tensor_name;
+   std::string tensor_name, tensor0_name;
    std::vector<IndexLabel> indices;
    bool complex_conj0,complex_conj1,complex_conj2;
    parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
@@ -1386,6 +1412,7 @@ bool NumServer::contractTensors(const std::string & contraction,
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
+     tensor0_name = tensor_name;
      parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
@@ -1447,6 +1474,12 @@ bool NumServer::contractTensors(const std::string & contraction,
          if(parsed && redistribution) parsed = sync(process_group);
 #endif
          if(parsed && tensor0a != tensor0) parsed = destroyTensor(tensor0a->getName());
+         if(parsed){
+          if(tensor0->hasIsometries()){
+           const auto & isometries = tensor0->retrieveIsometries();
+           parsed = transformTensor(tensor0_name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+          }
+         }
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "
@@ -1494,7 +1527,7 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
  auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);
  if(parsed){
   if(tensors.size() == 3){
-   std::string tensor_name;
+   std::string tensor_name, tensor0_name;
    std::vector<IndexLabel> indices;
    bool complex_conj0,complex_conj1,complex_conj2;
    parsed = parse_tensor(tensors[0],tensor_name,indices,complex_conj0);
@@ -1503,6 +1536,7 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
     auto iter = tensors_.find(tensor_name);
     if(iter != tensors_.end()){
      auto tensor0 = iter->second;
+     tensor0_name = tensor_name;
      parsed = parse_tensor(tensors[1],tensor_name,indices,complex_conj1);
      if(parsed){
       iter = tensors_.find(tensor_name);
@@ -1558,6 +1592,12 @@ bool NumServer::contractTensorsSync(const std::string & contraction,
          if(parsed && tensor2a != tensor2) parsed = destroyTensorSync(tensor2a->getName());
          if(parsed && tensor1a != tensor1) parsed = destroyTensorSync(tensor1a->getName());
          if(parsed && tensor0a != tensor0) parsed = destroyTensorSync(tensor0a->getName());
+         if(parsed){
+          if(tensor0->hasIsometries()){
+           const auto & isometries = tensor0->retrieveIsometries();
+           parsed = transformTensorSync(tensor0_name,std::shared_ptr<TensorMethod>(new numerics::FunctorIsometrize(*(isometries.cbegin()))));
+          }
+         }
         }else{
          parsed = true;
          //std::cout << "#ERROR(exatn::NumServer::contractTensors): Tensor " << tensor_name << " not found in tensor contraction: "

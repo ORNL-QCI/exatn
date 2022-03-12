@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2022/01/28
+REVISION: 2022/03/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -429,6 +429,12 @@ bool Tensor::hasIsometries() const
 const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 {
  return isometries_;
+}
+
+void Tensor::unregisterIsometries()
+{
+ isometries_.clear();
+ return;
 }
 
 bool Tensor::withIsometricDimension(unsigned int dim_id, const std::vector<unsigned int> ** iso_group) const

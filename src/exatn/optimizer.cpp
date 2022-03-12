@@ -1,8 +1,8 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2021/11/21
+REVISION: 2022/03/12
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "optimizer.hpp"
 
@@ -83,18 +83,18 @@ void TensorNetworkOptimizer::resetMicroIterations(unsigned int micro_iterations)
 }
 
 
-std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(std::complex<double> * average_expect_val) const
+std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(std::complex<double> * expect_val) const
 {
- if(average_expect_val != nullptr) *average_expect_val = average_expect_val_;
+ if(expect_val != nullptr) *expect_val = average_expect_val_;
  return vector_expansion_;
 }
 
 
 std::shared_ptr<TensorExpansion> TensorNetworkOptimizer::getSolution(unsigned int root_id,
-                                                                     std::complex<double> * average_expect_val) const
+                                                                     std::complex<double> * expect_val) const
 {
  assert(root_id < eigenvalues_.size());
- if(average_expect_val != nullptr) *average_expect_val = eigenvalues_[root_id];
+ if(expect_val != nullptr) *expect_val = eigenvalues_[root_id];
  return eigenvectors_[root_id];
 }
 
@@ -310,12 +310,15 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     double local_convergence = 0.0;
     for(unsigned int micro_iteration = 0; micro_iteration < micro_iterations_; ++micro_iteration){
      //Normalize the optimized tensor w.r.t. metrics:
-     done = initTensorSync("_scalar_norm",0.0); assert(done);
-     done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
      double tens_norm = 0.0;
-     done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-     tens_norm = std::sqrt(tens_norm);
-     done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done); //`Only works with no repeated tensors
+     if(!(environment.tensor->hasIsometries())){
+      done = initTensorSync("_scalar_norm",0.0); assert(done);
+      done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
+      tens_norm = 0.0;
+      done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
+      tens_norm = std::sqrt(tens_norm); //`Generalize for repeated tensors
+      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+     }
      //Compute the operator expectation value w.r.t. the optimized tensor:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
      done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
@@ -381,59 +384,60 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
      if(local_convergence > tolerance_){
       if(micro_iteration == (micro_iterations_ - 1)) converged = false;
      }
-      //Compute the optimal step size:
-      if(TensorNetworkOptimizer::debug > 2){
-       std::cout << " Old hessian expansion coefficients:\n";
-       environment.hessian_expansion.printCoefficients();
-      }
-      scale_metrics(environment.hessian_expansion,environment.expect_value,expect_val);
-      if(TensorNetworkOptimizer::debug > 2){
-       std::cout << " New hessian expansion coefficients:\n";
-       environment.hessian_expansion.printCoefficients();
-      }
-      done = initTensorSync("_scalar_norm",0.0); assert(done);
-      done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm,num_procs); assert(done);
-      denom = 0.0;
-      switch(scalar_norm->getElementType()){
-       case TensorElementType::REAL32:
-        denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<float>()[std::initializer_list<int>{}];
-        break;
-       case TensorElementType::REAL64:
-        denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<double>()[std::initializer_list<int>{}];
-        break;
-       case TensorElementType::COMPLEX32:
-        denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<float>>()[std::initializer_list<int>{}].real();
-        break;
-       case TensorElementType::COMPLEX64:
-        denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<double>>()[std::initializer_list<int>{}].real();
-        break;
-       default:
-        assert(false);
-      }
-      if(TensorNetworkOptimizer::debug > 1) std::cout << " Step size for " << environment.tensor->getName() << " = "
-                                                      << (grad_norm * grad_norm) << " / " << denom << " = "
-                                                      << (grad_norm * grad_norm / denom) << std::endl;
-      denom = std::abs(denom);
-      if(denom > MIN_ACCEPTABLE_DENOM){
-       epsilon_ = grad_norm * grad_norm / denom;
-       if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
-                                                       << ": Denominator = " << denom << std::endl;
-      }else{
-       epsilon_ = DEFAULT_LEARN_RATE;
-       if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
-      }
-      //Update the optimized tensor:
-      std::string add_pattern;
-      done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
-                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
-      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
+     //Compute the optimal step size:
+     if(TensorNetworkOptimizer::debug > 2){
+      std::cout << " Old hessian expansion coefficients:\n";
+      environment.hessian_expansion.printCoefficients();
+     }
+     scale_metrics(environment.hessian_expansion,environment.expect_value,expect_val);
+     if(TensorNetworkOptimizer::debug > 2){
+      std::cout << " New hessian expansion coefficients:\n";
+      environment.hessian_expansion.printCoefficients();
+     }
+     done = initTensorSync("_scalar_norm",0.0); assert(done);
+     done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm,num_procs); assert(done);
+     denom = 0.0;
+     switch(scalar_norm->getElementType()){
+      case TensorElementType::REAL32:
+       denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<float>()[std::initializer_list<int>{}];
+       break;
+      case TensorElementType::REAL64:
+       denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<double>()[std::initializer_list<int>{}];
+       break;
+      case TensorElementType::COMPLEX32:
+       denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<float>>()[std::initializer_list<int>{}].real();
+       break;
+      case TensorElementType::COMPLEX64:
+       denom = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<double>>()[std::initializer_list<int>{}].real();
+       break;
+      default:
+       assert(false);
+     }
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Step size for " << environment.tensor->getName() << " = "
+                                                     << (grad_norm * grad_norm) << " / " << denom << " = "
+                                                     << (grad_norm * grad_norm / denom) << std::endl;
+     denom = std::abs(denom);
+     if(denom > MIN_ACCEPTABLE_DENOM){
+      epsilon_ = grad_norm * grad_norm / denom;
+      if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_
+                                                      << ": Denominator = " << denom << std::endl;
+     }else{
+      epsilon_ = DEFAULT_LEARN_RATE;
+      if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
+     }
+     //Update the optimized tensor:
+     std::string add_pattern;
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
+     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
+     if(!(environment.tensor->hasIsometries())){
       if(NORMALIZE_WITH_METRICS){
        //Normalize the optimized tensor w.r.t. metrics:
        done = initTensorSync("_scalar_norm",0.0); assert(done);
        done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
        tens_norm = 0.0;
        done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-       tens_norm = std::sqrt(tens_norm);
+       tens_norm = std::sqrt(tens_norm); //`Generalize for repeated tensors
        if(TensorNetworkOptimizer::debug > 1) std::cout << " Metrical tensor norm before normalization = "
                                                        << tens_norm << std::endl;
        done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
@@ -445,7 +449,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
                                                        << tens_norm << std::endl;
        done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
       }
-     //}
+     }
      //Update the old expectation value:
      environment.expect_value = expect_val;
      if(local_convergence <= tolerance_) break;

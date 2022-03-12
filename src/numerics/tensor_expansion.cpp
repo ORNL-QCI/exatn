@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network expansion
-REVISION: 2022/02/15
+REVISION: 2022/03/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -368,8 +368,8 @@ bool TensorExpansion::collapseIsometries(bool * deltas_appended)
 {
  bool collapsed = false, deltas_inserted = false;
  for(auto net = begin(); net != end(); ++net){
-  bool deltas = false;
-  auto clps = net->network->collapseIsometries(&deltas);
+  bool deltas = false, clps = false;
+  if(net->network->hasIsometries()) clps = net->network->collapseIsometries(&deltas);
   collapsed = collapsed || clps;
   deltas_inserted = deltas_inserted || deltas;
  }
