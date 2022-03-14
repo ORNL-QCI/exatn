@@ -4,7 +4,6 @@ file(GLOB SRC cuquantum_executor.cu)
 
 set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 
-#set(CUDA_ARCH_BIN 86)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -shared -std c++17 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC")
 
 cuda_add_library(${LIBRARY_NAME} SHARED ${SRC})
@@ -21,7 +20,7 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC exatn-numerics)
 
 if(CUQUANTUM)
   target_include_directories(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/include)
-  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/lib64/libcutensornet.so)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/lib/libcutensornet.so)
 endif()
 
 if(CUTENSOR AND NOT CUTENSOR_PATH STREQUAL ".")
