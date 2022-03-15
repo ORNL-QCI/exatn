@@ -49,9 +49,9 @@
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30 */
-#define EXATN_TEST31 //requires input file from source
-//#define EXATN_TEST32
-#define EXATN_TEST33 //requires input file from source
+//#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST32
+//#define EXATN_TEST33 //requires input file from source
 //#define EXATN_TEST34
 
 
@@ -4054,7 +4054,9 @@ TEST(NumServerTester, CuTensorNet) {
 
 #ifdef CUQUANTUM
  success = exatn::sync(); assert(success);
- exatn::switchComputationalBackend("cuquantum"); //{default|cuquantum}
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
 
  std::cout << "Testing individual tensor network execution via cuQuantum backend ...\n";
  num_repeats = NUM_REPEATS;
