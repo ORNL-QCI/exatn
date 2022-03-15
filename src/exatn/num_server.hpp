@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/03/12
+REVISION: 2022/03/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -271,6 +271,9 @@ public:
                                const std::string & dag_executor_name,
                                const std::string & node_executor_name);
 #endif
+
+ /** Queries available computational backends. **/
+ std::vector<std::string> queryComputationalBackends() const;
 
  /** Switches the computational backend: {"default","cuquantum"}.
      Only applies to tensor network execution. **/

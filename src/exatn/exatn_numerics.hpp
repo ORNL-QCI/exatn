@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/03/12
+REVISION: 2022/03/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -1107,6 +1107,11 @@ inline std::shared_ptr<exatn::TensorNetwork> makeTensorNetwork(const std::string
 //////////////////////////
 // INTERNAL CONTROL API //
 //////////////////////////
+
+/** Queries available computational backends. **/
+inline std::vector<std::string> queryComputationalBackends()
+ {return numericalServer->queryComputationalBackends();}
+
 
 /** Switches the computational backend: {"default","cuquantum"}.
     Only applies to tensor network execution. **/

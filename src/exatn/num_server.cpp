@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/03/12
+REVISION: 2022/03/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -195,6 +195,17 @@ void NumServer::reconfigureTensorRuntime(const ParamConf & parameters,
  return;
 }
 #endif
+
+
+std::vector<std::string> NumServer::queryComputationalBackends() const
+{
+ std::vector<std::string> backends = {"default"};
+#ifdef CUQUANTUM
+ backends.emplace_back("cuquantum");
+#endif
+ return backends;
+}
+
 
 void NumServer::switchComputationalBackend(const std::string & backend_name)
 {
