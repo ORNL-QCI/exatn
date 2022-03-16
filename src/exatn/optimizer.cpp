@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/03/12
+REVISION: 2022/03/16
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -176,6 +176,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 {
  constexpr bool NORMALIZE_WITH_METRICS = true;  //whether to normalize tensor network factors with metrics or not
  constexpr double MIN_ACCEPTABLE_DENOM = 1e-13; //minimally acceptable denominator in optimal step size determination
+ constexpr bool COLLAPSE_ISOMETRIES = true;     //enables collapsing isometries in all tensor networks
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
@@ -214,6 +215,9 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
  for(auto net = operator_expectation.begin(); net != operator_expectation.end(); ++net){
   net->network->rename("OperExpect" + std::to_string(std::distance(operator_expectation.begin(),net)));
  }
+ if(COLLAPSE_ISOMETRIES){
+  auto collapsed = operator_expectation.collapseIsometries();
+ }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
   operator_expectation.printIt();
@@ -225,6 +229,11 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
  metrics_expectation.rename("MetricsExpectation");
  for(auto net = metrics_expectation.begin(); net != metrics_expectation.end(); ++net){
   net->network->rename("MetrExpect" + std::to_string(std::distance(metrics_expectation.begin(),net)));
+ }
+ bool trivial_metrics = false;
+ if(COLLAPSE_ISOMETRIES){
+  auto collapsed = metrics_expectation.collapseIsometries();
+  if(metrics_expectation.getNumComponents() == 0) trivial_metrics = true;
  }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Metrics expectation expansion:" << std::endl;
@@ -309,17 +318,13 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     //Microiterations:
     double local_convergence = 0.0;
     for(unsigned int micro_iteration = 0; micro_iteration < micro_iterations_; ++micro_iteration){
-     //Normalize the optimized tensor w.r.t. metrics:
+     //Compute the metrics expectation value w.r.t. the optimized tensor (real positive definite):
+     done = initTensorSync("_scalar_norm",0.0); assert(done);
+     done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
      double tens_norm = 0.0;
-     if(!(environment.tensor->hasIsometries())){
-      done = initTensorSync("_scalar_norm",0.0); assert(done);
-      done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
-      tens_norm = 0.0;
-      done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-      tens_norm = std::sqrt(tens_norm); //`Generalize for repeated tensors
-      done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
-     }
-     //Compute the operator expectation value w.r.t. the optimized tensor:
+     done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
+     assert(tens_norm > 0.0);
+     //Compute the operator expectation value w.r.t. the optimized tensor (real):
      done = initTensorSync("_scalar_norm",0.0); assert(done);
      done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
      std::complex<double> expect_val{0.0,0.0};
@@ -339,10 +344,15 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
       default:
        assert(false);
      }
+     expect_val /= std::complex<double>{tens_norm,0.0}; //average operator expectation value w.r.t. the optimized tensor
      if(micro_iteration == (micro_iterations_ - 1)) average_expect_val_ += expect_val;
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
-     //Update the expectation value in the gradient expansion:
+     //Normalize the optimized tensor w.r.t. metrics:
+     if(!(environment.tensor->hasIsometries())){
+      done = scaleTensorSync(environment.tensor->getName(),1.0/std::sqrt(tens_norm)); assert(done);
+     }
+     //Update the average operator expectation value in the gradient expansion:
      if(TensorNetworkOptimizer::debug > 2){
       std::cout << " Old gradient expansion coefficients:\n";
       environment.gradient_expansion.printCoefficients();
@@ -437,17 +447,18 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
        done = evaluateSync(process_group,metrics_expectation,scalar_norm,num_procs); assert(done);
        tens_norm = 0.0;
        done = computeNorm1Sync("_scalar_norm",tens_norm); assert(done);
-       tens_norm = std::sqrt(tens_norm); //`Generalize for repeated tensors
        if(TensorNetworkOptimizer::debug > 1) std::cout << " Metrical tensor norm before normalization = "
-                                                       << tens_norm << std::endl;
-       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+                                                       << std::sqrt(tens_norm) << std::endl;
+       assert(tens_norm > 0.0);
+       done = scaleTensorSync(environment.tensor->getName(),1.0/std::sqrt(tens_norm)); assert(done);
       }else{
        //Normalize the optimized tensor with unity metrics:
        tens_norm = 0.0;
        done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
        if(TensorNetworkOptimizer::debug > 1) std::cout << " Regular tensor norm before normalization = "
-                                                       << tens_norm << std::endl;
-       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
+                                                       << std::sqrt(tens_norm) << std::endl;
+       assert(tens_norm > 0.0);
+       done = scaleTensorSync(environment.tensor->getName(),1.0/std::sqrt(tens_norm)); assert(done);
       }
      }
      //Update the old expectation value:

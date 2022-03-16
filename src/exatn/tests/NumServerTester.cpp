@@ -3991,6 +3991,146 @@ TEST(NumServerTester, ExcitedMCVQE) {
 #endif
 
 #ifdef EXATN_TEST32
+TEST(NumServerTester, IsometricAIEM) {
+ using exatn::TensorShape;
+ using exatn::TensorSignature;
+ using exatn::Tensor;
+ using exatn::TensorNetwork;
+ using exatn::TensorExpansion;
+ using exatn::TensorOperator;
+ using exatn::TensorElementType;
+ using exatn::TensorRange;
+
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+
+ const int num_spin_sites = 8;
+ const int bond_dim_lim = 16;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
+ const int arity = 2;
+ const std::string tn_type = "TTN"; //MPS or TTN
+ const unsigned int num_states = 1;
+ const double accuracy = 1e-5;
+
+ exatn::resetLoggingLevel(1,2); //debug
+
+ std::size_t free_mem = 0;
+ auto used_mem = exatn::getMemoryUsage(&free_mem);
+ std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
+           << used_mem << std::endl << std::flush;
+ assert(used_mem == 0);
+
+ bool success = true;
+ bool root = (exatn::getProcessRank() == 0);
+
+ //Create tensors:
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{4,2,8,2,4}); assert(success);
+ exatn::getTensor("A")->registerIsometry({0,2,4});
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
+
+ //Init tensors:
+ success = exatn::initTensorRnd("A"); assert(success); //random initialization will respect isometry
+ //success = exatn::transformTensor("A",std::shared_ptr<exatn::TensorMethod>(
+ //           new exatn::FunctorIsometrize(std::vector<unsigned int>{0,2,4})));
+ //assert(success);
+ success = exatn::initTensor("B",0.0); assert(success);
+
+ //Contract tensors (to produce identity):
+ success = exatn::contractTensorsSync("B(j1,j2,j3,j4)+=A(i1,j1,i2,j2,i3)*A+(i1,j3,i2,j4,i3)",1.0); assert(success);
+ //success = exatn::printTensor("B"); assert(success);
+ double nrm1 = 0.0;
+ success = exatn::computeNorm1Sync("B",nrm1); assert(success);
+ if(root) std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
+
+ //Destroy tensors:
+ success = exatn::sync(); assert(success);
+ success = exatn::destroyTensor("B"); assert(success);
+ success = exatn::destroyTensor("A"); assert(success);
+
+ //Read the MCVQE Hamiltonian in spin representation:
+ if(root) std::cout << "Reading in the Hamiltonian ... ";
+ auto hamiltonian = exatn::quantum::readSpinHamiltonian("MCVQEHamiltonian",
+  "mcvqe_"+std::to_string(num_spin_sites)+"q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
+ success = hamiltonian->deleteComponent(0); assert(success);
+ if(root) std::cout << "Done" << std::endl;
+
+ if(root) std::cout << "Constructing the tensor network ansatz ... ";
+ //Configure the tensor network builder:
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+  success = tn_builder->setParameter("num_states",num_states); assert(success);
+  success = tn_builder->setParameter("isometric",1); assert(success);
+ }else{
+  std::cout << "#FATAL: Unknown tensor network builder!" << std::endl; assert(false);
+ }
+
+ //Construct the tensor network ansatz:
+ auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
+ auto ket_net = exatn::makeSharedTensorNetwork("KetNet",ket_tensor,*tn_builder,false);
+ auto ket_tns = exatn::makeSharedTensorExpansion("KetTNS",ket_net,std::complex<double>{1.0,0.0});
+ if(root) std::cout << "Done" << std::endl;
+ if(root) ket_tns->printIt(); //debug
+
+ //Checking the Hamiltonian functional structure:
+ if(root) std::cout << "Checking the Hamiltonian functional structure:\n";
+ if(root) std::cout << " Conjugated (bra) TNS:\n";
+ auto bra_tns = exatn::makeSharedTensorExpansion(*ket_tns);
+ bra_tns->conjugate();
+ bra_tns->rename("BraTNS");
+ if(root) bra_tns->printIt(); //debug
+ if(root) std::cout << " Full Hamiltonian functional:\n";
+ auto func_tns = exatn::makeSharedTensorExpansion(*bra_tns,*ket_tns,*hamiltonian);
+ if(root) func_tns->printIt(); //debug
+ if(root) std::cout << " Collapsed Hamiltonian functional: ";
+ bool deltas = false;
+ auto collapsed = func_tns->collapseIsometries(&deltas);
+ if(root) std::cout << "Collapsed = " << collapsed << "; Deltas appended = " << deltas << std::endl;
+ if(root) func_tns->printIt(); //debug
+ if(root) std::cout << "Done" << std::endl;
+
+ {//Numerical processing:
+  if(root) std::cout << "Allocating and initializing the tensor network ansatz ... ";
+  success = exatn::createTensorsSync(*ket_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*ket_net); assert(success);
+  if(root) std::cout << "Done" << std::endl;
+
+  if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
+  exatn::TensorNetworkOptimizer::resetDebugLevel(2,0);
+  ket_net->markOptimizableAllTensors();
+  success = exatn::initTensorsRndSync(*ket_tns); assert(success);
+  exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
+  optimizer.enableParallelization(true);
+  success = exatn::sync(); assert(success);
+  bool converged = optimizer.optimize();
+  success = exatn::sync(); assert(success);
+  if(converged){
+   if(root){
+    std::cout << "Search succeeded:" << std::endl;
+    /*for(unsigned int root_id = 0; root_id < num_states; ++root_id){
+     std::cout << "Expectation value " << root_id << " = "
+               << optimizer.getExpectationValue(root_id) << std::endl;
+    }*/
+   }
+  }else{
+   if(root) std::cout << "Search failed!" << std::endl;
+   assert(false);
+  }
+ }
+
+ //Synchronize:
+ if(root) std::cout << "Destroying all tensors ... ";
+ success = exatn::destroyTensorsSync(); assert(success);
+ if(root) std::cout << "Done" << std::endl;
+ success = exatn::syncClean(); assert(success);
+ //exatn::resetLoggingLevel(0,0);
+ //Grab a beer!
+}
+#endif
+
+#ifdef EXATN_TEST33
 TEST(NumServerTester, CuTensorNet) {
  using exatn::TensorShape;
  using exatn::TensorSignature;
@@ -4121,147 +4261,6 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::destroyTensor("A"); assert(success);
 
  //Synchronize:
- success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
- //Grab a beer!
-}
-#endif
-
-#ifdef EXATN_TEST33
-TEST(NumServerTester, IsometricAIEM) {
- using exatn::TensorShape;
- using exatn::TensorSignature;
- using exatn::Tensor;
- using exatn::TensorNetwork;
- using exatn::TensorExpansion;
- using exatn::TensorOperator;
- using exatn::TensorElementType;
- using exatn::TensorRange;
-
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
-
- const int num_spin_sites = 8;
- const int bond_dim_lim = 16;
- const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
- const int arity = 2;
- const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 3;
- const double accuracy = 1e-5;
-
- //exatn::resetLoggingLevel(1,2); //debug
-
- std::size_t free_mem = 0;
- auto used_mem = exatn::getMemoryUsage(&free_mem);
- std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
-           << used_mem << std::endl << std::flush;
- assert(used_mem == 0);
-
- bool success = true;
- bool root = (exatn::getProcessRank() == 0);
-
- //Create tensors:
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{4,2,8,2,4}); assert(success);
- exatn::getTensor("A")->registerIsometry({0,2,4});
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{2,2,2,2}); assert(success);
-
- //Init tensors:
- success = exatn::initTensorRnd("A"); assert(success); //random initialization will respect isometry
- //success = exatn::transformTensor("A",std::shared_ptr<exatn::TensorMethod>(
- //           new exatn::FunctorIsometrize(std::vector<unsigned int>{0,2,4})));
- //assert(success);
- success = exatn::initTensor("B",0.0); assert(success);
-
- //Contract tensors (to produce identity):
- success = exatn::contractTensorsSync("B(j1,j2,j3,j4)+=A(i1,j1,i2,j2,i3)*A+(i1,j3,i2,j4,i3)",1.0); assert(success);
- //success = exatn::printTensor("B"); assert(success);
- double nrm1 = 0.0;
- success = exatn::computeNorm1Sync("B",nrm1); assert(success);
- if(root) std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
-
- //Destroy tensors:
- success = exatn::sync(); assert(success);
- success = exatn::destroyTensor("B"); assert(success);
- success = exatn::destroyTensor("A"); assert(success);
-
- //Read the MCVQE Hamiltonian in spin representation:
- if(root) std::cout << "Reading in the Hamiltonian ... ";
- auto hamiltonian = exatn::quantum::readSpinHamiltonian("MCVQEHamiltonian",
-  "mcvqe_"+std::to_string(num_spin_sites)+"q.qcw.txt",TENS_ELEM_TYPE,"QCWare");
- success = hamiltonian->deleteComponent(0); assert(success);
- if(root) std::cout << "Done" << std::endl;
-
- if(root) std::cout << "Constructing the tensor network ansatz ... ";
- //Configure the tensor network builder:
- auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
- if(tn_type == "MPS"){
-  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
- }else if(tn_type == "TTN"){
-  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
-  success = tn_builder->setParameter("arity",arity); assert(success);
-  success = tn_builder->setParameter("num_states",num_states); assert(success);
-  success = tn_builder->setParameter("isometric",1); assert(success);
- }else{
-  std::cout << "#FATAL: Unknown tensor network builder!" << std::endl; assert(false);
- }
-
- //Construct the tensor network ansatz:
- auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
- auto ket_net = exatn::makeSharedTensorNetwork("KetNet",ket_tensor,*tn_builder,false);
- auto ket_tns = exatn::makeSharedTensorExpansion("KetTNS",ket_net,std::complex<double>{1.0,0.0});
- if(root) std::cout << "Done" << std::endl;
- if(root) ket_tns->printIt(); //debug
-
- //Checking the Hamiltonian functional structure:
- if(root) std::cout << "Checking the Hamiltonian functional structure:\n";
- if(root) std::cout << " Conjugated (bra) TNS:\n";
- auto bra_tns = exatn::makeSharedTensorExpansion(*ket_tns);
- bra_tns->conjugate();
- bra_tns->rename("BraTNS");
- if(root) bra_tns->printIt(); //debug
- if(root) std::cout << " Full Hamiltonian functional:\n";
- auto func_tns = exatn::makeSharedTensorExpansion(*bra_tns,*ket_tns,*hamiltonian);
- if(root) func_tns->printIt(); //debug
- if(root) std::cout << " Collapsed Hamiltonian functional: ";
- bool deltas = false;
- auto collapsed = func_tns->collapseIsometries(&deltas);
- if(root) std::cout << "Collapsed = " << collapsed << "; Deltas appended = " << deltas << std::endl;
- if(root) func_tns->printIt(); //debug
- if(root) std::cout << "Done" << std::endl;
- assert(false);
-
- {//Numerical processing:
-  if(root) std::cout << "Allocating and initializing the tensor network ansatz ... ";
-  success = exatn::createTensorsSync(*ket_net,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*ket_net); assert(success);
-  if(root) std::cout << "Done" << std::endl;
-
-  if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  ket_net->markOptimizableAllTensors();
-  success = exatn::initTensorsRndSync(*ket_tns); assert(success);
-  exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
-  optimizer.enableParallelization(true);
-  success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   if(root){
-    std::cout << "Search succeeded:" << std::endl;
-    for(unsigned int root_id = 0; root_id < num_states; ++root_id){
-     std::cout << "Expectation value " << root_id << " = "
-               << optimizer.getExpectationValue(root_id) << std::endl;
-    }
-   }
-  }else{
-   if(root) std::cout << "Search failed!" << std::endl;
-   assert(false);
-  }
- }
-
- //Synchronize:
- if(root) std::cout << "Destroying all tensors ... ";
- success = exatn::destroyTensorsSync(); assert(success);
- if(root) std::cout << "Done" << std::endl;
  success = exatn::syncClean(); assert(success);
  //exatn::resetLoggingLevel(0,0);
  //Grab a beer!

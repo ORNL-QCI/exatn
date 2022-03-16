@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/03/12
+REVISION: 2022/03/16
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -16,8 +16,9 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
  (B) Algorithm:
      for i = 0 .. N-1
       for all optimizable x:
-       |x_i> = |x_i> / norm_S(|x_i>)
-       E_i = <x_i|H|x_i>
+       Normalize x_i: Only if x_i has no isometry
+       s_i = <x_i|S|x_i>
+       E_i = <x_i|H|x_i> / s_i
        |r_i> = H|x_i> - E_i*S|x_i>
        if norm_2(|r_i>) / (norm_2(H|x_i>) + abs(E_i)*norm_2(S|x_i>)) <= tolerance: Break
        t = - <r_i|r_i> / (<r_i|H|r_i> - E_i*<r_i|S|r_i>)
