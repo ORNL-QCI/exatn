@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2022/01/28
+REVISION: 2022/03/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -172,6 +172,11 @@ void TensorConn::conjugate(bool conjug)
 {
  if(conjugated_ != conjug) return conjugate();
  return;
+}
+
+bool TensorConn::isCongruentTo(const TensorConn & another) const
+{
+ return tensor_->isCongruentTo(*(another.getTensor()));
 }
 
 const Metadata & TensorConn::getMetadata() const

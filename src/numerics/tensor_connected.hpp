@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2022/01/28
+REVISION: 2022/03/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -117,6 +117,10 @@ public:
      of the tensor itself as well as tensor leg direction reversal. **/
  void conjugate(); //changes the current conjugation status to the opposite
  void conjugate(bool conjug); //changes the conjugation status to the requested one
+
+ /** Returns TRUE if the tensor is congruent to another tensor, that is,
+     it has the same shape and signature. **/
+ bool isCongruentTo(const TensorConn & another) const;
 
  /** Retrieves metadata attached to the connected tensor. **/
  const Metadata & getMetadata() const;
