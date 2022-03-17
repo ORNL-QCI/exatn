@@ -215,9 +215,6 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
  for(auto net = operator_expectation.begin(); net != operator_expectation.end(); ++net){
   net->network->rename("OperExpect" + std::to_string(std::distance(operator_expectation.begin(),net)));
  }
- if(COLLAPSE_ISOMETRIES){
-  auto collapsed = operator_expectation.collapseIsometries();
- }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
   operator_expectation.printIt();
@@ -229,11 +226,6 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
  metrics_expectation.rename("MetricsExpectation");
  for(auto net = metrics_expectation.begin(); net != metrics_expectation.end(); ++net){
   net->network->rename("MetrExpect" + std::to_string(std::distance(metrics_expectation.begin(),net)));
- }
- bool trivial_metrics = false;
- if(COLLAPSE_ISOMETRIES){
-  auto collapsed = metrics_expectation.collapseIsometries();
-  if(metrics_expectation.getNumComponents() == 0) trivial_metrics = true;
  }
  if(TensorNetworkOptimizer::debug > 1){
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Metrics expectation expansion:" << std::endl;
@@ -273,11 +265,33 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
                                             TensorExpansion(metrics_expectation,tensor.getName(),true),  // |metrics|tensor>
                                             TensorExpansion(residual_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient> - <gradient|metrics|gradient>
                                             {1.0,0.0}});
+     if(COLLAPSE_ISOMETRIES){
+      auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
+      collapsed = environments_.back().operator_gradient.collapseIsometries();
+      collapsed = environments_.back().metrics_gradient.collapseIsometries();
+      collapsed = environments_.back().hessian_expansion.collapseIsometries();
+     }
     }
    }
   }
  }
+ //Collapse isometries in the original TN functionals:
+ if(COLLAPSE_ISOMETRIES){
+  auto collapsed = operator_expectation.collapseIsometries();
+  collapsed = metrics_expectation.collapseIsometries();
+  collapsed = residual_expectation.collapseIsometries();
+ }
+ //Print final tensor expansions:
  if(TensorNetworkOptimizer::debug > 1){
+  if(COLLAPSE_ISOMETRIES){
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Collapsed TN functionals:" << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
+   operator_expectation.printIt();
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Metrics expectation expansion:" << std::endl;
+   metrics_expectation.printIt();
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Residual expectation expansion:" << std::endl;
+   residual_expectation.printIt();
+  }
   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Derivatives:" << std::endl;
   for(const auto & environment: environments_){
    std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
@@ -456,9 +470,9 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
        tens_norm = 0.0;
        done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
        if(TensorNetworkOptimizer::debug > 1) std::cout << " Regular tensor norm before normalization = "
-                                                       << std::sqrt(tens_norm) << std::endl;
+                                                       << tens_norm << std::endl;
        assert(tens_norm > 0.0);
-       done = scaleTensorSync(environment.tensor->getName(),1.0/std::sqrt(tens_norm)); assert(done);
+       done = scaleTensorSync(environment.tensor->getName(),1.0/tens_norm); assert(done);
       }
      }
      //Update the old expectation value:

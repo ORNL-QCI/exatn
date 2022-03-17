@@ -47,10 +47,10 @@
 #define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29
-#define EXATN_TEST30 */
+#define EXATN_TEST29 */
+#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32
+//#define EXATN_TEST32
 //#define EXATN_TEST33 //requires input file from source
 //#define EXATN_TEST34
 
@@ -277,7 +277,7 @@ TEST(NumServerTester, PerformanceExaTN)
 
  //Synchronize ExaTN server:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -396,7 +396,7 @@ TEST(NumServerTester, ExamplarExaTN)
 
  //Synchronize ExaTN server:
  success = exatn::syncClean(all_processes); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -492,7 +492,7 @@ TEST(NumServerTester, ParallelExaTN)
 
  //All processes: Synchronize ExaTN server:
  success = exatn::syncClean(all_processes); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -1853,7 +1853,7 @@ TEST(NumServerTester, IsingTNO)
   //Synchronize:
   success = exatn::syncClean(); assert(success);
  }
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
 }
 #endif
 
@@ -2450,7 +2450,7 @@ TEST(NumServerTester, neurIPS) {
  //Synchronize:
  success = exatn::syncClean(); assert(success);
  exatn::deactivateContrSeqCaching();
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2535,7 +2535,7 @@ TEST(NumServerTester, MPSNorm) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2634,7 +2634,7 @@ TEST(NumServerTester, UserDefinedMethod) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2688,7 +2688,7 @@ TEST(NumServerTester, PrintTensors) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2748,7 +2748,7 @@ TEST(NumServerTester, CollapseTensors) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2764,7 +2764,7 @@ TEST(NumServerTester, Reconstructor) {
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
 
- //exatn::resetLoggingLevel(2,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -2839,7 +2839,7 @@ TEST(NumServerTester, Reconstructor) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -2986,7 +2986,7 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3168,7 +3168,7 @@ TEST(NumServerTester, OptimizerHubbard) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3316,7 +3316,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3441,7 +3441,7 @@ TEST(NumServerTester, HubbardHamiltonian) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3535,7 +3535,7 @@ TEST(NumServerTester, MCVQEHamiltonian) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3587,7 +3587,7 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3616,10 +3616,11 @@ TEST(NumServerTester, SpinHamiltonians) {
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 8;
+ const unsigned int num_states = 1;
+ const unsigned int isometric = 1;
  const double accuracy = 1e-4;
 
- exatn::resetLoggingLevel(2,2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -3696,6 +3697,8 @@ TEST(NumServerTester, SpinHamiltonians) {
  }else if(tn_type == "TTN"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
   success = tn_builder->setParameter("arity",arity); assert(success);
+  success = tn_builder->setParameter("num_states",num_states); assert(success);
+  success = tn_builder->setParameter("isometric",isometric); assert(success);
  }else{
   assert(false);
  }
@@ -3734,14 +3737,24 @@ TEST(NumServerTester, SpinHamiltonians) {
   exatn::TensorNetworkOptimizer optimizer(transverse_ising,vec_tns0,accuracy);
   optimizer.enableParallelization(true);
   success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize(num_states);
+  bool converged = false;
+  if(isometric != 0){
+   converged = optimizer.optimize();
+  }else{
+   converged = optimizer.optimize(num_states);
+  }
   success = exatn::sync(); assert(success);
   if(converged){
    if(root){
     std::cout << "Search succeeded:" << std::endl;
-    for(unsigned int root_id = 0; root_id < num_states; ++root_id){
-     std::cout << "Expectation value " << root_id << " = "
-               << optimizer.getExpectationValue(root_id) << std::endl;
+    if(isometric != 0){
+     std::cout << "State-averaged expectation value for " << num_states << " states = "
+               << optimizer.getExpectationValue() << std::endl;
+    }else{
+     for(unsigned int root_id = 0; root_id < num_states; ++root_id){
+      std::cout << "Expectation value " << root_id << " = "
+                << optimizer.getExpectationValue(root_id) << std::endl;
+     }
     }
    }
   }else{
@@ -3816,7 +3829,7 @@ TEST(NumServerTester, SpinHamiltonians) {
  //Synchronize:
  success = exatn::destroyTensorsSync(); assert(success);
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -3985,7 +3998,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
  //Synchronize:
  success = exatn::destroyTensorsSync(); assert(success);
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -4011,7 +4024,7 @@ TEST(NumServerTester, IsometricAIEM) {
  const unsigned int num_states = 1;
  const double accuracy = 1e-5;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,2); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -4098,7 +4111,7 @@ TEST(NumServerTester, IsometricAIEM) {
   if(root) std::cout << "Done" << std::endl;
 
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(2,0);
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
   ket_net->markOptimizableAllTensors();
   success = exatn::initTensorsRndSync(*ket_tns); assert(success);
   exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
@@ -4125,7 +4138,7 @@ TEST(NumServerTester, IsometricAIEM) {
  success = exatn::destroyTensorsSync(); assert(success);
  if(root) std::cout << "Done" << std::endl;
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -4262,7 +4275,7 @@ TEST(NumServerTester, CuTensorNet) {
 
  //Synchronize:
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif
@@ -4392,7 +4405,7 @@ TEST(NumServerTester, TensorComposite) {
  //Synchronize:
  success = exatn::destroyTensorsSync(); assert(success);
  success = exatn::syncClean(); assert(success);
- //exatn::resetLoggingLevel(0,0);
+ exatn::resetLoggingLevel(0,0);
  //Grab a beer!
 }
 #endif

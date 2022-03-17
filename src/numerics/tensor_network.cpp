@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/02/21
+REVISION: 2022/03/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -2155,7 +2155,7 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
        //std::cout << "#DEBUG(collapseIsometries): Tensor pair: " << tensor_id << " " << iso_matched_tensor_id
        //          << ": " << iso_group.size() << " " << num_iso_legs << " " << num_open_legs << " " << num_spectators << std::endl;
        if(num_iso_legs == iso_group.size()){ //a single isometric connection between tensors identified: Collapse
-        if(num_iso_legs < tensor.getNumLegs()){
+        if(num_iso_legs < tensor.getNumLegs()){ //there are other legs other than isometric legs
          if(num_open_legs > 0) this->resetOutputTensor(); //new open legs need to be appended to the output tensor
          for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
           auto first_tensor_id = tensor_legs[i].getTensorId();
@@ -2172,12 +2172,13 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
             auto dim_atr1 = output_tensor->getDimSpaceAttr(second_tensor_dimsn);
             assert(dim_ext0 == dim_ext1);
             assert(dim_atr0 == dim_atr1);
+            auto delta_tensor = std::make_shared<Tensor>("_delta", //name will be changed to _dHash
+                                 std::initializer_list<decltype(dim_ext0)>{dim_ext0,dim_ext1},
+                                 std::initializer_list<decltype(dim_atr0)>{dim_atr0,dim_atr1});
+            delta_tensor->setElementType(tensor.getElementType());
             auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
             auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
-                                                        std::make_shared<Tensor>("_delta", //name will be changed
-                                                         std::initializer_list<decltype(dim_ext0)>{dim_ext0,dim_ext1},
-                                                         std::initializer_list<decltype(dim_atr0)>{dim_atr0,dim_atr1}),
-                                                        delta_tensor_id,
+                                                        delta_tensor, delta_tensor_id,
                                                         std::vector<TensorLeg>{TensorLeg{0,first_tensor_dimsn},
                                                                                TensorLeg{0,second_tensor_dimsn}});
             assert(appended);
@@ -2196,11 +2197,12 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
            }
           }
          }
-        }else{
+        }else{ //no other legs, this isometry collapses to a unity scalar
+         auto scalar_tensor = std::make_shared<Tensor>("_e1");
+         scalar_tensor->setElementType(tensor.getElementType());
          auto scalar_tensor_id = this->getMaxTensorId()+1; assert(scalar_tensor_id > 0);
          auto appended = emplaceTensorConnDirect(true,scalar_tensor_id,
-                                                 std::make_shared<Tensor>("_e1"),
-                                                 scalar_tensor_id,
+                                                 scalar_tensor,scalar_tensor_id,
                                                  std::vector<TensorLeg>{});
          assert(appended);
         }
@@ -2217,16 +2219,16 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
            double_isometry = false;
            break;
           }
-         }else{
-          double_isometry = false;
-          break;
+       //}else{
+       // double_isometry = false;
+       // break;
          }
         }
         if(double_isometry){ //contract the isometric tensor pair into the Delta tensor
          for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
           assert(tensor_legs[i].getDimensionId() == i);
           assert(conj_tensor_legs[i].getDimensionId() == i);
-          if(std::find(iso_group.cbegin(),iso_group.cend(),i) == iso_group.cend()){
+          if(std::find(iso_group.cbegin(),iso_group.cend(),i) == iso_group.cend()){ //trace auxiliary delta leg
            auto dim_ext = tensor.getDimExtent(i);
            auto dim_atr = tensor.getDimSpaceAttr(i);
            auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
