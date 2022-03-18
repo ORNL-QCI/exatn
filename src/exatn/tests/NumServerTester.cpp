@@ -3616,8 +3616,8 @@ TEST(NumServerTester, SpinHamiltonians) {
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 1;
- const unsigned int isometric = 1;
+ const unsigned int num_states = 4; //only for TTN
+ const unsigned int isometric = 1; //only for TTN
  const double accuracy = 1e-4;
 
  exatn::resetLoggingLevel(1,2); //debug
@@ -3697,25 +3697,22 @@ TEST(NumServerTester, SpinHamiltonians) {
  }else if(tn_type == "TTN"){
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
   success = tn_builder->setParameter("arity",arity); assert(success);
-  success = tn_builder->setParameter("num_states",num_states); assert(success);
   success = tn_builder->setParameter("isometric",isometric); assert(success);
+  if(isometric != 0){
+   success = tn_builder->setParameter("num_states",num_states); assert(success);
+  }
  }else{
   assert(false);
  }
 
  //Build tensor network vectors:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
- auto vec_net0 = exatn::makeSharedTensorNetwork("VectorNet1",ket_tensor,*tn_builder,false);
+ auto vec_net0 = exatn::makeSharedTensorNetwork("VectorNet0",ket_tensor,*tn_builder,false);
  vec_net0->markOptimizableAllTensors();
- auto vec_tns0 = exatn::makeSharedTensorExpansion("VectorTNS1",vec_net0,std::complex<double>{1.0,0.0});
- auto vec_net1 = exatn::makeSharedTensorNetwork("VectorNet2",ket_tensor,*tn_builder,false);
- vec_net1->markOptimizableAllTensors();
- auto vec_tns1 = exatn::makeSharedTensorExpansion("VectorTNS2",vec_net1,std::complex<double>{1.0,0.0});
- auto vec_net2 = exatn::makeSharedTensorNetwork("VectorNet3",ket_tensor,*tn_builder,false);
- vec_net2->markOptimizableAllTensors();
- auto vec_tns2 = exatn::makeSharedTensorExpansion("VectorTNS3",vec_net2,std::complex<double>{1.0,0.0});
+ auto vec_tns0 = exatn::makeSharedTensorExpansion("VectorTNS0",vec_net0,std::complex<double>{1.0,0.0});
  auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
  auto rhs_tns = exatn::makeSharedTensorExpansion("RightHandSideTNS",rhs_net,std::complex<double>{1.0,0.0});
+ //vec_net0->printIt(); //debug
 
  //Numerical processing:
  {
@@ -3723,15 +3720,11 @@ TEST(NumServerTester, SpinHamiltonians) {
   if(root) std::cout << "Creating and initializing tensor network vector tensors ... ";
   success = exatn::createTensorsSync(*vec_net0,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*vec_net0); assert(success);
-  success = exatn::createTensorsSync(*vec_net1,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*vec_net1); assert(success);
-  success = exatn::createTensorsSync(*vec_net2,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*vec_net2); assert(success);
   success = exatn::createTensorsSync(*rhs_net,TENS_ELEM_TYPE); assert(success);
   success = exatn::initTensorsRndSync(*rhs_net); assert(success);
   if(root) std::cout << "Ok" << std::endl;
 
-  //Ground and three excited states in one call:
+  //Ground and excited states in one call:
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
   exatn::TensorNetworkOptimizer optimizer(transverse_ising,vec_tns0,accuracy);
@@ -3739,9 +3732,9 @@ TEST(NumServerTester, SpinHamiltonians) {
   success = exatn::sync(); assert(success);
   bool converged = false;
   if(isometric != 0){
-   converged = optimizer.optimize();
+   converged = optimizer.optimize(); //state-averaged
   }else{
-   converged = optimizer.optimize(num_states);
+   converged = optimizer.optimize(num_states); //state-specific
   }
   success = exatn::sync(); assert(success);
   if(converged){
@@ -3761,69 +3754,6 @@ TEST(NumServerTester, SpinHamiltonians) {
    if(root) std::cout << "Search failed!" << std::endl;
    assert(false);
   }
-#if 0
-  //Ground state search for the original Hamiltonian:
-  std::cout << "Ground state search for the original Hamiltonian:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer0(ising_hamiltonian0,vec_tns0,1e-4);
-  success = exatn::sync(); assert(success);
-  bool converged = optimizer0.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   std::cout << "Search succeeded: ";
-  }else{
-   std::cout << "Search failed!" << std::endl;
-   assert(false);
-  }
-  const auto expect_val0 = optimizer0.getExpectationValue();
-  std::cout << "Expectation value = " << expect_val0 << std::endl;
-
-  //First excited state search for the projected Hamiltonian:
-  std::cout << "1st excited state search for the projected Hamiltonian:" << std::endl;
-  vec_net0->markOptimizableNoTensors();
-  std::vector<std::pair<unsigned int, unsigned int>> ket_pairing(num_spin_sites);
-  for(unsigned int i = 0; i < num_spin_sites; ++i) ket_pairing[i] = std::make_pair(i,i);
-  std::vector<std::pair<unsigned int, unsigned int>> bra_pairing(num_spin_sites);
-  for(unsigned int i = 0; i < num_spin_sites; ++i) bra_pairing[i] = std::make_pair(i,i);
-  auto projector0 = exatn::makeSharedTensorOperator("Projector0",vec_net0,vec_net0,
-                                                    ket_pairing,bra_pairing,-expect_val0);
-  auto ising_hamiltonian1 = exatn::combineTensorOperators(*ising_hamiltonian0,*projector0);
-  //ising_hamiltonian1->printIt(); //debug
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer1(ising_hamiltonian1,vec_tns1,1e-4);
-  success = exatn::sync(); assert(success);
-  converged = optimizer1.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   std::cout << "Search succeeded: ";
-  }else{
-   std::cout << "Search failed!" << std::endl;
-   assert(false);
-  }
-  const auto expect_val1 = optimizer1.getExpectationValue();
-  std::cout << "Expectation value = " << expect_val1 << std::endl;
-
-  //Second excited state search for the projected Hamiltonian:
-  std::cout << "2nd excited state search for the projected Hamiltonian:" << std::endl;
-  vec_net1->markOptimizableNoTensors();
-  auto projector1 = exatn::makeSharedTensorOperator("Projector1",vec_net1,vec_net1,
-                                                    ket_pairing,bra_pairing,-expect_val1);
-  auto ising_hamiltonian2 = exatn::combineTensorOperators(*ising_hamiltonian1,*projector1);
-  //ising_hamiltonian2->printIt(); //debug
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer2(ising_hamiltonian2,vec_tns2,1e-4);
-  success = exatn::sync(); assert(success);
-  converged = optimizer2.optimize();
-  success = exatn::sync(); assert(success);
-  if(converged){
-   std::cout << "Search succeeded: ";
-  }else{
-   std::cout << "Search failed!" << std::endl;
-   assert(false);
-  }
-  const auto expect_val2 = optimizer2.getExpectationValue();
-  std::cout << "Expectation value = " << expect_val2 << std::endl;
-#endif
  }
 
  //Synchronize:

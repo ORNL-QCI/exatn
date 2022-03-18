@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/02/21
+REVISION: 2022/03/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -170,7 +170,8 @@ public:
  TensorNetwork(const std::string & name,                    //in: tensor network name
                const std::string & tensor_network,          //in: tensor network expression (symbolic math expression)
                const std::map<std::string,std::shared_ptr<Tensor>> & tensors); //in: participating tensors identified by their names
- /** Builds a named tensor network from a template implemented by a custom tensor network builder. **/
+ /** Builds a named tensor network from a template implemented by a custom tensor network builder.
+     Note that the tensor network builder may append additional legs to the original output tensor. **/
  TensorNetwork(const std::string & name,                    //in: tensor network name
                std::shared_ptr<Tensor> output_tensor,       //in: output tensor of the tensor network
                NetworkBuilder & builder,                    //in: specific tensor network builder

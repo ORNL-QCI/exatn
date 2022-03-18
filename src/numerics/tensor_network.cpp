@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/03/17
+REVISION: 2022/03/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -258,9 +258,11 @@ TensorNetwork::TensorNetwork(const std::string & name,
  contraction_seq_flops_(0.0), max_intermediate_presence_volume_(0.0),
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
+ auto new_out_tensor = output_tensor->clone();
+ new_out_tensor->rename();
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
-                                    output_tensor,0U,
+                                    new_out_tensor,0U,
                                     std::vector<TensorLeg>(output_tensor->getRank(),TensorLeg(0,0))); //dummy legs
  if(!res){
   std::cout << "#ERROR(exatn::numerics::TensorNetwork::TensorNetwork): Tensor id already in use!" << std::endl;
@@ -2212,6 +2214,7 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
         another_collapse = true;
         simplified = true;
        }else if(num_iso_legs > iso_group.size() && num_iso_legs == tensor.getNumLegs()){ //potential double isometric connection between tensors (delta trace)
+        std::size_t aux_vol = 1;
         bool double_isometry = true;
         for(unsigned int i = 0; i < tensor.getNumLegs(); ++i){
          if(tensor.withIsometricDimension(i)){
@@ -2219,9 +2222,8 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
            double_isometry = false;
            break;
           }
-       //}else{
-       // double_isometry = false;
-       // break;
+         }else{
+          aux_vol *= tensor.getDimExtent(i);
          }
         }
         if(double_isometry){ //contract the isometric tensor pair into the Delta tensor
@@ -2231,16 +2233,22 @@ bool TensorNetwork::collapseIsometries(bool * deltas_appended)
           if(std::find(iso_group.cbegin(),iso_group.cend(),i) == iso_group.cend()){ //trace auxiliary delta leg
            auto dim_ext = tensor.getDimExtent(i);
            auto dim_atr = tensor.getDimSpaceAttr(i);
-           auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
+           auto scalar_tensor = std::make_shared<Tensor>("_e"+std::to_string(dim_ext));
+           scalar_tensor->setElementType(tensor.getElementType());
+           auto scalar_tensor_id = this->getMaxTensorId()+1; assert(scalar_tensor_id > 0);
+           auto appended = emplaceTensorConnDirect(true,scalar_tensor_id,
+                                                   scalar_tensor,scalar_tensor_id,
+                                                   std::vector<TensorLeg>{});
+           /*auto delta_tensor_id = this->getMaxTensorId()+1; assert(delta_tensor_id > 0);
            auto appended = emplaceTensorConnPrefDirect(true,"d",false,delta_tensor_id,
                                                        std::make_shared<Tensor>("_delta", //name will be changed
                                                         std::initializer_list<decltype(dim_ext)>{dim_ext,dim_ext},
                                                         std::initializer_list<decltype(dim_atr)>{dim_atr,dim_atr}),
                                                        delta_tensor_id,
                                                        std::vector<TensorLeg>{TensorLeg{delta_tensor_id,1},
-                                                                              TensorLeg{delta_tensor_id,0}});
+                                                                              TensorLeg{delta_tensor_id,0}});*/
            assert(appended);
-           if(deltas_appended != nullptr) *deltas_appended = true;
+           //if(deltas_appended != nullptr) *deltas_appended = true;
           }
          }
          //std::cout << "#DEBUG(collapseIsometries): Type 2 collapse: " << tensor_id << " " << iso_matched_tensor_id << std::endl; //debug

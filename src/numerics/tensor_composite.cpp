@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Composite tensor
-REVISION: 2021/08/21
+REVISION: 2022/03/18
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_composite.hpp"
 #include "tensor_symbol.hpp"
