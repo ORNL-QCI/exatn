@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/01/17
+REVISION: 2022/03/29
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -65,6 +65,14 @@ Rationale:
 
 namespace exatn {
 namespace runtime {
+
+enum class CompBackend {
+  None
+ ,Default
+#ifdef CUQUANTUM
+ ,Cuquantum
+#endif
+};
 
 class TensorRuntime final {
 
@@ -224,6 +232,8 @@ private:
   TensorNetworkQueue tensor_network_queue_;
   /** Logging level (0:none) **/
   int logging_;
+  /** Currently used computational backend **/
+  std::atomic<CompBackend> backend_;
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** Current scope status **/

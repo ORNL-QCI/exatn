@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/11
+REVISION: 2022/03/29
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -17,6 +17,7 @@ Rationale:
 #include <vector>
 #include <unordered_map>
 #include <type_traits>
+#include <cstdint>
 
 #include <iostream>
 
@@ -79,6 +80,7 @@ struct TensorNetworkReq {
  cutensornetNetworkDescriptor_t net_descriptor;
  cutensornetContractionOptimizerConfig_t opt_config;
  cutensornetContractionOptimizerInfo_t opt_info;
+ cutensornetWorkspaceDescriptor_t workspace_descriptor;
  cutensornetContractionPlan_t comp_plan;
  cudaDataType_t data_type;
  cutensornetComputeType_t compute_type;
@@ -100,8 +102,9 @@ struct TensorNetworkReq {
   cudaEventDestroy(data_in_start);
   cudaStreamDestroy(stream);
   cutensornetDestroyContractionPlan(comp_plan);
-  cutensornetDestroyContractionOptimizerConfig(opt_config);
+  cutensornetDestroyWorkspaceDescriptor(workspace_descriptor);
   cutensornetDestroyContractionOptimizerInfo(opt_info);
+  cutensornetDestroyContractionOptimizerConfig(opt_config);
   cutensornetDestroyNetworkDescriptor(net_descriptor);
   //if(modes_out != nullptr) delete [] modes_out;
   if(strides_out != nullptr) delete [] strides_out;
@@ -459,15 +462,33 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
   HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
                                                   tn_req->net_descriptor,tn_req->opt_config,
                                                   tn_req->worksize,tn_req->opt_info));
-  HANDLE_CTN_ERROR(cutensornetCreateContractionPlan(gpu_attr_[gpu].second.cutn_handle,
-                                                    tn_req->net_descriptor,tn_req->opt_info,
-                                                    tn_req->worksize,&(tn_req->comp_plan)));
   double flops = 0.0;
   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
                                                                    tn_req->opt_info,
                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                    &flops,sizeof(flops)));
   flops_ += flops;
+  HANDLE_CTN_ERROR(cutensornetCreateWorkspaceDescriptor(gpu_attr_[gpu].second.cutn_handle,&(tn_req->workspace_descriptor)));
+  uint64_t required_workspace_size = 0;
+  HANDLE_CTN_ERROR(cutensornetWorkspaceComputeSizes(gpu_attr_[gpu].second.cutn_handle,
+                                                    tn_req->net_descriptor,tn_req->opt_info,
+                                                    tn_req->workspace_descriptor));
+  HANDLE_CTN_ERROR(cutensornetWorkspaceGetSize(gpu_attr_[gpu].second.cutn_handle,
+                                               tn_req->workspace_descriptor,
+                                               CUTENSORNET_WORKSIZE_PREF_MIN,
+                                               CUTENSORNET_MEMSPACE_DEVICE,
+                                               &required_workspace_size));
+  if(required_workspace_size > tn_req->worksize){
+   std::cout << "#FATAL(exatn::CuQuantumExecutor::planExecution): Insufficient work space on GPU " << gpu << "!" << std::endl;
+   std::abort();
+  }
+  HANDLE_CTN_ERROR(cutensornetWorkspaceSet(gpu_attr_[gpu].second.cutn_handle,
+                                           tn_req->workspace_descriptor,
+                                           CUTENSORNET_MEMSPACE_DEVICE,
+                                           tn_req->workspace,tn_req->worksize));
+  HANDLE_CTN_ERROR(cutensornetCreateContractionPlan(gpu_attr_[gpu].second.cutn_handle,
+                                                    tn_req->net_descriptor,tn_req->opt_info,
+                                                    tn_req->workspace_descriptor,&(tn_req->comp_plan)));
  }
  tn_req->prepare_finish = Timer::timeInSecHR();
  tn_req->exec_status = TensorNetworkQueue::ExecStat::Planning;
@@ -492,7 +513,7 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
    HANDLE_CTN_ERROR(cutensornetContraction(gpu_attr_[gpu].second.cutn_handle,
                                            tn_req->comp_plan,
                                            tn_req->data_in,tn_req->data_out,
-                                           tn_req->workspace,tn_req->worksize,
+                                           tn_req->workspace_descriptor,
                                            slice_id,tn_req->stream));
   }
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->compute_finish,tn_req->stream));

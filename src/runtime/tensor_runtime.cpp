@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/01/17
+REVISION: 2022/03/29
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -32,8 +32,8 @@ TensorRuntime::TensorRuntime(const MPICommProxy & communicator,
                              const std::string & graph_executor_name,
                              const std::string & node_executor_name):
  parameters_(parameters),
- graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
- current_dag_(nullptr), logging_(0), executing_(false), scope_set_(false), alive_(false)
+ graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name), current_dag_(nullptr),
+ logging_(0), backend_(CompBackend::None), executing_(false), scope_set_(false), alive_(false)
 {
 #ifdef DEBUG
   const bool debugging = true;
@@ -55,8 +55,8 @@ TensorRuntime::TensorRuntime(const ParamConf & parameters,
                              const std::string & graph_executor_name,
                              const std::string & node_executor_name):
  parameters_(parameters),
- graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name),
- current_dag_(nullptr), logging_(0), executing_(false), scope_set_(false), alive_(false)
+ graph_executor_name_(graph_executor_name), node_executor_name_(node_executor_name), current_dag_(nullptr),
+ logging_(0), backend_(CompBackend::None), executing_(false), scope_set_(false), alive_(false)
 {
 #ifdef DEBUG
   const bool debugging = true;
