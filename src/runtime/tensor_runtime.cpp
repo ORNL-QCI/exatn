@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/03/29
+REVISION: 2022/03/30
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -119,6 +119,18 @@ void TensorRuntime::executionThreadWorkflow()
   //std::cout << "#DEBUG(exatn::runtime::TensorRuntime)[EXEC_THREAD]: DAG node executor reset. End of life."
             //<< std::endl << std::flush;
   return; //end of execution thread life
+}
+
+
+void TensorRuntime::switchCompBackend(CompBackend requested_backend)
+{
+  bool synced = true;
+  if(backend_ != CompBackend::None){
+    if(backend_ != requested_backend) synced = sync(backend_,true);
+  }
+  assert(synced);
+  backend_ = requested_backend;
+  return;
 }
 
 
@@ -242,6 +254,7 @@ void TensorRuntime::closeScope() {
 
 VertexIdType TensorRuntime::submit(std::shared_ptr<TensorOperation> op) {
   assert(currentScopeIsSet());
+  switchCompBackend(CompBackend::Default);
   auto node_id = current_dag_->addOperation(op);
   op->setId(node_id);
   //current_dag_->printIt(); //debug
@@ -277,8 +290,36 @@ bool TensorRuntime::sync(const Tensor & tensor, bool wait) {
 }
 
 
+bool TensorRuntime::sync(CompBackend backend, bool wait) {
+  bool synced = true;
+  switch(backend){
+  case CompBackend::None:
+    break;
+  case CompBackend::Default:
+    synced = syncTensOps(wait);
+    break;
+#ifdef CUQUANTUM
+  case CompBackend::Cuquantum:
+    synced = syncNetworks(wait);
+    break;
+#endif
+  }
+  return synced;
+}
+
+
 bool TensorRuntime::sync(bool wait) {
-  //if(wait) std::cout << "#DEBUG(TensorRuntime::sync)[MAIN_THREAD]: Syncing ... "; //debug
+  bool synced = sync(backend_,wait);
+  if(synced && backend_ != CompBackend::Default) synced = sync(CompBackend::Default,wait);
+#ifdef CUQUANTUM
+  if(synced && backend_ != CompBackend::Cuquantum) synced = sync(CompBackend::Cuquantum,wait);
+#endif
+  return synced;
+}
+
+
+bool TensorRuntime::syncTensOps(bool wait) {
+  //if(wait) std::cout << "#DEBUG(TensorRuntime::syncTensOps)[MAIN_THREAD]: Syncing default backend ... "; //debug
   assert(currentScopeIsSet());
   if(current_dag_->hasUnexecutedNodes()) executing_.store(true);
   bool still_working = executing_.load();
@@ -303,6 +344,7 @@ TensorOpExecHandle TensorRuntime::submit(std::shared_ptr<numerics::TensorNetwork
                                          const MPICommProxy & communicator,
                                          unsigned int num_processes, unsigned int process_rank)
 {
+  switchCompBackend(CompBackend::Cuquantum);
   const auto exec_handle = tensor_network_queue_.append(network,communicator,num_processes,process_rank);
   executing_.store(true); //signal to the execution thread to execute the queue
   return exec_handle;
@@ -320,6 +362,20 @@ bool TensorRuntime::syncNetwork(const TensorOpExecHandle exec_handle, bool wait)
               exec_stat == TensorNetworkQueue::ExecStat::Completed);
     if(!wait) break;
   };
+  return synced;
+}
+
+
+bool TensorRuntime::syncNetworks(bool wait)
+{
+  //if(wait) std::cout << "#DEBUG(TensorRuntime::syncNetworks)[MAIN_THREAD]: Syncing cuQuantum backend ... "; //debug
+  executing_.store(true); //reactivate the execution thread in case it was not active
+  bool synced = false;
+  while(!synced){
+    synced = tensor_network_queue_.isEmpty();
+    if(!wait) break;
+  }
+  //if(wait) std::cout << "Synced\n" << std::flush; //debug
   return synced;
 }
 #endif

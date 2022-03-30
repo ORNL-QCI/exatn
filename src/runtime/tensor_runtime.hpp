@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/03/29
+REVISION: 2022/03/30
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -140,34 +140,47 @@ public:
   /** Submits a tensor operation into the current execution graph and returns its integer id. **/
   VertexIdType submit(std::shared_ptr<TensorOperation> op); //in: tensor operation
 
-  /** Tests for completion of a given tensor operation.
+  /** Tests for completion a given tensor operation.
       If wait = TRUE, it will block until completion. **/
-  bool sync(TensorOperation & op,
-            bool wait = true);
+  bool sync(TensorOperation & op, //in: previously submitted tensor operation
+            bool wait = true); //in: wait VS test semantics
 
-  /** Tests for completion of all outstanding update operations on a given tensor.
+  /** Tests for completion all outstanding update operations on a given tensor.
       If wait = TRUE, it will block until completion. **/
-  bool sync(const Tensor & tensor,
-            bool wait = true);
+  bool sync(const Tensor & tensor, //in: tensor
+            bool wait = true); //in: wait VS test semantics
 
-  /** Tests for completion of all previously submitted tensor operations.
+  /** Tests for completion all operations submitted to the given computational backend. **/
+  bool sync(CompBackend backend, //in: requested computational backend
+            bool wait = true); //in: wait VS test semantics
+
+  /** Tests for completion all previously submitted tensor operations.
       If wait = TRUE, it will block until completion. **/
-  bool sync(bool wait = true);
+  bool sync(bool wait = true); //in: wait VS test semantics
+
+  /** Tests for completion of processing of all basic tensor operations
+      previously submitted to the DAG (default computational backend). **/
+  bool syncTensOps(bool wait = true); //in: wait VS test semantics
 
 #ifdef CUQUANTUM
   /** Submits an entire tensor network for processing as a whole.
-      The returned execution handle can be used for checking the status
+      The returned positive execution handle can later be used for checking the status
       of the tensor network execution. Zero on return means unsuccessful submission. **/
   TensorOpExecHandle submit(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
                             const MPICommProxy & communicator, //MPI communicator proxy
                             unsigned int num_processes, //in: number of executing processes
                             unsigned int process_rank); //in: rank of the current executing process
 
-  /** Tests for completion of processing of a whole tensor network.
-      A valid execution handle obtained during tensor network
-      submission must be positive. **/
-  bool syncNetwork(const TensorOpExecHandle exec_handle,
-                   bool wait = true);
+  /** Tests for completion of processing of a whole tensor network
+      identified by its execution handle. A valid execution handle
+      obtained during tensor network submission must be positive.
+      If wait = TRUE, it will block until completion. **/
+  bool syncNetwork(const TensorOpExecHandle exec_handle, //in: execution handle (positive integer)
+                   bool wait = true); //in: wait VS test semantics
+
+  /** Tests for completion of processing of all tensor networks previously
+      submitted as a whole. If wait = TRUE, it will block until completion. **/
+  bool syncNetworks(bool wait = true); //in: wait VS test semantics
 #endif
 
   /** Returns a locally stored tensor slice (talsh::Tensor) providing access to tensor elements.
@@ -198,8 +211,16 @@ private:
 
   /** Launches the execution thread which will be executing DAGs on the fly. **/
   void launchExecutionThread();
+
   /** The execution thread lives here. **/
   void executionThreadWorkflow();
+
+  /** Switches/synchronizes computational backends in a multi-backend setting.
+      Submission of a new tensor operation or a tensor network to a different
+      backend than the one currently in use will cause a barrier, followed
+      by a switch to that different computational backend. **/
+  void switchCompBackend(CompBackend requested_backend);
+
   /** Processes all outstanding tensor data requests (by execution thread). **/
   void processTensorDataRequests();
 
@@ -233,7 +254,7 @@ private:
   /** Logging level (0:none) **/
   int logging_;
   /** Currently used computational backend **/
-  std::atomic<CompBackend> backend_;
+  CompBackend backend_;
   /** Current executing status (whether or not the execution thread is active) **/
   std::atomic<bool> executing_; //TRUE while the execution thread is executing the current DAG
   /** Current scope status **/

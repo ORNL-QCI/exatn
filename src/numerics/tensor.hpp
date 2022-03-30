@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2022/03/18
+REVISION: 2022/03/30
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -143,7 +143,8 @@ public:
  virtual void printItFile(std::ofstream & output_file,
                           bool with_hash = false) const;
 
- /** Rename (use this method with care as it can mess up higher-level maps). **/
+ /** Renames the tensor. Do not use this method after the tensor has been allocated
+     storage as it will mess up higher-level tensor allocation map! **/
  virtual void rename(const std::string & name);
  virtual void rename(); //a unique tensor name will be generated automatically via tensor hash
 

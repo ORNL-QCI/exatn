@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -45,14 +45,14 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-//#define EXATN_TEST27 //requires input file from source
-//#define EXATN_TEST28 //requires input file from source
-#define EXATN_TEST29 */
+#define EXATN_TEST27 //requires input file from source
+#define EXATN_TEST28 //requires input file from source
+#define EXATN_TEST29
 #define EXATN_TEST30
-//#define EXATN_TEST31 //requires input file from source
-//#define EXATN_TEST32
-//#define EXATN_TEST33 //requires input file from source
-//#define EXATN_TEST34
+#define EXATN_TEST31 //requires input file from source
+#define EXATN_TEST32
+#define EXATN_TEST33 //requires input file from source
+#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -1384,24 +1384,23 @@ TEST(NumServerTester, BigMPSNumServer)
 
  const int nbQubits = 32;
  const std::vector<int> qubitTensorDim(nbQubits, 2);
- const std::string ROOT_TENSOR_NAME = "Root";
- auto rootTensor = std::make_shared<Tensor>(ROOT_TENSOR_NAME, qubitTensorDim);
+ auto rootTensor = std::make_shared<Tensor>("Root", qubitTensorDim);
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS"); assert(builder);
  bool success = builder->setParameter("max_bond_dim", 1); assert(success);
 
  std::cout << "Building MPS tensor network ... " << std::flush;
- auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
+ auto tensorNetwork = exatn::makeSharedTensorNetwork("QubitRegister", rootTensor, *builder);
  std::cout << "Done\n" << std::flush;
  tensorNetwork->printIt();
 
  std::cout << "Creating/Initializing MPS tensors ... " << std::flush;
  const std::vector<std::complex<double>> ZERO_TENSOR_BODY {{1.0, 0.0}, {0.0, 0.0}};
  for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
-  auto tensor = iter->second.getTensor();
-  const auto & tensorName = tensor->getName();
-  if(tensorName != ROOT_TENSOR_NAME){
+  if(iter->first != 0){
+   auto tensor = iter->second.getTensor();
+   const auto & tensorName = tensor->getName();
    success = exatn::createTensorSync(tensor, exatn::TensorElementType::COMPLEX64);
    assert(success);
    success = exatn::initTensorDataSync(tensorName, ZERO_TENSOR_BODY);
@@ -1419,8 +1418,8 @@ TEST(NumServerTester, BigMPSNumServer)
  std::cout << "Constructing 1-RDM contracted tensor network ... " << std::flush;
  const std::size_t qubitIdx = 12; //qubit Id of the leg that will be left open to calculate RDM
  std::vector<std::pair<unsigned int, unsigned int>> pairings;
+ //Connect the original tensor network with its inverse but leave the measure qubit line open:
  for(std::size_t i = 0; i < nbQubits; ++i){
-  //Connect the original tensor network with its inverse but leave the measure qubit line open:
   if(i != qubitIdx) pairings.emplace_back(std::make_pair(i,i));
  }
  success = ket.appendTensorNetwork(std::move(bra), pairings);
@@ -1435,14 +1434,15 @@ TEST(NumServerTester, BigMPSNumServer)
  */
 
  std::cout << "Evaluating 1-RDM ... " << std::flush;
- success = exatn::evaluateSync(ket);
- assert(success);
+ success = exatn::evaluateSync(ket); assert(success);
  std::cout << "Done\n" << std::flush;
 
  std::cout << "Destroying MPS tensors ... " << std::flush;
  for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
-  auto tensor = iter->second.getTensor();
-  success = exatn::destroyTensor(tensor->getName()); assert(success);
+  if(iter->first != 0){
+   success = exatn::destroyTensor(iter->second.getTensor()->getName());
+   assert(success);
+  }
  }
  std::cout << "Done\n" << std::flush;
 
@@ -1879,21 +1879,20 @@ TEST(NumServerTester, MPSBuilderNumServer)
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS"); assert(builder);
- bool success = builder->setParameter("max_bond_dim",1);
- assert(success);
- const std::string ROOT_TENSOR_NAME = "Root";
- success = exatn::createTensorSync(ROOT_TENSOR_NAME, TensorElementType::COMPLEX64, TensorShape{2,2,2,2});
- assert(success);
- auto rootTensor = exatn::getTensor(ROOT_TENSOR_NAME);
- success = exatn::initTensorSync(ROOT_TENSOR_NAME, 0.0);
- assert(success);
- auto tensorNetwork = exatn::makeSharedTensorNetwork("Qubit Register", rootTensor, *builder);
+ bool success = builder->setParameter("max_bond_dim",1); assert(success);
+ auto rootTensor = exatn::makeSharedTensor("Root",TensorShape{2,2,2,2});
+ auto tensorNetwork = exatn::makeSharedTensorNetwork("QubitRegister", rootTensor, *builder);
  tensorNetwork->printIt();
+
+ success = exatn::createTensorSync(tensorNetwork->getTensor(0), TensorElementType::COMPLEX64);
+ assert(success);
+ success = exatn::initTensorSync(tensorNetwork->getTensor(0)->getName(), 0.0);
+ assert(success);
  const std::vector<std::complex<double>> ZERO_TENSOR_BODY {{1.0, 0.0}, {0.0, 0.0}};
  for(auto iter = tensorNetwork->cbegin(); iter != tensorNetwork->cend(); ++iter){
-  auto tensor = iter->second.getTensor();
-  const auto & tensorName = tensor->getName();
-  if(tensorName != ROOT_TENSOR_NAME){
+  if(iter->first != 0){
+   auto tensor = iter->second.getTensor();
+   const auto & tensorName = tensor->getName();
    success = exatn::createTensorSync(tensor, exatn::TensorElementType::COMPLEX64);
    assert(success);
    success = exatn::initTensorDataSync(tensorName, ZERO_TENSOR_BODY);
@@ -3708,11 +3707,13 @@ TEST(NumServerTester, SpinHamiltonians) {
  //Build tensor network vectors:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
  auto vec_net0 = exatn::makeSharedTensorNetwork("VectorNet0",ket_tensor,*tn_builder,false);
+ vec_net0->getTensor(3)->replaceDimension(2,2); //debug
+ vec_net0->getTensor(0)->replaceDimension(4,2); //debug
  vec_net0->markOptimizableAllTensors();
  auto vec_tns0 = exatn::makeSharedTensorExpansion("VectorTNS0",vec_net0,std::complex<double>{1.0,0.0});
  auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
  auto rhs_tns = exatn::makeSharedTensorExpansion("RightHandSideTNS",rhs_net,std::complex<double>{1.0,0.0});
- //vec_net0->printIt(); //debug
+ vec_net0->printIt(); //debug
 
  //Numerical processing:
  {

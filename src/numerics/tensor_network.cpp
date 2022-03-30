@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/03/18
+REVISION: 2022/03/30
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -259,7 +259,7 @@ TensorNetwork::TensorNetwork(const std::string & name,
  max_intermediate_volume_(0.0), max_intermediate_rank_(0), universal_indexing_(false)
 {
  auto new_out_tensor = output_tensor->clone();
- new_out_tensor->rename();
+ new_out_tensor->rename(tensor_hex_name("z",new_out_tensor->getTensorHash()));
  auto res = emplaceTensorConnDirect(false,
                                     0U, //output tensor (id = 0)
                                     new_out_tensor,0U,
