@@ -10,8 +10,8 @@
 ExaTN is a software library for expressing, manipulating and processing
 arbitrary tensor networks on homo- and heterogeneous HPC
 platforms of vastly different scale, from laptops to leadership
-HPC systems. The library can be leveraged in any computational
-domain that relies heavily on numerical tensor algebra:
+GPU-accelerated HPC systems. The library can be leveraged in any
+computational domain that relies heavily on numerical tensor algebra:
 
  * Quantum many-body theory in condensed matter physics;
  * Quantum many-body theory in quantum chemistry;
@@ -67,29 +67,6 @@ Main ExaTN C++ objects:
    must have their output tensors possess the same shape (be congruent).
 
 
-## Quick Start
-Click [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ornl-qci/exatn)
-to open up a pre-configured Eclipse Theia IDE. You should immediately be able to
-run any of the C++ tests or Python examples from the included terminal:
-```bash
-[run C++ tests]
-$ cd build && ctest
-
-[example Python scripts are in python/examples/*]
-$ python3 python/examples/simple.py
-```
-All the code is here and you can quickly start developing. We recommend
-turning on file auto-save by clicking ``File > Auto Save ``.
-Note the Gitpod free account provides 100 hours of use for the month, so if
-you foresee needing more time, we recommend our nightly docker images.
-
-The ExaTN nightly docker images also serve an Eclipse Theia IDE (the same IDE Gitpod uses) on port 3000. To get started, run
-```bash
-$ docker run --security-opt seccomp=unconfined --init -it -p 3000:3000 exatn/exatn
-```
-Navigate to ``https://localhost:3000`` in your browser to open the IDE and get started with ExaTN.
-
-
 ## API Documentation
 For detailed class documentation, please see our [API Documentation](https://ornl-qci.github.io/exatn-api-docs) page.
 
@@ -126,25 +103,35 @@ $ git submodule init
 $ git submodule update --init --recursive
 $ mkdir build && cd build
 $ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
+
   For CPU accelerated matrix algebra via a CPU BLAS library:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
    where the choices are OPENBLAS, ATLAS, MKL, ACML, ESSL.
    If you use Intel MKL, you will need to provide the following
    environment variable instead of BLAS_PATH above:
   -DPATH_INTEL_ROOT=<PATH_TO_INTEL_ROOT_DIRECTORY>
+
   For execution on NVIDIA GPU:
   -DENABLE_CUDA=True
-   You can adjust the NVIDIA GPU compute capability via setting
-   an environment variable GPU_SM_ARCH, for example:
-   export GPU_SM_ARCH=70 (Volta).
-  For GPU execution via very recent CUDA versions with the GNU compiler:
-  -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+   You can adjust the NVIDIA GPU compute capability like this:
+   -DCUDA_ARCH_BIN=70
+   For GPU execution via very recent CUDA versions with the GNU compiler:
+   -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
+   If you want to leverage NVIDIA cuQuantum framework, set these:
+   -DCUTENSOR=TRUE -DCUTENSOR_PATH=<PATH_TO_CUTENSOR_ROOT>
+   -DCUQUANTUM=TRUE -DCUQUANTUM_PATH=<PATH_TO_CUQUANTUM_ROOT>
+   Note that you will need to install cuTensor and cuQuantum
+   from their Linux tar archives provided by NVIDIA. Additionally,
+   after installing cuTensor, copy all cuTensor dynamic libraries (.so)
+   from <CUTENSOR_ROOT>/lib/<CUDA_VERSION> to <CUTENSOR_ROOT>/lib.
+
   For multi-node execution via MPI:
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
    where the choices are OPENMPI or MPICH. Note that the OPENMPI choice
    also covers its derivatives, for example Spectrum MPI. The MPICH choice
    also covers its derivatives, for example, Cray-MPICH. You may also need to set
   -DMPI_BIN_PATH=<PATH_TO_MPI_BINARIES> in case they are in a different location.
+
 $ make -j install
 $ make rebuild_cache
 $ make install
@@ -164,8 +151,8 @@ references to some libraries, in which case you will need to examine the
 generated string and manually fix it. When linking your application with
 ExaTN, you should also add the generated C++ flags to the linking line.
 
-In order to fully clean the build, you will need to do the following
-(from the source root directory of ExaTN):
+In order to cleanly rebuild ExaTN, you will need to do the following
+(from the ExaTN source root directory):
 ``` bash
 $ rm -r ~/.exatn
 $ cd ./tpls/ExaTensor
@@ -179,6 +166,8 @@ $ make install
 ```
 
 ```
+In the following examples, replace relevant paths with your local locations.
+
 Example of a typical workstation configuration with no BLAS (very slow):
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
@@ -203,75 +192,67 @@ cmake ..
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
 
 Example of a typical workstation configuration with default Linux BLAS (found in /usr/lib) and CUDA:
-export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=70
 
 Example of a typical workstation configuration with OpenBLAS (found in /usr/local/openblas/lib) and CUDA:
-export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=70
 
 Example of a workstation configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
-export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=70
 
 Example of an MPI-enabled configuration with default Linux BLAS (found in /usr/lib) and CUDA:
-export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=70
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
 Example of an MPI-enabled configuration with Intel MKL (with Intel root in /opt/intel) and CUDA:
-export GPU_SM_ARCH=70
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=MKL -DPATH_INTEL_ROOT=/opt/intel
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=70
 -DMPI_LIB=MPICH -DMPI_ROOT_DIR=/usr/local/mpi/mpich/3.2.1
 
 Example of a workstation configuration with OpenBLAS, CUDA and cuQuantum:
-export GPU_SM_ARCH=86
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=86
 -DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor
 -DCUQUANTUM=TRUE -DCUQUANTUM_PATH=/usr/local/cuquantum
 
 Example of an MPI-enabled configuration with OpenBLAS, MPI, CUDA and cuQuantum:
-export GPU_SM_ARCH=80
 cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
 -DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
--DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor
+-DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor -DCUDA_ARCH_BIN=86
 -DCUQUANTUM=TRUE -DCUQUANTUM_PATH=/usr/local/cuquantum
 -DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=/usr/local/mpi/openmpi/4.1.2
 
 Example of an MPI-enabled configuration with OpenBLAS and CUDA on Summit:
-export GPU_SM_ARCH=70
 CC=gcc CXX=g++ FC=gfortran cmake ..
 -DCMAKE_INSTALL_PREFIX=<PATH_TO_YOUR_HOME>/.exatn -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=<PATH_TO_YOUR_OPENBLAS>/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/sw/summit/gcc/7.4.0/bin/g++ -DCUDA_ARCH_BIN=70
 -DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=<PATH_TO_YOUR_SPECTRUM_MPI>
 
 On Summit, you can look up the location of libraries by "module show <MODULE_NAME>".

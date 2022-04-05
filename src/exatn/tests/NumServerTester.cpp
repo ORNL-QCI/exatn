@@ -45,13 +45,13 @@
 #define EXATN_TEST24
 #define EXATN_TEST25
 #define EXATN_TEST26
-#define EXATN_TEST27 //requires input file from source
-#define EXATN_TEST28 //requires input file from source
+//#define EXATN_TEST27 //requires input file from source
+//#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30
-#define EXATN_TEST31 //requires input file from source
+//#define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
-#define EXATN_TEST33 //requires input file from source
+//#define EXATN_TEST33 //requires input file from source
 #define EXATN_TEST34
 
 
