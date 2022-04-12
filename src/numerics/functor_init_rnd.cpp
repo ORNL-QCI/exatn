@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a random value
-REVISION: 2019/11/21
+REVISION: 2022/04/12
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "functor_init_rnd.hpp"
 
@@ -27,11 +27,19 @@ int FunctorInitRnd::apply(talsh::Tensor & local_tensor)
   float * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-   std::default_random_engine generator(seeder());
-   std::uniform_real_distribution<float> distribution(-1.0,1.0);
-   auto rnd = std::bind(distribution,generator);
+   if(random_seed_ == 0){
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
-   for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+   }else{
+    std::default_random_engine generator(seeder());
+    std::uniform_real_distribution<float> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+   }
    return 0;
   }
  }
@@ -40,11 +48,19 @@ int FunctorInitRnd::apply(talsh::Tensor & local_tensor)
   double * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-   std::default_random_engine generator(seeder());
-   std::uniform_real_distribution<double> distribution(-1.0,1.0);
-   auto rnd = std::bind(distribution,generator);
+   if(random_seed_ == 0){
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
-   for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+   }else{
+    std::default_random_engine generator(seeder());
+    std::uniform_real_distribution<double> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+    for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = rnd();
+   }
    return 0;
   }
  }
@@ -53,11 +69,29 @@ int FunctorInitRnd::apply(talsh::Tensor & local_tensor)
   std::complex<float> * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-   std::default_random_engine generator(seeder());
-   std::uniform_real_distribution<float> distribution(-1.0,1.0);
-   auto rnd = std::bind(distribution,generator);
+   if(random_seed_ == 0){
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+    if(real_only_){
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
-   for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{rnd(),rnd()};
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{rnd(),0.0f};
+    }else{
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{rnd(),rnd()};
+    }
+   }else{
+    std::default_random_engine generator(seeder());
+    std::uniform_real_distribution<float> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+    if(real_only_){
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{rnd(),0.0f};
+    }else{
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<float>{rnd(),rnd()};
+    }
+   }
    return 0;
   }
  }
@@ -66,11 +100,29 @@ int FunctorInitRnd::apply(talsh::Tensor & local_tensor)
   std::complex<double> * body;
   access_granted = local_tensor.getDataAccessHost(&body);
   if(access_granted){
-   std::default_random_engine generator(seeder());
-   std::uniform_real_distribution<double> distribution(-1.0,1.0);
-   auto rnd = std::bind(distribution,generator);
+   if(random_seed_ == 0){
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+    if(real_only_){
 #pragma omp parallel for schedule(guided) shared(tensor_volume,body)
-   for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{rnd(),rnd()};
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{rnd(),0.0};
+    }else{
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{rnd(),rnd()};
+    }
+   }else{
+    std::default_random_engine generator(seeder());
+    std::uniform_real_distribution<double> distribution(-1.0,1.0);
+    auto rnd = std::bind(distribution,generator);
+    if(real_only_){
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{rnd(),0.0};
+    }else{
+#pragma omp parallel for schedule(guided) shared(tensor_volume,body)
+     for(std::size_t i = 0; i < tensor_volume; ++i) body[i] = std::complex<double>{rnd(),rnd()};
+    }
+   }
    return 0;
   }
  }

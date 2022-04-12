@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/03/29
+REVISION: 2022/04/07
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -282,12 +282,11 @@ cutensornetComputeType_t getCutensorComputeType(const TensorElementType elem_typ
 {
  cutensornetComputeType_t cutensor_data_type;
  switch(elem_type){
- case TensorElementType::REAL32: cutensor_data_type = CUTENSORNET_COMPUTE_32F; break;
- case TensorElementType::REAL64: cutensor_data_type = CUTENSORNET_COMPUTE_64F; break;
- case TensorElementType::COMPLEX32: cutensor_data_type = CUTENSORNET_COMPUTE_32F; break;
- case TensorElementType::COMPLEX64: cutensor_data_type = CUTENSORNET_COMPUTE_64F; break;
- default:
-  assert(false);
+  case TensorElementType::REAL32: cutensor_data_type = CUTENSORNET_COMPUTE_32F; break;
+  case TensorElementType::REAL64: cutensor_data_type = CUTENSORNET_COMPUTE_64F; break;
+  case TensorElementType::COMPLEX32: cutensor_data_type = CUTENSORNET_COMPUTE_32F; break;
+  case TensorElementType::COMPLEX64: cutensor_data_type = CUTENSORNET_COMPUTE_64F; break;
+  default: assert(false);
  }
  return cutensor_data_type;
 }

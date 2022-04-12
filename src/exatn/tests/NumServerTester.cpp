@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-#define EXATN_TEST0
+/*#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -42,17 +42,17 @@
 #define EXATN_TEST21
 #define EXATN_TEST22
 #define EXATN_TEST23
-#define EXATN_TEST24
+#define EXATN_TEST24*/
 #define EXATN_TEST25
-#define EXATN_TEST26
+/*#define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 #define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32
-//#define EXATN_TEST33 //requires input file from source
-#define EXATN_TEST34
+#define EXATN_TEST32*/
+//#define EXATN_TEST33
+//#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -2770,6 +2770,11 @@ TEST(NumServerTester, Reconstructor) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -2814,12 +2819,12 @@ TEST(NumServerTester, Reconstructor) {
  //success = exatn::balanceNorm2Sync(*approximant,1.0,true); assert(success);
 
  //Construct the reconstructor (solver):
- exatn::TensorNetworkReconstructor::resetDebugLevel(0); //debug
- exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-5);
+ exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
+ exatn::TensorNetworkReconstructor reconstructor(target,approximant,1e-4);
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
- reconstructor.resetMaxIterations(1); //debug
+ //reconstructor.resetMaxIterations(1); //debug
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
@@ -2827,7 +2832,7 @@ TEST(NumServerTester, Reconstructor) {
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
             << "; Fidelity = " << fidelity << std::endl;
  }else{
-  std::cout << "Reconstruction failed!" << std::endl;
+  std::cout << "Reconstruction failed!" << std::endl; assert(false);
  }
 
  //Destroy tensors:
@@ -2862,9 +2867,15 @@ TEST(NumServerTester, OptimizerTransverseIsing) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
  double g_factor = 1e-1; // >0.0, 1e0 is critical state
+
  bool success = true;
 
  //Define, create and initialize Pauli tensors:
@@ -3003,16 +3014,22 @@ TEST(NumServerTester, OptimizerHubbard) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  //exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetExecutionSerialization(true,true); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
-
- bool success = true;
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  const int num_sites = 4, max_bond_dim = std::pow(2,num_sites/2);
+
+ bool success = true;
 
  //Define, create and initialize Pauli tensors:
  auto pauli_x = exatn::makeSharedTensor("PauliX",TensorShape{2,2});
@@ -3027,8 +3044,11 @@ TEST(NumServerTester, OptimizerHubbard) {
                                            {0.0f,0.0f}, {1.0f,0.0f},
                                            {1.0f,0.0f}, {0.0f,0.0f}}); assert(success);
  success = exatn::initTensorData("PauliY",std::vector<std::complex<float>>{
+                                           {0.0f,0.0f}, {1.0f,0.0f},
+                                           {1.0f,0.0f}, {0.0f,0.0f}}); assert(success);
+ /*success = exatn::initTensorData("PauliY",std::vector<std::complex<float>>{
                                            {0.0f,0.0f}, {0.0f,-1.0f},
-                                           {0.0f,1.0f}, {0.0f,0.0f}}); assert(success);
+                                           {0.0f,1.0f}, {0.0f,0.0f}}); assert(success);*/
  success = exatn::initTensorData("PauliZ",std::vector<std::complex<float>>{
                                            {1.0f,0.0f}, {0.0f,0.0f},
                                            {0.0f,0.0f}, {-1.0f,0.0f}}); assert(success);
@@ -3126,6 +3146,7 @@ TEST(NumServerTester, OptimizerHubbard) {
   std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1);
   exatn::TensorNetworkOptimizer optimizer(hubbard,ansatz_full,1e-4);
+  optimizer.resetMaxIterations(3); //debug
   success = exatn::sync(); assert(success);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);
@@ -3138,7 +3159,7 @@ TEST(NumServerTester, OptimizerHubbard) {
  success = exatn::normalizeNorm2Sync(ansatz_tensor->getName(),1.0); assert(success);
  success = exatn::printTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::initTensorSync(ansatz_tensor->getName(),0.0); assert(success);
-
+#if 0
  //Perform ground state optimization on a tensor network manifold:
  {
   std::cout << "Ground state optimization on a tensor network manifold:" << std::endl;
@@ -3156,7 +3177,7 @@ TEST(NumServerTester, OptimizerHubbard) {
    std::cout << "Optimization failed!" << std::endl; assert(false);
   }
  }
-
+#endif
  //Destroy tensors:
  success = exatn::destroyTensor(ansatz_tensor->getName()); assert(success);
  success = exatn::destroyTensors(*ansatz_net); assert(success);

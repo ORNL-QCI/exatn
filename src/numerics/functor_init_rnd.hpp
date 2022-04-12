@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization to a random value
-REVISION: 2019/11/21
+REVISION: 2022/04/12
 
-Copyright (C) 2018-2019 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2019 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (A) This tensor functor (method) is used to initialize a Tensor to a random value.
@@ -28,7 +28,9 @@ namespace numerics{
 class FunctorInitRnd: public talsh::TensorFunctor<Identifiable>{
 public:
 
- FunctorInitRnd() = default;
+ FunctorInitRnd(bool random_seed = false,
+                bool real_only = false):
+  random_seed_(random_seed), real_only_(real_only) {}
 
  virtual ~FunctorInitRnd() = default;
 
@@ -45,12 +47,16 @@ public:
  /** Packs data members into a byte packet. **/
  virtual void pack(BytePacket & packet) override
  {
+  appendToBytePacket(&packet,random_seed_);
+  appendToBytePacket(&packet,real_only_);
   return;
  }
 
  /** Unpacks data members from a byte packet. **/
  virtual void unpack(BytePacket & packet) override
  {
+  extractFromBytePacket(&packet,random_seed_);
+  extractFromBytePacket(&packet,real_only_);
   return;
  }
 
@@ -60,6 +66,10 @@ public:
      shape that both can be accessed by talsh::Tensor methods. **/
  virtual int apply(talsh::Tensor & local_tensor) override;
 
+private:
+
+ int random_seed_;
+ int real_only_;
 };
 
 } //namespace numerics
