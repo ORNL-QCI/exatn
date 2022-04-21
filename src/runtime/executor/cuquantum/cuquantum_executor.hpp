@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/01/10
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -22,6 +22,7 @@ Rationale:
 
 #include "linear_memory.hpp"
 #include "tensor_network_queue.hpp"
+#include "mpi_proxy.hpp"
 
 namespace talsh{
 class Tensor;
@@ -61,10 +62,18 @@ public:
  /** Submits a tensor network for execution via CuQuantumExecutor.
      The associated tensor network execution handle can be used
      for progressing and completing the tensor network execution. **/
+#ifdef MPI_ENABLED
+ TensorNetworkQueue::ExecStat execute(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
+                                      unsigned int num_processes, //in: total number of executing processes
+                                      unsigned int process_rank,  //in: rank of the current executing process
+                                      const MPICommProxy & communicator, //in: MPI communicator
+                                      const TensorOpExecHandle exec_handle); //in: tensor network execution handle
+#else
  TensorNetworkQueue::ExecStat execute(std::shared_ptr<numerics::TensorNetwork> network, //in: tensor network
                                       unsigned int num_processes, //in: total number of executing processes
                                       unsigned int process_rank,  //in: rank of the current executing process
                                       const TensorOpExecHandle exec_handle); //in: tensor network execution handle
+#endif
 
  /** Synchronizes on the progress of the tensor network execution.
      If wait = TRUE, waits until completion, otherwise just tests the progress.

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/08
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -30,8 +30,8 @@ public:
   static constexpr const unsigned int CUQUANTUM_PIPELINE_DEPTH = 2;
 #endif
 
-  LazyGraphExecutor(): pipeline_depth_(DEFAULT_PIPELINE_DEPTH),
-                       prefetch_depth_(DEFAULT_PREFETCH_DEPTH)
+  LazyGraphExecutor(): pipeline_depth_(DEFAULT_PIPELINE_DEPTH)
+                      ,prefetch_depth_(DEFAULT_PREFETCH_DEPTH)
 #ifdef CUQUANTUM
                       ,cuquantum_pipe_depth_(CUQUANTUM_PIPELINE_DEPTH)
 #endif

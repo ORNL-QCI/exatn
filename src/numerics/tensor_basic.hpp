@@ -1,5 +1,5 @@
 /** ExaTN: Tensor basic types and parameters
-REVISION: 2022/01/07
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -135,24 +135,28 @@ template <> struct TensorDataType<TensorElementType::REAL32>{
  using value = float;
  static constexpr const value ZERO {0.0f};
  static constexpr const value UNITY {1.0f};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {2};
  static constexpr std::size_t size() {return sizeof(value);}
 };
 template <> struct TensorDataType<TensorElementType::REAL64>{
  using value = double;
  static constexpr const value ZERO {0.0};
  static constexpr const value UNITY {1.0};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {2};
  static constexpr std::size_t size() {return sizeof(value);}
 };
 template <> struct TensorDataType<TensorElementType::COMPLEX32>{
  using value = std::complex<float>;
  static constexpr const value ZERO {0.0f,0.0f};
  static constexpr const value UNITY {1.0f,0.0f};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {8};
  static constexpr std::size_t size() {return sizeof(value);}
 };
 template <> struct TensorDataType<TensorElementType::COMPLEX64>{
  using value = std::complex<double>;
  static constexpr const value ZERO {0.0,0.0};
  static constexpr const value UNITY {1.0,0.0};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {8};
  static constexpr std::size_t size() {return sizeof(value);}
 };
 
@@ -164,24 +168,28 @@ template <> struct TensorDataKind<float>{
  static constexpr const TensorElementType value = TensorElementType::REAL32;
  static constexpr const float ZERO {0.0f};
  static constexpr const float UNITY {1.0f};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {2};
  static constexpr std::size_t size() {return sizeof(float);}
 };
 template <> struct TensorDataKind<double>{
  static constexpr const TensorElementType value = TensorElementType::REAL64;
  static constexpr const double ZERO {0.0};
  static constexpr const double UNITY {1.0};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {2};
  static constexpr std::size_t size() {return sizeof(double);}
 };
 template <> struct TensorDataKind<std::complex<float>>{
  static constexpr const TensorElementType value = TensorElementType::COMPLEX32;
  static constexpr const std::complex<float> ZERO {0.0f,0.0f};
  static constexpr const std::complex<float> UNITY {1.0f,0.0f};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {8};
  static constexpr std::size_t size() {return sizeof(std::complex<std::complex<float>>);}
 };
 template <> struct TensorDataKind<std::complex<double>>{
  static constexpr const TensorElementType value = TensorElementType::COMPLEX64;
  static constexpr const std::complex<double> ZERO {0.0,0.0};
  static constexpr const std::complex<double> UNITY {1.0,0.0};
+ static constexpr const std::size_t FMA_FLOP_FACTOR {8};
  static constexpr std::size_t size() {return sizeof(std::complex<std::complex<double>>);}
 };
 

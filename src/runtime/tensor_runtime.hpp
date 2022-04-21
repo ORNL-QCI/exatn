@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Task-based execution layer for tensor operations
-REVISION: 2022/03/30
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry Lyakh, Tiffany Mintz, Alex McCaskey
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -83,11 +83,11 @@ public:
 #ifdef MPI_ENABLED
   TensorRuntime(const MPICommProxy & communicator,                               //MPI communicator proxy
                 const ParamConf & parameters,                                    //runtime configuration parameters
-                const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+                const std::string & graph_executor_name = "lazy-dag-executor",   //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #else
   TensorRuntime(const ParamConf & parameters,                                    //runtime configuration parameters
-                const std::string & graph_executor_name = "eager-dag-executor",  //DAG executor kind
+                const std::string & graph_executor_name = "lazy-dag-executor",   //DAG executor kind
                 const std::string & node_executor_name = "talsh-node-executor"); //DAG node executor kind
 #endif
   TensorRuntime(const TensorRuntime &) = delete;

@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/04/07
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -43,6 +43,19 @@ Rationale:
 namespace exatn {
 namespace runtime {
 
+/** Retrieves a state of cutensornetContractionOptimizerInfo_t as a plain byte packet. **/
+void getCutensornetContractionOptimizerInfoState(cutensornetContractionOptimizerInfo_t info, //in: cutensornetContractionOptimizerInfo_t object
+                                                 BytePacket * info_state);                   //out: state of the object as a plain byte packet
+
+/** Sets a state of cutensornetContractionOptimizerInfo_t from a plain byte packet. **/
+void setCutensornetContractionOptimizerInfoState(cutensornetContractionOptimizerInfo_t info, //out: cutensornetContractionOptimizerInfo_t object
+                                                 BytePacket * info_state);                   //in: state of the object as a plain byte packet
+
+/** Broadcasts a cutensornetContractionOptimizerInfo_t to all MPI processes. **/
+void broadcastCutensornetContractionOptimizerInfo(cutensornetContractionOptimizerInfo_t info,
+                                                  MPICommProxy & communicator);
+
+/** Tensor descriptor (inside a tensor network) **/
 struct TensorDescriptor {
  std::vector<int64_t> extents; //tensor dimension extents
  std::vector<int64_t> strides; //tensor dimension strides (optional)
@@ -53,10 +66,14 @@ struct TensorDescriptor {
  std::vector<void*> dst_ptr;   //non-owning pointer to the tensor body destination image (on each GPU)
 };
 
+/** Tensor network processing request **/
 struct TensorNetworkReq {
  TensorNetworkQueue::ExecStat exec_status = TensorNetworkQueue::ExecStat::None; //tensor network execution status
  int num_procs = 0; //total number of executing processes
  int proc_id = -1; //id of the current executing process
+#ifdef MPI_ENABLED
+ MPICommProxy comm; //MPI communicator over executing processes
+#endif
  int64_t num_slices = 0;
  std::shared_ptr<numerics::TensorNetwork> network; //tensor network specification
  std::unordered_map<numerics::TensorHashType, TensorDescriptor> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
@@ -128,9 +145,11 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
  static_assert(std::is_same<cutensornetHandle_t,void*>::value,"#FATAL(exatn::runtime::CuQuantumExecutor): cutensornetHandle_t != (void*)");
 
  const size_t version = cutensornetGetVersion();
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): cuTensorNet backend version " << version << std::endl;
+ if(process_rank_ == 0){
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): cuTensorNet backend version " << version << std::endl;
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Total number of processes = " << num_processes_ << std::endl;
+ }
 
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Total number of processes = " << num_processes_ << std::endl;
  int num_gpus = 0;
  auto error_code = talshDeviceCount(DEV_NVIDIA_GPU,&num_gpus); assert(error_code == TALSH_SUCCESS);
  for(int i = 0; i < num_gpus; ++i){
@@ -150,21 +169,23 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                                            gpu_attr_.back().second.buffer_size,MEM_ALIGNMENT));
   }
  }
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
+ if(process_rank_ == 0)
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
 
  for(const auto & gpu: gpu_attr_){
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
   HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&gpu.second.cutn_handle)));
  }
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
-
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): GPU configuration:\n";
- for(const auto & gpu: gpu_attr_){
-  std::cout << " GPU #" << gpu.first
-            << ": wrk_ptr = " << gpu.second.workspace_ptr
-            << ", size = " << gpu.second.workspace_size
-            << "; buf_ptr = " << gpu.second.buffer_ptr
-            << ", size = " << gpu.second.buffer_size << std::endl;
+ if(process_rank_ == 0){
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): GPU configuration:\n";
+  for(const auto & gpu: gpu_attr_){
+   std::cout << " GPU #" << gpu.first
+             << ": wrk_ptr = " << gpu.second.workspace_ptr
+             << ", size = " << gpu.second.workspace_size
+             << "; buf_ptr = " << gpu.second.buffer_ptr
+             << ", size = " << gpu.second.buffer_size << std::endl;
+  }
  }
 }
 
@@ -176,7 +197,9 @@ CuQuantumExecutor::~CuQuantumExecutor()
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
   HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(gpu.second.cutn_handle)));
  }
- std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
+ if(process_rank_ == 0)
+  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
+
  std::cout << "#MSG(exatn::cuQuantum): Statistics across all GPU devices:\n";
  std::cout << " Number of Flops processed: " << flops_ << std::endl;
  std::cout << "#END_MSG\n";
@@ -184,9 +207,16 @@ CuQuantumExecutor::~CuQuantumExecutor()
 }
 
 
+#ifdef MPI_ENABLED
+TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
+                                                        unsigned int num_processes, unsigned int process_rank,
+                                                        const MPICommProxy & communicator,
+                                                        const TensorOpExecHandle exec_handle)
+#else
 TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics::TensorNetwork> network,
                                                         unsigned int num_processes, unsigned int process_rank,
                                                         const TensorOpExecHandle exec_handle)
+#endif
 {
  assert(network);
  TensorNetworkQueue::ExecStat exec_stat = TensorNetworkQueue::ExecStat::None;
@@ -197,6 +227,9 @@ TensorNetworkQueue::ExecStat CuQuantumExecutor::execute(std::shared_ptr<numerics
   tn_req->exec_status = TensorNetworkQueue::ExecStat::Idle;
   tn_req->num_procs = num_processes;
   tn_req->proc_id = process_rank;
+#ifdef MPI_ENABLED
+  tn_req->comm = communicator;
+#endif
   parseTensorNetwork(tn_req); //still Idle
   loadTensors(tn_req); //Idle --> Loading
   if(tn_req->exec_status == TensorNetworkQueue::ExecStat::Loading){
@@ -466,7 +499,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                                    tn_req->opt_info,
                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                    &flops,sizeof(flops)));
-  flops_ += flops;
+  flops_ += flops * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
   HANDLE_CTN_ERROR(cutensornetCreateWorkspaceDescriptor(gpu_attr_[gpu].second.cutn_handle,&(tn_req->workspace_descriptor)));
   uint64_t required_workspace_size = 0;
   HANDLE_CTN_ERROR(cutensornetWorkspaceComputeSizes(gpu_attr_[gpu].second.cutn_handle,

@@ -1,5 +1,5 @@
 /** ExaTN:: Tensor Runtime: Tensor graph executor: Lazy
-REVISION: 2022/01/17
+REVISION: 2022/04/21
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -319,8 +319,14 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
             logfile_.flush();
 #endif
           }
+#ifdef MPI_ENABLED
+          MPICommProxy comm;
+          const auto exec_conf = tensor_network_queue.getExecConfiguration(exec_handle,&comm);
+          exec_stat = cuquantum_executor_->execute(current->first,exec_conf.first,exec_conf.second,comm,exec_handle);
+#else
           const auto exec_conf = tensor_network_queue.getExecConfiguration(exec_handle);
           exec_stat = cuquantum_executor_->execute(current->first,exec_conf.first,exec_conf.second,exec_handle);
+#endif
           if(logging_.load() != 0){
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Submitted to cuQuantum tensor network " << exec_handle
