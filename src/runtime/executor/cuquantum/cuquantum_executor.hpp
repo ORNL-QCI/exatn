@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/04/21
+REVISION: 2022/04/25
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -81,7 +81,7 @@ public:
  TensorNetworkQueue::ExecStat sync(const TensorOpExecHandle exec_handle, //in: tensor network execution handle
                                    int * error_code, //out: error code (0:success)
                                    int64_t * num_slices = nullptr, //out: number of tensor network slices
-                                   ExecutionTimings * timings = nullptr); //out: execution timings (ms)
+                                   std::vector<ExecutionTimings> * timings = nullptr); //out: execution timings (ms)
 
  /** Synchronizes execution of all submitted tensor networks to completion. **/
  void sync();
