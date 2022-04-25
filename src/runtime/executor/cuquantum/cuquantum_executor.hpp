@@ -41,6 +41,10 @@ struct ExecutionTimings {
  float data_in = 0.0;
  float data_out = 0.0;
  float compute = 0.0;
+
+ static ExecutionTimings computeAverage(const std::vector<ExecutionTimings> & timings);
+ static ExecutionTimings computeWorst(const std::vector<ExecutionTimings> & timings);
+ static ExecutionTimings computeBest(const std::vector<ExecutionTimings> & timings);
 };
 
 

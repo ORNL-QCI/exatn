@@ -16,6 +16,7 @@ Rationale:
 
 #include <vector>
 #include <unordered_map>
+#include <numeric>
 #include <type_traits>
 #include <cstdint>
 
@@ -515,7 +516,11 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
   acquireWorkspace(gpu,&(tn_req->gpu_workspace[gpu]),&(tn_req->gpu_worksize[gpu]));
   if(gpu == 0){
+   const int32_t min_slices = tn_req->num_procs * num_gpus;
    HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerConfig(gpu_attr_[gpu].second.cutn_handle,&(tn_req->opt_config)));
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SLICER_MIN_SLICES,
+                                                                      &min_slices,sizeof(min_slices)));
    HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor,&(tn_req->opt_info)));
    HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
                                                    tn_req->net_descriptor,tn_req->opt_config,
@@ -616,6 +621,61 @@ void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
  }
  if(all_completed) tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
  return;
+}
+
+
+ExecutionTimings ExecutionTimings::computeAverage(const std::vector<ExecutionTimings> & timings)
+{
+ ExecutionTimings result_timings = std::accumulate(timings.cbegin(),timings.cend(),
+                                    ExecutionTimings{0.0f,0.0f,0.0f,0.0f},
+                                    [](const ExecutionTimings & first, const ExecutionTimings & second){
+                                     return ExecutionTimings{first.prepare + second.prepare,
+                                                             first.data_in + second.data_in,
+                                                             first.data_out + second.data_out,
+                                                             first.compute + second.compute};
+                                    });
+ if(!timings.empty()){
+  const float num_elems = static_cast<float>(timings.size());
+  result_timings.prepare /= num_elems;
+  result_timings.data_in /= num_elems;
+  result_timings.data_out /= num_elems;
+  result_timings.compute /= num_elems;
+ }
+ return std::move(result_timings);
+}
+
+
+ExecutionTimings ExecutionTimings::computeWorst(const std::vector<ExecutionTimings> & timings)
+{
+ ExecutionTimings result_timings{0.0f,0.0f,0.0f,0.0f};
+ if(!timings.empty()){
+  result_timings = std::accumulate(timings.cbegin()+1,timings.cend(),
+                                   timings[0],
+                                   [](const ExecutionTimings & first, const ExecutionTimings & second){
+                                    return ExecutionTimings{std::max(first.prepare,second.prepare),
+                                                            std::max(first.data_in,second.data_in),
+                                                            std::max(first.data_out,second.data_out),
+                                                            std::max(first.compute,second.compute)};
+                                   });
+ }
+ return std::move(result_timings);
+}
+
+
+ExecutionTimings ExecutionTimings::computeBest(const std::vector<ExecutionTimings> & timings)
+{
+ ExecutionTimings result_timings{0.0f,0.0f,0.0f,0.0f};
+ if(!timings.empty()){
+  result_timings = std::accumulate(timings.cbegin()+1,timings.cend(),
+                                   timings[0],
+                                   [](const ExecutionTimings & first, const ExecutionTimings & second){
+                                    return ExecutionTimings{std::min(first.prepare,second.prepare),
+                                                            std::min(first.data_in,second.data_in),
+                                                            std::min(first.data_out,second.data_out),
+                                                            std::min(first.compute,second.compute)};
+                                   });
+ }
+ return std::move(result_timings);
 }
 
 } //namespace runtime

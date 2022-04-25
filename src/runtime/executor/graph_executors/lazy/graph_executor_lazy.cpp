@@ -305,10 +305,10 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
         const auto exec_handle = current->second;
         int error_code = 0;
         int64_t num_slices = 0;
-        std::vector<ExecutionTimings> timings;
+        std::vector<ExecutionTimings> gpu_timings; //for each GPU
         auto exec_stat = tensor_network_queue.checkExecStatus(exec_handle);
         if(exec_stat == TensorNetworkQueue::ExecStat::Idle || current_pos == 0){
-          exec_stat = cuquantum_executor_->sync(exec_handle,&error_code,&num_slices,&timings); //this call will progress tensor network execution
+          exec_stat = cuquantum_executor_->sync(exec_handle,&error_code,&num_slices,&gpu_timings); //this call will progress tensor network execution
           assert(error_code == 0);
         }
         if(exec_stat == TensorNetworkQueue::ExecStat::None){
@@ -342,11 +342,12 @@ void LazyGraphExecutor::execute(TensorNetworkQueue & tensor_network_queue) {
           not_over = tensor_network_queue.next();
         }else if(exec_stat == TensorNetworkQueue::ExecStat::Completed){
           if(logging_.load() != 0){
+            ExecutionTimings timings = ExecutionTimings::computeAverage(gpu_timings);
             logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                      << "](LazyGraphExecutor)[EXEC_THREAD]: Completed via cuQuantum tensor network " << exec_handle
-                     << ": NumSlices = " << num_slices << "; Time (ms): In{" << timings[0].data_in
-                     << "}, Prep{" << timings[0].prepare << "}, Comp{" << timings[0].compute
-                     << "}, Out{" << timings[0].data_out << "}" << std::endl;
+                     << ": NumSlices = " << num_slices << "; Time (ms): In{" << timings.data_in
+                     << "}, Prep{" << timings.prepare << "}, Comp{" << timings.compute
+                     << "}, Out{" << timings.data_out << "}" << std::endl;
 #ifdef DEBUG
             logfile_.flush();
 #endif
