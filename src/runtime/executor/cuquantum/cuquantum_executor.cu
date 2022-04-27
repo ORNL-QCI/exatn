@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/04/25
+REVISION: 2022/04/27
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -19,6 +19,7 @@ Rationale:
 #include <numeric>
 #include <type_traits>
 #include <cstdint>
+#include <complex>
 
 #include <iostream>
 
@@ -98,8 +99,8 @@ struct TensorNetworkReq {
  cutensornetNetworkDescriptor_t net_descriptor;
  cutensornetContractionOptimizerConfig_t opt_config;
  cutensornetContractionOptimizerInfo_t opt_info;
- std::vector<cutensornetWorkspaceDescriptor_t> workspace_descriptor;
- std::vector<cutensornetContractionPlan_t> comp_plan;
+ std::vector<cutensornetWorkspaceDescriptor_t> workspace_descriptor; //for each GPU
+ std::vector<cutensornetContractionPlan_t> comp_plan; //for each GPU
  cudaDataType_t data_type;
  cutensornetComputeType_t compute_type;
  std::vector<cudaStream_t> gpu_stream; //CUDA stream on each GPU
@@ -172,6 +173,10 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
  }
  if(process_rank_ == 0)
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
+ if(gpu_attr_.empty()){
+  std::cout << "#FATAL(exatn::runtime::CuQuantumExecutor): cuQuantum backend requires at least one NVIDIA GPU per MPI process!\n";
+  std::abort();
+ }
 
  for(const auto & gpu: gpu_attr_){
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
@@ -379,7 +384,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
   if(tens_type == TensorElementType::VOID){
    std::cout << "#ERROR(exatn::runtime::CuQuantumExecutor): Network tensor #" << tens_id
              << " has not been allocated typed storage yet!\n";
-   assert(false);
+   std::abort();
   }
   const auto & tens_legs = tens.getTensorLegs();
   const auto & tens_dims = tens.getDimExtents();
@@ -445,7 +450,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
   HANDLE_CUDA_ERROR(cudaEventCreate(&(tn_req->gpu_data_out_finish[gpu])));
  }
 
- //Create the cuTensorNet tensor network descriptor:
+ //Create the cuTensorNet tensor network descriptor (not GPU specific):
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(gpu_attr_[0].second.cutn_handle,num_input_tensors,
                   tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,
                   tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
@@ -456,6 +461,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
 
 void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
 {
+ const auto out_tens_hash = tn_req->network->getTensor(0)->getTensorHash();
  //Load tensors to all GPUs:
  const int num_gpus = gpu_attr_.size();
  for(int gpu = 0; gpu < num_gpus; ++gpu){
@@ -473,11 +479,15 @@ void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
    //Initiate data transfers:
    HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_in_start[gpu],tn_req->gpu_stream[gpu]));
    for(auto & descr: tn_req->tensor_descriptors){
-    /*std::cout << "#DEBUG(exatn::CuQuantumExecutor): loadTensors: "
-              << descr.second.dst_ptr.back() << " " << descr.second.src_ptr << " "
-              << descr.second.size << std::endl << std::flush; //debug*/
-    HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.second.dst_ptr.back(),descr.second.src_ptr,
-                                      descr.second.size,cudaMemcpyDefault,tn_req->gpu_stream[gpu]));
+    if(descr.first == out_tens_hash){ //output tensor: Set to 0
+     HANDLE_CUDA_ERROR(cudaMemsetAsync(descr.second.dst_ptr.back(),0,descr.second.size,tn_req->gpu_stream[gpu]));
+    }else{ //input tensors: Copy from their original locations
+     /*std::cout << "#DEBUG(exatn::CuQuantumExecutor): loadTensors: "
+                 << descr.second.dst_ptr.back() << " " << descr.second.src_ptr << " "
+                 << descr.second.size << std::endl << std::flush; //debug*/
+     HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.second.dst_ptr.back(),descr.second.src_ptr,
+                                       descr.second.size,cudaMemcpyDefault,tn_req->gpu_stream[gpu]));
+    }
    }
    HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_in_finish[gpu],tn_req->gpu_stream[gpu]));
    tn_req->memory_window_ptr.emplace_back(mem_pool_[gpu].getFront());
@@ -550,7 +560,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                CUTENSORNET_MEMSPACE_DEVICE,
                                                &required_workspace_size));
   if(required_workspace_size > tn_req->gpu_worksize[gpu]){
-   std::cout << "#FATAL(exatn::CuQuantumExecutor::planExecution): Insufficient work space on GPU " << gpu << "!" << std::endl;
+   std::cout << "#ERROR(exatn::CuQuantumExecutor::planExecution): Insufficient work space on GPU " << gpu << "!" << std::endl;
    std::abort();
   }
   HANDLE_CTN_ERROR(cutensornetWorkspaceSet(gpu_attr_[gpu].second.cutn_handle,
@@ -567,13 +577,41 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
 }
 
 
+void accumulateOutputOnHost(TensorElementType elem_type, void * out_ptr, void * tmp_ptr, std::size_t vol)
+{
+ auto accumulate = [](auto * ptr0, const auto * ptr1, auto count){
+#pragma omp parallel for schedule(guided) shared(count,ptr0,ptr1)
+  for(std::size_t i = 0; i < count; ++i) ptr0[i] += ptr1[i];
+  return;
+ };
+
+ switch(elem_type){
+  case TensorElementType::REAL32:
+   accumulate(static_cast<float*>(out_ptr),static_cast<float*>(tmp_ptr),vol);
+   break;
+  case TensorElementType::REAL64:
+   accumulate(static_cast<double*>(out_ptr),static_cast<double*>(tmp_ptr),vol);
+   break;
+  case TensorElementType::COMPLEX32:
+   accumulate(static_cast<std::complex<float>*>(out_ptr),static_cast<std::complex<float>*>(tmp_ptr),vol);
+   break;
+  case TensorElementType::COMPLEX64:
+   accumulate(static_cast<std::complex<double>*>(out_ptr),static_cast<std::complex<double>*>(tmp_ptr),vol);
+   break;
+  default: assert(false);
+ }
+ return;
+}
+
+
 void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_req)
 {
  //Execute the contraction plans on all GPUs:
  const int num_gpus = gpu_attr_.size();
  const int64_t total_gpus = tn_req->num_procs * num_gpus;
- for(int gpu = 0; gpu < num_gpus; ++gpu)
+ for(int gpu = 0; gpu < num_gpus; ++gpu){
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_compute_start[gpu],tn_req->gpu_stream[gpu]));
+ }
  for(int64_t slice_base_id = tn_req->proc_id * num_gpus; slice_base_id < tn_req->num_slices; slice_base_id += total_gpus){
   const int64_t slice_end = std::min(tn_req->num_slices,(int64_t)(slice_base_id + num_gpus));
   for(int64_t slice_id = slice_base_id; slice_id < slice_end; ++slice_id){
@@ -585,16 +623,68 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
                                            slice_id,tn_req->gpu_stream[gpu]));
   }
  }
- for(int gpu = 0; gpu < num_gpus; ++gpu)
+ for(int gpu = 0; gpu < num_gpus; ++gpu){
   HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_compute_finish[gpu],tn_req->gpu_stream[gpu]));
- const auto output_hash = tn_req->network->getTensor(0)->getTensorHash();
+ }
+ //Retrieve the output tensor from all GPUs and perform reduction:
+ auto output_tensor = tn_req->network->getTensor(0);
+ const auto out_elem_type = output_tensor->getElementType();
+ const auto out_elem_size = TensorElementTypeSize(out_elem_type);
+ const auto output_hash = output_tensor->getTensorHash();
  auto iter = tn_req->tensor_descriptors.find(output_hash);
  assert(iter != tn_req->tensor_descriptors.cend());
  const auto & descr = iter->second;
- for(int gpu = 0; gpu < num_gpus; ++gpu){ //`Needs accumulation into the Host RAM
-  HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.src_ptr,descr.dst_ptr[gpu],
-                                    descr.size,cudaMemcpyDefault,tn_req->gpu_stream[gpu]));
-  HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_out_finish[gpu],tn_req->gpu_stream[gpu]));
+ if(num_gpus > 1){ //`Blocking solution for output reduction (temporary)
+  const auto dev_id = talshFlatDevId(DEV_HOST,0);
+  void * host_out_tens = nullptr;
+  auto errc = mem_allocate(dev_id,descr.size,YEP,&host_out_tens);
+  if(errc != 0 || host_out_tens == nullptr){
+   std::cout << "#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Insufficient memory space in the Host buffer!\n";
+   std::abort();
+  }
+  struct ReductionBuf{void * tmp_ptr; void * out_ptr; void * gpu_ptr; std::size_t vol;};
+  assert(MEM_ALIGNMENT % out_elem_size == 0);
+  const auto vol0 = (descr.volume / 2) - ((descr.volume / 2) % (MEM_ALIGNMENT / out_elem_size));
+  const auto vol1 = descr.volume - vol0;
+  std::vector<ReductionBuf> red_buf = {ReductionBuf{host_out_tens,
+                                                    descr.src_ptr,
+                                                    nullptr,
+                                                    vol0},
+                                       ReductionBuf{(void*)(((char*)host_out_tens)+(vol0*out_elem_size)),
+                                                    (void*)(((char*)descr.src_ptr)+(vol0*out_elem_size)),
+                                                    nullptr,
+                                                    vol1}};
+  bool first_iteration = true;
+  for(int gpu = 0; gpu < num_gpus; ++gpu){
+   red_buf[0].gpu_ptr = descr.dst_ptr[gpu];
+   red_buf[1].gpu_ptr = (void*)(((char*)descr.dst_ptr[gpu])+(vol0*out_elem_size));
+   for(int part = 0; part < 2; ++part){
+    HANDLE_CUDA_ERROR(cudaMemcpyAsync(red_buf[part].tmp_ptr,red_buf[part].gpu_ptr,
+                                      red_buf[part].vol*out_elem_size,cudaMemcpyDefault,tn_req->gpu_stream[gpu]));
+    if(first_iteration){
+     HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_out_finish[gpu],tn_req->gpu_stream[gpu]));
+     first_iteration = false;
+    }else{
+     if(part == 0){
+      HANDLE_CUDA_ERROR(cudaEventSynchronize(tn_req->gpu_data_out_finish[gpu-1]));
+     }else{
+      HANDLE_CUDA_ERROR(cudaEventSynchronize(tn_req->gpu_data_out_finish[gpu]));
+     }
+     HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_out_finish[gpu],tn_req->gpu_stream[gpu]));
+     const auto other_part = 1 - part;
+     accumulateOutputOnHost(out_elem_type,red_buf[other_part].out_ptr,red_buf[other_part].tmp_ptr,red_buf[other_part].vol);
+    }
+   }
+  }
+  errc = mem_free(dev_id,&host_out_tens);
+  if(errc != 0){
+   std::cout << "#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Unable to free a temporary Host buffer entry!\n";
+   std::abort();
+  }
+ }else{
+  HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.src_ptr,descr.dst_ptr[0],
+                                    descr.size,cudaMemcpyDefault,tn_req->gpu_stream[0]));
+  HANDLE_CUDA_ERROR(cudaEventRecord(tn_req->gpu_data_out_finish[0],tn_req->gpu_stream[0]));
  }
  tn_req->exec_status = TensorNetworkQueue::ExecStat::Executing;
  return;
@@ -619,7 +709,13 @@ void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
    all_completed = false;
   }
  }
- if(all_completed) tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
+ if(all_completed){
+  //Global output reduction across all participating MPI processes:
+  const auto out_tens_hash = tn_req->network->getTensor(0)->getTensorHash();
+  const auto & descr = tn_req->tensor_descriptors[out_tens_hash];
+  
+  tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
+ }
  return;
 }
 
