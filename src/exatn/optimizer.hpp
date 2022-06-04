@@ -1,8 +1,9 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/03/16
+REVISION: 2022/06/03
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 /** Rationale:
  (A) Given a closed symmetric tensor network expansion functional, composed
@@ -51,6 +52,7 @@ public:
  static constexpr const double DEFAULT_LEARN_RATE = 0.5;
  static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
  static constexpr const unsigned int DEFAULT_MICRO_ITERATIONS = 1;
+
  static constexpr const bool PREOPTIMIZE_INITIAL_GUESS = false;
  static constexpr const unsigned int DEFAULT_KRYLOV_GUESS_DIM = 8;
  static constexpr const unsigned int DEFAULT_GUESS_MAX_BOND_DIM = DEFAULT_KRYLOV_GUESS_DIM;
@@ -78,25 +80,28 @@ public:
  /** Resets the number of micro-iterations. **/
  void resetMicroIterations(unsigned int micro_iterations = DEFAULT_MICRO_ITERATIONS);
 
- /** Optimizes the given closed symmetric tensor network expansion
-     functional for its minimum (or maximum). **/
- bool optimize();
-
- bool optimize(const ProcessGroup & process_group); //in: executing process group
-
- /** Returns the optimized tensor network expansion forming the optimal
-     bra/ket vectors delivering an extremum to the functional. **/
- std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * expect_val = nullptr) const;
-
- /** Returns the achieved expectation value of the optimized functional. **/
- std::complex<double> getExpectationValue() const;
-
- /** Performs a consecutive tensor network functional optimization
-     delivering multiple extreme eigenvalues/eigenvectors. **/
- bool optimize(unsigned int num_roots);            //in: number of extreme roots to find
+ /** Optimizes the given closed symmetric tensor network expansion functional
+     for its minimum (or maximum) extremes. Accepts both single-state and
+     multi-state tensor network expansions. All optimizable tensors in
+     a multi-state tensor network expansion must be isometric. **/
+ bool optimize(bool multistate = false); //in: single- or multi-state optimization
 
  bool optimize(const ProcessGroup & process_group, //in: executing process group
-               unsigned int num_roots);            //in: number of extreme roots to find
+               bool multistate = false);           //in: single- or multi-state optimization
+
+ /** Returns the optimized tensor network expansion forming the optimal
+     bra/ket vector delivering an extremum to the functional. **/
+ std::shared_ptr<TensorExpansion> getSolution(std::complex<double> * expect_val = nullptr) const;
+
+ /** Returns the final expectation value of the optimized functional. **/
+ std::complex<double> getExpectationValue() const;
+
+ /** Performs a consecutive tensor network expansion functional optimization
+     delivering consecutive extreme eigenvalues/eigenvectors in a serialized way. **/
+ bool optimizeSequential(unsigned int num_roots);            //in: number of extreme roots to find
+
+ bool optimizeSequential(const ProcessGroup & process_group, //in: executing process group
+                         unsigned int num_roots);            //in: number of extreme roots to find
 
  /** Returns a specific extreme root (eigenvalue/eigenvector pair). **/
  std::shared_ptr<TensorExpansion> getSolution(unsigned int root_id,
@@ -105,7 +110,8 @@ public:
  /** Returns a specific extreme eigenvalue. **/
  std::complex<double> getExpectationValue(unsigned int root_id) const;
 
- /** Enables/disables coarse-grain parallelization over tensor networks. **/
+ /** Enables/disables the coarse-grain parallelization over tensor networks
+     inside a tensor network expansion. **/
  void enableParallelization(bool parallel = true);
 
  static void resetDebugLevel(unsigned int level = 0,  //in: debug level
@@ -118,20 +124,24 @@ protected:
                           bool highest = false,
                           unsigned int guess_dim = DEFAULT_KRYLOV_GUESS_DIM);
 
- //Implementation based on the steepest descent algorithm:
+ //Implementation based on the steepest descent algorithm (one root at a time):
  bool optimize_sd(const ProcessGroup & process_group); //in: executing process group
+
+ //Implementation based on the steepest descent algorithm (multiple roots in one shot):
+ bool optimize_tr(const ProcessGroup & process_group); //in: executing process group
 
 private:
 
  struct Environment{
-  std::shared_ptr<Tensor> tensor;       //tensor being optimized: x
-  std::shared_ptr<Tensor> gradient;     //gradient w.r.t. the tensor being optimized: g
-  std::shared_ptr<Tensor> gradient_aux; //partial gradient tensor (intermediate)
-  TensorExpansion gradient_expansion;   //gradient tensor network expansion: H|x> - E*S|x> = g
-  TensorExpansion operator_gradient;    //operator gradient tensor network expansion: H|x>
-  TensorExpansion metrics_gradient;     //metrics gradient tensor network expansion: S|x>
-  TensorExpansion hessian_expansion;    //hessian-gradient tensor network expansion: <g|H|g> - E*<g|S|g>
-  std::complex<double> expect_value;    //current expectation value
+  std::shared_ptr<Tensor> tensor;        //tensor being optimized: x
+  std::shared_ptr<Tensor> gradient;      //gradient w.r.t. the tensor being optimized: g
+  std::shared_ptr<Tensor> gradient_aux;  //partial gradient tensor (intermediate)
+  std::shared_ptr<Tensor> gradient_over; //gradient overlap with the parental tensor
+  TensorExpansion gradient_expansion;    //gradient tensor network expansion: H|x> - E*S|x> = g
+  TensorExpansion operator_gradient;     //operator gradient tensor network expansion: H|x>
+  TensorExpansion metrics_gradient;      //metrics gradient tensor network expansion: S|x>
+  TensorExpansion hessian_expansion;     //hessian-gradient tensor network expansion: <g|H|g> - E*<g|S|g>
+  std::complex<double> expect_value;     //current expectation value
  };
 
  std::vector<std::shared_ptr<TensorExpansion>> eigenvectors_; //extreme eigenvectors

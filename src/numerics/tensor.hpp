@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2022/03/30
+REVISION: 2022/06/03
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 /** NOTES:
  Tensor specification requires:
@@ -107,10 +108,16 @@ public:
       Output tensor id = 0;
       Left input tensor id = 1;
       Right input tensor id = 2. **/
- Tensor(const std::string & name,                    //tensor name
-        const Tensor & left_tensor,                  //left tensor
-        const Tensor & right_tensor,                 //right tensor
-        const std::vector<TensorLeg> & contraction); //tensor contraction pattern
+ Tensor(const std::string & name,                    //in: tensor name
+        const Tensor & left_tensor,                  //in: left tensor
+        const Tensor & right_tensor,                 //in: right tensor
+        const std::vector<TensorLeg> & contraction); //in: tensor contraction pattern
+ /** Create a tensor as a result of contraction of an isometric tensor
+     with its conjugate over the isometric group of dimensions. **/
+ Tensor(const std::string & name,             //in: tensor name
+        const Tensor & isometric_tensor,      //in: isometric tensor
+        std::vector<TensorLeg> & contraction, //out: tensor contraction pattern (see above)
+        unsigned int iso_group_id = 0);       //in: isometric dimension group selector (0 or 1)
  /** Create a tensor from a byte packet. **/
  Tensor(BytePacket & byte_packet);
 
@@ -231,6 +238,13 @@ public:
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
+
+ /** Retrieves a specific group of isometric dimensions.
+     If the specified group does not exist, returns an empty vector. **/
+ std::vector<unsigned int> retrieveIsometry(unsigned int iso_group_id) const;
+
+ /** Returns the ordered vector of non-isometric dimensions. **/
+ std::vector<unsigned int> retrieveNonisometricDimensions() const;
 
  /** Unregisters all isometries in the tensor. **/
  void unregisterIsometries();

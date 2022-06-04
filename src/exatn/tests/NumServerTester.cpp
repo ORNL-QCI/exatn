@@ -41,16 +41,16 @@
 #define EXATN_TEST20
 #define EXATN_TEST21
 #define EXATN_TEST22*/
-#define EXATN_TEST23
-#define EXATN_TEST24
+//#define EXATN_TEST23
+//#define EXATN_TEST24
 /*#define EXATN_TEST25
 #define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30
+#define EXATN_TEST30*/
 //#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32*/
+#define EXATN_TEST32
 //#define EXATN_TEST33
 //#define EXATN_TEST34
 
@@ -3756,7 +3756,7 @@ TEST(NumServerTester, SpinHamiltonians) {
   if(isometric != 0){
    converged = optimizer.optimize(); //state-averaged
   }else{
-   converged = optimizer.optimize(num_states); //state-specific
+   converged = optimizer.optimizeSequential(num_states); //state-specific
   }
   success = exatn::sync(); assert(success);
   if(converged){
@@ -3804,12 +3804,12 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  const int num_spin_sites = 8;
- const int bond_dim_lim = 4;
+ const int bond_dim_lim = 16;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 3;
- const double accuracy = 1e-4;
+ const unsigned int num_states = 4;
+ const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug
 
@@ -3931,7 +3931,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
   exatn::TensorNetworkOptimizer optimizer3(hamiltonian0,vec_tns0,accuracy);
   optimizer3.enableParallelization(true);
   success = exatn::sync(); assert(success);
-  bool converged = optimizer3.optimize(num_states);
+  bool converged = optimizer3.optimizeSequential(num_states);
   success = exatn::sync(); assert(success);
   if(converged){
    if(root){
@@ -3971,10 +3971,12 @@ TEST(NumServerTester, IsometricAIEM) {
  const int num_spin_sites = 8;
  const int bond_dim_lim = 16;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
- const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 1;
- const double accuracy = 1e-5;
+ const int arity = 2;
+ const unsigned int isometric = 1;
+ const unsigned int num_states = 2;
+ const bool multistate = (num_states > 1 && isometric != 0);
+ const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug
 
@@ -4005,6 +4007,7 @@ TEST(NumServerTester, IsometricAIEM) {
  double nrm1 = 0.0;
  success = exatn::computeNorm1Sync("B",nrm1); assert(success);
  if(root) std::cout << "1-norm of the identity tensor = " << nrm1 << " VS correct = 4" << std::endl;
+ exatn::make_sure(nrm1,4.0,1e-6);
 
  //Destroy tensors:
  success = exatn::sync(); assert(success);
@@ -4027,7 +4030,7 @@ TEST(NumServerTester, IsometricAIEM) {
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
   success = tn_builder->setParameter("arity",arity); assert(success);
   success = tn_builder->setParameter("num_states",num_states); assert(success);
-  success = tn_builder->setParameter("isometric",1); assert(success);
+  success = tn_builder->setParameter("isometric",isometric); assert(success);
  }else{
   std::cout << "#FATAL: Unknown tensor network builder!" << std::endl; assert(false);
  }
@@ -4057,19 +4060,19 @@ TEST(NumServerTester, IsometricAIEM) {
  if(root) std::cout << "Done" << std::endl;
 
  {//Numerical processing:
-  if(root) std::cout << "Allocating and initializing the tensor network ansatz ... ";
+  if(root) std::cout << "Allocating the tensor network ansatz ... ";
   success = exatn::createTensorsSync(*ket_net,TENS_ELEM_TYPE); assert(success);
-  success = exatn::initTensorsRndSync(*ket_net); assert(success);
   if(root) std::cout << "Done" << std::endl;
 
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
   ket_net->markOptimizableAllTensors();
-  success = exatn::initTensorsRndSync(*ket_tns); assert(success);
+  success = exatn::initTensorsRndSync(*ket_tns,false); assert(success);
   exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
   optimizer.enableParallelization(true);
   success = exatn::sync(); assert(success);
-  bool converged = optimizer.optimize();
+  bool converged = optimizer.optimize(multistate); //single- or multi-state tensor network optimized in one shot
+  //bool converged = optimizer.optimizeSequential(num_states); //sequential state-by-state optimization using a single-state tensor network
   success = exatn::sync(); assert(success);
   if(converged){
    if(root){

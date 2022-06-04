@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2022/03/18
+REVISION: 2022/06/03
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 #include "tensor.hpp"
 #include "tensor_symbol.hpp"
@@ -109,6 +110,44 @@ name_(name), element_type_(TensorElementType::VOID)
  }
 }
 
+std::vector<TensorLeg> & generatePatternForIsometricSelfContraction(const Tensor & tensor,
+                                                                    std::vector<TensorLeg> & contraction,
+                                                                    unsigned int iso_group_id)
+{
+ const auto tens_rank = tensor.getRank();
+ contraction.resize(tens_rank*2,TensorLeg());
+ if(tens_rank > 0){
+  std::vector<unsigned int> marks(tens_rank,0);
+  const auto iso_group = tensor.retrieveIsometry(iso_group_id);
+  for(const auto & iso_dim: iso_group){
+   marks[iso_dim] = 1;
+   contraction[iso_dim] = TensorLeg{2,iso_dim};
+   contraction[iso_dim+tens_rank] = TensorLeg{1,iso_dim};
+  }
+  const unsigned int niso_size = tens_rank - iso_group.size();
+  if(niso_size > 0){
+   unsigned int dest_leg = 0;
+   for(unsigned int i = 0; i < tens_rank; ++i){
+    if(marks[i] == 0){
+     contraction[i] = TensorLeg{0,dest_leg};
+     contraction[i+tens_rank] = TensorLeg{0,dest_leg+niso_size};
+     ++dest_leg;
+    }
+   }
+  }
+ }
+ return contraction;
+}
+
+Tensor::Tensor(const std::string & name,
+               const Tensor & isometric_tensor,
+               std::vector<TensorLeg> & contraction,
+               unsigned int iso_group_id):
+ Tensor(name,isometric_tensor,isometric_tensor,
+        generatePatternForIsometricSelfContraction(isometric_tensor,contraction,iso_group_id))
+{
+}
+
 Tensor::Tensor(BytePacket & byte_packet)
 {
  unpack(byte_packet);
@@ -202,6 +241,14 @@ void Tensor::printIt(bool with_hash) const
  }
  signature_.printIt();
  shape_.printIt();
+ for(const auto & iso_group: isometries_){
+  std::cout << "[";
+  for(auto iso_dim = iso_group.cbegin(); iso_dim != iso_group.cend(); ++iso_dim){
+   if(iso_dim != iso_group.cbegin()) std::cout << ",";
+   std::cout << (*iso_dim);
+  }
+  std::cout << "]";
+ }
  return;
 }
 
@@ -214,6 +261,14 @@ void Tensor::printItFile(std::ofstream & output_file, bool with_hash) const
  }
  signature_.printItFile(output_file);
  shape_.printItFile(output_file);
+ for(const auto & iso_group: isometries_){
+  output_file << "[";
+  for(auto iso_dim = iso_group.cbegin(); iso_dim != iso_group.cend(); ++iso_dim){
+   if(iso_dim != iso_group.cbegin()) output_file << ",";
+   output_file << (*iso_dim);
+  }
+  output_file << "]";
+ }
  return;
 }
 
@@ -429,6 +484,38 @@ bool Tensor::hasIsometries() const
 const std::list<std::vector<unsigned int>> & Tensor::retrieveIsometries() const
 {
  return isometries_;
+}
+
+std::vector<unsigned int> Tensor::retrieveIsometry(unsigned int iso_group_id) const
+{
+ make_sure(iso_group_id < isometries_.size(),"#ERROR(exatn::Tensor::retrieveIsometry): Invalid isometric group id!");
+ std::vector<unsigned int> dims;
+ unsigned int iso_id = 0;
+ for(const auto & iso_group: isometries_){
+  if(iso_id == iso_group_id){
+   dims = iso_group;
+   break;
+  }
+  ++iso_id;
+ }
+ return dims;
+}
+
+std::vector<unsigned int> Tensor::retrieveNonisometricDimensions() const
+{
+ const auto tens_rank = getRank();
+ std::vector<unsigned int> dims;
+ if(tens_rank > 0){
+  dims.reserve(tens_rank);
+  std::vector<unsigned int> marks(tens_rank,0);
+  for(const auto & iso_group: isometries_){
+   for(const auto & iso_dim: iso_group) marks[iso_dim] = 1;
+  }
+  for(unsigned int i = 0; i < tens_rank; ++i){
+   if(marks[i] == 0) dims.emplace_back(i);
+  }
+ }
+ return dims;
 }
 
 void Tensor::unregisterIsometries()

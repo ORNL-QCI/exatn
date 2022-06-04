@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/03/15
+REVISION: 2022/06/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 /** Rationale:
  (a) Numerical server provides basic tensor network processing functionality:
@@ -684,15 +685,21 @@ public:
 
  bool initTensorRndSync(const std::string & name); //in: tensor name
 
- /** Initializes all input tensors of a given tensor network to a random value. **/
- bool initTensorsRnd(TensorNetwork & tensor_network);     //inout: tensor network
+ /** Initializes all input tensors in a given tensor network to a random value.
+     By default only the optimizable input tensors are initialized. **/
+ bool initTensorsRnd(TensorNetwork & tensor_network, //inout: tensor network
+                     bool only_optimizable = true);  //in: whether or not to initialize only the optimizable input tensors
 
- bool initTensorsRndSync(TensorNetwork & tensor_network); //inout: tensor network
+ bool initTensorsRndSync(TensorNetwork & tensor_network, //inout: tensor network
+                         bool only_optimizable = true);  //in: whether or not to initialize only the optimizable input tensors
 
- /** Initializes all input tensors in a given tensor network expansion to a random value. **/
- bool initTensorsRnd(TensorExpansion & tensor_expansion);     //inout: tensor network expansion
+ /** Initializes all input tensors in a given tensor network expansion to a random value.
+     By default only the optimizable input tensors are initialized. **/
+ bool initTensorsRnd(TensorExpansion & tensor_expansion, //inout: tensor network expansion
+                     bool only_optimizable = true);      //in: whether or not to initialize only the optimizable input tensors
 
- bool initTensorsRndSync(TensorExpansion & tensor_expansion); //inout: tensor network expansion
+ bool initTensorsRndSync(TensorExpansion & tensor_expansion, //inout: tensor network expansion
+                         bool only_optimizable = true);      //in: whether or not to initialize only the optimizable input tensors
 
  /** Initializes special tensors present in the tensor network. **/
  bool initTensorsSpecial(TensorNetwork & tensor_network);     //inout: tensor network

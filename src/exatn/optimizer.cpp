@@ -1,8 +1,9 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/03/16
+REVISION: 2022/06/03
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 #include "optimizer.hpp"
 
@@ -112,26 +113,27 @@ std::complex<double> TensorNetworkOptimizer::getExpectationValue(unsigned int ro
 }
 
 
-bool TensorNetworkOptimizer::optimize()
+bool TensorNetworkOptimizer::optimize(bool multistate)
 {
- return optimize(exatn::getDefaultProcessGroup());
+ return optimize(exatn::getDefaultProcessGroup(),multistate);
 }
 
 
-bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group)
+bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group, bool multistate)
 {
+ if(multistate) return optimize_tr(process_group);
  return optimize_sd(process_group);
 }
 
 
-bool TensorNetworkOptimizer::optimize(unsigned int num_roots)
+bool TensorNetworkOptimizer::optimizeSequential(unsigned int num_roots)
 {
- return optimize(exatn::getDefaultProcessGroup(),num_roots);
+ return optimizeSequential(exatn::getDefaultProcessGroup(),num_roots);
 }
 
 
-bool TensorNetworkOptimizer::optimize(const ProcessGroup & process_group,
-                                      unsigned int num_roots)
+bool TensorNetworkOptimizer::optimizeSequential(const ProcessGroup & process_group,
+                                                unsigned int num_roots)
 {
  bool success = true;
  auto original_operator = tensor_operator_;
@@ -255,11 +257,14 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
      auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
+     std::vector<TensorLeg> iso_self_pattern;
+     auto overlap_tensor = std::make_shared<Tensor>("_s"+tensor.getName(),*(tensor.getTensor()),iso_self_pattern,0);
      environments_.emplace_back(Environment{tensor.getTensor(),                              //optimizable tensor
                                             gradient_tensor,                                 //gradient tensor
                                             std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
+                                            overlap_tensor,                                  //gradient-tensor overlap
                                             TensorExpansion(residual_expectation,tensor.getName(),true), // |operator|tensor> - |metrics|tensor>
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(metrics_expectation,tensor.getName(),true),  // |metrics|tensor>
@@ -498,7 +503,195 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
 
  //Deactivate caching of optimal tensor contraction sequences:
  if(!con_seq_caching) deactivateContrSeqCaching();
+ return converged;
+}
 
+
+bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
+{
+ constexpr double MIN_ACCEPTABLE_DENOM = 1e-13; //minimally acceptable denominator in optimal step size determination
+ constexpr bool COLLAPSE_ISOMETRIES = true;     //enables collapsing isometries in all tensor networks
+
+ unsigned int local_rank; //local process rank within the process group
+ if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
+ unsigned int num_procs = 1;
+ if(parallel_) num_procs = process_group.getSize();
+
+ if(TensorNetworkOptimizer::focus >= 0){
+  if(getProcessRank() != TensorNetworkOptimizer::focus) TensorNetworkOptimizer::debug = 0;
+ }
+
+ if(TensorNetworkOptimizer::debug > 0){
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network operator:" << std::endl;
+  tensor_operator_->printIt();
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Tensor network vector:" << std::endl;
+  vector_expansion_->printIt();
+ }
+
+ //Activate caching of optimal tensor contraction sequences:
+ bool con_seq_caching = queryContrSeqCaching();
+ if(!con_seq_caching) activateContrSeqCaching();
+
+ //Construct the operator expectation expansion:
+ // <vector|operator|vector>
+ TensorExpansion bra_vector_expansion(*vector_expansion_);
+ bra_vector_expansion.conjugate();
+ bra_vector_expansion.rename(vector_expansion_->getName()+"Bra");
+ TensorExpansion operator_expectation(bra_vector_expansion,*vector_expansion_,*tensor_operator_);
+ operator_expectation.rename("OperatorExpectation");
+ for(auto net = operator_expectation.begin(); net != operator_expectation.end(); ++net){
+  net->network->rename("OperExpect" + std::to_string(std::distance(operator_expectation.begin(),net)));
+ }
+ if(TensorNetworkOptimizer::debug > 1){
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
+  operator_expectation.printIt();
+ }
+
+ //Prepare derivative environments for all optimizable tensors in the vector expansion:
+ environments_.clear();
+ std::unordered_set<std::string> tensor_names;
+ // Loop over the tensor networks constituting the tensor network vector expansion:
+ for(auto network = vector_expansion_->cbegin(); network != vector_expansion_->cend(); ++network){
+  // Loop over the optimizable tensors inside the current tensor network:
+  for(auto tensor_conn = network->network->begin(); tensor_conn != network->network->end(); ++tensor_conn){
+   const auto & tensor = tensor_conn->second;
+   if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the tensor network vector expansion
+    make_sure(tensor.hasIsometries(),"#ERROR(exatn::TensorNetworkOptimizer): Unable to optimize non-isometric tensors in trace minimization!");
+    auto res = tensor_names.emplace(tensor.getName());
+    if(res.second){ //prepare derivative environment only once for each unique tensor name
+     auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
+     std::vector<TensorLeg> iso_self_pattern;
+     auto overlap_tensor = std::make_shared<Tensor>("_s"+tensor.getName(),*(tensor.getTensor()),iso_self_pattern,0);
+     environments_.emplace_back(Environment{tensor.getTensor(),                              //optimizable tensor (isometric)
+                                            gradient_tensor,                                 //gradient tensor (non-isometric)
+                                            std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor (non-isometric)
+                                                                     tensor.getShape(),
+                                                                     tensor.getSignature()),
+                                            overlap_tensor,                                  //gradient-tensor overlap
+                                            TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
+                                            TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
+                                            TensorExpansion(), //no metrics
+                                            TensorExpansion(operator_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient>
+                                            {1.0,0.0}});
+     if(COLLAPSE_ISOMETRIES){
+      auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
+      collapsed = environments_.back().operator_gradient.collapseIsometries();
+      collapsed = environments_.back().hessian_expansion.collapseIsometries();
+     }
+    }
+   }
+  }
+ }
+ //Collapse isometries in the original TN functionals:
+ if(COLLAPSE_ISOMETRIES){
+  auto collapsed = operator_expectation.collapseIsometries();
+ }
+ //Print final tensor expansions:
+ if(TensorNetworkOptimizer::debug > 1){
+  if(COLLAPSE_ISOMETRIES){
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Collapsed TN functionals:" << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Operator expectation expansion:" << std::endl;
+   operator_expectation.printIt();
+  }
+  std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Derivatives:" << std::endl;
+  for(const auto & environment: environments_){
+   std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
+   environment.gradient_expansion.printIt();
+  }
+ }
+
+ //Tensor optimization procedure:
+ bool converged = environments_.empty();
+ if(!converged){
+  //Create a scalar tensor:
+  auto scalar_norm = makeSharedTensor("_scalar_norm");
+  bool done = createTensorSync(scalar_norm,environments_[0].tensor->getElementType()); assert(done);
+  //Iterate:
+  unsigned int iteration = 0;
+  while((!converged) && (iteration < max_iterations_)){
+   if(TensorNetworkOptimizer::debug > 0)
+    std::cout << "#DEBUG(exatn::TensorNetworkOptimizer)["
+              << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
+              << "]: Iteration " << iteration << std::endl;
+   converged = true;
+   double max_convergence = 0.0;
+   average_expect_val_ = std::complex<double>{0.0,0.0};
+   for(auto & environment: environments_){
+    //Create the gradient tensors:
+    done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
+    done = createTensorSync(environment.gradient_aux,environment.tensor->getElementType()); assert(done);
+    //Microiterations:
+    double grad_norm = 0.0;
+    for(unsigned int micro_iteration = 0; micro_iteration < micro_iterations_; ++micro_iteration){
+     //Compute the operator expectation value w.r.t. the optimized tensor (real):
+     done = initTensorSync("_scalar_norm",0.0); assert(done);
+     done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
+     std::complex<double> expect_val{0.0,0.0};
+     switch(scalar_norm->getElementType()){
+      case TensorElementType::REAL32:
+       expect_val = {exatn::getLocalTensor("_scalar_norm")->getSliceView<float>()[std::initializer_list<int>{}],0.0f};
+       break;
+      case TensorElementType::REAL64:
+       expect_val = {exatn::getLocalTensor("_scalar_norm")->getSliceView<double>()[std::initializer_list<int>{}],0.0};
+       break;
+      case TensorElementType::COMPLEX32:
+       expect_val = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<float>>()[std::initializer_list<int>{}];
+       break;
+      case TensorElementType::COMPLEX64:
+       expect_val = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<double>>()[std::initializer_list<int>{}];
+       break;
+      default:
+       assert(false);
+     }
+     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val_ += expect_val;
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
+                                                     << " = " << std::scientific << expect_val << std::endl;
+     //Initialize the gradient tensor to zero:
+     done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
+     //Evaluate the gradient tensor expansion:
+     done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient,num_procs); assert(done);
+     //Compute the norm of the gradient tensor:
+     grad_norm = 0.0;
+     done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
+     //Compute the norm of the current tensor (debug):
+     double tens_norm = 0.0;
+     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Gradient norm w.r.t. " << environment.tensor->getName()
+                                                     << " = " << grad_norm << "; Tensor norm = " << tens_norm << std::endl;
+     if(grad_norm > tolerance_){
+      if(micro_iteration == (micro_iterations_ - 1)) converged = false;
+     }
+     //Compute the step size:
+     epsilon_ = DEFAULT_LEARN_RATE;
+     if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
+     //Update the optimized tensor:
+     std::string add_pattern;
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
+     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
+     //Update the old expectation value:
+     environment.expect_value = expect_val;
+     if(grad_norm <= tolerance_) break;
+    } //micro-iterations
+    //Update the convergence residual:
+    max_convergence = std::max(max_convergence,grad_norm);
+    //Destroy the gradient tensors:
+    done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
+    done = destroyTensorSync(environment.gradient->getName()); assert(done);
+   } //tensors
+   average_expect_val_ /= static_cast<double>(environments_.size());
+   if(TensorNetworkOptimizer::debug > 0){
+    std::cout << "Average expectation value = " << average_expect_val_
+              << "; Max convergence residual = " << max_convergence << std::endl;
+   }
+   ++iteration;
+  }
+  //Destroy the scalar tensor:
+  done = destroyTensorSync("_scalar_norm"); assert(done);
+ }
+
+ //Deactivate caching of optimal tensor contraction sequences:
+ if(!con_seq_caching) deactivateContrSeqCaching();
  return converged;
 }
 

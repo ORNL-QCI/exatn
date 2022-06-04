@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/03/17
+REVISION: 2022/06/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 #include "num_server.hpp"
 #include "tensor_range.hpp"
@@ -1743,7 +1744,7 @@ bool NumServer::initTensorRndSync(const std::string & name)
  return success;
 }
 
-bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
+bool NumServer::initTensorsRnd(TensorNetwork & tensor_network, bool only_optimizable)
 {
  bool success = true;
  for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
@@ -1751,7 +1752,7 @@ bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
-    if(tens->second.isOptimizable()) success = initTensorRnd(tens_name);
+    if((!only_optimizable) || tens->second.isOptimizable()) success = initTensorRnd(tens_name);
    }else{
     success = false;
    }
@@ -1763,7 +1764,7 @@ bool NumServer::initTensorsRnd(TensorNetwork & tensor_network)
  return success;
 }
 
-bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
+bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network, bool only_optimizable)
 {
  bool success = true;
  for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
@@ -1771,7 +1772,7 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
   const auto & tens_name = tensor->getName();
   if(tens->first != 0){ //input tensor
    if(tensorAllocated(tens_name)){
-    if(tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
+    if((!only_optimizable) || tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
    }else{
     success = false;
    }
@@ -1783,7 +1784,7 @@ bool NumServer::initTensorsRndSync(TensorNetwork & tensor_network)
  return success;
 }
 
-bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
+bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion, bool only_optimizable)
 {
  bool success = true;
  for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
@@ -1792,7 +1793,7 @@ bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
    const auto & tens_name = tensor->getName();
    if(tens->first != 0){ //input tensor
     if(tensorAllocated(tens_name)){
-     if(tens->second.isOptimizable()) success = initTensorRnd(tens_name);
+     if((!only_optimizable) || tens->second.isOptimizable()) success = initTensorRnd(tens_name);
     }else{
      success = false;
     }
@@ -1805,7 +1806,7 @@ bool NumServer::initTensorsRnd(TensorExpansion & tensor_expansion)
  return success;
 }
 
-bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion)
+bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion, bool only_optimizable)
 {
  bool success = true;
  for(auto tensor_network = tensor_expansion.cbegin(); tensor_network != tensor_expansion.cend(); ++tensor_network){
@@ -1814,7 +1815,7 @@ bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion)
    const auto & tens_name = tensor->getName();
    if(tens->first != 0){ //input tensor
     if(tensorAllocated(tens_name)){
-     if(tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
+     if((!only_optimizable) || tens->second.isOptimizable()) success = initTensorRndSync(tens_name);
     }else{
      success = false;
     }

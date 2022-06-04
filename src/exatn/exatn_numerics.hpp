@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/03/15
+REVISION: 2022/06/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation **/
 
 /** Rationale:
  1. Vector space and subspace registration [spaces.hpp, space_register.hpp]:
@@ -475,20 +476,26 @@ inline bool initTensorRndSync(const std::string & name) //in: tensor name
  {return numericalServer->initTensorRndSync(name);}
 
 
-/** Initializes all input tensors of a given tensor network to a random value. **/
-inline bool initTensorsRnd(TensorNetwork & tensor_network)     //inout: tensor network
- {return numericalServer->initTensorsRnd(tensor_network);}
+/** Initializes all input tensors in a given tensor network to a random value.
+    By default only the optimizable input tensors are initialized. **/
+inline bool initTensorsRnd(TensorNetwork & tensor_network, //inout: tensor network
+                           bool only_optimizable = true)   //in: whether or not to initialize only the optimizable input tensors
+ {return numericalServer->initTensorsRnd(tensor_network,only_optimizable);}
 
-inline bool initTensorsRndSync(TensorNetwork & tensor_network) //inout: tensor network
- {return numericalServer->initTensorsRndSync(tensor_network);}
+inline bool initTensorsRndSync(TensorNetwork & tensor_network, //inout: tensor network
+                               bool only_optimizable = true)   //in: whether or not to initialize only the optimizable input tensors
+ {return numericalServer->initTensorsRndSync(tensor_network,only_optimizable);}
 
 
-/** Initializes all input tensors in a given tensor network expansion to a random value. **/
-inline bool initTensorsRnd(TensorExpansion & tensor_expansion)     //inout: tensor network expansion
- {return numericalServer->initTensorsRnd(tensor_expansion);}
+/** Initializes all input tensors in a given tensor network expansion to a random value.
+    By default only the optimizable input tensors are initialized. **/
+inline bool initTensorsRnd(TensorExpansion & tensor_expansion, //inout: tensor network expansion
+                           bool only_optimizable = true)       //in: whether or not to initialize only the optimizable input tensors
+ {return numericalServer->initTensorsRnd(tensor_expansion,only_optimizable);}
 
-inline bool initTensorsRndSync(TensorExpansion & tensor_expansion) //inout: tensor network expansion
- {return numericalServer->initTensorsRndSync(tensor_expansion);}
+inline bool initTensorsRndSync(TensorExpansion & tensor_expansion, //inout: tensor network expansion
+                               bool only_optimizable = true)       //in: whether or not to initialize only the optimizable input tensors
+ {return numericalServer->initTensorsRndSync(tensor_expansion,only_optimizable);}
 
 
 /** Initializes special tensors present in the tensor network. **/
