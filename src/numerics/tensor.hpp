@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2022/06/03
+REVISION: 2022/06/06
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -239,8 +239,7 @@ public:
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
 
- /** Retrieves a specific group of isometric dimensions.
-     If the specified group does not exist, returns an empty vector. **/
+ /** Retrieves a specific group of isometric dimensions. **/
  std::vector<unsigned int> retrieveIsometry(unsigned int iso_group_id) const;
 
  /** Returns the ordered vector of non-isometric dimensions. **/

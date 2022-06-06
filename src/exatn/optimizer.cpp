@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/06/03
+REVISION: 2022/06/06
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -257,14 +257,12 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
      auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
-     std::vector<TensorLeg> iso_self_pattern;
-     auto overlap_tensor = std::make_shared<Tensor>("_s"+tensor.getName(),*(tensor.getTensor()),iso_self_pattern,0);
      environments_.emplace_back(Environment{tensor.getTensor(),                              //optimizable tensor
                                             gradient_tensor,                                 //gradient tensor
                                             std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
-                                            overlap_tensor,                                  //gradient-tensor overlap
+                                            std::shared_ptr<Tensor>(nullptr),                //gradient-tensor overlap
                                             TensorExpansion(residual_expectation,tensor.getName(),true), // |operator|tensor> - |metrics|tensor>
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(metrics_expectation,tensor.getName(),true),  // |metrics|tensor>
@@ -567,22 +565,21 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
                                             std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor (non-isometric)
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
-                                            overlap_tensor,                                  //gradient-tensor overlap
+                                            overlap_tensor,                                  //gradient-tensor overlap (non-isometric)
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(), //no metrics
-                                            TensorExpansion(operator_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient>
+                                            TensorExpansion(), //no hessian
                                             {1.0,0.0}});
      if(COLLAPSE_ISOMETRIES){
       auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
       collapsed = environments_.back().operator_gradient.collapseIsometries();
-      collapsed = environments_.back().hessian_expansion.collapseIsometries();
      }
     }
    }
   }
  }
- //Collapse isometries in the original TN functionals:
+ //Collapse isometries in the original TN functional:
  if(COLLAPSE_ISOMETRIES){
   auto collapsed = operator_expectation.collapseIsometries();
  }
@@ -664,9 +661,9 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
      //Compute the step size:
      epsilon_ = DEFAULT_LEARN_RATE;
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
-     //Update the optimized tensor:
+     //Update the optimized tensor (with the conjugate gradient):
      std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true,
                                       environment.tensor->getName(),environment.gradient->getName()); assert(done);
      done = addTensorsSync(add_pattern,-epsilon_); assert(done);
      //Update the old expectation value:

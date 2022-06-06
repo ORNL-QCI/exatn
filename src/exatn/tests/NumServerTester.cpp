@@ -3976,6 +3976,7 @@ TEST(NumServerTester, IsometricAIEM) {
  const unsigned int isometric = 1;
  const unsigned int num_states = 2;
  const bool multistate = (num_states > 1 && isometric != 0);
+ const unsigned int max_iterations = 999;
  const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug
@@ -4070,6 +4071,7 @@ TEST(NumServerTester, IsometricAIEM) {
   success = exatn::initTensorsRndSync(*ket_tns,false); assert(success);
   exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
   optimizer.enableParallelization(true);
+  optimizer.resetMaxIterations(max_iterations);
   success = exatn::sync(); assert(success);
   bool converged = optimizer.optimize(multistate); //single- or multi-state tensor network optimized in one shot
   //bool converged = optimizer.optimizeSequential(num_states); //sequential state-by-state optimization using a single-state tensor network
