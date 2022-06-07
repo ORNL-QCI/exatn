@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/06/03
+REVISION: 2022/06/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -71,13 +71,15 @@ public:
  /** Resets the numerical tolerance. **/
  void resetTolerance(double tolerance = DEFAULT_TOLERANCE);
 
- /** Resets the learning rate. **/
+ /** Resets the initial learning rate. **/
  void resetLearningRate(double learn_rate = DEFAULT_LEARN_RATE);
 
  /** Resets the max number of macro-iterations. **/
  void resetMaxIterations(unsigned int max_iterations = DEFAULT_MAX_ITERATIONS);
 
- /** Resets the number of micro-iterations. **/
+ /** Resets the number of micro-iterations, that is,
+     the number of consecutive updates of the same
+     tensor factor before proceeding to the next one. **/
  void resetMicroIterations(unsigned int micro_iterations = DEFAULT_MICRO_ITERATIONS);
 
  /** Optimizes the given closed symmetric tensor network expansion functional
@@ -96,7 +98,7 @@ public:
  /** Returns the final expectation value of the optimized functional. **/
  std::complex<double> getExpectationValue() const;
 
- /** Performs a consecutive tensor network expansion functional optimization
+ /** Performs sequential tensor network expansion functional optimizations
      delivering consecutive extreme eigenvalues/eigenvectors in a serialized way. **/
  bool optimizeSequential(unsigned int num_roots);            //in: number of extreme roots to find
 
@@ -135,13 +137,18 @@ private:
  struct Environment{
   std::shared_ptr<Tensor> tensor;        //tensor being optimized: x
   std::shared_ptr<Tensor> gradient;      //gradient w.r.t. the tensor being optimized: g
-  std::shared_ptr<Tensor> gradient_aux;  //partial gradient tensor (intermediate)
-  std::shared_ptr<Tensor> gradient_over; //gradient overlap with the parental tensor
+  std::shared_ptr<Tensor> gradient_aux;  //partial gradient tensor: h
+  std::shared_ptr<Tensor> gradient_over; //gradient overlap with the parental tensor: s
+  std::string iso_self_contr;            //directional derivative times tensor contraction pattern
+  std::string iso_over_contr;            //directional derivative with tensor overlap contraction pattern
+  std::string grad_update_add;           //gradient update addition pattern
+  std::string tens_update_add;           //tensor update addition pattern
   TensorExpansion gradient_expansion;    //gradient tensor network expansion: H|x> - E*S|x> = g
   TensorExpansion operator_gradient;     //operator gradient tensor network expansion: H|x>
   TensorExpansion metrics_gradient;      //metrics gradient tensor network expansion: S|x>
   TensorExpansion hessian_expansion;     //hessian-gradient tensor network expansion: <g|H|g> - E*<g|S|g>
   std::complex<double> expect_value;     //current expectation value
+  double step_size;                      //current step size
  };
 
  std::vector<std::shared_ptr<TensorExpansion>> eigenvectors_; //extreme eigenvectors

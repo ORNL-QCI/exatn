@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/06/06
+REVISION: 2022/06/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -257,17 +257,22 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
      auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
-     environments_.emplace_back(Environment{tensor.getTensor(),                              //optimizable tensor
-                                            gradient_tensor,                                 //gradient tensor
-                                            std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor
+     environments_.emplace_back(Environment{tensor.getTensor(),                              //optimizable tensor (can be isometric)
+                                            gradient_tensor,                                 //gradient tensor (non-isometric)
+                                            std::make_shared<Tensor>("_h"+tensor.getName(),  //auxiliary gradient tensor (non-isometric)
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
                                             std::shared_ptr<Tensor>(nullptr),                //gradient-tensor overlap
-                                            TensorExpansion(residual_expectation,tensor.getName(),true), // |operator|tensor> - |metrics|tensor>
+                                            "", "", "", "",                                  //necessary contraction and addition patterns
+                                            TensorExpansion(residual_expectation,tensor.getName(),true), // |operator|tensor> - E*|metrics|tensor>
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
                                             TensorExpansion(metrics_expectation,tensor.getName(),true),  // |metrics|tensor>
-                                            TensorExpansion(residual_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient> - <gradient|metrics|gradient>
-                                            {1.0,0.0}});
+                                            TensorExpansion(residual_expectation,tensor.getTensor(),gradient_tensor), // <gradient|operator|gradient> - E*<gradient|metrics|gradient>
+                                            {1.0,0.0},DEFAULT_LEARN_RATE}); //local expectation value and initial step size
+     //Generate the addition pattern for the tensor factor update:
+     bool done = generate_addition_pattern(tensor.getRank(),environments_.back().tens_update_add,false,
+                                           tensor.getName(),gradient_tensor->getName());
+     assert(done);
      if(COLLAPSE_ISOMETRIES){
       auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
       collapsed = environments_.back().operator_gradient.collapseIsometries();
@@ -453,10 +458,7 @@ bool TensorNetworkOptimizer::optimize_sd(const ProcessGroup & process_group)
       if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
      }
      //Update the optimized tensor:
-     std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
-                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
-     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
+     done = addTensorsSync(environment.tens_update_add,-epsilon_); assert(done);
      if(!(environment.tensor->hasIsometries())){
       if(NORMALIZE_WITH_METRICS){
        //Normalize the optimized tensor w.r.t. metrics:
@@ -566,14 +568,45 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
                                                                      tensor.getShape(),
                                                                      tensor.getSignature()),
                                             overlap_tensor,                                  //gradient-tensor overlap (non-isometric)
+                                            "", "", "", "",                                  //necessary contraction and addition patterns
                                             TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
-                                            TensorExpansion(operator_expectation,tensor.getName(),true), // |operator|tensor>
+                                            TensorExpansion(), //no separate operator gradient part
                                             TensorExpansion(), //no metrics
                                             TensorExpansion(), //no hessian
-                                            {1.0,0.0}});
+                                            {1.0,0.0},1.0}); //local expectation value and step size
+     //Generate the addition pattern for the tensor factor update:
+     bool done = generate_addition_pattern(tensor.getRank(),environments_.back().tens_update_add,true,
+                                           tensor.getName(),gradient_tensor->getName());
+     assert(done);
+     //Generate the addition pattern for the gradient update (Riemannian gradient on Grassman manifold):
+     done = generate_addition_pattern(gradient_tensor->getRank(),environments_.back().grad_update_add,false,
+                                      gradient_tensor->getName(),environments_.back().gradient_aux->getName());
+     assert(done);
+     //Generate the contraction patterns for computing the Riemannian gradient (Grassman manifold):
+     done = generate_contraction_pattern(iso_self_pattern,gradient_tensor->getRank(),tensor.getRank(),
+                                         environments_.back().iso_self_contr,false,false,
+                                         overlap_tensor->getName(),gradient_tensor->getName(),tensor.getName());
+     assert(done);
+     const auto tensor_rank = tensor.getRank();
+     const auto overlap_rank = overlap_tensor->getRank();
+     std::vector<TensorLeg> iso_over_pattern(overlap_rank + tensor_rank);
+     const auto iso_dims = tensor.getTensor()->retrieveIsometry(0);
+     const auto iso_compl_dims = tensor.getTensor()->retrieveIsometryComplement(0);
+     const unsigned int overlap_half_rank = iso_compl_dims.size();
+     assert(overlap_half_rank * 2 == overlap_rank);
+     for(unsigned int i = 0; i < overlap_half_rank; ++i){
+      iso_over_pattern[i] = TensorLeg{0,iso_compl_dims[i]};
+      iso_over_pattern[overlap_half_rank + i] = TensorLeg{2,iso_compl_dims[i]};
+      iso_over_pattern[overlap_rank + iso_compl_dims[i]] = TensorLeg{1,overlap_half_rank + i};
+     }
+     for(const auto & i: iso_dims) iso_over_pattern[overlap_rank + i] = TensorLeg{0,i};
+     done = generate_contraction_pattern(iso_over_pattern,overlap_tensor->getRank(),tensor.getRank(),
+                                         environments_.back().iso_over_contr,false,true,
+                                         environments_.back().gradient_aux->getName(),
+                                         overlap_tensor->getName(),tensor.getName());
+     assert(done);
      if(COLLAPSE_ISOMETRIES){
       auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
-      collapsed = environments_.back().operator_gradient.collapseIsometries();
      }
     }
    }
@@ -597,6 +630,28 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
   }
  }
 
+ //Scalar value accessor:
+ auto get_scalar_value = [](const Tensor & scalar_tensor){
+  std::complex<double> scal_val{0.0,0.0};
+  switch(scalar_tensor.getElementType()){
+   case TensorElementType::REAL32:
+    scal_val = {exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<float>()[std::initializer_list<int>{}],0.0f};
+    break;
+   case TensorElementType::REAL64:
+    scal_val = {exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<double>()[std::initializer_list<int>{}],0.0};
+    break;
+   case TensorElementType::COMPLEX32:
+    scal_val = exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<float>>()[std::initializer_list<int>{}];
+    break;
+   case TensorElementType::COMPLEX64:
+    scal_val = exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<double>>()[std::initializer_list<int>{}];
+    break;
+   default:
+    assert(false);
+   }
+   return scal_val;
+ };
+
  //Tensor optimization procedure:
  bool converged = environments_.empty();
  if(!converged){
@@ -614,40 +669,29 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
    double max_convergence = 0.0;
    average_expect_val_ = std::complex<double>{0.0,0.0};
    for(auto & environment: environments_){
-    //Create the gradient tensors:
+    //Create the gradient and auxiliary tensors:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
     done = createTensorSync(environment.gradient_aux,environment.tensor->getElementType()); assert(done);
+    done = createTensorSync(environment.gradient_over,environment.tensor->getElementType()); assert(done);
     //Microiterations:
     double grad_norm = 0.0;
     for(unsigned int micro_iteration = 0; micro_iteration < micro_iterations_; ++micro_iteration){
-     //Compute the operator expectation value w.r.t. the optimized tensor (real):
+     //Compute the operator expectation value w.r.t. the optimized tensor:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
      done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
-     std::complex<double> expect_val{0.0,0.0};
-     switch(scalar_norm->getElementType()){
-      case TensorElementType::REAL32:
-       expect_val = {exatn::getLocalTensor("_scalar_norm")->getSliceView<float>()[std::initializer_list<int>{}],0.0f};
-       break;
-      case TensorElementType::REAL64:
-       expect_val = {exatn::getLocalTensor("_scalar_norm")->getSliceView<double>()[std::initializer_list<int>{}],0.0};
-       break;
-      case TensorElementType::COMPLEX32:
-       expect_val = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<float>>()[std::initializer_list<int>{}];
-       break;
-      case TensorElementType::COMPLEX64:
-       expect_val = exatn::getLocalTensor("_scalar_norm")->getSliceView<std::complex<double>>()[std::initializer_list<int>{}];
-       break;
-      default:
-       assert(false);
-     }
-     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val_ += expect_val;
+     auto expect_val = get_scalar_value(*scalar_norm);
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
-     //Initialize the gradient tensor to zero:
+     //Compute the directional derivative w.r.t. the optimized tensor:
      done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
-     //Evaluate the gradient tensor expansion:
      done = evaluateSync(process_group,environment.gradient_expansion,environment.gradient,num_procs); assert(done);
-     //Compute the norm of the gradient tensor:
+     //Compute the Riemannian gradient from the directional derivative:
+     done = initTensorSync(environment.gradient_aux->getName(),0.0); assert(done);
+     done = initTensorSync(environment.gradient_over->getName(),0.0); assert(done);
+     done = contractTensorsSync(environment.iso_self_contr,1.0); assert(done);
+     done = contractTensorsSync(environment.iso_over_contr,1.0); assert(done);
+     done = addTensorsSync(environment.grad_update_add,-1.0); assert(done);
+     //Compute the norm of the gradient:
      grad_norm = 0.0;
      done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
      //Compute the norm of the current tensor (debug):
@@ -657,22 +701,55 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
                                                      << " = " << grad_norm << "; Tensor norm = " << tens_norm << std::endl;
      if(grad_norm > tolerance_){
       if(micro_iteration == (micro_iterations_ - 1)) converged = false;
+      //Update the step size (increase):
+      while(true){
+       done = copyTensorSync(environment.gradient_aux->getName(),environment.tensor->getName()); assert(done);
+       done = addTensorsSync(environment.tens_update_add,-2.0*(environment.step_size)); assert(done);
+       done = initTensorSync("_scalar_norm",0.0); assert(done);
+       done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
+       auto new_expect_val = get_scalar_value(*scalar_norm);
+       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
+       if(std::real(expect_val - new_expect_val) >= ((environment.step_size) * grad_norm * grad_norm)){
+        environment.step_size *= 2.0;
+       }else{
+        break;
+       }
+      }
+      //Update the step size (decrease):
+      while(true){
+       done = copyTensorSync(environment.gradient_aux->getName(),environment.tensor->getName()); assert(done);
+       done = addTensorsSync(environment.tens_update_add,-(environment.step_size)); assert(done);
+       done = initTensorSync("_scalar_norm",0.0); assert(done);
+       done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
+       auto new_expect_val = get_scalar_value(*scalar_norm);
+       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
+       if(std::real(expect_val - new_expect_val) < (0.5 * (environment.step_size) * grad_norm * grad_norm)){
+        environment.step_size *= 0.5;
+       }else{
+        break;
+       }
+      }
+      //Update the optimized tensor:
+      done = addTensorsSync(environment.tens_update_add,-(environment.step_size)); assert(done);
+      done = initTensorSync("_scalar_norm",0.0); assert(done);
+      done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
+      expect_val = get_scalar_value(*scalar_norm);
+      if(TensorNetworkOptimizer::debug > 1){
+       std::cout << " Updated operator expectation value w.r.t. " << environment.tensor->getName()
+                 << " = " << std::scientific << expect_val << std::endl;
+       std::cout << " Local step size = " << environment.step_size << std::endl;
+      }
      }
-     //Compute the step size:
-     epsilon_ = DEFAULT_LEARN_RATE;
-     if(TensorNetworkOptimizer::debug > 1) std::cout << " Optimal step size = " << epsilon_ << std::endl;
-     //Update the optimized tensor (with the conjugate gradient):
-     std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,true,
-                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
-     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
      //Update the old expectation value:
+     if(micro_iteration == (micro_iterations_ - 1)) average_expect_val_ += expect_val;
      environment.expect_value = expect_val;
+     //Stop micro-iterations if locally converged:
      if(grad_norm <= tolerance_) break;
     } //micro-iterations
-    //Update the convergence residual:
+    //Update the global convergence residual:
     max_convergence = std::max(max_convergence,grad_norm);
     //Destroy the gradient tensors:
+    done = destroyTensorSync(environment.gradient_over->getName()); assert(done);
     done = destroyTensorSync(environment.gradient_aux->getName()); assert(done);
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    } //tensors

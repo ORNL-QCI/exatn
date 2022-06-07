@@ -3976,7 +3976,7 @@ TEST(NumServerTester, IsometricAIEM) {
  const unsigned int isometric = 1;
  const unsigned int num_states = 2;
  const bool multistate = (num_states > 1 && isometric != 0);
- const unsigned int max_iterations = 999;
+ const unsigned int max_iterations = 10000;
  const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug

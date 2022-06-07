@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor
-REVISION: 2022/06/03
+REVISION: 2022/06/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -494,6 +494,30 @@ std::vector<unsigned int> Tensor::retrieveIsometry(unsigned int iso_group_id) co
  for(const auto & iso_group: isometries_){
   if(iso_id == iso_group_id){
    dims = iso_group;
+   break;
+  }
+  ++iso_id;
+ }
+ return dims;
+}
+
+std::vector<unsigned int> Tensor::retrieveIsometryComplement(unsigned int iso_group_id) const
+{
+ make_sure(iso_group_id < isometries_.size(),"#ERROR(exatn::Tensor::retrieveIsometryComplement): Invalid isometric group id!");
+ std::vector<unsigned int> dims;
+ unsigned int iso_id = 0;
+ for(const auto & iso_group: isometries_){
+  if(iso_id == iso_group_id){
+   const auto tens_rank = getRank();
+   dims.resize(tens_rank-iso_group.size());
+   if(dims.size() > 0){
+    std::vector<unsigned int> marks(tens_rank,0);
+    for(const auto & iso_dim: iso_group) marks[iso_dim] = 1;
+    unsigned int j = 0;
+    for(unsigned int i = 0; i < tens_rank; ++i){
+     if(marks[i] == 0) dims[j++] = i;
+    }
+   }
    break;
   }
   ++iso_id;

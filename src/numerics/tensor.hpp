@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Abstract Tensor
-REVISION: 2022/06/06
+REVISION: 2022/06/07
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -113,7 +113,9 @@ public:
         const Tensor & right_tensor,                 //in: right tensor
         const std::vector<TensorLeg> & contraction); //in: tensor contraction pattern
  /** Create a tensor as a result of contraction of an isometric tensor
-     with its conjugate over the isometric group of dimensions. **/
+     with its conjugate over the isometric group of dimensions.
+     The remaining tensor dimensions enter the destination tensor
+     in order, first from the left tensor, then from the right tensor. **/
  Tensor(const std::string & name,             //in: tensor name
         const Tensor & isometric_tensor,      //in: isometric tensor
         std::vector<TensorLeg> & contraction, //out: tensor contraction pattern (see above)
@@ -241,6 +243,10 @@ public:
 
  /** Retrieves a specific group of isometric dimensions. **/
  std::vector<unsigned int> retrieveIsometry(unsigned int iso_group_id) const;
+
+ /** Retrieves (in order) the tensor dimensions which
+     do not belong to the specified isometric group. **/
+ std::vector<unsigned int> retrieveIsometryComplement(unsigned int iso_group_id) const;
 
  /** Returns the ordered vector of non-isometric dimensions. **/
  std::vector<unsigned int> retrieveNonisometricDimensions() const;
