@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization of Kronecker Delta tensors
-REVISION: 2020/12/29
+REVISION: 2022/06/13
 
 Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -9,6 +9,8 @@ Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
 #include "tensor_range.hpp"
 
 #include "talshxx.hpp"
+
+#include <type_traits>
 
 namespace exatn{
 
@@ -39,12 +41,16 @@ int FunctorInitDelta::apply(talsh::Tensor & local_tensor) //tensor slice (in gen
   std::vector<DimExtent> ext(rank);
   for(unsigned int i = 0; i < rank; ++i) ext[i] = extents[i]; //tensor slice dimension extents
   TensorRange rng(bas,ext);
+
+  const typename std::remove_pointer<decltype(tensor_body)>::type zero{0.0};
+  const typename std::remove_pointer<decltype(tensor_body)>::type one{1.0};
+
   bool not_over = true;
   while(not_over){
    if(rng.onDiagonal()){
-    tensor_body[rng.localOffset()] = 1.0;
+    tensor_body[rng.localOffset()] = one;
    }else{
-    tensor_body[rng.localOffset()] = 0.0;
+    tensor_body[rng.localOffset()] = zero;
    }
    not_over = rng.next();
   }

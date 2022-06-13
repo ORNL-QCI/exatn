@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor range
-REVISION: 2022/01/28
+REVISION: 2022/06/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp. **/
 
 /** Rationale:
  (a) Tensor range is a Cartesian product of one or more ranges.
@@ -75,6 +76,9 @@ public:
 
  /** Resets the current multi-index value to a given flattened local offset. **/
  inline void reset(DimOffset offset);
+
+ /** Resets the current multi-index value to a given (local) multi-index value. **/
+ inline void reset(const std::vector<DimOffset> & mlndx);
 
  /** Resets the current multi-index for a number of concurrent progress agents,
      each given an exclusive subrange of this range to iterate within. Returns
@@ -250,6 +254,19 @@ inline void TensorRange::reset(DimOffset offset)
  assert(offset < volume_);
  reset();
  shift(static_cast<long long>(offset));
+ return;
+}
+
+
+inline void TensorRange::reset(const std::vector<DimOffset> & mlndx)
+{
+ const unsigned int rank = mlndx.size();
+ assert(rank == mlndx_.size());
+ reset();
+ for(unsigned int i = 0; i < rank; ++i){
+  mlndx_[i] = mlndx[i];
+  assert(mlndx_[i] < extents_[i]);
+ }
  return;
 }
 

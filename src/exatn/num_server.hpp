@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/01
+REVISION: 2022/06/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -58,6 +58,7 @@ Copyright (C) 2022-2022 NVIDIA Corporation **/
 #include "functor_init_rnd.hpp"
 #include "functor_init_dat.hpp"
 #include "functor_init_delta.hpp"
+#include "functor_init_unity.hpp"
 #include "functor_init_proj.hpp"
 #include "functor_init_file.hpp"
 #include "functor_isometrize.hpp"
@@ -109,6 +110,7 @@ using numerics::FunctorInitVal;
 using numerics::FunctorInitRnd;
 using numerics::FunctorInitDat;
 using numerics::FunctorInitDelta;
+using numerics::FunctorInitUnity;
 using numerics::FunctorInitProj;
 using numerics::FunctorInitFile;
 using numerics::FunctorIsometrize;
