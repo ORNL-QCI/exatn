@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/03/18
+REVISION: 2022/06/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp. **/
 
 /** Rationale:
  (a) A tensor network is a set of connected tensors.
@@ -464,6 +465,10 @@ public:
  void markOptimizableTensors(std::function<bool (const Tensor &)> predicate);
  void markOptimizableAllTensors(); //marks all input tensors as optimizable
  void markOptimizableNoTensors(); //marks no input tensors as optimizable
+
+ /** Resets optimizability for a specific tensor specified by its id. **/
+ void markOptimizableTensor(unsigned int tensor_id,   //in: tensor id
+                            bool optimizable = true); //in: optimizability
 
  /** Returns the FMA flop count for a given contraction of two tensors identified by their ids
      in the tensor network. Optionally returns the volume difference. Optionally also returns

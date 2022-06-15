@@ -3976,7 +3976,7 @@ TEST(NumServerTester, IsometricAIEM) {
  const unsigned int isometric = 1;
  const unsigned int num_states = 2;
  const bool multistate = (num_states > 1 && isometric != 0);
- const unsigned int max_iterations = 10000;
+ const unsigned int max_iterations = 3;
  const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug
@@ -4066,7 +4066,7 @@ TEST(NumServerTester, IsometricAIEM) {
   if(root) std::cout << "Done" << std::endl;
 
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  exatn::TensorNetworkOptimizer::resetDebugLevel(2,0);
   ket_net->markOptimizableAllTensors();
   success = exatn::initTensorsRndSync(*ket_tns,false); assert(success);
   exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);

@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/03/30
+REVISION: 2022/06/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) NVIDIA Corp. **/
 
 #include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
@@ -2425,6 +2426,16 @@ void TensorNetwork::markOptimizableAllTensors()
 void TensorNetwork::markOptimizableNoTensors()
 {
  return markOptimizableTensors([](const Tensor &){return false;});
+}
+
+
+void TensorNetwork::markOptimizableTensor(unsigned int tensor_id, bool optimizable)
+{
+ auto * tensor_conn = getTensorConn(tensor_id);
+ make_sure(tensor_conn != nullptr,
+  "#ERROR(TensorNetwork::markOptimizableTensor): Tensor "+std::to_string(tensor_id)+" not found!");
+ tensor_conn->resetOptimizability(optimizable);
+ return;
 }
 
 

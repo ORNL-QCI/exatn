@@ -616,7 +616,7 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
  if(COLLAPSE_ISOMETRIES){
   auto collapsed = operator_expectation.collapseIsometries();
  }
- //Print final tensor expansions:
+ //Print final tensor network expansions:
  if(TensorNetworkOptimizer::debug > 1){
   if(COLLAPSE_ISOMETRIES){
    std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Collapsed TN functionals:" << std::endl;
@@ -630,27 +630,16 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
   }
  }
 
- //Scalar value accessor:
- auto get_scalar_value = [](const Tensor & scalar_tensor){
-  std::complex<double> scal_val{0.0,0.0};
-  switch(scalar_tensor.getElementType()){
-   case TensorElementType::REAL32:
-    scal_val = {exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<float>()[std::initializer_list<int>{}],0.0f};
-    break;
-   case TensorElementType::REAL64:
-    scal_val = {exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<double>()[std::initializer_list<int>{}],0.0};
-    break;
-   case TensorElementType::COMPLEX32:
-    scal_val = exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<float>>()[std::initializer_list<int>{}];
-    break;
-   case TensorElementType::COMPLEX64:
-    scal_val = exatn::getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<double>>()[std::initializer_list<int>{}];
-    break;
-   default:
-    assert(false);
-   }
-   return scal_val;
- };
+ //Reset optimizable isometric tensors to unity:
+ for(auto & environment: environments_){
+  const auto iso_group = environment.tensor->retrieveIsometry(0);
+  if(!(iso_group.empty())){
+   bool done = transformTensorSync(environment.tensor->getName(),
+                                   std::shared_ptr<TensorMethod>(new FunctorInitUnity(iso_group)));
+   assert(done);
+  }
+ }
+ //sync(process_group);
 
  //Tensor optimization procedure:
  bool converged = environments_.empty();
@@ -679,7 +668,7 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
      //Compute the operator expectation value w.r.t. the optimized tensor:
      done = initTensorSync("_scalar_norm",0.0); assert(done);
      done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
-     auto expect_val = get_scalar_value(*scalar_norm);
+     auto expect_val = getScalarValue("_scalar_norm");
      if(TensorNetworkOptimizer::debug > 1) std::cout << " Operator expectation value w.r.t. " << environment.tensor->getName()
                                                      << " = " << std::scientific << expect_val << std::endl;
      //Compute the directional derivative w.r.t. the optimized tensor:
@@ -707,7 +696,7 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
        done = addTensorsSync(environment.tens_update_add,-2.0*(environment.step_size)); assert(done);
        done = initTensorSync("_scalar_norm",0.0); assert(done);
        done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
-       auto new_expect_val = get_scalar_value(*scalar_norm);
+       auto new_expect_val = getScalarValue("_scalar_norm");
        done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
        if(std::real(expect_val - new_expect_val) >= ((environment.step_size) * grad_norm * grad_norm)){
         environment.step_size *= 2.0;
@@ -721,7 +710,7 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
        done = addTensorsSync(environment.tens_update_add,-(environment.step_size)); assert(done);
        done = initTensorSync("_scalar_norm",0.0); assert(done);
        done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
-       auto new_expect_val = get_scalar_value(*scalar_norm);
+       auto new_expect_val = getScalarValue("_scalar_norm");
        done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
        if(std::real(expect_val - new_expect_val) < (0.5 * (environment.step_size) * grad_norm * grad_norm)){
         environment.step_size *= 0.5;
@@ -733,7 +722,7 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
       done = addTensorsSync(environment.tens_update_add,-(environment.step_size)); assert(done);
       done = initTensorSync("_scalar_norm",0.0); assert(done);
       done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
-      expect_val = get_scalar_value(*scalar_norm);
+      expect_val = getScalarValue("_scalar_norm");
       if(TensorNetworkOptimizer::debug > 1){
        std::cout << " Updated operator expectation value w.r.t. " << environment.tensor->getName()
                  << " = " << std::scientific << expect_val << std::endl;

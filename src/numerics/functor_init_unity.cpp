@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Initialization of an isometric tensor to unity
-REVISION: 2022/06/13
+REVISION: 2022/06/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -37,6 +37,16 @@ int FunctorInitUnity::apply(talsh::Tensor & local_tensor) //tensor slice (in gen
  const auto * extents = local_tensor.getDimExtents(rank); //rank is returned by reference
  const auto tensor_volume = local_tensor.getVolume(); //volume of the given tensor slice
  const auto & offsets = local_tensor.getDimOffsets(); //base offsets of the given tensor slice
+
+ /*//DEBUG:
+ std::cout << "Initializing a local isometric tensor to unity:\n";
+ std::cout << "Bases:";
+ for(unsigned int i = 0; i < rank; ++i) std::cout << " " << offsets[i];
+ std::cout << "; Extents:";
+ for(unsigned int i = 0; i < rank; ++i) std::cout << " " << extents[i];
+ std::cout << "; Iso-dims:";
+ for(const auto & iso_dim: iso_dims_) std::cout << " " << iso_dim;
+ std::cout << std::endl;*/
 
  const unsigned int iso_rank = iso_dims_.size();
  make_sure(iso_rank <= rank,
@@ -102,6 +112,8 @@ int FunctorInitUnity::apply(talsh::Tensor & local_tensor) //tensor slice (in gen
    for(unsigned int i = 0; i < iso_rank; ++i) mlndx[iso_dims_[i]] = iso_mlndx[i];
    rng.reset(mlndx);
    tensor_body[rng.localOffset()] = one;
+   //for(const auto & ind: rng.getMultiIndex()) std::cout << " " << ind; //debug
+   //std::cout << " = 1.0: Offset = " << rng.localOffset() << std::endl; //debug
   }
 
   return 0;

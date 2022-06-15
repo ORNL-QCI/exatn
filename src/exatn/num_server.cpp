@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/01
+REVISION: 2022/06/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -8,6 +8,8 @@ Copyright (C) 2022-2022 NVIDIA Corporation **/
 #include "num_server.hpp"
 #include "tensor_range.hpp"
 #include "timers.hpp"
+
+#include "talshxx.hpp"
 
 #include <unordered_set>
 #include <complex>
@@ -3579,6 +3581,35 @@ std::shared_ptr<talsh::Tensor> NumServer::getLocalTensor(const std::string & nam
  auto iter = tensors_.find(name);
  if(iter == tensors_.end()) return std::shared_ptr<talsh::Tensor>(nullptr);
  return getLocalTensor(iter->second);
+}
+
+std::complex<double> NumServer::getScalarValue(const std::string & name)
+{
+ std::complex<double> scal_val{0.0,0.0};
+ auto iter = tensors_.find(name);
+ if(iter != tensors_.end()){
+  const auto & scalar_tensor = *(iter->second);
+  make_sure(scalar_tensor.getRank() == 0, "#ERROR(NumServer::getScalarValue): Non-scalar tensor passed!");
+  switch(scalar_tensor.getElementType()){
+   case TensorElementType::REAL32:
+    scal_val = {getLocalTensor(scalar_tensor.getName())->getSliceView<float>()[std::initializer_list<int>{}],0.0f};
+    break;
+   case TensorElementType::REAL64:
+    scal_val = {getLocalTensor(scalar_tensor.getName())->getSliceView<double>()[std::initializer_list<int>{}],0.0};
+    break;
+   case TensorElementType::COMPLEX32:
+    scal_val = getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<float>>()[std::initializer_list<int>{}];
+    break;
+   case TensorElementType::COMPLEX64:
+    scal_val = getLocalTensor(scalar_tensor.getName())->getSliceView<std::complex<double>>()[std::initializer_list<int>{}];
+    break;
+   default:
+    assert(false);
+  }
+ }else{
+  fatal_error("#ERROR(NumServer::getScalarValue): Tensor not found: "+name);
+ }
+ return scal_val;
 }
 
 void NumServer::destroyOrphanedTensors(bool force)

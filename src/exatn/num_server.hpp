@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/13
+REVISION: 2022/06/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -74,6 +74,7 @@ Copyright (C) 2022-2022 NVIDIA Corporation **/
 #include <memory>
 #include <vector>
 #include <string>
+#include <complex>
 #include <stack>
 #include <list>
 #include <map>
@@ -1051,6 +1052,10 @@ public:
  /** This overload returns a copy of the full tensor while referencing it by its registered name. **/
  std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name); //in: exatn tensor name
 
+ /** Returns the value of a scalar tensor (order-0 tensor). **/
+ std::complex<double> getScalarValue(const std::string & name); //in: exatn tensor name
+
+ /** Returns the time stamp of the numerical server start. **/
  inline double getTimeStampStart() const {return time_start_;}
 
  /** DEBUG: Prints all currently existing (allocated) tensors. **/

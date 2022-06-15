@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/06/01
+REVISION: 2022/06/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1067,6 +1067,10 @@ inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name, /
 
 inline std::shared_ptr<talsh::Tensor> getLocalTensor(const std::string & name) //in: name of the registered exatn::numerics::Tensor
  {return numericalServer->getLocalTensor(name);}
+
+/** Returns the value of a scalar tensor (order-0 tensor). **/
+inline std::complex<double> getScalarValue(const std::string & name) //in: name of the registered order-0 exatn::numerics::Tensor
+ {return numericalServer->getScalarValue(name);}
 
 
 //////////////////////////////
