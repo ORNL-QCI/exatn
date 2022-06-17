@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2022/02/04
+REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp. **/
 
 #include "network_builder_ttn.hpp"
 #include "tensor_network.hpp"
@@ -59,6 +60,8 @@ bool NetworkBuilderTTN::setParameter(const std::string & name, long long value)
 
 void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
 {
+ make_sure(num_states_ <= max_bond_dim_,
+  "#ERROR(NetworkBuilderTTN::build): Number of states must not exceed the max bond dimension!");
  //Inspect the output tensor:
  auto output_tensor = network.getTensor(0);
  auto output_tensor_rank = output_tensor->getRank();
