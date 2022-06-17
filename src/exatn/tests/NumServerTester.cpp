@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -40,19 +40,19 @@
 #define EXATN_TEST19
 #define EXATN_TEST20
 #define EXATN_TEST21
-#define EXATN_TEST22*/
-//#define EXATN_TEST23
-//#define EXATN_TEST24
-/*#define EXATN_TEST25
+#define EXATN_TEST22
+#define EXATN_TEST23
+#define EXATN_TEST24
+#define EXATN_TEST25
 #define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30*/
+#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
 #define EXATN_TEST32
-//#define EXATN_TEST33
-//#define EXATN_TEST34
+#define EXATN_TEST33
+#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -2824,7 +2824,6 @@ TEST(NumServerTester, Reconstructor) {
 
  //Run the reconstructor:
  success = exatn::sync(); assert(success);
- //reconstructor.resetMaxIterations(1); //debug
  double residual_norm, fidelity;
  bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
@@ -3146,7 +3145,6 @@ TEST(NumServerTester, OptimizerHubbard) {
   std::cout << "Ground state optimization in the complete tensor space:" << std::endl;
   exatn::TensorNetworkOptimizer::resetDebugLevel(1);
   exatn::TensorNetworkOptimizer optimizer(hubbard,ansatz_full,1e-4);
-  optimizer.resetMaxIterations(3); //debug
   success = exatn::sync(); assert(success);
   bool converged = optimizer.optimize();
   success = exatn::sync(); assert(success);
