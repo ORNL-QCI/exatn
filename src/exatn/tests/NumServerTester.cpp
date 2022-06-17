@@ -3974,9 +3974,9 @@ TEST(NumServerTester, IsometricAIEM) {
  const std::string tn_type = "TTN"; //MPS or TTN
  const int arity = 2;
  const unsigned int isometric = 1;
- const unsigned int num_states = 2;
+ const unsigned int num_states = 4;
  const bool multistate = (num_states > 1 && isometric != 0);
- const unsigned int max_iterations = 3;
+ const unsigned int max_iterations = 1000;
  const double accuracy = 3e-5;
 
  //exatn::resetLoggingLevel(1,2); //debug
@@ -4061,14 +4061,16 @@ TEST(NumServerTester, IsometricAIEM) {
  if(root) std::cout << "Done" << std::endl;
 
  {//Numerical processing:
-  if(root) std::cout << "Allocating the tensor network ansatz ... ";
+  if(root) std::cout << "Allocating and initializing the tensor network ansatz ... ";
   success = exatn::createTensorsSync(*ket_net,TENS_ELEM_TYPE); assert(success);
+  success = exatn::initTensorsRndSync(*ket_tns); assert(success);
   if(root) std::cout << "Done" << std::endl;
 
   if(root) std::cout << "Ground and excited states search for the original Hamiltonian:" << std::endl;
-  exatn::TensorNetworkOptimizer::resetDebugLevel(2,0);
+  exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
+  success = exatn::initTensorsWithIsometriesSync(*ket_net); assert(success);
   ket_net->markOptimizableAllTensors();
-  success = exatn::initTensorsRndSync(*ket_tns,false); assert(success);
+  //ket_net->markOptimizableTensor(7); //debug
   exatn::TensorNetworkOptimizer optimizer(hamiltonian,ket_tns,accuracy);
   optimizer.enableParallelization(true);
   optimizer.resetMaxIterations(max_iterations);

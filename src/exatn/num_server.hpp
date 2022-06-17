@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/14
+REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -649,7 +649,8 @@ public:
 
  bool destroyTensorsSync();
 
- /** Initializes a tensor to some scalar value. **/
+ /** Initializes a tensor to some scalar value (element-wise).
+     If the tensor has isometries, they will be deleted. **/
  template<typename NumericType>
  bool initTensor(const std::string & name, //in: tensor name
                  NumericType value);       //in: scalar value
@@ -660,7 +661,8 @@ public:
 
  /** Initializes a tensor with externally provided data.
      The vector containing externally provided data assumes
-     the column-wise storage in the initialized tensor.  **/
+     the column-wise storage in the initialized tensor.
+     It is the user responsibility to respect isometries. **/
  template<typename NumericType>
  bool initTensorData(const std::string & name,                   //in: tensor name
                      const std::vector<NumericType> & ext_data); //in: vector with externally provided data
@@ -676,7 +678,8 @@ public:
      Tensor signature (space-separated dimension base offsets)
      Tensor elements:
       Dense format: Numeric values (column-wise order), any number of values per line
-      List format: Numeric value and Multi-index in each line **/
+      List format: Numeric value and Multi-index in each line
+    WARNING: It is the user responsibility to respect isometries. **/
  bool initTensorFile(const std::string & name,      //in: tensor name
                      const std::string & filename); //in: file name with tensor data
 
@@ -688,21 +691,24 @@ public:
 
  bool initTensorRndSync(const std::string & name); //in: tensor name
 
- /** Initializes all input tensors in a given tensor network to a random value.
-     By default only the optimizable input tensors are initialized. **/
+ /** Initializes all input tensors in a given tensor network to a random value. **/
  bool initTensorsRnd(TensorNetwork & tensor_network, //inout: tensor network
-                     bool only_optimizable = true);  //in: whether or not to initialize only the optimizable input tensors
+                     bool only_optimizable = false); //in: whether or not to initialize only the optimizable input tensors
 
  bool initTensorsRndSync(TensorNetwork & tensor_network, //inout: tensor network
-                         bool only_optimizable = true);  //in: whether or not to initialize only the optimizable input tensors
+                         bool only_optimizable = false); //in: whether or not to initialize only the optimizable input tensors
 
- /** Initializes all input tensors in a given tensor network expansion to a random value.
-     By default only the optimizable input tensors are initialized. **/
+ /** Initializes all input tensors in a given tensor network expansion to a random value. **/
  bool initTensorsRnd(TensorExpansion & tensor_expansion, //inout: tensor network expansion
-                     bool only_optimizable = true);      //in: whether or not to initialize only the optimizable input tensors
+                     bool only_optimizable = false);     //in: whether or not to initialize only the optimizable input tensors
 
  bool initTensorsRndSync(TensorExpansion & tensor_expansion, //inout: tensor network expansion
-                         bool only_optimizable = true);      //in: whether or not to initialize only the optimizable input tensors
+                         bool only_optimizable = false);     //in: whether or not to initialize only the optimizable input tensors
+
+ /** Initializes all input tensors with isometries in a given tensor network to unity. **/
+ bool initTensorsWithIsometries(TensorNetwork & tensor_network); //inout: tensor network
+
+ bool initTensorsWithIsometriesSync(TensorNetwork & tensor_network); //inout: tensor network
 
  /** Initializes special tensors present in the tensor network. **/
  bool initTensorsSpecial(TensorNetwork & tensor_network);     //inout: tensor network
@@ -838,12 +844,15 @@ public:
  /** Assigns one tensor to another congruent one (makes a copy of a tensor).
      If the output tensor with the given name does not exist, it will be created.
      Note that the output tensor must either exist or not exist across all
-     participating processes, otherwise it will result in an undefined behavior! **/
+     participating processes, otherwise it will result in an undefined behavior!
+     By default, the output tensor will lose all its isometries. **/
  bool copyTensor(const std::string & output_name, //in: output tensor name
-                 const std::string & input_name); //in: input tensor name
+                 const std::string & input_name,  //in: input tensor name
+                 bool keep_isometries = false);   //in: whether or not to keep isometries in the output tensor
 
  bool copyTensorSync(const std::string & output_name, //in: output tensor name
-                     const std::string & input_name); //in: input tensor name
+                     const std::string & input_name,  //in: input tensor name
+                     bool keep_isometries = false);   //in: whether or not to keep isometries in the output tensor
 
  /** Performs tensor addition: tensor0 += tensor1 * alpha
      If tensor0 has isometries, they will be automatically enforced afterwards. **/

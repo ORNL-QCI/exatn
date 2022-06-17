@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/14
+REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1830,6 +1830,48 @@ bool NumServer::initTensorsRndSync(TensorExpansion & tensor_expansion, bool only
  return success;
 }
 
+bool NumServer::initTensorsWithIsometries(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tens->first != 0){ //input tensor
+   if(tensorAllocated(tens_name)){
+    if(tens->second.hasIsometries()){
+     success = transformTensor(tens_name,
+      std::shared_ptr<TensorMethod>(new FunctorInitUnity(tens->second.retrieveIsometry(0))));
+    }
+   }else{
+    success = false;
+   }
+  }
+  if(!success) break;
+ }
+ return success;
+}
+
+bool NumServer::initTensorsWithIsometriesSync(TensorNetwork & tensor_network)
+{
+ bool success = true;
+ for(auto tens = tensor_network.cbegin(); tens != tensor_network.cend(); ++tens){
+  auto tensor = tens->second.getTensor();
+  const auto & tens_name = tensor->getName();
+  if(tens->first != 0){ //input tensor
+   if(tensorAllocated(tens_name)){
+    if(tens->second.hasIsometries()){
+     success = transformTensorSync(tens_name,
+      std::shared_ptr<TensorMethod>(new FunctorInitUnity(tens->second.retrieveIsometry(0))));
+    }
+   }else{
+    success = false;
+   }
+  }
+  if(!success) break;
+ }
+ return success;
+}
+
 bool NumServer::initTensorsSpecial(TensorNetwork & tensor_network)
 {
  bool success = true;
@@ -2556,7 +2598,8 @@ bool NumServer::insertTensorSliceSync(const std::string & tensor_name,
 }
 
 bool NumServer::copyTensor(const std::string & output_name,
-                           const std::string & input_name)
+                           const std::string & input_name,
+                           bool keep_isometries)
 {
  bool success = true;
  if(output_name != input_name){
@@ -2569,12 +2612,17 @@ bool NumServer::copyTensor(const std::string & output_name,
     output_tensor->rename(output_name);
     success = createTensor(output_tensor,output_tensor->getElementType());
     if(success) iter = tensors_.find(output_name);
+    keep_isometries = false;
    }
    if(success){
     auto tensor0 = iter->second;
     success = tensor0->isCongruentTo(*tensor1);
     if(success){
-     success = initTensor(output_name,0.0);
+     if(keep_isometries){
+      success = transformTensor(output_name,std::shared_ptr<TensorMethod>(new FunctorInitVal(0.0)));
+     }else{
+      success = initTensor(output_name,0.0);
+     }
      if(success){
       std::string add_pattern;
       success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);
@@ -2599,7 +2647,8 @@ bool NumServer::copyTensor(const std::string & output_name,
 }
 
 bool NumServer::copyTensorSync(const std::string & output_name,
-                               const std::string & input_name)
+                               const std::string & input_name,
+                               bool keep_isometries)
 {
  bool success = true;
  if(output_name != input_name){
@@ -2612,12 +2661,17 @@ bool NumServer::copyTensorSync(const std::string & output_name,
     output_tensor->rename(output_name);
     success = createTensorSync(output_tensor,output_tensor->getElementType());
     if(success) iter = tensors_.find(output_name);
+    keep_isometries = false;
    }
    if(success){
     auto tensor0 = iter->second;
     success = tensor0->isCongruentTo(*tensor1);
     if(success){
-     success = initTensorSync(output_name,0.0);
+     if(keep_isometries){
+      success = transformTensorSync(output_name,std::shared_ptr<TensorMethod>(new FunctorInitVal(0.0)));
+     }else{
+      success = initTensorSync(output_name,0.0);
+     }
      if(success){
       std::string add_pattern;
       success = generate_addition_pattern(tensor1->getRank(),add_pattern,false,output_name,input_name);

@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor connected to other tensors in a tensor network
-REVISION: 2022/03/17
+REVISION: 2022/06/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDA Corp. **/
 
 /** Rationale:
  (a) A tensor inside a tensor network is generally connected
@@ -162,6 +163,19 @@ public:
 
  /** Retrieves the list of all registered isometries in the tensor. **/
  const std::list<std::vector<unsigned int>> & retrieveIsometries() const;
+
+ /** Retrieves a specific group of isometric dimensions. **/
+ std::vector<unsigned int> retrieveIsometry(unsigned int iso_group_id) const;
+
+ /** Retrieves (in order) the tensor dimensions which
+     do not belong to the specified isometric group. **/
+ std::vector<unsigned int> retrieveIsometryComplement(unsigned int iso_group_id) const;
+
+ /** Returns the ordered vector of non-isometric dimensions. **/
+ std::vector<unsigned int> retrieveNonisometricDimensions() const;
+
+ /** Unregisters all isometries in the tensor. **/
+ void unregisterIsometries();
 
  /** Returns TRUE if the given tensor dimension belongs to a registered isometry group. **/
  bool withIsometricDimension(unsigned int dim_id,                                           //in: tensor dimension id

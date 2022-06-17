@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor Functor: Tensor Isometrization
-REVISION: 2022/01/29
+REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp. **/
 
 #include "functor_isometrize.hpp"
 
@@ -16,14 +17,14 @@ namespace numerics{
 
 void FunctorIsometrize::pack(BytePacket & packet)
 {
- //`Finish
+ fatal_error("#FATAL(FunctorIsometrize::pack): Not implemented!");
  return;
 }
 
 
 void FunctorIsometrize::unpack(BytePacket & packet)
 {
- //`Finish
+ fatal_error("#FATAL(FunctorIsometrize::unpack): Not implemented!");
  return;
 }
 
@@ -121,7 +122,27 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
      }
     }
    }
-
+#if 0
+   //Verification (debug):
+   for(DimOffset j = 0; j < voly; ++j){
+    double nrm2 = 0.0;
+    for(DimOffset k = 0; k < volx; ++k){
+     const auto elem = std::abs(buf[volx*j + k]);
+     nrm2 += elem * elem;
+    }
+    nrm2 = std::sqrt(nrm2);
+    make_sure(nrm2,1.0,1e-5,
+     "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm!");
+    for(DimOffset i = (j+1); i < voly; ++i){
+     tensor_body_type overlap{0.0};
+     for(DimOffset k = 0; k < volx; ++k){
+      overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
+     }
+     make_sure(static_cast<double>(std::abs(overlap)),0.0,1e-5,
+      "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap!");
+    }
+   }
+#endif
    //Copy the result back into the tensor:
    rngy.reset();
    for(DimOffset j = 0; j < voly; ++j){

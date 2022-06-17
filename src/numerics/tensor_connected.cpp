@@ -1,8 +1,9 @@
 /** ExaTN::Numerics: Tensor connected to other tensors inside a tensor network
-REVISION: 2022/03/17
+REVISION: 2022/06/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp. **/
 
 #include "tensor_connected.hpp"
 #include "tensor_symbol.hpp"
@@ -235,6 +236,26 @@ bool TensorConn::hasIsometries() const
 const std::list<std::vector<unsigned int>> & TensorConn::retrieveIsometries() const
 {
  return tensor_->retrieveIsometries();
+}
+
+std::vector<unsigned int> TensorConn::retrieveIsometry(unsigned int iso_group_id) const
+{
+ return tensor_->retrieveIsometry(iso_group_id);
+}
+
+std::vector<unsigned int> TensorConn::retrieveIsometryComplement(unsigned int iso_group_id) const
+{
+ return tensor_->retrieveIsometryComplement(iso_group_id);
+}
+
+std::vector<unsigned int> TensorConn::retrieveNonisometricDimensions() const
+{
+ return tensor_->retrieveNonisometricDimensions();
+}
+
+void TensorConn::unregisterIsometries()
+{
+ return tensor_->unregisterIsometries();
 }
 
 bool TensorConn::withIsometricDimension(unsigned int dim_id, const std::vector<unsigned int> ** iso_group) const

@@ -1,5 +1,5 @@
 /** ExaTN:: Variational optimizer of a closed symmetric tensor network expansion functional
-REVISION: 2022/06/07
+REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -138,7 +138,7 @@ bool TensorNetworkOptimizer::optimizeSequential(const ProcessGroup & process_gro
  bool success = true;
  auto original_operator = tensor_operator_;
  for(unsigned int root_id = 0; root_id < num_roots; ++root_id){
-  success = initTensorsRndSync(*vector_expansion_); assert(success);
+  success = initTensorsRndSync(*vector_expansion_,true); assert(success);
   bool synced = sync(process_group); assert(synced);
   success = optimize(process_group);
   synced = sync(process_group); assert(synced);
@@ -697,8 +697,13 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
        done = initTensorSync("_scalar_norm",0.0); assert(done);
        done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
        auto new_expect_val = getScalarValue("_scalar_norm");
-       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
-       if(std::real(expect_val - new_expect_val) >= ((environment.step_size) * grad_norm * grad_norm)){
+       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName(),true); assert(done);
+       if(TensorNetworkOptimizer::debug > 1){
+        std::cout << " Trying step size increase: " << expect_val << " " << new_expect_val
+                  << " " << std::real(expect_val - new_expect_val)
+                  << " " << (grad_norm * grad_norm) << " " << environment.step_size << " ?" << std::endl;
+       }
+       if(std::real(expect_val - new_expect_val) >= ((environment.step_size) * (grad_norm * grad_norm))){
         environment.step_size *= 2.0;
        }else{
         break;
@@ -711,8 +716,13 @@ bool TensorNetworkOptimizer::optimize_tr(const ProcessGroup & process_group)
        done = initTensorSync("_scalar_norm",0.0); assert(done);
        done = evaluateSync(process_group,operator_expectation,scalar_norm,num_procs); assert(done);
        auto new_expect_val = getScalarValue("_scalar_norm");
-       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName());
-       if(std::real(expect_val - new_expect_val) < (0.5 * (environment.step_size) * grad_norm * grad_norm)){
+       done = copyTensorSync(environment.tensor->getName(),environment.gradient_aux->getName(),true); assert(done);
+       if(TensorNetworkOptimizer::debug > 1){
+        std::cout << " Trying step size decrease: " << expect_val << " " << new_expect_val
+                  << " " << std::real(expect_val - new_expect_val)
+                  << " " << (grad_norm * grad_norm) << " " << environment.step_size << " ?" << std::endl;
+       }
+       if(std::real(expect_val - new_expect_val) < (0.5 * (environment.step_size) * (grad_norm * grad_norm))){
         environment.step_size *= 0.5;
        }else{
         break;
