@@ -1,8 +1,9 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/04/25
+REVISION: 2022/06/22
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp.
 
 Rationale:
  - ExaTN graph executor may accept whole tensor networks for execution
@@ -23,6 +24,9 @@ Rationale:
 #include "linear_memory.hpp"
 #include "tensor_network_queue.hpp"
 #include "mpi_proxy.hpp"
+
+#include "errors.hpp"
+
 
 namespace talsh{
 class Tensor;

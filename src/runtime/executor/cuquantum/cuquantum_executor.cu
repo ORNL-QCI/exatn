@@ -1,8 +1,9 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/04/27
+REVISION: 2022/06/24
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corp.
 
 Rationale:
 
@@ -14,16 +15,22 @@ Rationale:
 #include <cutensor.h>
 #include <cuda_runtime.h>
 
+#ifdef MPI_ENABLED
+#include "mpi.h"
+#endif
+
+#include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <numeric>
 #include <type_traits>
 #include <cstdint>
 #include <complex>
-
 #include <iostream>
 
+#include "byte_packet.h"
 #include "talshxx.hpp"
+
 #include "timers.hpp"
 
 #include "cuquantum_executor.hpp"
@@ -46,16 +53,21 @@ namespace exatn {
 namespace runtime {
 
 /** Retrieves a state of cutensornetContractionOptimizerInfo_t as a plain byte packet. **/
-void getCutensornetContractionOptimizerInfoState(cutensornetContractionOptimizerInfo_t info, //in: cutensornetContractionOptimizerInfo_t object
-                                                 BytePacket * info_state);                   //out: state of the object as a plain byte packet
+void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,                 //cuTensorNet handle
+                                                 cutensornetContractionOptimizerInfo_t & info, //in: cutensornetContractionOptimizerInfo_t object
+                                                 BytePacket * info_state);                     //out: state of the object as a plain byte packet
 
 /** Sets a state of cutensornetContractionOptimizerInfo_t from a plain byte packet. **/
-void setCutensornetContractionOptimizerInfoState(cutensornetContractionOptimizerInfo_t info, //out: cutensornetContractionOptimizerInfo_t object
-                                                 BytePacket * info_state);                   //in: state of the object as a plain byte packet
-
+void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,                 //cuTensorNet handle
+                                                 cutensornetContractionOptimizerInfo_t & info, //out: cutensornetContractionOptimizerInfo_t object
+                                                 BytePacket * info_state);                     //in: state of the object as a plain byte packet
+#ifdef MPI_ENABLED
 /** Broadcasts a cutensornetContractionOptimizerInfo_t to all MPI processes. **/
-void broadcastCutensornetContractionOptimizerInfo(cutensornetContractionOptimizerInfo_t info,
-                                                  MPICommProxy & communicator);
+void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,                 //cuTensorNet handle
+                                                  cutensornetContractionOptimizerInfo_t & info, //in: cutensornetContractionOptimizerInfo_t object
+                                                  MPICommProxy & communicator);                 //in: MPI communicator
+#endif
+
 
 /** Tensor descriptor (inside a tensor network) **/
 struct TensorDescriptor {
@@ -174,8 +186,7 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
  if(process_rank_ == 0)
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
  if(gpu_attr_.empty()){
-  std::cout << "#FATAL(exatn::runtime::CuQuantumExecutor): cuQuantum backend requires at least one NVIDIA GPU per MPI process!\n";
-  std::abort();
+  fatal_error("#FATAL(exatn::runtime::CuQuantumExecutor): cuQuantum backend requires at least one NVIDIA GPU per MPI process!\n");
  }
 
  for(const auto & gpu: gpu_attr_){
@@ -516,6 +527,159 @@ void CuQuantumExecutor::loadTensors(std::shared_ptr<TensorNetworkReq> tn_req)
 }
 
 
+void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
+                                                 cutensornetContractionOptimizerInfo_t & info,
+                                                 BytePacket * info_state)
+{
+ cutensornetContractionPath_t contr_path;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                  info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                  &contr_path,sizeof(contr_path)));
+ assert(contr_path.numContractions >= 0);
+ appendToBytePacket(info_state,contr_path.numContractions);
+ if(contr_path.numContractions > 0){
+  for(int32_t i = 0; i < contr_path.numContractions; ++i){
+   appendToBytePacket(info_state,contr_path.data[i].first);
+   appendToBytePacket(info_state,contr_path.data[i].second);
+  }
+  int32_t num_sliced_modes = 0;
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
+                                                                   &num_sliced_modes,sizeof(num_sliced_modes)));
+  assert(num_sliced_modes >= 0);
+  appendToBytePacket(info_state,num_sliced_modes);
+  if(num_sliced_modes > 0){
+   int64_t num_slices = 0;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
+                                                                    &num_slices,sizeof(num_slices)));
+   appendToBytePacket(info_state,num_slices);
+   std::vector<int32_t> sliced_modes(num_sliced_modes);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_MODE,
+                                                                    sliced_modes.data(),sliced_modes.size()*sizeof(int32_t)));
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    appendToBytePacket(info_state,sliced_modes[i]);
+   }
+   std::vector<int64_t> sliced_extents(num_sliced_modes);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_EXTENT,
+                                                                    sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    appendToBytePacket(info_state,sliced_extents[i]);
+   }
+  }
+ }
+ return;
+}
+
+
+void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
+                                                 cutensornetContractionOptimizerInfo_t & info,
+                                                 BytePacket * info_state)
+{
+ cutensornetContractionPath_t contr_path;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                  info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                  &contr_path,sizeof(contr_path)));
+ assert(contr_path.numContractions >= 0);
+ int32_t num_contractions = 0;
+ extractFromBytePacket(info_state,num_contractions);
+ assert(num_contractions == contr_path.numContractions);
+ if(contr_path.numContractions > 0){
+  int32_t first, second;
+  for(int32_t i = 0; i < contr_path.numContractions; ++i){
+   extractFromBytePacket(info_state,first);
+   extractFromBytePacket(info_state,second);
+   contr_path.data[i].first = first;
+   contr_path.data[i].second = second;
+  }
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                   &contr_path,sizeof(contr_path)));
+  int32_t num_sliced_modes = 0;
+  extractFromBytePacket(info_state,num_sliced_modes);
+  assert(num_sliced_modes >= 0);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
+                                                                   &num_sliced_modes,sizeof(num_sliced_modes)));
+  if(num_sliced_modes > 0){
+   int64_t num_slices = 0;
+   extractFromBytePacket(info_state,num_slices);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
+                                                                    &num_slices,sizeof(num_slices)));
+   std::vector<int32_t> sliced_modes(num_sliced_modes);
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    extractFromBytePacket(info_state,sliced_modes[i]);
+   }
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_MODE,
+                                                                    sliced_modes.data(),sliced_modes.size()*sizeof(int32_t)));
+   std::vector<int64_t> sliced_extents(num_sliced_modes);
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    extractFromBytePacket(info_state,sliced_extents[i]);
+   }
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_EXTENT,
+                                                                    sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
+  }
+ }
+ return;
+}
+
+
+#ifdef MPI_ENABLED
+void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,
+                                                  cutensornetContractionOptimizerInfo_t & info,
+                                                  MPICommProxy & communicator)
+{
+ double flops = 0.0;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                  info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
+                                                                  &flops,sizeof(flops)));
+ assert(flops >= 0.0);
+ auto & mpi_comm = communicator.getRef<MPI_Comm>();
+ int my_rank = -1;
+ auto errc = MPI_Comm_rank(mpi_comm, &my_rank); assert(errc == MPI_SUCCESS);
+ struct {double flop_count; int mpi_rank;} my_flop{flops,my_rank}, best_flop{0.0,-1};
+ errc = MPI_Allreduce((void*)(&my_flop),(void*)(&best_flop),1,MPI_DOUBLE_INT,MPI_MINLOC,mpi_comm);
+ assert(errc == MPI_SUCCESS);
+
+ BytePacket packet;
+ initBytePacket(&packet);
+ if(my_rank == best_flop.mpi_rank){
+  getCutensornetContractionOptimizerInfoState(handle,info,&packet);
+ }
+ int packet_size = packet.size_bytes;
+ errc = MPI_Bcast((void*)(&packet_size),1,MPI_INT,best_flop.mpi_rank,mpi_comm);
+ assert(errc == MPI_SUCCESS);
+ if(my_rank != best_flop.mpi_rank){
+  initBytePacket(&packet,packet_size);
+  packet.size_bytes = packet_size;
+ }
+ errc = MPI_Bcast(packet.base_addr,packet_size,MPI_CHAR,best_flop.mpi_rank,mpi_comm);
+ assert(errc == MPI_SUCCESS);
+ if(my_rank != best_flop.mpi_rank){
+  setCutensornetContractionOptimizerInfoState(handle,info,&packet);
+ }
+ return;
+}
+#endif
+
+
 void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
 {
  //Configure tensor network contraction on all GPUs:
@@ -525,8 +689,13 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
   const int gpu_id = gpu_attr_[gpu].first;
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
   acquireWorkspace(gpu,&(tn_req->gpu_workspace[gpu]),&(tn_req->gpu_worksize[gpu]));
-  if(gpu == 0){
-   const int32_t min_slices = tn_req->num_procs * num_gpus;
+ }
+ const auto min_gpu_workspace_size = *(std::min_element(tn_req->gpu_worksize.cbegin(),tn_req->gpu_worksize.cend()));
+ for(int gpu = 0; gpu < num_gpus; ++gpu){
+  const int gpu_id = gpu_attr_[gpu].first;
+  HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
+  if(gpu == 0){ //tensor network contraction path needs to be computed only once
+   const int32_t min_slices = tn_req->num_procs * num_gpus; //ensure parallelism
    HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerConfig(gpu_attr_[gpu].second.cutn_handle,&(tn_req->opt_config)));
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SLICER_MIN_SLICES,
@@ -534,20 +703,25 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor,&(tn_req->opt_info)));
    HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
                                                    tn_req->net_descriptor,tn_req->opt_config,
-                                                   tn_req->gpu_worksize[gpu],tn_req->opt_info));
-   tn_req->num_slices = 0;
-   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
-                                                                    tn_req->opt_info,
-                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
-                                                                    &(tn_req->num_slices),sizeof(tn_req->num_slices)));
-   assert(tn_req->num_slices > 0);
+                                                   min_gpu_workspace_size,tn_req->opt_info));
+#ifdef MPI_ENABLED
+   if(tn_req->num_procs > 1){
+    broadcastCutensornetContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_info,tn_req->comm);
+   }
+#endif
    double flops = 0.0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
                                                                     tn_req->opt_info,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                     &flops,sizeof(flops)));
    assert(flops >= 0.0);
-   flops_ += flops * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
+   flops_ += (flops / static_cast<double>(tn_req->num_procs)) * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
+   tn_req->num_slices = 0;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
+                                                                    tn_req->opt_info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
+                                                                    &(tn_req->num_slices),sizeof(tn_req->num_slices)));
+   assert(tn_req->num_slices > 0);
   }
   HANDLE_CTN_ERROR(cutensornetCreateWorkspaceDescriptor(gpu_attr_[gpu].second.cutn_handle,&(tn_req->workspace_descriptor[gpu])));
   HANDLE_CTN_ERROR(cutensornetWorkspaceComputeSizes(gpu_attr_[gpu].second.cutn_handle,
@@ -560,8 +734,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                CUTENSORNET_MEMSPACE_DEVICE,
                                                &required_workspace_size));
   if(required_workspace_size > tn_req->gpu_worksize[gpu]){
-   std::cout << "#ERROR(exatn::CuQuantumExecutor::planExecution): Insufficient work space on GPU " << gpu << "!" << std::endl;
-   std::abort();
+   fatal_error("#ERROR(exatn::CuQuantumExecutor::planExecution): Insufficient work space on GPU "+std::to_string(gpu)+"!\n");
   }
   HANDLE_CTN_ERROR(cutensornetWorkspaceSet(gpu_attr_[gpu].second.cutn_handle,
                                            tn_req->workspace_descriptor[gpu],
