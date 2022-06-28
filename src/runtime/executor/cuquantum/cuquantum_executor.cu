@@ -897,28 +897,30 @@ void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
  if(all_completed){
 #ifdef MPI_ENABLED
   //Global output reduction across all participating MPI processes:
-  const auto out_elem_type = tn_req->network->getTensor(0)->getElementType();
-  const auto out_tens_hash = tn_req->network->getTensor(0)->getTensorHash();
-  const auto & descr = tn_req->tensor_descriptors[out_tens_hash];
-  auto & mpi_comm = tn_req->comm.getRef<MPI_Comm>();
-  int errc = MPI_SUCCESS;
-  switch(out_elem_type){
-   case TensorElementType::REAL32:
-    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_FLOAT,MPI_SUM,mpi_comm);
-    break;
-   case TensorElementType::REAL64:
-    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_DOUBLE,MPI_SUM,mpi_comm);
-    break;
-   case TensorElementType::COMPLEX32:
-    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_FLOAT_COMPLEX,MPI_SUM,mpi_comm);
-    break;
-   case TensorElementType::COMPLEX64:
-    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_DOUBLE_COMPLEX,MPI_SUM,mpi_comm);
-    break;
-   default:
-    fatal_error("#ERROR(exatn::CuQuantumExecutor::testCompletion): Invalid tensor element type!");
+  if(tn_req->num_procs > 1){
+   const auto out_elem_type = tn_req->network->getTensor(0)->getElementType();
+   const auto out_tens_hash = tn_req->network->getTensor(0)->getTensorHash();
+   const auto & descr = tn_req->tensor_descriptors[out_tens_hash];
+   auto & mpi_comm = tn_req->comm.getRef<MPI_Comm>();
+   int errc = MPI_SUCCESS;
+   switch(out_elem_type){
+    case TensorElementType::REAL32:
+     errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_FLOAT,MPI_SUM,mpi_comm);
+     break;
+    case TensorElementType::REAL64:
+     errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_DOUBLE,MPI_SUM,mpi_comm);
+     break;
+    case TensorElementType::COMPLEX32:
+     errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_FLOAT_COMPLEX,MPI_SUM,mpi_comm);
+     break;
+    case TensorElementType::COMPLEX64:
+     errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_DOUBLE_COMPLEX,MPI_SUM,mpi_comm);
+     break;
+    default:
+     fatal_error("#ERROR(exatn::CuQuantumExecutor::testCompletion): Invalid tensor element type!");
+   }
+   assert(errc == MPI_SUCCESS);
   }
-  assert(errc == MPI_SUCCESS);
 #endif
   tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
  }
