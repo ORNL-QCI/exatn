@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/06/24
+REVISION: 2022/06/28
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -653,13 +653,27 @@ void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,
  assert(flops >= 0.0);
  auto & mpi_comm = communicator.getRef<MPI_Comm>();
  int my_rank = -1;
- auto errc = MPI_Comm_rank(mpi_comm, &my_rank); assert(errc == MPI_SUCCESS);
+ auto errc = MPI_Comm_rank(mpi_comm, &my_rank);
+ assert(errc == MPI_SUCCESS);
  struct {double flop_count; int mpi_rank;} my_flop{flops,my_rank}, best_flop{0.0,-1};
  errc = MPI_Allreduce((void*)(&my_flop),(void*)(&best_flop),1,MPI_DOUBLE_INT,MPI_MINLOC,mpi_comm);
  assert(errc == MPI_SUCCESS);
 
+ cutensornetContractionPath_t contr_path;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                  info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                  &contr_path,sizeof(contr_path)));
+ assert(contr_path.numContractions >= 0);
+ int32_t num_sliced_modes = 0;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                  info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
+                                                                  &num_sliced_modes,sizeof(num_sliced_modes)));
+ std::size_t packet_capacity = ((sizeof(int32_t) * 2 * contr_path.numContractions) +
+                                ((sizeof(int32_t) + sizeof(int64_t)) * num_sliced_modes)) * 2;
  BytePacket packet;
- initBytePacket(&packet);
+ initBytePacket(&packet,packet_capacity);
  if(my_rank == best_flop.mpi_rank){
   getCutensornetContractionOptimizerInfoState(handle,info,&packet);
  }
@@ -667,7 +681,6 @@ void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,
  errc = MPI_Bcast((void*)(&packet_size),1,MPI_INT,best_flop.mpi_rank,mpi_comm);
  assert(errc == MPI_SUCCESS);
  if(my_rank != best_flop.mpi_rank){
-  initBytePacket(&packet,packet_size);
   packet.size_bytes = packet_size;
  }
  errc = MPI_Bcast(packet.base_addr,packet_size,MPI_CHAR,best_flop.mpi_rank,mpi_comm);
@@ -715,7 +728,8 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                     &flops,sizeof(flops)));
    assert(flops >= 0.0);
-   flops_ += (flops / static_cast<double>(tn_req->num_procs)) * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
+   flops_ += (flops / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution
+             tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
    tn_req->num_slices = 0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
                                                                     tn_req->opt_info,
@@ -812,8 +826,7 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
   void * host_out_tens = nullptr;
   auto errc = mem_allocate(dev_id,descr.size,YEP,&host_out_tens);
   if(errc != 0 || host_out_tens == nullptr){
-   std::cout << "#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Insufficient memory space in the Host buffer!\n";
-   std::abort();
+   fatal_error("#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Insufficient memory space in the Host buffer!\n");
   }
   struct ReductionBuf{void * tmp_ptr; void * out_ptr; void * gpu_ptr; std::size_t vol;};
   assert(MEM_ALIGNMENT % out_elem_size == 0);
@@ -851,8 +864,7 @@ void CuQuantumExecutor::contractTensorNetwork(std::shared_ptr<TensorNetworkReq> 
   }
   errc = mem_free(dev_id,&host_out_tens);
   if(errc != 0){
-   std::cout << "#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Unable to free a temporary Host buffer entry!\n";
-   std::abort();
+   fatal_error("#ERROR(exatn::CuQuantumExecutor::contractTensorNetwork): Unable to free a temporary Host buffer entry!\n");
   }
  }else{
   HANDLE_CUDA_ERROR(cudaMemcpyAsync(descr.src_ptr,descr.dst_ptr[0],
@@ -873,7 +885,7 @@ void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
   const auto gpu_id = gpu_attr_[gpu].first;
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu_id));
   cudaError_t cuda_error = cudaEventQuery(tn_req->gpu_data_out_finish[gpu]);
-  if(cuda_error == cudaSuccess){
+  if(cuda_error != cudaErrorNotReady){
    if(tn_req->memory_window_ptr[gpu] != nullptr){
     mem_pool_[gpu].releaseMemory(tn_req->memory_window_ptr[gpu]);
     tn_req->memory_window_ptr[gpu] = nullptr;
@@ -883,10 +895,31 @@ void CuQuantumExecutor::testCompletion(std::shared_ptr<TensorNetworkReq> tn_req)
   }
  }
  if(all_completed){
+#ifdef MPI_ENABLED
   //Global output reduction across all participating MPI processes:
+  const auto out_elem_type = tn_req->network->getTensor(0)->getElementType();
   const auto out_tens_hash = tn_req->network->getTensor(0)->getTensorHash();
   const auto & descr = tn_req->tensor_descriptors[out_tens_hash];
-  
+  auto & mpi_comm = tn_req->comm.getRef<MPI_Comm>();
+  int errc = MPI_SUCCESS;
+  switch(out_elem_type){
+   case TensorElementType::REAL32:
+    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_FLOAT,MPI_SUM,mpi_comm);
+    break;
+   case TensorElementType::REAL64:
+    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_DOUBLE,MPI_SUM,mpi_comm);
+    break;
+   case TensorElementType::COMPLEX32:
+    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_FLOAT_COMPLEX,MPI_SUM,mpi_comm);
+    break;
+   case TensorElementType::COMPLEX64:
+    errc = MPI_Allreduce(MPI_IN_PLACE,descr.src_ptr,descr.volume,MPI_CXX_DOUBLE_COMPLEX,MPI_SUM,mpi_comm);
+    break;
+   default:
+    fatal_error("#ERROR(exatn::CuQuantumExecutor::testCompletion): Invalid tensor element type!");
+  }
+  assert(errc == MPI_SUCCESS);
+#endif
   tn_req->exec_status = TensorNetworkQueue::ExecStat::Completed;
  }
  return;
