@@ -39,13 +39,13 @@ Rationale:
 #define HANDLE_CUDA_ERROR(x) \
 { const auto err = x; \
   if( err != cudaSuccess ) \
-  { printf("Error: %s in line %d\n", cudaGetErrorString(err), __LINE__); std::abort(); } \
+  { printf("Error: %s in line %d\n", cudaGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
 };
 
 #define HANDLE_CTN_ERROR(x) \
 { const auto err = x; \
   if( err != CUTENSORNET_STATUS_SUCCESS ) \
-  { printf("Error: %s in line %d\n", cutensornetGetErrorString(err), __LINE__); std::abort(); } \
+  { printf("Error: %s in line %d\n", cutensornetGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
 };
 
 
@@ -557,12 +557,6 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
   assert(num_sliced_modes >= 0);
   appendToBytePacket(info_state,num_sliced_modes);
   if(num_sliced_modes > 0){
-   int64_t num_slices = 0;
-   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
-                                                                    info,
-                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
-                                                                    &num_slices,sizeof(num_slices)));
-   appendToBytePacket(info_state,num_slices);
    std::vector<int32_t> sliced_modes(num_sliced_modes);
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
                                                                     info,
@@ -621,12 +615,6 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
                                                                    &num_sliced_modes,sizeof(num_sliced_modes)));
   if(num_sliced_modes > 0){
-   int64_t num_slices = 0;
-   extractFromBytePacket(info_state,num_slices);
-   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
-                                                                    info,
-                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
-                                                                    &num_slices,sizeof(num_slices)));
    std::vector<int32_t> sliced_modes(num_sliced_modes);
    for(int32_t i = 0; i < num_sliced_modes; ++i){
     extractFromBytePacket(info_state,sliced_modes[i]);
