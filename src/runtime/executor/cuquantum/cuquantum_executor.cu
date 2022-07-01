@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/06/28
+REVISION: 2022/07/01
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -531,7 +531,7 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                  cutensornetContractionOptimizerInfo_t & info,
                                                  BytePacket * info_state)
 {
- cutensornetContractionPath_t contr_path;
+ cutensornetContractionPath_t contr_path{0,nullptr};
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
                                                                   info,
                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
@@ -539,6 +539,12 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
  assert(contr_path.numContractions >= 0);
  appendToBytePacket(info_state,contr_path.numContractions);
  if(contr_path.numContractions > 0){
+  contr_path.data = new cutensornetNodePair_t[contr_path.numContractions];
+  assert(contr_path.data != nullptr);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                   &contr_path,sizeof(contr_path)));
   for(int32_t i = 0; i < contr_path.numContractions; ++i){
    appendToBytePacket(info_state,contr_path.data[i].first);
    appendToBytePacket(info_state,contr_path.data[i].second);
@@ -574,6 +580,7 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
     appendToBytePacket(info_state,sliced_extents[i]);
    }
   }
+  if(contr_path.data != nullptr) delete [] contr_path.data;
  }
  return;
 }
@@ -583,7 +590,7 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                  cutensornetContractionOptimizerInfo_t & info,
                                                  BytePacket * info_state)
 {
- cutensornetContractionPath_t contr_path;
+ cutensornetContractionPath_t contr_path{0,nullptr};
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
                                                                   info,
                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
@@ -593,6 +600,8 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
  extractFromBytePacket(info_state,num_contractions);
  assert(num_contractions == contr_path.numContractions);
  if(contr_path.numContractions > 0){
+  contr_path.data = new cutensornetNodePair_t[contr_path.numContractions];
+  assert(contr_path.data != nullptr);
   int32_t first, second;
   for(int32_t i = 0; i < contr_path.numContractions; ++i){
    extractFromBytePacket(info_state,first);
@@ -635,6 +644,7 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_EXTENT,
                                                                     sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
   }
+  if(contr_path.data != nullptr) delete [] contr_path.data;
  }
  return;
 }
@@ -659,34 +669,44 @@ void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,
  errc = MPI_Allreduce((void*)(&my_flop),(void*)(&best_flop),1,MPI_DOUBLE_INT,MPI_MINLOC,mpi_comm);
  assert(errc == MPI_SUCCESS);
 
- cutensornetContractionPath_t contr_path;
+ cutensornetContractionPath_t contr_path{0,nullptr};
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
                                                                   info,
                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
                                                                   &contr_path,sizeof(contr_path)));
  assert(contr_path.numContractions >= 0);
- int32_t num_sliced_modes = 0;
- HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
-                                                                  info,
-                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
-                                                                  &num_sliced_modes,sizeof(num_sliced_modes)));
- std::size_t packet_capacity = ((sizeof(int32_t) * 2 * contr_path.numContractions) +
-                                ((sizeof(int32_t) + sizeof(int64_t)) * num_sliced_modes)) * 2;
- BytePacket packet;
- initBytePacket(&packet,packet_capacity);
- if(my_rank == best_flop.mpi_rank){
-  getCutensornetContractionOptimizerInfoState(handle,info,&packet);
- }
- int packet_size = packet.size_bytes;
- errc = MPI_Bcast((void*)(&packet_size),1,MPI_INT,best_flop.mpi_rank,mpi_comm);
- assert(errc == MPI_SUCCESS);
- if(my_rank != best_flop.mpi_rank){
-  packet.size_bytes = packet_size;
- }
- errc = MPI_Bcast(packet.base_addr,packet_size,MPI_CHAR,best_flop.mpi_rank,mpi_comm);
- assert(errc == MPI_SUCCESS);
- if(my_rank != best_flop.mpi_rank){
-  setCutensornetContractionOptimizerInfoState(handle,info,&packet);
+ if(contr_path.numContractions > 0){
+  contr_path.data = new cutensornetNodePair_t[contr_path.numContractions];
+  assert(contr_path.data != nullptr);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                   &contr_path,sizeof(contr_path)));
+  int32_t num_sliced_modes = 0;
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                   info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
+                                                                   &num_sliced_modes,sizeof(num_sliced_modes)));
+  std::size_t packet_capacity = ((sizeof(int32_t) * 2 * contr_path.numContractions) +
+                                 ((sizeof(int32_t) + sizeof(int64_t)) * num_sliced_modes)) * 2 + 1024; //upper bound
+  BytePacket packet;
+  initBytePacket(&packet,packet_capacity);
+  if(my_rank == best_flop.mpi_rank){
+   getCutensornetContractionOptimizerInfoState(handle,info,&packet);
+  }
+  int packet_size = packet.size_bytes;
+  errc = MPI_Bcast((void*)(&packet_size),1,MPI_INT,best_flop.mpi_rank,mpi_comm);
+  assert(errc == MPI_SUCCESS);
+  if(my_rank != best_flop.mpi_rank){
+   packet.size_bytes = packet_size;
+  }
+  errc = MPI_Bcast(packet.base_addr,packet_size,MPI_CHAR,best_flop.mpi_rank,mpi_comm);
+  assert(errc == MPI_SUCCESS);
+  if(my_rank != best_flop.mpi_rank){
+   setCutensornetContractionOptimizerInfoState(handle,info,&packet);
+  }
+  destroyBytePacket(&packet);
+  if(contr_path.data != nullptr) delete [] contr_path.data;
  }
  return;
 }
