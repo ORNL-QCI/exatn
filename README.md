@@ -23,7 +23,7 @@ computational domain that relies heavily on numerical tensor algebra:
 
 ## Concepts and Usage
 
-[An open-access paper is available, please use the PDF]: https://www.frontiersin.org/articles/10.3389/fams.2022.838601/full
+[Here you can find the PDF of the ExaTN paper](https://www.frontiersin.org/articles/10.3389/fams.2022.838601/full)
 
 The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
 
