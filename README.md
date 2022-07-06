@@ -17,7 +17,7 @@ computational domain that relies heavily on numerical tensor algebra:
  * Quantum many-body theory in quantum chemistry;
  * Quantum computing simulations;
  * General relativity simulations;
- * Multivariate data analytics, tensor completion;
+ * Multivariate data analytics, tensor regression, tensor completion;
  * Tensor-based neural network algorithms.
 
 
@@ -74,7 +74,7 @@ For detailed class documentation, please see our [API Documentation](https://orn
 ## Dependencies
 ```
 CMake 3.9+ (for build)
-Compilers (C++14, Fortran-2003): GNU 8+, Intel 18+, IBM XL 16.1.1+ (not tested)
+Compilers (C++14, Fortran-2003): GNU 8+
 MPI (optional): MPICH 3+, OpenMPI 4+
 BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
 CUDA 9+ (optional, NVIDIA GPU only)
@@ -87,45 +87,40 @@ ANTLR: wget https://www.antlr.org/download/antlr-4.7.2-complete.jar (inside src/
 
 
 ## Linux Build instructions
-```
-On Ubuntu, for GCC 8+, OpenMPI 4+, and ATLAS BLAS, run the following:
-``` bash
-$ add-apt-repository ppa:ubuntu-toolchain-r/test
-$ apt-get update
-$ apt-get install gcc-8 g++-8 gfortran-8 libblas-dev liblapack-dev libopenmpi-dev
-$ python3 -m pip install --upgrade cmake
-```
-
 ``` bash
 $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ git submodule init
 $ git submodule update --init --recursive
 $ mkdir build && cd build
-$ cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
+$ CC=gcc CXX=g++ FC=gfortran cmake .. -DCMAKE_BUILD_TYPE=Release -DEXATN_BUILD_TESTS=TRUE
 
-  For CPU accelerated matrix algebra via a CPU BLAS library:
+  Additional CMAKE options (BLAS, GPU, MPI, cuQuantum):
+
+  For CPU accelerated matrix algebra via a CPU BLAS library add this:
   -DBLAS_LIB=<BLAS_CHOICE> -DBLAS_PATH=<PATH_TO_BLAS_LIBRARIES>
    where the choices are OPENBLAS, ATLAS, MKL, ACML, ESSL.
    If you use Intel MKL, you will need to provide the following
-   environment variable instead of BLAS_PATH above:
+   environment variable instead of the BLAS_PATH above:
   -DPATH_INTEL_ROOT=<PATH_TO_INTEL_ROOT_DIRECTORY>
 
-  For execution on NVIDIA GPU:
+  For execution on NVIDIA GPU add this:
   -DENABLE_CUDA=True
    You can adjust the NVIDIA GPU compute capability like this:
    -DCUDA_ARCH_BIN=70
    For GPU execution via very recent CUDA versions with the GNU compiler:
    -DCUDA_HOST_COMPILER=<PATH_TO_CUDA_COMPATIBLE_GNU_C++_COMPILER>
-   If you want to leverage NVIDIA cuQuantum framework, set these:
+   If you want to leverage the NVIDIA cuQuantum framework, set these:
    -DCUTENSOR=TRUE -DCUTENSOR_PATH=<PATH_TO_CUTENSOR_ROOT>
    -DCUQUANTUM=TRUE -DCUQUANTUM_PATH=<PATH_TO_CUQUANTUM_ROOT>
    Note that you will need to install cuTensor and cuQuantum
-   from their Linux tar archives provided by NVIDIA. Additionally,
-   after installing cuTensor, copy all cuTensor dynamic libraries (.so)
-   from <CUTENSOR_ROOT>/lib/<CUDA_VERSION> to <CUTENSOR_ROOT>/lib.
+   by unpacking their Linux tar archives downloaded from NVIDIA.
+   Additionally, after installing cuTensor, copy all cuTensor dynamic
+   libraries (.so) from <CUTENSOR_ROOT>/lib/<CUDA_VERSION> to
+   <CUTENSOR_ROOT>/lib such that the latter directory contains exactly
+   the same libraries and symbolic links as the former.
 
-  For multi-node execution via MPI:
+  For multi-node execution via MPI add this:
   -DMPI_LIB=<MPI_CHOICE> -DMPI_ROOT_DIR=<PATH_TO_MPI_ROOT>
    where the choices are OPENMPI or MPICH. Note that the OPENMPI choice
    also covers its derivatives, for example Spectrum MPI. The MPICH choice
@@ -242,8 +237,8 @@ cmake ..
 -DCMAKE_BUILD_TYPE=Release
 -DEXATN_BUILD_TESTS=TRUE
 -DBLAS_LIB=OPENBLAS -DBLAS_PATH=/usr/local/openblas/lib
--DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++
--DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor -DCUDA_ARCH_BIN=86
+-DENABLE_CUDA=True -DCUDA_HOST_COMPILER=/usr/bin/g++ -DCUDA_ARCH_BIN=86
+-DCUTENSOR=TRUE -DCUTENSOR_PATH=/usr/local/cutensor
 -DCUQUANTUM=TRUE -DCUQUANTUM_PATH=/usr/local/cuquantum
 -DMPI_LIB=OPENMPI -DMPI_ROOT_DIR=/usr/local/mpi/openmpi/4.1.2
 
@@ -281,7 +276,7 @@ Now continue with configuring and building ExaTN
 $ git clone --recursive https://github.com/ornl-qci/exatn.git
 $ cd exatn
 $ mkdir build && cd build
-$ FC=gfortran-8 CXX=g++-8 cmake .. -DEXATN_BUILD_TESTS=TRUE
+$ CC=gcc-8 CXX=g++-8 FC=gfortran-8 cmake .. -DEXATN_BUILD_TESTS=TRUE
 $ make install
 ```
 
@@ -290,6 +285,14 @@ From build directory:
 ```bash
 $ ctest
 ```
+or, alternatively, run this (fix the number of CPU threads):
+```bash
+$ OMP_PLACES=cores OMP_DYNAMIC=FALSE OMP_NUM_THREADS=4 ./src/exatn/tests/NumServerTester
+```
+or, with MPI:
+```bash
+$ OMP_PLACES=cores OMP_DYNAMIC=FALSE OMP_NUM_THREADS=4 mpiexec -n 1 ./src/exatn/tests/NumServerTester
+```
 
 ## License
-See LICENSE
+See LICENSE (BSD-3-Clause)
