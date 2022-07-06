@@ -23,6 +23,8 @@ computational domain that relies heavily on numerical tensor algebra:
 
 ## Concepts and Usage
 
+[An open-access paper is available, please use the PDF]: https://www.frontiersin.org/articles/10.3389/fams.2022.838601/full
+
 The ExaTN C++ header to include is `exatn.hpp`. ExaTN provides two kinds of API:
 
  1. Declarative API is used to declare, construct and manipulate C++ objects
@@ -79,6 +81,7 @@ MPI (optional): MPICH 3+, OpenMPI 4+
 BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
 CUDA 9+ (optional, NVIDIA GPU only)
 cuTensor/cuQuantum (optional, NVIDIA GPU only)
+Note: The support of lazy tensor conjugation in ExaTN+cuQuantum is coming soon
 ```
 For TaProl Parser Development
 ```

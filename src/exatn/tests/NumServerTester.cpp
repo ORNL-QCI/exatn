@@ -30,7 +30,7 @@
 #define EXATN_TEST9
 #define EXATN_TEST10
 #define EXATN_TEST11
-#define EXATN_TEST12
+//#define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
 //#define EXATN_TEST15 //buggy (parsed named spaces/subspaces)
@@ -43,14 +43,14 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25
-#define EXATN_TEST26
+//#define EXATN_TEST25
+//#define EXATN_TEST26
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-#define EXATN_TEST30
+//#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-#define EXATN_TEST32
+//#define EXATN_TEST32
 #define EXATN_TEST33
 #define EXATN_TEST34
 
