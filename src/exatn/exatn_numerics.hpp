@@ -3,7 +3,9 @@ REVISION: 2022/06/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation **/
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 /** Rationale:
  1. Vector space and subspace registration [spaces.hpp, space_register.hpp]:

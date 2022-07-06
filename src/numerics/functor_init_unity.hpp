@@ -3,7 +3,9 @@ REVISION: 2022/06/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corp. **/
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 /** Rationale:
  (A) This tensor functor (method) is used to initialize a tensor

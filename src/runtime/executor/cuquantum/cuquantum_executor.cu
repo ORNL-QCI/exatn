@@ -3,11 +3,9 @@ REVISION: 2022/07/01
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corp.
+Copyright (C) 2022-2022 NVIDIA Corporation
 
-Rationale:
-
-**/
+SPDX-License-Identifier: BSD-3-Clause **/
 
 #ifdef CUQUANTUM
 

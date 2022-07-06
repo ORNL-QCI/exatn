@@ -3,7 +3,9 @@ REVISION: 2022/06/22
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corp.
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause
 
 Rationale:
  - ExaTN graph executor may accept whole tensor networks for execution

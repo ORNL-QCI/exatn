@@ -3,7 +3,9 @@ REVISION: 2022/06/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corp. **/
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 #include "tensor_connected.hpp"
 #include "tensor_symbol.hpp"
