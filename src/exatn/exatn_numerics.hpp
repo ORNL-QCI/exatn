@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/06/17
+REVISION: 2022/07/15
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1145,7 +1145,7 @@ inline void switchComputationalBackend(const std::string & backend_name)
 
 
 /** Resets the tensor contraction sequence optimizer that is invoked
-    when evaluating tensor networks: {dummy,heuro,greed,metis}. **/
+    when evaluating tensor networks: {dummy,heuro,greed,metis,cutnn}. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name)
  {return numericalServer->resetContrSeqOptimizer(optimizer_name);}
 

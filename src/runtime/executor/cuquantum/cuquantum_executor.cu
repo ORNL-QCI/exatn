@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/07/01
+REVISION: 2022/07/15
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -318,7 +318,7 @@ void CuQuantumExecutor::sync()
 }
 
 
-cudaDataType_t getCudaDataType(const TensorElementType elem_type)
+static cudaDataType_t getCudaDataType(const TensorElementType elem_type)
 {
  cudaDataType_t cuda_data_type;
  switch(elem_type){
@@ -332,7 +332,7 @@ cudaDataType_t getCudaDataType(const TensorElementType elem_type)
 }
 
 
-cutensornetComputeType_t getCutensorComputeType(const TensorElementType elem_type)
+static cutensornetComputeType_t getCutensorComputeType(const TensorElementType elem_type)
 {
  cutensornetComputeType_t cutensor_data_type;
  switch(elem_type){

@@ -16,6 +16,7 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #ifdef CUQUANTUM
 
 #include "contraction_seq_optimizer.hpp"
+#include "mpi_proxy.hpp"
 
 #include <memory>
 
@@ -33,11 +34,14 @@ class ContractionSeqOptimizerCutnn: public ContractionSeqOptimizer{
 public:
 
  ContractionSeqOptimizerCutnn();
- virtual ~ContractionSeqOptimizerCutnn() = default;
+ virtual ~ContractionSeqOptimizerCutnn();
+
+ void resetMemLimit(std::size_t mem_limit);
 
  void resetMinSlices(std::size_t min_slices);
 
- std::shared_ptr<InfoCuTensorNet> determineContractionSequenceWithSlicing(const TensorNetwork & network,
+ std::shared_ptr<InfoCuTensorNet> determineContractionSequenceWithSlicing(
+                                   const TensorNetwork & network,
                                    std::list<ContrTriple> & contr_seq,
                                    std::function<unsigned int ()> intermediate_num_generator);
 
@@ -51,7 +55,9 @@ protected:
 
  using ContractionSequence = std::list<ContrTriple>;
 
- std::size_t min_slices_;
+ std::size_t mem_limit_; //memory limit (for intermediates)
+ std::size_t min_slices_; //min number of slices to produce
+ void * cutnn_handle_; //cutensornet handle
 };
 
 } //namespace numerics
