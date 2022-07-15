@@ -1,8 +1,11 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer factory
-REVISION: 2020/04/29
+REVISION: 2022/07/14
 
-Copyright (C) 2018-2020 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2020 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 #include "contraction_seq_optimizer_factory.hpp"
 
@@ -16,6 +19,9 @@ ContractionSeqOptimizerFactory::ContractionSeqOptimizerFactory()
  registerContractionSeqOptimizer("heuro",&ContractionSeqOptimizerHeuro::createNew);
  registerContractionSeqOptimizer("greed",&ContractionSeqOptimizerGreed::createNew);
  registerContractionSeqOptimizer("metis",&ContractionSeqOptimizerMetis::createNew);
+#ifdef CUQUANTUM
+ registerContractionSeqOptimizer("cutnn",&ContractionSeqOptimizerCutnn::createNew);
+#endif
 }
 
 void ContractionSeqOptimizerFactory::registerContractionSeqOptimizer(const std::string & name,

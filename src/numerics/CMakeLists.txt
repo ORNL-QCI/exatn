@@ -1,71 +1,47 @@
 set(LIBRARY_NAME exatn-numerics)
 
-add_library(${LIBRARY_NAME}
-            SHARED
-            tensor_symbol.cpp
-            metis_graph.cpp
-            basis_vector.cpp
-            space_basis.cpp
-            spaces.cpp
-            space_register.cpp
-            tensor_shape.cpp
-            tensor_signature.cpp
-            tensor_leg.cpp
-            tensor.cpp
-            tensor_composite.cpp
-            tensor_connected.cpp
-            tensor_operation.cpp
-            tensor_op_create.cpp
-            tensor_op_destroy.cpp
-            tensor_op_transform.cpp
-            tensor_op_slice.cpp
-            tensor_op_insert.cpp
-            tensor_op_add.cpp
-            tensor_op_contract.cpp
-            tensor_op_decompose_svd3.cpp
-            tensor_op_decompose_svd2.cpp
-            tensor_op_orthogonalize_svd.cpp
-            tensor_op_orthogonalize_mgs.cpp
-            tensor_op_fetch.cpp
-            tensor_op_upload.cpp
-            tensor_op_broadcast.cpp
-            tensor_op_allreduce.cpp
-            tensor_op_factory.cpp
-            network_builder_mps.cpp
-            network_builder_ttn.cpp
-            network_build_factory.cpp
-            contraction_seq_optimizer.cpp
-            contraction_seq_optimizer_dummy.cpp
-            contraction_seq_optimizer_heuro.cpp
-            contraction_seq_optimizer_greed.cpp
-            contraction_seq_optimizer_metis.cpp
-            contraction_seq_optimizer_factory.cpp
-            tensor_network.cpp
-            tensor_operator.cpp
-            tensor_expansion.cpp
-            functor_init_val.cpp
-            functor_init_rnd.cpp
-            functor_init_dat.cpp
-            functor_init_delta.cpp
-            functor_init_unity.cpp
-            functor_init_proj.cpp
-            functor_init_file.cpp
-            functor_isometrize.cpp
-            functor_scale.cpp
-            functor_maxabs.cpp
-            functor_norm1.cpp
-            functor_norm2.cpp
-            functor_diag_rank.cpp
-            functor_print.cpp)
+set(INTERFACE_POSITION_INDEPENDENT_CODE ON)
+
+file(GLOB SRC *.cpp)
+
+if(CUQUANTUM)
+  enable_language(CUDA)
+  set(CUDA_FOUND TRUE)
+  set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC ${CMAKE_CXX_FLAGS}")
+  set_source_files_properties(contraction_seq_optimizer_cutnn.cpp PROPERTIES LANGUAGE CUDA)
+endif()
+
+add_library(${LIBRARY_NAME} SHARED ${SRC})
+
+if(CUQUANTUM)
+  set_target_properties(${LIBRARY_NAME}
+                        PROPERTIES
+                        CUDA_SEPARABLE_COMPILATION ON
+                        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
+
+#set_target_properties(${LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "")
 
 target_include_directories(${LIBRARY_NAME}
-                    PUBLIC .
-                    PRIVATE
+                           PUBLIC .
+                           PRIVATE
                            ${CMAKE_SOURCE_DIR}/tpls/metis/include
                            ${CMAKE_SOURCE_DIR}/src/runtime
                            ${CMAKE_SOURCE_DIR}/src/runtime/executor
                            ${CMAKE_SOURCE_DIR}/src/exatn)
+
 target_link_libraries(${LIBRARY_NAME} PUBLIC ExaTensor::ExaTensor exatn-utils metis GKlib)
+
+if(CUQUANTUM)
+  target_include_directories(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/include)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUQUANTUM_PATH}/lib/libcutensornet.so)
+endif()
+
+if(CUTENSOR AND NOT CUTENSOR_PATH STREQUAL ".")
+  target_include_directories(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/include)
+  target_link_libraries(${LIBRARY_NAME} PRIVATE ${CUTENSOR_PATH}/lib/libcutensor.so)
+endif()
 
 exatn_configure_plugin_rpath(${LIBRARY_NAME})
 

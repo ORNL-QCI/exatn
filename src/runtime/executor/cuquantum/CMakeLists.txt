@@ -4,9 +4,16 @@ file(GLOB SRC cuquantum_executor.cu)
 
 set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -shared -std c++17 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -shared -std=c++14 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC")
 
 cuda_add_library(${LIBRARY_NAME} SHARED ${SRC})
+
+if(CUQUANTUM)
+  set_target_properties(${LIBRARY_NAME}
+                        PROPERTIES
+                        CUDA_SEPARABLE_COMPILATION ON
+                        CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
 
 set_target_properties(${LIBRARY_NAME} PROPERTIES DEFINE_SYMBOL "")
 

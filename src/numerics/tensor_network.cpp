@@ -1,17 +1,16 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/06/15
+REVISION: 2022/07/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) NVIDIA Corporation
+Copyright (C) 2022-2022 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
 #include "tensor_network.hpp"
 #include "tensor_symbol.hpp"
-#include "contraction_seq_optimizer_factory.hpp"
 #include "functor_init_val.hpp"
-
+#include "contraction_seq_optimizer_factory.hpp"
 #include "metis_graph.hpp"
 
 #include <iostream>

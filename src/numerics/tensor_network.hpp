@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/06/15
+REVISION: 2022/07/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -60,6 +60,10 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #include "tensor_op_factory.hpp"
 #include "network_build_factory.hpp"
 #include "contraction_seq_optimizer.hpp"
+
+#ifdef CUQUANTUM
+#include "contraction_seq_optimizer_cutnn.hpp"
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -672,6 +676,9 @@ private:
                                 unsigned int>> //position of the split index in the tensor operand: [0..max]
          > split_tensors_; //information on tensors with split dimensions
  bool universal_indexing_; //universal indexing flag
+#ifdef CUQUANTUM
+ std::shared_ptr<InfoCuTensorNet> info_cutn_; //cutensornet data structures
+#endif
 
  /** Data members: Bond adaptivity: **/
  std::shared_ptr<BondAdaptivity> bond_adaptivity_; //bond adaptivity policy
