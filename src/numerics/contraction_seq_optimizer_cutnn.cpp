@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/07/15
+REVISION: 2022/07/20
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -51,13 +51,14 @@ struct TensorNetworkParsed {
 #ifdef MPI_ENABLED
  MPICommProxy comm; //MPI communicator over executing processes
 #endif
+ int32_t num_input_tensors = 0;
  std::unordered_map<numerics::TensorHashType, TensDescr> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
  std::unordered_map<int32_t, int64_t> mode_extents; //extent of each registered tensor mode (mode --> extent)
  int32_t * num_modes_in = nullptr;
- int64_t ** extents_in = nullptr; //non-owning
+ int64_t ** extents_in = nullptr;
  int64_t ** strides_in = nullptr;
- int32_t ** modes_in = nullptr; //non-owning
+ int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
  int32_t num_modes_out = 0;
  int64_t * extents_out = nullptr; //non-owning
@@ -69,14 +70,23 @@ struct TensorNetworkParsed {
  double prepare_start;
  double prepare_finish;
 
- ~TensorNetworkParsed() {
-  //if(modes_out != nullptr) delete [] modes_out;
+ TensorNetworkParsed(unsigned int num_inp_tensors):
+  num_input_tensors(num_inp_tensors)
+ {
+  num_modes_in = new int32_t[num_input_tensors];
+  extents_in = new int64_t*[num_input_tensors];
+  strides_in = new int64_t*[num_input_tensors];
+  modes_in = new int32_t*[num_input_tensors];
+  alignments_in = new uint32_t[num_input_tensors];
+ }
+
+ ~TensorNetworkParsed()
+ {
   if(strides_out != nullptr) delete [] strides_out;
-  //if(extents_out != nullptr) delete [] extents_out;
   if(alignments_in != nullptr) delete [] alignments_in;
-  //if(modes_in != nullptr) delete [] modes_in;
+  if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
-  //if(extents_in != nullptr) delete [] extents_in;
+  if(extents_in != nullptr) delete [] extents_in;
   if(num_modes_in != nullptr) delete [] num_modes_in;
  }
 };
@@ -116,7 +126,7 @@ ContractionSeqOptimizerCutnn::ContractionSeqOptimizerCutnn():
 
 ContractionSeqOptimizerCutnn::~ContractionSeqOptimizerCutnn()
 {
- HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(cutnn_handle_)));
+ HANDLE_CTN_ERROR(cutensornetDestroy(*((cutensornetHandle_t*)(cutnn_handle_))));
  delete static_cast<cutensornetHandle_t*>(cutnn_handle_);
 }
 
@@ -169,7 +179,8 @@ InfoCuTensorNet::InfoCuTensorNet(cutensornetHandle_t * handle,
                                  std::size_t memory_limit,
                                  std::size_t min_slices,
                                  const TensorNetwork & network):
- cutnn_handle(handle), workspace_size(memory_limit), minimum_slices(min_slices)
+ cutnn_handle(handle), workspace_size(memory_limit), minimum_slices(min_slices),
+ tn_rep(network.getNumTensors())
 {
  parseTensorNetwork(network);
  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerConfig(*cutnn_handle,&cutnn_config));
@@ -218,16 +229,8 @@ static cutensornetComputeType_t getCutensorComputeType(const TensorElementType e
 
 void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
 {
- const int32_t num_input_tensors = network.getNumTensors();
-
- tn_rep.num_modes_in = new int32_t[num_input_tensors];
- tn_rep.extents_in = new int64_t*[num_input_tensors];
- tn_rep.strides_in = new int64_t*[num_input_tensors];
- tn_rep.modes_in = new int32_t*[num_input_tensors];
- tn_rep.alignments_in = new uint32_t[num_input_tensors];
-
- for(unsigned int i = 0; i < num_input_tensors; ++i) tn_rep.strides_in[i] = NULL;
- for(unsigned int i = 0; i < num_input_tensors; ++i) tn_rep.alignments_in[i] = MEM_ALIGNMENT;
+ for(unsigned int i = 0; i < tn_rep.num_input_tensors; ++i) tn_rep.strides_in[i] = NULL;
+ for(unsigned int i = 0; i < tn_rep.num_input_tensors; ++i) tn_rep.alignments_in[i] = MEM_ALIGNMENT;
  tn_rep.strides_out = NULL;
  tn_rep.alignment_out = MEM_ALIGNMENT;
 
@@ -287,7 +290,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  tn_rep.compute_type = getCutensorComputeType(tens_elem_type);
 
  //Create the cuTensorNet tensor network descriptor (not GPU specific):
- HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(*cutnn_handle,num_input_tensors,
+ HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(*cutnn_handle,tn_rep.num_input_tensors,
                   tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.alignments_in,
                   tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,tn_rep.alignment_out,
                   tn_rep.data_type,tn_rep.compute_type,&cutnn_network));

@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/07/15
+REVISION: 2022/07/20
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -92,9 +92,9 @@ struct TensorNetworkReq {
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
  std::unordered_map<int32_t, int64_t> mode_extents; //extent of each registered tensor mode (mode --> extent)
  int32_t * num_modes_in = nullptr;
- int64_t ** extents_in = nullptr; //non-owning
+ int64_t ** extents_in = nullptr;
  int64_t ** strides_in = nullptr;
- int32_t ** modes_in = nullptr; //non-owning
+ int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
  std::vector<void**> gpu_data_in; //vector of owning arrays of non-owning pointers to the input tensor bodies on each GPU
  int32_t num_modes_out;
@@ -140,9 +140,9 @@ struct TensorNetworkReq {
   //if(extents_out != nullptr) delete [] extents_out;
   for(auto & data_in: gpu_data_in) if(data_in != nullptr) delete [] data_in;
   if(alignments_in != nullptr) delete [] alignments_in;
-  //if(modes_in != nullptr) delete [] modes_in;
+  if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
-  //if(extents_in != nullptr) delete [] extents_in;
+  if(extents_in != nullptr) delete [] extents_in;
   if(num_modes_in != nullptr) delete [] num_modes_in;
  }
 };
