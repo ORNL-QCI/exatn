@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-3-Clause **/
 
 #include <iostream>
 #include <algorithm>
+#include <cstring>
 
 namespace exatn{
 
@@ -69,7 +70,9 @@ name_(name), element_type_(TensorElementType::VOID)
   unsigned int inp_mode = 0;
   unsigned int argt = 1; if(left_rank == 0) argt = 2;
   unsigned int max_out_dim = 0;
-  unsigned int contr[left_rank+right_rank][2] = {0};
+  unsigned int contr[left_rank+right_rank][2];
+  memset(contr, 0, (left_rank+right_rank)*2*sizeof(unsigned int));
+
   for(const auto & leg: contraction){
    auto tens_id = leg.getTensorId();
    if(tens_id == 0){ //uncontracted leg of either input tensor

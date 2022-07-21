@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #include <map>
 #include <memory>
 #include <algorithm>
+#include <cstring>
 
 namespace exatn{
 
@@ -969,8 +970,10 @@ bool TensorNetwork::appendTensor(unsigned int tensor_id,
  assert(output_tensor != nullptr); //output tensor must be present
  auto output_rank = output_tensor->getNumLegs();
  if(output_rank > 0 && tensor_rank > 0){
-  int ouf[output_rank] = {0};
-  int tef[tensor_rank] = {0};
+  int ouf[output_rank];
+  memset(ouf, 0, output_rank*sizeof(int));
+  int tef[tensor_rank];
+  memset(tef, 0, tensor_rank*sizeof(int));
   for(const auto & link: pairing){
    if(link.first >= output_rank || link.second >= tensor_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensor): Invalid argument: Invalid leg pairing!" << std::endl;
@@ -1109,7 +1112,8 @@ bool TensorNetwork::appendTensorGate(unsigned int tensor_id,
   return false;
  }
  if(output_rank > 0){
-  char inds[output_rank] = {0};
+  char inds[output_rank];
+  memset(inds, 0, output_rank*sizeof(char));
   for(const auto & leg_id: pairing){
    if(leg_id >= output_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
@@ -1219,7 +1223,8 @@ bool TensorNetwork::appendTensorGateGeneral(unsigned int tensor_id,
   return false;
  }
  if(output_rank > 0){
-  char inds[output_rank] = {0};
+  char inds[output_rank];
+  memset(inds, 0, output_rank*sizeof(char));
   for(const auto & leg_match: pairing){
    if(leg_match.first >= output_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
@@ -1232,7 +1237,8 @@ bool TensorNetwork::appendTensorGateGeneral(unsigned int tensor_id,
   }
  }
  if(tensor_rank > 0){
-  char inds[tensor_rank] = {0};
+  char inds[tensor_rank];
+  memset(inds, 0, tensor_rank*sizeof(char));
   for(const auto & leg_match: pairing){
    if(leg_match.second.first >= tensor_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensorGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;
@@ -1334,8 +1340,10 @@ bool TensorNetwork::appendTensorNetwork(TensorNetwork && network,               
  assert(output1 != nullptr);
  auto output1_rank = output1->getNumLegs();
  if(output0_rank > 0 && output1_rank > 0){
-  int ou0[output0_rank] = {0};
-  int ou1[output1_rank] = {0};
+  int ou0[output0_rank];
+  memset(ou0, 0, output0_rank*sizeof(int));
+  int ou1[output1_rank];
+  memset(ou1, 0, output1_rank*sizeof(int));
   for(const auto & link: pairing){
    if(link.first >= output0_rank || link.second >= output1_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensorNetwork): Invalid argument: Pairing: Out of bounds!" << std::endl;
@@ -1467,7 +1475,8 @@ bool TensorNetwork::appendTensorNetworkGate(TensorNetwork && network,
   return false;
  }
  if(output0_rank > 0){
-  char inds[output0_rank] = {0};
+  char inds[output0_rank];
+  memset(inds, 0, output0_rank*sizeof(char));
   for(const auto & leg_id: pairing){
    if(leg_id >= output0_rank){
     std::cout << "#ERROR(TensorNetwork::appendTensorNetworkGate): Invalid argument: Invalid content of the pairing vector!" << std::endl;

@@ -48,7 +48,7 @@ TensorNetworkOptimizer::TensorNetworkOptimizer(std::shared_ptr<TensorOperator> t
 #else
  parallel_(false),
 #endif
- average_expect_val_({0.0,0.0})
+ average_expect_val_(0.0, 0.0)
 {
  if(!vector_expansion_->isKet()){
   std::cout << "#ERROR(exatn:TensorNetworkOptimizer): The tensor network vector expansion must be a ket!"

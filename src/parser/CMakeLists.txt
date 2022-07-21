@@ -31,7 +31,11 @@ file (GLOB HEADERS *.hpp)
 install(FILES ${HEADERS} DESTINATION include/exatn)
 install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
 
-find_package(Clang 10.0.0)
-if (CLANG_FOUND) 
-add_subdirectory(syntax_handler)
+if (NOT("${CMAKE_CXX_COMPILER_WRAPPER}" MATCHES "CrayPrgEnv"))
+  find_package(Clang 10.0.0)
+  # Only build Syntax Handler when using the custom Clang build.
+  # CrayPrgEnv uses a Clang-based compiler.
+  if (CLANG_FOUND) 
+    add_subdirectory(syntax_handler)
+  endif()
 endif()
