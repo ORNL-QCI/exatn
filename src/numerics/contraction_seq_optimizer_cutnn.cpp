@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/07/20
+REVISION: 2022/07/21
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -52,6 +52,7 @@ struct TensorNetworkParsed {
  MPICommProxy comm; //MPI communicator over executing processes
 #endif
  int32_t num_input_tensors = 0;
+ std::vector<unsigned int> tensor_ids;
  std::unordered_map<numerics::TensorHashType, TensDescr> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
  std::unordered_map<int32_t, int64_t> mode_extents; //extent of each registered tensor mode (mode --> extent)
@@ -73,6 +74,7 @@ struct TensorNetworkParsed {
  TensorNetworkParsed(unsigned int num_inp_tensors):
   num_input_tensors(num_inp_tensors)
  {
+  tensor_ids.resize(num_input_tensors);
   num_modes_in = new int32_t[num_input_tensors];
   extents_in = new int64_t*[num_input_tensors];
   strides_in = new int64_t*[num_input_tensors];
@@ -107,6 +109,10 @@ struct InfoCuTensorNet {
                  const TensorNetwork & network);
 
  ~InfoCuTensorNet();
+
+ void extractContractionSequence(const TensorNetwork & network,
+                                 std::list<ContrTriple> & contr_seq,
+                                 std::function<unsigned int ()> intermediate_num_generator);
 
 private:
 
@@ -162,6 +168,7 @@ double ContractionSeqOptimizerCutnn::determineContractionSequence(const TensorNe
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
  auto info_cutnn = determineContractionSequenceWithSlicing(network,contr_seq,intermediate_num_generator);
+ info_cutnn->extractContractionSequence(network,contr_seq,intermediate_num_generator);
  double flops = 0.0;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(info_cutnn->cutnn_handle),
                    info_cutnn->cutnn_info,CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,&flops,sizeof(flops)));
@@ -237,6 +244,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  int32_t mode_id = 0, tens_num = 0;
  for(auto iter = network.cbegin(); iter != network.cend(); ++iter){
   const auto tens_id = iter->first;
+  if(tens_id != 0) tn_rep.tensor_ids[tens_num] = tens_id;
   const auto & tens = iter->second;
   const auto tens_hash = tens.getTensor()->getTensorHash();
   const auto tens_vol = tens.getTensor()->getVolume();
@@ -294,6 +302,32 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
                   tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.alignments_in,
                   tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,tn_rep.alignment_out,
                   tn_rep.data_type,tn_rep.compute_type,&cutnn_network));
+ return;
+}
+
+
+void InfoCuTensorNet::extractContractionSequence(const TensorNetwork & network,
+                                                 std::list<ContrTriple> & contr_seq,
+                                                 std::function<unsigned int ()> intermediate_num_generator)
+{
+ contr_seq.clear();
+ cutensornetContractionPath_t contr_path{0,nullptr};
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*cutnn_handle,
+                                                                  cutnn_info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                  &contr_path,sizeof(contr_path)));
+ make_sure(contr_path.numContractions == (tn_rep.num_input_tensors - 1));
+ if(contr_path.numContractions > 0){
+  std::vector<unsigned int> tensors(tn_rep.tensor_ids);
+  for(unsigned int i = 0; i < contr_path.numContractions; ++i){
+   const auto & contr = contr_path.data[i];
+   const unsigned int res_id = intermediate_num_generator();
+   contr_seq.emplace_back(ContrTriple{res_id,tensors[contr.first],tensors[contr.second]});
+   tensors.erase(tensors.begin()+contr.first);
+   tensors.erase(tensors.begin()+contr.second);
+   tensors.emplace_back(res_id);
+  }
+ }
  return;
 }
 
