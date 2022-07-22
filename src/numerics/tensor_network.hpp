@@ -518,6 +518,11 @@ public:
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "metis",
                                                                 bool universal_indices = false);
 
+ /** Returns the contraction path and slicing information produced by cuTensorNet. **/
+#ifdef CUQUANTUM
+ std::shared_ptr<InfoCuTensorNet> getCuTensorNetInfo() const {return info_cutn_;}
+#endif
+
  /** Splits some indices of the tensor network into smaller segments in order
      to make sure all intermediates from the operation list will fit within
      the given memory limit. The generated information will be available to

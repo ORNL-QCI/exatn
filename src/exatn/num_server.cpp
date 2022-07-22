@@ -239,7 +239,11 @@ void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool 
 {
  contr_seq_optimizer_ = optimizer_name;
  contr_seq_caching_ = caching;
- contr_seq_slicer_ = default_slicer;
+ if(optimizer_name == "cutnn"){
+  contr_seq_slicer_ = default_slicer;
+ }else{
+  contr_seq_slicer_ = true;
+ }
  return;
 }
 

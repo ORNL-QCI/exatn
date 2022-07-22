@@ -2611,6 +2611,11 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
 #endif
 {
  assert(!operations_.empty());
+#ifdef CUQUANTUM
+ const bool use_exatn_slicer = use_default_slicer;
+#else
+ const bool use_exatn_slicer = true;
+#endif
 
  std::unordered_map<std::string,   //index name
                     double         //cumulative volume of all intermediates carrying this index
@@ -2639,139 +2644,146 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
  split_indices_.clear();
  establishUniversalIndexNumeration();
 
- //Compute cumulative index volumes over all tensor operations:
- for(auto op_iter = operations_.cbegin(); op_iter != operations_.cend(); ++op_iter){
-  const auto & op = *(*op_iter); //tensor operation
-  const auto num_operands = op.getNumOperands();
-  const auto & pattern = op.getIndexPattern();
-  if(!pattern.empty()){ //tensor operation with two or more tensor operands (has a symbolic index pattern)
-   //Extract symbolic tensor operands from the current tensor operation:
-   tens_operands.clear();
-   bool success = parse_tensor_network(pattern,tens_operands);
-   if(success){
-    assert(tens_operands.size() == num_operands);
-    tens_name.clear(); indices.clear();
-    success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
-    if(success){
-     assert(!conjugated); //output tensor operands never appear conjugated
-     auto intermediate_p = op.getTensorOperand(0);
-     if(intermediate_p == nullptr){ //trap
-      std::cout << "#ERROR(exatn::TensorNetwork::splitIndices): Tensor operation is missing operand #0:" << std::endl;
-      op.printIt();
-      assert(false);
-     }
-     const auto & intermediate = *intermediate_p;
-     const auto & intermediate_name = intermediate.getName();
-     assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
-     assert(indices.size() == intermediate.getRank());
-     double intermediate_volume = 1.0;
-     for(unsigned int i = 0; i < indices.size(); ++i){
-      intermediate_volume *= static_cast<double>(intermediate.getDimExtent(i)); //full dimension extent
-     }
-     for(unsigned int i = 0; i < indices.size(); ++i){
-      auto res = index_volume.emplace(std::make_pair(indices[i].label,intermediate_volume));
-      if(!(res.second)) res.first->second += intermediate_volume;
-     }
-    }else{
-     std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-               << "Unable to parse the output tensor operand: " << tens_operands[0] << std::endl;
-     assert(false);
-    }
-   }else{
-    std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-              << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
-    assert(false);
-   }
-  }
- }
-
- //Traverse tensor operations in reverse order and split intermediate tensor indices:
  unsigned int num_split_indices = 0; //total number of indices split
- for(auto op_iter = operations_.rbegin(); op_iter != operations_.rend(); ++op_iter){
-  const auto & op = *(*op_iter); //tensor operation
-  const auto op_hash = op.getTensorOpHash();
-  const auto num_operands = op.getNumOperands();
-  const auto num_operands_out = op.getNumOperandsOut();
-  const auto & pattern = op.getIndexPattern();
-  //Analyze the tensor operation with a symbolic index pattern:
-  if(!pattern.empty()){ //tensor operation with two or more tensor operands (has a symbolic index pattern)
-   assert(num_operands > 1 && num_operands_out == 1); //`Expecting only a single output tensor operand here (no SVDs, etc)
-   //Extract symbolic tensor operands from the current tensor operation:
-   tens_operands.clear();
-   bool success = parse_tensor_network(pattern,tens_operands);
-   if(success){
-    assert(tens_operands.size() == num_operands);
-    //Inspect the output tensor operand (intermediate tensor) and split its dimensions if needed:
-    tens_name.clear(); indices.clear();
-    success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
+ if(use_exatn_slicer){
+  //Compute cumulative index volumes over all tensor operations:
+  for(auto op_iter = operations_.cbegin(); op_iter != operations_.cend(); ++op_iter){
+   const auto & op = *(*op_iter); //tensor operation
+   const auto num_operands = op.getNumOperands();
+   const auto & pattern = op.getIndexPattern();
+   if(!pattern.empty()){ //tensor operation with two or more tensor operands (has a symbolic index pattern)
+    //Extract symbolic tensor operands from the current tensor operation:
+    tens_operands.clear();
+    bool success = parse_tensor_network(pattern,tens_operands);
     if(success){
-     assert(!conjugated); //output tensor operands never appear conjugated
-     const auto & intermediate = *(op.getTensorOperand(0));
-     const auto & intermediate_name = intermediate.getName();
-     assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
-     assert(indices.size() == intermediate.getRank());
-     /*if(!isIntermediateTensorName(tens_name)){ //output tensor operands must be intermediate tensors
+     assert(tens_operands.size() == num_operands);
+     tens_name.clear(); indices.clear();
+     success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
+     if(success){
+      assert(!conjugated); //output tensor operands never appear conjugated
+      auto intermediate_p = op.getTensorOperand(0);
+      if(intermediate_p == nullptr){ //trap
+       std::cout << "#ERROR(exatn::TensorNetwork::splitIndices): Tensor operation is missing operand #0:" << std::endl;
+       op.printIt();
+       assert(false);
+      }
+      const auto & intermediate = *intermediate_p;
+      const auto & intermediate_name = intermediate.getName();
+      assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
+      assert(indices.size() == intermediate.getRank());
+      double intermediate_volume = 1.0;
+      for(unsigned int i = 0; i < indices.size(); ++i){
+       intermediate_volume *= static_cast<double>(intermediate.getDimExtent(i)); //full dimension extent
+      }
+      for(unsigned int i = 0; i < indices.size(); ++i){
+       auto res = index_volume.emplace(std::make_pair(indices[i].label,intermediate_volume));
+       if(!(res.second)) res.first->second += intermediate_volume;
+      }
+     }else{
       std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-                << "The output tensor operand name does not name an intermediate tensor: " << tens_name << std::endl;
+                << "Unable to parse the output tensor operand: " << tens_operands[0] << std::endl;
       assert(false);
-     }*/
-     //Compute the volume of the intermediate tensor and find its full dimensions:
-     dims.clear();
-     std::size_t intermediate_volume = 1;
-     for(unsigned int i = 0; i < indices.size(); ++i){
-      auto index_iter = splitted.find(indices[i].label);
-      if(index_iter != splitted.end()){
-       intermediate_volume *= index_iter->second.second[0].second; //segment extent (already split index)
-      }else{
-       intermediate_volume *= intermediate.getDimExtent(i); //full dimension extent
-       dims.emplace_back(std::pair<unsigned int,std::size_t>{i,1});
-      }
-     }
-     //Split the found full dimensions of the intermediate tensor:
-     if(max_intermediate_volume > 0 && intermediate_volume > max_intermediate_volume){
-      assert(dims.size() > 0); //at least one full dimension is expected
-      //Prioritize full indices by their cumulative volume:
-      std::stable_sort(dims.begin(),dims.end(),[&index_volume,&indices](const auto & d1, const auto & d2){
-                                                return index_volume[indices[d1.first].label]
-                                                     < index_volume[indices[d2.first].label];
-                                               });
-      //Reduce the volume of the intermediate tensor by increasing the number of segments per tensor dimensions:
-      int i = dims.size() - 1; //split dimensions from the right (because of column-wise tensor storage)
-      while(intermediate_volume > max_intermediate_volume){
-       if((dims[i].second)*2 <= intermediate.getDimExtent(dims[i].first)){
-        dims[i].second <<= 1; intermediate_volume >>= 1; //split tensor dimension in half
-       }
-       if(--i < 0) i = dims.size() - 1;
-      }
-      //Split full tensor dimensions into segments:
-      for(const auto & dim: dims){
-       const auto & num_dim_segs = dim.second;
-       if(num_dim_segs > 1){ //number of segments
-        const auto & dim_pos = dim.first;
-        IndexSplit split_info = splitDimension(intermediate.getDimSpaceAttr(dim_pos),
-                                               intermediate.getDimExtent(dim_pos),
-                                               num_dim_segs);
-        auto saved = splitted.emplace(std::make_pair(indices[dim_pos].label,
-                                                     std::make_pair(num_split_indices,split_info)));
-        assert(saved.second);
-        split_indices_.emplace_back(std::make_pair(indices[dim_pos].label,split_info));
-        num_split_indices++;
-       }
-      }
      }
     }else{
      std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-               << "Unable to parse the output tensor operand: " << tens_operands[0] << std::endl;
+               << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
      assert(false);
     }
-   }else{
-    std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-              << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
-    assert(false);
    }
   }
+
+  //Traverse tensor operations in reverse order and split intermediate tensor indices:
+  for(auto op_iter = operations_.rbegin(); op_iter != operations_.rend(); ++op_iter){
+   const auto & op = *(*op_iter); //tensor operation
+   const auto op_hash = op.getTensorOpHash();
+   const auto num_operands = op.getNumOperands();
+   const auto num_operands_out = op.getNumOperandsOut();
+   const auto & pattern = op.getIndexPattern();
+   //Analyze the tensor operation with a symbolic index pattern:
+   if(!pattern.empty()){ //tensor operation with two or more tensor operands (has a symbolic index pattern)
+    assert(num_operands > 1 && num_operands_out == 1); //`Expecting only a single output tensor operand here (no SVDs, etc)
+    //Extract symbolic tensor operands from the current tensor operation:
+    tens_operands.clear();
+    bool success = parse_tensor_network(pattern,tens_operands);
+    if(success){
+     assert(tens_operands.size() == num_operands);
+     //Inspect the output tensor operand (intermediate tensor) and split its dimensions if needed:
+     tens_name.clear(); indices.clear();
+     success = parse_tensor(tens_operands[0],tens_name,indices,conjugated); //`Assumes a single output tensor operand (#0)
+     if(success){
+      assert(!conjugated); //output tensor operands never appear conjugated
+      const auto & intermediate = *(op.getTensorOperand(0));
+      const auto & intermediate_name = intermediate.getName();
+      assert(intermediate_name == tens_name); //tensor must enter the symbolic index pattern under the same name
+      assert(indices.size() == intermediate.getRank());
+      /*if(!isIntermediateTensorName(tens_name)){ //output tensor operands must be intermediate tensors
+       std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                 << "The output tensor operand name does not name an intermediate tensor: " << tens_name << std::endl;
+       assert(false);
+      }*/
+      //Compute the volume of the intermediate tensor and find its full dimensions:
+      dims.clear();
+      std::size_t intermediate_volume = 1;
+      for(unsigned int i = 0; i < indices.size(); ++i){
+       auto index_iter = splitted.find(indices[i].label);
+       if(index_iter != splitted.end()){
+        intermediate_volume *= index_iter->second.second[0].second; //segment extent (already split index)
+       }else{
+        intermediate_volume *= intermediate.getDimExtent(i); //full dimension extent
+        dims.emplace_back(std::pair<unsigned int,std::size_t>{i,1});
+       }
+      }
+      //Split the found full dimensions of the intermediate tensor:
+      if(max_intermediate_volume > 0 && intermediate_volume > max_intermediate_volume){
+       assert(dims.size() > 0); //at least one full dimension is expected
+       //Prioritize full indices by their cumulative volume:
+       std::stable_sort(dims.begin(),dims.end(),[&index_volume,&indices](const auto & d1, const auto & d2){
+                                                 return index_volume[indices[d1.first].label]
+                                                      < index_volume[indices[d2.first].label];
+                                                });
+       //Reduce the volume of the intermediate tensor by increasing the number of segments per tensor dimensions:
+       int i = dims.size() - 1; //split dimensions from the right (because of column-wise tensor storage)
+       while(intermediate_volume > max_intermediate_volume){
+        if((dims[i].second)*2 <= intermediate.getDimExtent(dims[i].first)){
+         dims[i].second <<= 1; intermediate_volume >>= 1; //split tensor dimension in half
+        }
+        if(--i < 0) i = dims.size() - 1;
+       }
+       //Split full tensor dimensions into segments:
+       for(const auto & dim: dims){
+        const auto & num_dim_segs = dim.second;
+        if(num_dim_segs > 1){ //number of segments
+         const auto & dim_pos = dim.first;
+         IndexSplit split_info = splitDimension(intermediate.getDimSpaceAttr(dim_pos),
+                                                intermediate.getDimExtent(dim_pos),
+                                                num_dim_segs);
+         auto saved = splitted.emplace(std::make_pair(indices[dim_pos].label,
+                                                      std::make_pair(num_split_indices,split_info)));
+         assert(saved.second);
+         split_indices_.emplace_back(std::make_pair(indices[dim_pos].label,split_info));
+         num_split_indices++;
+        }
+       }
+      }
+     }else{
+      std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                << "Unable to parse the output tensor operand: " << tens_operands[0] << std::endl;
+      assert(false);
+     }
+    }else{
+     std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+               << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
+     assert(false);
+    }
+   }
+  }
+  assert(split_indices_.size() == num_split_indices);
+ }else{
+  const auto ind_split_info = ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(*this);
+  num_split_indices = ind_split_info.size();
+  //`Finish: splitted, split_indices_
+  fatal_error("#FATAL(exatn::numerics::tensor_network::splitIndices): Not implemented!");
  }
- assert(split_indices_.size() == num_split_indices);
 
  //Traverse tensor operations in reverse order and mark index splitting in each affected tensor:
  for(auto op_iter = operations_.rbegin(); op_iter != operations_.rend(); ++op_iter){

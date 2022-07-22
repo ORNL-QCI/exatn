@@ -52,10 +52,11 @@ struct TensorNetworkParsed {
  MPICommProxy comm; //MPI communicator over executing processes
 #endif
  int32_t num_input_tensors = 0;
- std::vector<unsigned int> tensor_ids;
+ std::vector<unsigned int> tensor_ids; //original tensor ids in the order of their encounter
  std::unordered_map<numerics::TensorHashType, TensDescr> tensor_descriptors; //tensor descriptors (shape, volume, data type, body)
  std::unordered_map<unsigned int, std::vector<int32_t>> tensor_modes; //indices associated with tensor dimensions (key = original tensor id)
  std::unordered_map<int32_t, int64_t> mode_extents; //extent of each registered tensor mode (mode --> extent)
+ std::unordered_map<int32_t, std::pair<unsigned int, unsigned int>> mode_locations; //location of each mode on the first encounter (mode --> {tensor_id,position})
  int32_t * num_modes_in = nullptr;
  int64_t ** extents_in = nullptr;
  int64_t ** strides_in = nullptr;
@@ -276,6 +277,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
    if(other_tens_iter == tn_rep.tensor_modes.end()){
     res1.first->second[i] = ++mode_id;
     auto new_mode = tn_rep.mode_extents.emplace(std::make_pair(mode_id,tens_dims[i]));
+    auto new_locn = tn_rep.mode_locations.emplace(std::make_pair(mode_id,std::make_pair(tens_id,i)));
    }else{
     res1.first->second[i] = other_tens_iter->second[other_tens_leg_id];
    }
@@ -348,6 +350,16 @@ void InfoCuTensorNet::extractContractionSequence(const TensorNetwork & network,
  for(const auto & ctr: contr_seq) std::cout << "{" << ctr.result_id << ":" << ctr.left_id << "," << ctr.right_id << "}";
  std::cout << std::endl << std::flush;*/
  return;
+}
+
+
+std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>>
+ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(const TensorNetwork & network)
+{
+ std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>> ind_split_info;
+ const auto & cutn_info = *(network.getCuTensorNetInfo());
+ //`Finish: Extract sliced modes, return their locations and extents
+ return ind_split_info;
 }
 
 } //namespace numerics

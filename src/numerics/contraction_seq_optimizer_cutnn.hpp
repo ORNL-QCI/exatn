@@ -46,6 +46,10 @@ public:
 
  static std::unique_ptr<ContractionSeqOptimizer> createNew();
 
+ /** Returns information on index splitting done by cuTensorNet: {{tensor_id,index_position},segment_size}.
+     The tensor id and index position inside the tensor are returned for the first encounter of that index. **/
+ static std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>> extractIndexSplittingInfo(const TensorNetwork & network);
+
 protected:
 
  using ContractionSequence = std::list<ContrTriple>;
