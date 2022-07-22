@@ -242,6 +242,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  tn_rep.strides_out = NULL;
  tn_rep.alignment_out = MEM_ALIGNMENT;
 
+ const auto tens_elem_type = network.getTensorElementType();
  int32_t mode_id = 0, tens_num = 0;
  for(auto iter = network.cbegin(); iter != network.cend(); ++iter){
   const auto tens_id = iter->first;
@@ -250,12 +251,6 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
   const auto tens_hash = tens.getTensor()->getTensorHash();
   const auto tens_vol = tens.getTensor()->getVolume();
   const auto tens_rank = tens.getRank();
-  const auto tens_type = tens.getElementType();
-  if(tens_type == TensorElementType::VOID){
-   std::cout << "#ERROR(exatn::numerics::contraction_seq_optimizer_cutnn): Network tensor #" << tens_id
-             << " has not been allocated typed storage yet!\n";
-   std::abort();
-  }
   const auto & tens_legs = tens.getTensorLegs();
   const auto & tens_dims = tens.getDimExtents();
 
@@ -264,7 +259,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
    auto & descr = res0.first->second;
    descr.extents.resize(tens_rank);
    for(unsigned int i = 0; i < tens_rank; ++i) descr.extents[i] = tens_dims[i];
-   descr.data_type = getCudaDataType(tens_type);
+   descr.data_type = getCudaDataType(tens_elem_type);
    descr.volume = tens_vol;
   }
 
@@ -295,7 +290,6 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
   }
  }
 
- const auto tens_elem_type = network.getTensorElementType();
  tn_rep.data_type = getCudaDataType(tens_elem_type);
  tn_rep.compute_type = getCutensorComputeType(tens_elem_type);
 
