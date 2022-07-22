@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/14
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -494,8 +494,11 @@ public:
      The tensor network must contain at least two input tensors in order to generate a single contraction.
      No contraction sequence is generated for tensor networks consisting of a single input tensor.
      If the tensor network already has its contraction sequence determined, does nothing. Note that
-     the FMA flop count neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers.**/
- double determineContractionSequence(const std::string & contr_seq_opt_name = "metis");
+     the FMA flop count neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers.
+     The last two parameters make sense only for certain optimizers, e.g. cutnn (cuTensorNet). **/
+ double determineContractionSequence(const std::string & contr_seq_opt_name = "metis", //in: contraction sequence optimizer name
+                                     std::size_t memory_limit = 0, //in: memory limit per MPI process (bytes) to hold intermediate tensors
+                                     std::size_t min_slices = 1); //in: number of tensor network slices to produce
 
  /** Imports and caches an externally provided tensor contraction sequence. **/
  void importContractionSequence(const std::list<ContrTriple> & contr_sequence, //in: imported tensor contraction sequence
@@ -519,7 +522,12 @@ public:
      to make sure all intermediates from the operation list will fit within
      the given memory limit. The generated information will be available to
      the processing backend when the tensor network is submitted for evaluation. **/
+#ifdef CUQUANTUM
+ void splitIndices(std::size_t max_intermediate_volume, //in: intermediate volume limit
+                   bool use_default_slicer = true); //in: whether or not to use the default exatn slicer
+#else
  void splitIndices(std::size_t max_intermediate_volume); //in: intermediate volume limit
+#endif
 
  /** Returns the total number of splitted indices. **/
  unsigned int getNumSplitIndices() const;

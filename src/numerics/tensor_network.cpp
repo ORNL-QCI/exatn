@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/14
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -642,6 +642,9 @@ void TensorNetwork::invalidateContractionSequence()
  max_intermediate_volume_ = 0.0;
  max_intermediate_rank_ = 0;
  universal_indexing_ = false;
+#ifdef CUQUANTUM
+ info_cutn_.reset();
+#endif
  return;
 }
 
@@ -674,7 +677,8 @@ double TensorNetwork::determineContractionSequence(ContractionSeqOptimizer & con
 }
 
 
-double TensorNetwork::determineContractionSequence(const std::string & contr_seq_opt_name)
+double TensorNetwork::determineContractionSequence(const std::string & contr_seq_opt_name,
+                                                   std::size_t memory_limit, std::size_t min_slices)
 {
  auto iter = optimizers.find(contr_seq_opt_name);
  if(iter == optimizers.end()){ //not cached
@@ -691,6 +695,8 @@ double TensorNetwork::determineContractionSequence(const std::string & contr_seq
    assert(false);
   }
  }
+ iter->second->resetMemLimit(memory_limit);
+ iter->second->resetMinSlices(min_slices);
  return determineContractionSequence(*(iter->second));
 }
 
@@ -699,6 +705,9 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
                                               double fma_flops)
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
+#ifdef CUQUANTUM
+ info_cutn_.reset();
+#endif
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
  contraction_seq_flops_ = fma_flops; //flop count may be unknown yet (defaults to zero)
@@ -713,6 +722,9 @@ void TensorNetwork::importContractionSequence(const std::vector<unsigned int> & 
                                               double fma_flops)
 {
  assert(finalized_ != 0); //tensor network must be in finalized state
+#ifdef CUQUANTUM
+ info_cutn_.reset();
+#endif
  contraction_seq_.clear();
  unpackContractionSequenceFromVector(contraction_seq_,contr_sequence_content);
  contraction_seq_flops_ = fma_flops; //flop count may be unknown yet (defaults to zero)
@@ -2592,8 +2604,11 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
  return operations_;
 }
 
-
+#ifdef CUQUANTUM
+void TensorNetwork::splitIndices(std::size_t max_intermediate_volume, bool use_default_slicer)
+#else
 void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
+#endif
 {
  assert(!operations_.empty());
 

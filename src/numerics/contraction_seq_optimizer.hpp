@@ -1,8 +1,11 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2021/04/01
+REVISION: 2022/07/22
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 /** Rationale:
 **/
@@ -46,6 +49,10 @@ class ContractionSeqOptimizer{
 public:
 
  virtual ~ContractionSeqOptimizer() = default;
+
+ virtual void resetMemLimit(std::size_t mem_limit);
+
+ virtual void resetMinSlices(std::size_t min_slices);
 
  /** Determines the pseudo-optimal tensor contraction sequence required for
      evaluating a given tensor network. The unique intermediate tensor id's are generated

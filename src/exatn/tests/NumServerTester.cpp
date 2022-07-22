@@ -4115,7 +4115,7 @@ TEST(NumServerTester, CuTensorNet) {
 
  const int NUM_REPEATS = 10;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,2); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -4144,6 +4144,8 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::initTensor("G",0.0); assert(success);
 
  success = exatn::sync(); assert(success);
+
+ exatn::resetContrSeqOptimizer("cutnn",false,true); //debug
 
  std::cout << "Testing individual tensor network execution via default backend ...\n";
  int num_repeats = NUM_REPEATS;

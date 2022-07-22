@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: cuTensorNet heuristics
-REVISION: 2022/07/15
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -36,14 +36,9 @@ public:
  ContractionSeqOptimizerCutnn();
  virtual ~ContractionSeqOptimizerCutnn();
 
- void resetMemLimit(std::size_t mem_limit);
+ virtual void resetMemLimit(std::size_t mem_limit) override;
 
- void resetMinSlices(std::size_t min_slices);
-
- std::shared_ptr<InfoCuTensorNet> determineContractionSequenceWithSlicing(
-                                   const TensorNetwork & network,
-                                   std::list<ContrTriple> & contr_seq,
-                                   std::function<unsigned int ()> intermediate_num_generator);
+ virtual void resetMinSlices(std::size_t min_slices) override;
 
  virtual double determineContractionSequence(const TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
@@ -54,6 +49,11 @@ public:
 protected:
 
  using ContractionSequence = std::list<ContrTriple>;
+
+ std::shared_ptr<InfoCuTensorNet> determineContractionSequenceWithSlicing(
+                                   const TensorNetwork & network,
+                                   std::list<ContrTriple> & contr_seq,
+                                   std::function<unsigned int ()> intermediate_num_generator);
 
  std::size_t mem_limit_; //memory limit (for intermediates)
  std::size_t min_slices_; //min number of slices to produce

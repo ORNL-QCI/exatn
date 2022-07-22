@@ -1,8 +1,11 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: Base
-REVISION: 2021/04/01
+REVISION: 2022/07/22
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 #include "contraction_seq_optimizer.hpp"
 #include "tensor_network.hpp"
@@ -18,6 +21,18 @@ namespace numerics{
 //Cache of already determined tensor network contraction sequences:
 std::unordered_map<std::string,ContractionSeqOptimizer::CachedContrSeq> ContractionSeqOptimizer::cached_contr_seqs_;
 bool ContractionSeqOptimizer::cache_to_disk_{false};
+
+
+void ContractionSeqOptimizer::resetMemLimit(std::size_t mem_limit)
+{
+ return;
+}
+
+
+void ContractionSeqOptimizer::resetMinSlices(std::size_t min_slices)
+{
+ return;
+}
 
 
 void packContractionSequenceIntoVector(const std::list<ContrTriple> & contr_sequence,

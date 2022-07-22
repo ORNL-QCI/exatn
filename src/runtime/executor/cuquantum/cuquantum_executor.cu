@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/07/20
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -37,13 +37,13 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #define HANDLE_CUDA_ERROR(x) \
 { const auto err = x; \
   if( err != cudaSuccess ) \
-  { printf("Error: %s in line %d\n", cudaGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
+  { printf("#ERROR(cuquantum_executor): %s in line %d\n", cudaGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
 };
 
 #define HANDLE_CTN_ERROR(x) \
 { const auto err = x; \
   if( err != CUTENSORNET_STATUS_SUCCESS ) \
-  { printf("Error: %s in line %d\n", cutensornetGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
+  { printf("#ERROR(cuquantum_executor): %s in line %d\n", cutensornetGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
 };
 
 
@@ -734,7 +734,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                     &flops,sizeof(flops)));
    assert(flops >= 0.0);
-   flops_ += (flops / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution
+   flops_ += ((flops * 0.5) / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution
              tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
    tn_req->num_slices = 0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,

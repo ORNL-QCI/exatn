@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/17
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -94,7 +94,8 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), comp_backend_("default"),
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), contr_seq_slicer_(true),
+ logging_(0), comp_backend_("default"),
  intra_comm_(communicator), validation_tracing_(false)
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
@@ -123,7 +124,8 @@ NumServer::NumServer(const MPICommProxy & communicator,
 NumServer::NumServer(const ParamConf & parameters,
                      const std::string & graph_executor_name,
                      const std::string & node_executor_name):
- contr_seq_optimizer_("metis"), contr_seq_caching_(false), logging_(0), comp_backend_("default"),
+ contr_seq_optimizer_("metis"), contr_seq_caching_(false), contr_seq_slicer_(true),
+ logging_(0), comp_backend_("default"),
  validation_tracing_(false)
 {
  num_processes_ = 1; process_rank_ = 0; global_process_rank_ = 0;
@@ -233,10 +235,11 @@ void NumServer::switchComputationalBackend(const std::string & backend_name)
  return;
 }
 
-void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool caching)
+void NumServer::resetContrSeqOptimizer(const std::string & optimizer_name, bool caching, bool default_slicer)
 {
  contr_seq_optimizer_ = optimizer_name;
  contr_seq_caching_ = caching;
+ contr_seq_slicer_ = default_slicer;
  return;
 }
 
@@ -696,6 +699,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(logging_ > 0) network.printItFile(logfile_);
 
  //Determine the pseudo-optimal tensor contraction sequence:
+ const std::size_t proc_mem_limit = process_group.getMemoryLimitPerProcess() / (1.5 * 2.0); //{1.5:memory fragmentation}; {2.0:tensor transpose}
  const auto num_input_tensors = network.getNumTensors();
  bool new_contr_seq = network.exportContractionSequence().empty();
  if(contr_seq_caching_ && new_contr_seq){ //check whether the optimal tensor contraction sequence is already available from the past
@@ -706,7 +710,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
   }
  }
  if(new_contr_seq){
-  double flops = network.determineContractionSequence(contr_seq_optimizer_);
+  double flops = network.determineContractionSequence(contr_seq_optimizer_,proc_mem_limit,num_procs);
  }
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
                            << "]: Found a contraction sequence candidate locally (caching = " << contr_seq_caching_
@@ -759,7 +763,11 @@ bool NumServer::submit(const ProcessGroup & process_group,
  }
  if(logging_ > 0) logfile_ << max_intermediate_volume << " (after slicing)" << std::endl << std::flush;
  //if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0)
+#ifdef CUQUANTUM
+ network.splitIndices(static_cast<std::size_t>(max_intermediate_volume),contr_seq_slicer_);
+#else
  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume));
+#endif
  if(logging_ > 0) network.printSplitIndexInfo(logfile_,logging_ > 1);
 
  //Create the output tensor of the tensor network if needed:

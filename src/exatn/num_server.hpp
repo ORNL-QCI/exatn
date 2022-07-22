@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/06/17
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -288,7 +288,8 @@ public:
  /** Resets the tensor contraction sequence optimizer that is
      invoked when evaluating tensor networks. **/
  void resetContrSeqOptimizer(const std::string & optimizer_name, //in: tensor contraction sequence optimizer name
-                             bool caching = false);              //whether or not optimized tensor contraction sequence will be cached for later reuse
+                             bool caching = false,               //in: whether or not optimized tensor contraction sequence will be cached for a later reuse
+                             bool default_slicer = true);        //in: whether or not to still use the default exatn slicer
 
  /** Activates optimized tensor contraction sequence caching for later reuse. **/
  void activateContrSeqCaching(bool persist = false);
@@ -1109,6 +1110,7 @@ private:
  //Contraction path optimizer:
  std::string contr_seq_optimizer_; //tensor contraction sequence optimizer invoked when evaluating tensor networks
  bool contr_seq_caching_; //regulates whether or not to cache pseudo-optimal tensor contraction orders for later reuse
+ bool contr_seq_slicer_; //regulates whether or not to keep using the default exatn slicer after contraction order determination
 
  //Registered external methods and data:
  std::map<std::string,std::shared_ptr<TensorMethod>> ext_methods_; //external tensor methods

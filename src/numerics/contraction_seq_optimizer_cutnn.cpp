@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/07/21
+REVISION: 2022/07/22
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -32,7 +32,7 @@ namespace numerics{
 #define HANDLE_CTN_ERROR(x) \
 { const auto err = x; \
   if( err != CUTENSORNET_STATUS_SUCCESS ) \
-  { printf("Error: %s in line %d\n", cutensornetGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
+  { printf("#ERROR(contraction_seq_optimizer_cutnn): %s in line %d\n", cutensornetGetErrorString(err), __LINE__); fflush(stdout); std::abort(); } \
 };
 
 
@@ -172,7 +172,7 @@ double ContractionSeqOptimizerCutnn::determineContractionSequence(const TensorNe
  double flops = 0.0;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(info_cutnn->cutnn_handle),
                    info_cutnn->cutnn_info,CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,&flops,sizeof(flops)));
- return flops;
+ return (flops * 0.5); //removed the FMA factor
 }
 
 
@@ -318,16 +318,35 @@ void InfoCuTensorNet::extractContractionSequence(const TensorNetwork & network,
                                                                   &contr_path,sizeof(contr_path)));
  make_sure(contr_path.numContractions == (tn_rep.num_input_tensors - 1));
  if(contr_path.numContractions > 0){
+  contr_path.data = new cutensornetNodePair_t[contr_path.numContractions];
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*cutnn_handle,
+                                                                   cutnn_info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_PATH,
+                                                                   &contr_path,sizeof(contr_path)));
+  /*std::cout << "#DEBUG(contraction_seq_optimizer_cutnn): cuTensorNet contraction path:\n";
+  for(unsigned int i = 0; i < contr_path.numContractions; ++i) std::cout << "{" << contr_path.data[i].first
+                                                                         << "," << contr_path.data[i].second << "}";
+  std::cout << std::endl;*/
   std::vector<unsigned int> tensors(tn_rep.tensor_ids);
+  /*std::cout << "#DEBUG(contraction_seq_optimizer_cutnn): Tensor Ids:\n";
+  for(const auto & id: tensors) std::cout << " " << id;
+  std::cout << std::endl;*/
   for(unsigned int i = 0; i < contr_path.numContractions; ++i){
    const auto & contr = contr_path.data[i];
-   const unsigned int res_id = intermediate_num_generator();
-   contr_seq.emplace_back(ContrTriple{res_id,tensors[contr.first],tensors[contr.second]});
-   tensors.erase(tensors.begin()+contr.first);
-   tensors.erase(tensors.begin()+contr.second);
-   tensors.emplace_back(res_id);
+   unsigned int res_id = 0;
+   if(i < (contr_path.numContractions - 1)) res_id = intermediate_num_generator();
+   unsigned int lid = contr.first, rid = contr.second;
+   if(lid > rid) std::swap(lid,rid);
+   contr_seq.emplace_back(ContrTriple{res_id,tensors[lid],tensors[rid]});
+   tensors.erase(tensors.begin()+rid);
+   tensors.erase(tensors.begin()+lid);
+   if(res_id > 0) tensors.emplace_back(res_id);
   }
+  delete [] contr_path.data;
  }
+ /*std::cout << "#DEBUG(contraction_seq_optimizer_cutnn): Extracted contraction sequence:\n";
+ for(const auto & ctr: contr_seq) std::cout << "{" << ctr.result_id << ":" << ctr.left_id << "," << ctr.right_id << "}";
+ std::cout << std::endl << std::flush;*/
  return;
 }
 
