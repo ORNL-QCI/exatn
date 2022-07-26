@@ -8,7 +8,7 @@ if(CUQUANTUM)
   enable_language(CUDA)
   set(CUDA_FOUND TRUE)
   set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++14 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -forward-unknown-to-host-compiler -std=c++14 -gencode arch=compute_${CUDA_ARCH_BIN},code=sm_${CUDA_ARCH_BIN} -rdc=true --compiler-options -fPIC ${CMAKE_CXX_FLAGS}")
   set_source_files_properties(contraction_seq_optimizer_cutnn.cpp PROPERTIES LANGUAGE CUDA)
 endif()
 
