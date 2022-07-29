@@ -28,7 +28,7 @@ public:
 
  void resetNumWalkers(unsigned int num_walkers);
 
- virtual double determineContractionSequence(const TensorNetwork & network,
+ virtual double determineContractionSequence(TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) override;
 

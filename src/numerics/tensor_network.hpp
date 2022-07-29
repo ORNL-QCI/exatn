@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -518,8 +518,11 @@ public:
  std::list<std::shared_ptr<TensorOperation>> & getOperationList(const std::string & contr_seq_opt_name = "metis",
                                                                 bool universal_indices = false);
 
- /** Returns the contraction path and slicing information produced by cuTensorNet. **/
 #ifdef CUQUANTUM
+ /** Saves the contraction path and slicing information produced by cuTensorNet. **/
+ void setCuTensorNetInfo(std::shared_ptr<InfoCuTensorNet> cutn_info) {info_cutn_ = cutn_info; return;}
+
+ /** Returns the contraction path and slicing information produced by cuTensorNet. **/
  std::shared_ptr<InfoCuTensorNet> getCuTensorNetInfo() const {return info_cutn_;}
 #endif
 

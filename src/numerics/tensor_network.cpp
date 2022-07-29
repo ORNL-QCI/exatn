@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -2541,9 +2541,9 @@ std::list<std::shared_ptr<TensorOperation>> & TensorNetwork::getOperationList(co
      if(tensor0->getElementType() == TensorElementType::VOID) tensor0->setElementType(default_elem_type);
     }
     auto op = tensor_op_factory.createTensorOpShared(TensorOpCode::CONTRACT);
-    op->setTensorOperand(tensor0);
-    op->setTensorOperand(tensor1,conj1);
-    op->setTensorOperand(tensor2,conj2);
+    op->setTensorOperand(tensor0,false,contr->result_id);
+    op->setTensorOperand(tensor1,conj1,contr->left_id);
+    op->setTensorOperand(tensor2,conj2,contr->right_id);
     op->setIndexPattern(contr_pattern);
     if(!ACCUMULATIVE_CONTRACTIONS && contr->result_id != 0) //no accumulation into intermediate tensors
      std::dynamic_pointer_cast<TensorOpContract>(op)->resetAccumulative(false);
@@ -2779,9 +2779,48 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
   }
   assert(split_indices_.size() == num_split_indices);
  }else{
+  //Import slicing information from cuTensorNet:
   const auto ind_split_info = ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(*this);
   num_split_indices = ind_split_info.size();
-  //`Finish: splitted, split_indices_
+  //Find the indices which were marked for slicing:
+  for(auto op_iter = operations_.cbegin(); op_iter != operations_.cend(); ++op_iter){
+   const auto & op = *(*op_iter); //tensor operation
+   if(op.getOpcode() == TensorOpCode::CONTRACT){
+    const auto num_operands = op.getNumOperands();
+    const auto & pattern = op.getIndexPattern();
+    if(!pattern.empty() && num_operands == 3){
+     //Determine whether the participating input tensors have splitted modes:
+     const auto left_id = op.getTensorOperandId(1);
+     const auto right_id = op.getTensorOperandId(2);
+     //`Look for these ids in ind_split_info
+     if(true){
+      //Extract symbolic tensor operands from the current tensor operation:
+      tens_operands.clear();
+      bool success = parse_tensor_network(pattern,tens_operands);
+      if(success){
+       assert(tens_operands.size() == num_operands);
+       tens_name.clear(); indices.clear();
+       success = parse_tensor(tens_operands[1],tens_name,indices,conjugated);
+       if(success){
+        auto left_operand = op.getTensorOperand(1);
+       }else{
+        std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                  << "Unable to parse the left tensor operand: " << tens_operands[0] << std::endl;
+        assert(false);
+       }
+      }else{
+       std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                 << "Unable to parse the tensor operation index pattern: " << pattern << std::endl;
+       assert(false);
+      }
+     }
+    }else{
+     std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+               << "Corrupted tensor contraction operation!" << std::endl;
+     assert(false);
+    }
+   }
+  }
   fatal_error("#FATAL(exatn::numerics::tensor_network::splitIndices): Not implemented!");
  }
 

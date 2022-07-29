@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1150,7 +1150,7 @@ inline void switchComputationalBackend(const std::string & backend_name)
     will also need to reset default_slicer to FALSE, unless you
     prefer to keep using the default exatn index slicer. **/
 inline void resetContrSeqOptimizer(const std::string & optimizer_name, //in: optimizer name
-                                   bool caching = false, //in: whether or not optimized tensor contraction sequence will be cached for a later reuse
+                                   bool caching = false, //in: whether or not to cache optimized tensor contraction sequences for a later reuse
                                    bool default_slicer = true) //in: whether or not to still use the default exatn slicer
  {return numericalServer->resetContrSeqOptimizer(optimizer_name,caching,default_slicer);}
 

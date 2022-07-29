@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: cuTensorNet heuristics
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -40,7 +40,7 @@ public:
 
  virtual void resetMinSlices(std::size_t min_slices) override;
 
- virtual double determineContractionSequence(const TensorNetwork & network,
+ virtual double determineContractionSequence(TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) override;
 
@@ -55,7 +55,7 @@ protected:
  using ContractionSequence = std::list<ContrTriple>;
 
  std::shared_ptr<InfoCuTensorNet> determineContractionSequenceWithSlicing(
-                                   const TensorNetwork & network,
+                                   TensorNetwork & network,
                                    std::list<ContrTriple> & contr_seq,
                                    std::function<unsigned int ()> intermediate_num_generator);
 

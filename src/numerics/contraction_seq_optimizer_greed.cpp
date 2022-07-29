@@ -37,7 +37,7 @@ void ContractionSeqOptimizerGreed::resetAcceptanceTolerance(double acceptance_to
 }
 
 
-double ContractionSeqOptimizerGreed::determineContractionSequence(const TensorNetwork & network,
+double ContractionSeqOptimizerGreed::determineContractionSequence(TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {

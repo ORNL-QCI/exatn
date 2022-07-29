@@ -30,7 +30,7 @@ void ContractionSeqOptimizerHeuro::resetNumWalkers(unsigned int num_walkers)
 }
 
 
-double ContractionSeqOptimizerHeuro::determineContractionSequence(const TensorNetwork & network,
+double ContractionSeqOptimizerHeuro::determineContractionSequence(TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {

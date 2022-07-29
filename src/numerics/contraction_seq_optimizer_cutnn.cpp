@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -124,7 +124,7 @@ private:
 
 
 ContractionSeqOptimizerCutnn::ContractionSeqOptimizerCutnn():
- min_slices_(1)
+ mem_limit_(0), min_slices_(1), cutnn_handle_(nullptr)
 {
  cutnn_handle_ = static_cast<void*>(new cutensornetHandle_t);
  HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(cutnn_handle_)));
@@ -155,16 +155,17 @@ void ContractionSeqOptimizerCutnn::resetMinSlices(std::size_t min_slices)
 
 
 std::shared_ptr<InfoCuTensorNet> ContractionSeqOptimizerCutnn::determineContractionSequenceWithSlicing(
-                                  const TensorNetwork & network,
+                                  TensorNetwork & network,
                                   std::list<ContrTriple> & contr_seq,
                                   std::function<unsigned int ()> intermediate_num_generator)
 {
  auto info_cutnn = std::make_shared<InfoCuTensorNet>((cutensornetHandle_t*)(cutnn_handle_),mem_limit_,min_slices_,network);
+ network.setCuTensorNetInfo(info_cutnn);
  return info_cutnn;
 }
 
 
-double ContractionSeqOptimizerCutnn::determineContractionSequence(const TensorNetwork & network,
+double ContractionSeqOptimizerCutnn::determineContractionSequence(TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
@@ -173,7 +174,7 @@ double ContractionSeqOptimizerCutnn::determineContractionSequence(const TensorNe
  double flops = 0.0;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(info_cutnn->cutnn_handle),
                    info_cutnn->cutnn_info,CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,&flops,sizeof(flops)));
- return (flops * 0.5); //removed the FMA factor
+ return (flops * 0.5); //removed the FMA factor of 2 (formal multiplications only, no complex prefactor of 4)
 }
 
 
@@ -350,9 +351,33 @@ void InfoCuTensorNet::extractContractionSequence(const TensorNetwork & network,
 std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>>
 ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(const TensorNetwork & network)
 {
- std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>> ind_split_info;
+ std::vector<std::pair<std::pair<unsigned int, unsigned int>, DimExtent>> ind_split_info; //{{tensor_id,index_position},segment_size}
  const auto & cutn_info = *(network.getCuTensorNetInfo());
- //`Finish: Extract sliced modes, return their locations and extents
+ int32_t num_sliced_modes = 0;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(cutn_info.cutnn_handle),
+                                                                  cutn_info.cutnn_info,
+                                                                  CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
+                                                                  &num_sliced_modes,sizeof(num_sliced_modes)));
+ assert(num_sliced_modes >= 0);
+ if(num_sliced_modes > 0){
+  std::vector<int32_t> sliced_modes(num_sliced_modes);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(cutn_info.cutnn_handle),
+                                                                   cutn_info.cutnn_info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_MODE,
+                                                                   sliced_modes.data(),sliced_modes.size()*sizeof(int32_t)));
+  std::vector<int64_t> sliced_extents(num_sliced_modes);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(cutn_info.cutnn_handle),
+                                                                   cutn_info.cutnn_info,
+                                                                   CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_EXTENT,
+                                                                   sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
+  ind_split_info.resize(num_sliced_modes);
+  for(unsigned int i = 0; i < num_sliced_modes; ++i){
+   auto iter = cutn_info.tn_rep.mode_locations.find(sliced_modes[i]);
+   make_sure(iter != cutn_info.tn_rep.mode_locations.end(),
+             "#ERROR(exatn::numerics::contractionSeqOptimizerCutnn::extractIndexSplittingInfo): Mode not found!");
+   ind_split_info[i] = std::make_pair(iter->second,static_cast<DimExtent>(sliced_extents[i]));
+  }
+ }
  return ind_split_info;
 }
 

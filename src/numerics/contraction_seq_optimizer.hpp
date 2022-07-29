@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -62,7 +62,7 @@ public:
      The tensor network must have at least two input tensors in order to get a single contraction.
      No contraction sequence is generated for tensor networks with a single input tensor. Note that
      the FMA flop count neither includes the FMA factor of 2.0 nor the factor of 4.0 for complex numbers. **/
- virtual double determineContractionSequence(const TensorNetwork & network,
+ virtual double determineContractionSequence(TensorNetwork & network,
                                              std::list<ContrTriple> & contr_seq,
                                              std::function<unsigned int ()> intermediate_num_generator) = 0;
 

@@ -11,7 +11,7 @@ namespace exatn{
 
 namespace numerics{
 
-double ContractionSeqOptimizerDummy::determineContractionSequence(const TensorNetwork & network,
+double ContractionSeqOptimizerDummy::determineContractionSequence(TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {

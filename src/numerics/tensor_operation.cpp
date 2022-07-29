@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/07/13
+REVISION: 2022/07/29
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operation.hpp"
 #include "tensor_symbol.hpp"
@@ -138,6 +138,12 @@ TensorHashType TensorOperation::getTensorOperandHash(unsigned int op_num) const
  return this->getTensorOperand(op_num)->getTensorHash();
 }
 
+unsigned int TensorOperation::getTensorOperandId(unsigned int op_num) const
+{
+ assert(op_num < operand_tensor_ids_.size());
+ return operand_tensor_ids_[op_num];
+}
+
 bool TensorOperation::operandIsConjugated(unsigned int op_num) const
 {
  assert(op_num < operands_.size());
@@ -162,9 +168,9 @@ std::shared_ptr<Tensor> TensorOperation::getTensorOperand(unsigned int op_num,
  return std::shared_ptr<Tensor>(nullptr);
 }
 
-void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
-                                       bool conjugated,
-                                       bool mutated)
+void TensorOperation::appendTensorOperand(std::shared_ptr<Tensor> tensor,
+                                          bool conjugated,
+                                          bool mutated)
 {
  assert(tensor);
  assert(operands_.size() < num_operands_);
@@ -173,9 +179,11 @@ void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
 }
 
 void TensorOperation::setTensorOperand(std::shared_ptr<Tensor> tensor,
-                                       bool conjugated)
+                                       bool conjugated,
+                                       unsigned int tensor_id)
 {
- return this->setTensorOperand(tensor,conjugated,(mutation_>>operands_.size())&(0x1U));
+ operand_tensor_ids_.emplace_back(tensor_id);
+ return this->appendTensorOperand(tensor,conjugated,(mutation_>>operands_.size())&(0x1U));
 }
 
 bool TensorOperation::resetTensorOperand(unsigned int op_num,

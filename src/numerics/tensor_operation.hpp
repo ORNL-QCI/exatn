@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2021/08/19
+REVISION: 2022/07/29
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  (a) A tensor operation is a formal numerical operation on one or more tensors.
@@ -178,6 +178,9 @@ public:
  /** Returns a unique integer tensor operand identifier. **/
  TensorHashType getTensorOperandHash(unsigned int op_num) const;
 
+ /** Returns the tensor operand id (its constituent tensor id). **/
+ unsigned int getTensorOperandId(unsigned int op_num) const;
+
  /** Returns the complex conjugation status of a tensor operand
      (whether or not the operand enters the operation as complex conjugated). **/
  bool operandIsConjugated(unsigned int op_num) const;
@@ -193,7 +196,8 @@ public:
 
  /** Sets the next tensor operand. **/
  void setTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
-                       bool conjugated = false);       //in: complex conjugation status
+                       bool conjugated = false,        //in: complex conjugation status
+                       unsigned int tensor_id = 0);    //in: optional tensor id
 
  /** Resets an already existing tensor operand. **/
  bool resetTensorOperand(unsigned int op_num,             //in: tensor operand position
@@ -265,10 +269,10 @@ public:
 
 private:
 
- /** Sets the next tensor operand with its mutability status. **/
- void setTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
-                       bool conjugated,                //in: complex conjugation status
-                       bool mutated);                  //in: mutability status
+ /** Appends the next tensor operand with its mutability status. **/
+ void appendTensorOperand(std::shared_ptr<Tensor> tensor, //in: tensor
+                          bool conjugated,                //in: complex conjugation status
+                          bool mutated);                  //in: mutability status
 
 protected:
 
@@ -276,6 +280,7 @@ protected:
  std::string pattern_; //symbolic index pattern
  const std::vector<int> symb_pos_; //symb_pos_[operand_position] --> operand position in the symbolic index pattern;
  std::vector<std::tuple<std::shared_ptr<Tensor>,bool,bool>> operands_; //tensor operands <operand,conjugation,mutation>
+ std::vector<unsigned int> operand_tensor_ids_; //tensor ids (optional)
  std::vector<std::complex<double>> scalars_; //additional scalars (prefactors)
  unsigned int num_operands_; //number of required tensor operands
  unsigned int num_scalars_; //number of required scalar arguments

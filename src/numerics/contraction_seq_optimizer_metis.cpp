@@ -47,7 +47,7 @@ void ContractionSeqOptimizerMetis::resetAcceptanceTolerance(double acceptance_to
 }
 
 
-double ContractionSeqOptimizerMetis::determineContractionSequence(const TensorNetwork & network,
+double ContractionSeqOptimizerMetis::determineContractionSequence(TensorNetwork & network,
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {

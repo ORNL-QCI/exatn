@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/07/22
+REVISION: 2022/07/29
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -713,7 +713,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
    new_contr_seq = false;
   }
  }
- if(new_contr_seq){
+ if(new_contr_seq){ //`Consider using smaller proc_mem_limit for the cutnn optimizer to fit everything in GPU RAM
   double flops = network.determineContractionSequence(contr_seq_optimizer_,proc_mem_limit,num_procs);
  }
  if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
@@ -1184,6 +1184,14 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
       << "]: Locally synchronized cuQuantum execution handle " << cuter->second << " via tensor <" << tensor.getName() << ">"
       << std::endl << std::flush;
      tn_exec_handles_.erase(cuter);
+#ifdef MPI_ENABLED
+     if(wait){
+      auto errc = MPI_Barrier(process_group.getMPICommProxy().getRef<MPI_Comm>());
+      success = success && (errc == MPI_SUCCESS);
+      if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
+       << "]: Globally synchronized all operations on tensor <" << tensor.getName() << ">" << std::endl << std::flush;
+     }
+#endif
     }
    }
    return success;
