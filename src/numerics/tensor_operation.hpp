@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor operation
-REVISION: 2022/07/29
+REVISION: 2022/08/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -178,7 +178,7 @@ public:
  /** Returns a unique integer tensor operand identifier. **/
  TensorHashType getTensorOperandHash(unsigned int op_num) const;
 
- /** Returns the tensor operand id (its constituent tensor id). **/
+ /** Returns the tensor operand id (id of its constituent tensor). **/
  unsigned int getTensorOperandId(unsigned int op_num) const;
 
  /** Returns the complex conjugation status of a tensor operand

@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/07/29
+REVISION: 2022/08/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -273,7 +273,11 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
    if(other_tens_iter == tn_rep.tensor_modes.end()){
     res1.first->second[i] = ++mode_id;
     auto new_mode = tn_rep.mode_extents.emplace(std::make_pair(mode_id,tens_dims[i]));
-    auto new_locn = tn_rep.mode_locations.emplace(std::make_pair(mode_id,std::make_pair(tens_id,i)));
+    if(tens_id == 0){
+     auto new_locn = tn_rep.mode_locations.emplace(std::make_pair(mode_id,std::make_pair(other_tens_id,other_tens_leg_id)));
+    }else{
+     auto new_locn = tn_rep.mode_locations.emplace(std::make_pair(mode_id,std::make_pair(tens_id,i)));
+    }
    }else{
     res1.first->second[i] = other_tens_iter->second[other_tens_leg_id];
    }

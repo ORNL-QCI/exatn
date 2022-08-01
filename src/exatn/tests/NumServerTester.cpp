@@ -4112,10 +4112,10 @@ TEST(NumServerTester, CuTensorNet) {
  using exatn::TensorRange;
 
  const auto TENS_ELEM_TYPE = TensorElementType::REAL32;
-
+ const std::size_t DIM_EXT = 64; //64 is default
  const int NUM_REPEATS = 10;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,1); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -4123,16 +4123,20 @@ TEST(NumServerTester, CuTensorNet) {
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
 
+ //exatn::resetContrSeqOptimizer("metis",false,true);
+ //exatn::resetContrSeqOptimizer("cutnn",false,true);
+ //exatn::resetContrSeqOptimizer("cutnn",false,false);
+
  bool success = true;
 
  //Create tensors:
- success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
- success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{64,64,64}); assert(success);
- success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{64,64,64}); assert(success);
- success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
- success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
- success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
- success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{64,64,64,64}); assert(success);
+ success = exatn::createTensor("A",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("B",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("C",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("D",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("E",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("F",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
+ success = exatn::createTensor("G",TENS_ELEM_TYPE,TensorShape{DIM_EXT,DIM_EXT,DIM_EXT,DIM_EXT}); assert(success);
 
  //Init tensors:
  success = exatn::initTensorRnd("A"); assert(success);
@@ -4144,8 +4148,6 @@ TEST(NumServerTester, CuTensorNet) {
  success = exatn::initTensor("G",0.0); assert(success);
 
  success = exatn::sync(); assert(success);
-
- exatn::resetContrSeqOptimizer("cutnn",false,true); //debug
 
  std::cout << "Testing individual tensor network execution via default backend ...\n";
  int num_repeats = NUM_REPEATS;

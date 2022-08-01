@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/29
+REVISION: 2022/08/01
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -119,6 +119,17 @@ void printContractionSequence(std::ofstream & output_file, const std::list<numer
  }
  if(i != 0) output_file << std::endl;
  return;
+}
+
+
+IndexSplit generateIndexSplitting(SubspaceId base, DimExtent extent, DimExtent segment_size)
+{
+ IndexSplit ind_split;
+ for(DimOffset i = 0; i < extent; i += segment_size){
+  const DimExtent seg_ext = std::min((extent-i),segment_size);
+  ind_split.emplace_back(std::make_pair(base+i,seg_ext));
+ }
+ return std::move(ind_split);
 }
 
 
@@ -2778,10 +2789,12 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
    }
   }
   assert(split_indices_.size() == num_split_indices);
- }else{
-  //Import slicing information from cuTensorNet:
-  const auto ind_split_info = ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(*this);
+
+ }else{ //Import slicing information from cuTensorNet
+
+  const auto ind_split_info = ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(*this); //{{tensor_id,index_position},segment_size}
   num_split_indices = ind_split_info.size();
+  split_indices_.resize(num_split_indices);
   //Find the indices which were marked for slicing:
   for(auto op_iter = operations_.cbegin(); op_iter != operations_.cend(); ++op_iter){
    const auto & op = *(*op_iter); //tensor operation
@@ -2790,23 +2803,58 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
     const auto & pattern = op.getIndexPattern();
     if(!pattern.empty() && num_operands == 3){
      //Determine whether the participating input tensors have splitted modes:
-     const auto left_id = op.getTensorOperandId(1);
-     const auto right_id = op.getTensorOperandId(2);
-     //`Look for these ids in ind_split_info
-     if(true){
+     const auto & left_operand = *(op.getTensorOperand(1));
+     const auto & right_operand = *(op.getTensorOperand(2));
+     const auto left_id = op.getTensorOperandId(1); //original tensor id inside the network
+     const auto right_id = op.getTensorOperandId(2); //original tensor id inside the network
+     assert(left_id > 0 && right_id > 0 && left_id != right_id);
+     bool match = false;
+     for(unsigned int i = 0; i < num_split_indices; ++i){
+      if(left_id == ind_split_info[i].first.first ||
+         right_id == ind_split_info[i].first.first){
+       match = true;
+       break;
+      }
+     }
+     if(match){ //Tensor contraction contains tensors with splitted indices
       //Extract symbolic tensor operands from the current tensor operation:
       tens_operands.clear();
       bool success = parse_tensor_network(pattern,tens_operands);
       if(success){
        assert(tens_operands.size() == num_operands);
-       tens_name.clear(); indices.clear();
-       success = parse_tensor(tens_operands[1],tens_name,indices,conjugated);
-       if(success){
-        auto left_operand = op.getTensorOperand(1);
-       }else{
-        std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
-                  << "Unable to parse the left tensor operand: " << tens_operands[0] << std::endl;
-        assert(false);
+       for(unsigned int i = 0; i < num_split_indices; ++i){
+        if(left_id == ind_split_info[i].first.first){
+         tens_name.clear(); indices.clear();
+         success = parse_tensor(tens_operands[1],tens_name,indices,conjugated);
+         if(success){
+          const auto mode_pos = ind_split_info[i].first.second;
+          const DimExtent seg_ext = ind_split_info[i].second;
+          const IndexSplit ind_split = generateIndexSplitting(0,left_operand.getDimExtent(mode_pos),seg_ext);
+          split_indices_[i] = std::make_pair(indices[mode_pos].label,ind_split);
+          auto res = splitted.emplace(std::make_pair(indices[mode_pos].label,std::make_pair(i,ind_split)));
+          assert(res.second);
+         }else{
+          std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                    << "Unable to parse the left tensor operand: " << tens_operands[1] << std::endl;
+          assert(false);
+         }
+        }
+        if(right_id == ind_split_info[i].first.first){
+         tens_name.clear(); indices.clear();
+         success = parse_tensor(tens_operands[2],tens_name,indices,conjugated);
+         if(success){
+          const auto mode_pos = ind_split_info[i].first.second;
+          const DimExtent seg_ext = ind_split_info[i].second;
+          const IndexSplit ind_split = generateIndexSplitting(0,right_operand.getDimExtent(mode_pos),seg_ext);
+          split_indices_[i] = std::make_pair(indices[mode_pos].label,ind_split);
+          auto res = splitted.emplace(std::make_pair(indices[mode_pos].label,std::make_pair(i,ind_split)));
+          assert(res.second);
+         }else{
+          std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
+                    << "Unable to parse the right tensor operand: " << tens_operands[2] << std::endl;
+          assert(false);
+         }
+        }
        }
       }else{
        std::cout << "#ERROR(exatn::numerics::TensorNetwork::splitIndices): "
@@ -2821,7 +2869,7 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
     }
    }
   }
-  fatal_error("#FATAL(exatn::numerics::tensor_network::splitIndices): Not implemented!");
+
  }
 
  //Traverse tensor operations in reverse order and mark index splitting in each affected tensor:
