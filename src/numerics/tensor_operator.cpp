@@ -1,8 +1,8 @@
 /** ExaTN::Numerics: Tensor operator
-REVISION: 2021/10/29
+REVISION: 2022/08/30
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "tensor_operator.hpp"
 #include "tensor_range.hpp"
@@ -243,7 +243,8 @@ void TensorOperator::printIt() const
            << ")[size = " << this->getNumComponents() << "]{" << std::endl;
  std::size_t i = 0;
  for(const auto & component: components_){
-  std::cout << "Component " << i++ << ": " << component.coefficient << std::endl;
+  std::cout << "Component " << i++ << ": "
+            << std::scientific << component.coefficient << std::endl;
   std::cout << "Ket legs { ";
   for(const auto & leg: component.ket_legs) std::cout << "{" << leg.second << "->" << leg.first << "}";
   std::cout << " }" << std::endl;

@@ -43,16 +43,16 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-//#define EXATN_TEST25
-//#define EXATN_TEST26
-//#define EXATN_TEST27 //requires input file from source
+#define EXATN_TEST25*/
+#define EXATN_TEST26
+/*//#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 //#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-//#define EXATN_TEST32*/
+//#define EXATN_TEST32
 #define EXATN_TEST33
-//#define EXATN_TEST34
+//#define EXATN_TEST34*/
 
 
 #ifdef EXATN_TEST0
@@ -3205,11 +3205,14 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //Test configuration:
- const int num_sites = 16, max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),1);
+ const int bond_dim_lim = 1;
+ const int num_sites = 16;
+ const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
  const int max_layers = (num_sites - 1); //1 less CNOT gates
  bool EVALUATE_FULL_TENSOR = false;
 
- //exatn::resetLoggingLevel(1,2); //debug
+ exatn::resetLoggingLevel(1,1); //debug
+ //exatn::resetContrSeqOptimizer("cutnn");
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
@@ -3320,7 +3323,8 @@ TEST(NumServerTester, ExaTNGenVisitor) {
    //exatn::printTensor(tensor1_name); //debug
   }
  }else{
-  std::cout << "Reconstruction failed!" << std::endl; //assert(false);
+  std::cout << "Reconstruction failed!" << std::endl;
+  assert(false);
  }
  ansatz->conjugate();
 

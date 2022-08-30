@@ -1,8 +1,8 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/11/21
+REVISION: 2022/08/30
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include "reconstructor.hpp"
 
@@ -331,7 +331,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     if(relative_grad_norm > max_grad_norm) max_grad_norm = relative_grad_norm;
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << " Normalized gradient norm w.r.t. " << environment.tensor->getName()
-               << " = " << relative_grad_norm << ": Tensor norm =  " << tens_norm
+               << " = " << std::scientific << relative_grad_norm
+               << ": Tensor norm =  " << tens_norm
                << ": Optimal step size = " << epsilon_ << std::endl;
     }
     //Update the optimizable tensor:
@@ -351,7 +352,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    done = computeNorm1Sync("_scalar_norm",residual_norm_); assert(done);
    residual_norm_ = std::sqrt(residual_norm_);
    if(TensorNetworkReconstructor::debug > 0){
-    std::cout << " Residual norm = " << residual_norm_ << "; Max gradient = " << max_grad_norm << std::endl;
+    std::cout << " Residual norm = " << std::scientific << residual_norm_
+              << "; Max gradient = " << max_grad_norm << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:
@@ -370,7 +372,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    overlap_prev = overlap_abs;
    if(TensorNetworkReconstructor::debug > 0)
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
-              << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
+              << std::scientific << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
    bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
    converged = (overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration;
    //converged = (max_grad_norm <= tolerance_) || ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
@@ -395,24 +397,27 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   output_norm_ = std::sqrt(output_norm_);
   if(TensorNetworkReconstructor::debug > 0)
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
-             << output_norm_ << std::endl;
+             << std::scientific << output_norm_ << std::endl;
   //Compute final approximation fidelity and overlap:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap_conj,scalar_norm,num_procs); assert(done);
   overlap_abs = 0.0;
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
   if(TensorNetworkReconstructor::debug > 0)
-   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated overlap = " << overlap_abs << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Conjugated overlap = "
+             << std::scientific << overlap_abs << std::endl;
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,overlap,scalar_norm,num_procs); assert(done);
   overlap_abs = 0.0;
   done = computeNorm1Sync("_scalar_norm",overlap_abs); assert(done);
   fidelity_ = std::pow(overlap_abs / (output_norm_ * input_norm_), 2.0);
   if(TensorNetworkReconstructor::debug > 0){
-   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct overlap = " << overlap_abs << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Direct overlap = "
+             << std::scientific << overlap_abs << std::endl;
    std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Absolute overlap = "
-             << (overlap_abs / (output_norm_ * input_norm_)) << std::endl;
-   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Fidelity = " << fidelity_ << std::endl;
+             << std::scientific << (overlap_abs / (output_norm_ * input_norm_)) << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Fidelity = "
+             << std::scientific  << fidelity_ << std::endl;
   }
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Check the necessity to restart iterations:
