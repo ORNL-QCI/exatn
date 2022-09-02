@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/07/29
+REVISION: 2022/09/02
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1187,6 +1187,16 @@ inline void resetLoggingLevel(int client_level = 0,
   resetRuntimeLoggingLevel(runtime_level);
   return;
  }
+
+
+/** Activates the internal sanitizer to catch runtime problems. **/
+inline void activateSanitizer()
+ {return numericalServer->activateSanitizer();}
+
+
+/** Deactivates the internal sanitizer to catch runtime problems. **/
+inline void deactivateSanitizer()
+ {return numericalServer->deactivateSanitizer();}
 
 
 /** Resets tensor operation execution serialization. **/

@@ -17,6 +17,7 @@ std::mutex FunctorMaxAbs::mutex_;
 int FunctorMaxAbs::apply(talsh::Tensor & local_tensor)
 {
  const std::lock_guard<std::mutex> lock(mutex_);
+
  //norm_ = 0.0;
  const auto tensor_volume = local_tensor.getVolume();
  auto access_granted = false;

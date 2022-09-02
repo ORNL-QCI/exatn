@@ -1,10 +1,13 @@
-/** ExaTN::Numerics: Tensor Functor: Computes 2-norm of a tensor
-REVISION: 2021/07/21
+/** ExaTN::Numerics: Tensor Functor: Checks the tensor on the presence of NaN
+REVISION: 2022/09/02
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
 
-#include "functor_norm2.hpp"
+SPDX-License-Identifier: BSD-3-Clause **/
+
+#include "functor_isnan.hpp"
 
 #include "talshxx.hpp"
 
@@ -12,30 +15,29 @@ namespace exatn{
 
 namespace numerics{
 
-std::mutex FunctorNorm2::mutex_;
+std::mutex FunctorIsNaN::mutex_;
 
-int FunctorNorm2::apply(talsh::Tensor & local_tensor)
+int FunctorIsNaN::apply(talsh::Tensor & local_tensor)
 {
  const std::lock_guard<std::mutex> lock(mutex_);
- //norm_ = 0.0;
+
  const auto tensor_volume = local_tensor.getVolume();
  auto access_granted = false;
 
- auto norm2_func = [&](const auto * tensor_body){
-  double norm = 0.0;
-#pragma omp parallel for schedule(guided) shared(tensor_volume,tensor_body) reduction(+:norm)
+ auto num_nans_func = [&](const auto * tensor_body){
+  std::size_t num_nans = 0;
+#pragma omp parallel for schedule(guided) shared(tensor_volume,tensor_body) reduction(+:num_nans)
   for(std::size_t i = 0; i < tensor_volume; ++i){
-   const double elem_abs = static_cast<double>(std::abs(tensor_body[i]));
-   norm += (elem_abs * elem_abs);
+   if(isnan(tensor_body[i])) ++num_nans;
   }
-  return norm;
+  return num_nans;
  };
 
  {//Try REAL32:
   const float * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ += norm2_func(body);
+   num_nans_ = num_nans_func(body);
    return 0;
   }
  }
@@ -44,7 +46,7 @@ int FunctorNorm2::apply(talsh::Tensor & local_tensor)
   const double * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ += norm2_func(body);
+   num_nans_ = num_nans_func(body);
    return 0;
   }
  }
@@ -53,7 +55,7 @@ int FunctorNorm2::apply(talsh::Tensor & local_tensor)
   const std::complex<float> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ += norm2_func(body);
+   num_nans_ = num_nans_func(body);
    return 0;
   }
  }
@@ -62,12 +64,12 @@ int FunctorNorm2::apply(talsh::Tensor & local_tensor)
   const std::complex<double> * body;
   access_granted = local_tensor.getDataAccessHostConst(&body);
   if(access_granted){
-   norm_ += norm2_func(body);
+   num_nans_ = num_nans_func(body);
    return 0;
   }
  }
 
- std::cout << "#ERROR(exatn::numerics::FunctorNorm2): Unknown data kind in talsh::Tensor!" << std::endl;
+ std::cout << "#ERROR(exatn::numerics::FunctorIsNaN): Unknown data kind in talsh::Tensor!" << std::endl;
  return 1;
 }
 

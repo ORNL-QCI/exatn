@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/07/22
+REVISION: 2022/09/02
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -68,6 +68,7 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #include "functor_maxabs.hpp"
 #include "functor_norm1.hpp"
 #include "functor_norm2.hpp"
+#include "functor_isnan.hpp"
 #include "functor_diag_rank.hpp"
 #include "functor_print.hpp"
 
@@ -121,6 +122,7 @@ using numerics::FunctorScale;
 using numerics::FunctorMaxAbs;
 using numerics::FunctorNorm1;
 using numerics::FunctorNorm2;
+using numerics::FunctorIsNaN;
 using numerics::FunctorDiagRank;
 using numerics::FunctorPrint;
 
@@ -305,6 +307,12 @@ public:
 
  /** Resets the runtime logging level (0:none). **/
  void resetRuntimeLoggingLevel(int level = 0);
+
+ /** Activates the internal sanitizer to catch runtime problems. **/
+ void activateSanitizer();
+
+ /** Deactivates the internal sanitizer to catch runtime problems. **/
+ void deactivateSanitizer();
 
  /** Resets tensor operation execution serialization. **/
  void resetExecutionSerialization(bool serialize,
@@ -1136,6 +1144,7 @@ private:
  std::shared_ptr<runtime::TensorRuntime> tensor_rt_; //tensor runtime (for actual execution of tensor operations)
  BytePacket byte_packet_; //byte packet for exchanging tensor meta-data
  double time_start_; //time stamp of the Numerical Server start
+ bool sanitizing_; //internal sanitizing flag (for debugging)
  bool validation_tracing_; //validation tracing flag (for debugging)
 };
 
@@ -1240,6 +1249,7 @@ template<typename NumericType>
 bool NumServer::initTensor(const std::string & name,
                            NumericType value)
 {
+ assert(!numerics::isnan(value));
  getTensorRef(name).unregisterIsometries();
  return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
 }
@@ -1248,6 +1258,7 @@ template<typename NumericType>
 bool NumServer::initTensorSync(const std::string & name,
                                NumericType value)
 {
+ assert(!numerics::isnan(value));
  getTensorRef(name).unregisterIsometries();
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(value)));
 }
@@ -1276,6 +1287,7 @@ template<typename NumericType>
 bool NumServer::scaleTensor(const std::string & name,
                             NumericType value)
 {
+ assert(!numerics::isnan(value));
  if(std::abs(value) != 1.0) getTensorRef(name).unregisterIsometries();
  return transformTensor(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
 }
@@ -1284,6 +1296,7 @@ template<typename NumericType>
 bool NumServer::scaleTensorSync(const std::string & name,
                                 NumericType value)
 {
+ assert(!numerics::isnan(value));
  if(std::abs(value) != 1.0) getTensorRef(name).unregisterIsometries();
  return transformTensorSync(name,std::shared_ptr<TensorMethod>(new numerics::FunctorScale(value)));
 }
@@ -1292,6 +1305,7 @@ template<typename NumericType>
 bool NumServer::addTensors(const std::string & addition,
                            NumericType alpha)
 {
+ assert(!numerics::isnan(alpha));
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(addition,tensors);
  if(parsed){
@@ -1357,6 +1371,7 @@ template<typename NumericType>
 bool NumServer::addTensorsSync(const std::string & addition,
                                NumericType alpha)
 {
+ assert(!numerics::isnan(alpha));
  std::vector<std::string> tensors;
  auto parsed = parse_tensor_network(addition,tensors);
  if(parsed){
@@ -1428,6 +1443,7 @@ template<typename NumericType>
 bool NumServer::contractTensors(const std::string & contraction,
                                 NumericType alpha)
 {
+ assert(!numerics::isnan(alpha));
  std::vector<std::string> tensors;
  std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
  auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);
@@ -1552,6 +1568,7 @@ template<typename NumericType>
 bool NumServer::contractTensorsSync(const std::string & contraction,
                                     NumericType alpha)
 {
+ assert(!numerics::isnan(alpha));
  std::vector<std::string> tensors;
  std::vector<PosIndexLabel> left_inds, right_inds, contr_inds, hyper_inds;
  auto parsed = parse_tensor_contraction(contraction,tensors,left_inds,right_inds,contr_inds,hyper_inds);

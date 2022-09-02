@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/07/29
+REVISION: 2022/09/02
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -96,7 +96,7 @@ NumServer::NumServer(const MPICommProxy & communicator,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("metis"), contr_seq_caching_(false), contr_seq_slicer_(true),
  logging_(0), comp_backend_("default"),
- intra_comm_(communicator), validation_tracing_(false)
+ intra_comm_(communicator), sanitizing_(false), validation_tracing_(false)
 {
  int mpi_error = MPI_Comm_size(*(communicator.get<MPI_Comm>()),&num_processes_); assert(mpi_error == MPI_SUCCESS);
  mpi_error = MPI_Comm_rank(*(communicator.get<MPI_Comm>()),&process_rank_); assert(mpi_error == MPI_SUCCESS);
@@ -126,7 +126,7 @@ NumServer::NumServer(const ParamConf & parameters,
                      const std::string & node_executor_name):
  contr_seq_optimizer_("metis"), contr_seq_caching_(false), contr_seq_slicer_(true),
  logging_(0), comp_backend_("default"),
- validation_tracing_(false)
+ sanitizing_(false), validation_tracing_(false)
 {
  num_processes_ = 1; process_rank_ = 0; global_process_rank_ = 0;
  process_world_ = std::make_shared<ProcessGroup>(intra_comm_,num_processes_); //intra-communicator is empty here
@@ -281,6 +281,18 @@ void NumServer::resetRuntimeLoggingLevel(int level)
  while(!tensor_rt_);
  bool synced = tensor_rt_->sync(); assert(synced);
  tensor_rt_->resetLoggingLevel(level);
+ return;
+}
+
+void NumServer::activateSanitizer()
+{
+ sanitizing_ = true;
+ return;
+}
+
+void NumServer::deactivateSanitizer()
+{
+ sanitizing_ = false;
  return;
 }
 
@@ -526,8 +538,10 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
    logfile_.flush(); //`Debug only
   }
   submitted = true;
+  const auto opcode = operation->getOpcode();
+  const auto num_operands = operation->getNumOperands();
   //Register/unregister tensor existence:
-  if(operation->getOpcode() == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
+  if(opcode == TensorOpCode::CREATE){ //TENSOR_CREATE sets tensor element type for future references
    auto tensor = operation->getTensorOperand(0);
    auto elem_type = std::dynamic_pointer_cast<numerics::TensorOpCreate>(operation)->getTensorElementType();
    if(elem_type == TensorElementType::VOID){
@@ -545,7 +559,7 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
     //const auto & tens_name = tensor->getName();
     //std::cout << "#DEBUG(exatn::NumServer::submitOp): Created tensor " << tens_name << std::endl << std::flush;
    }
-  }else if(operation->getOpcode() == TensorOpCode::DESTROY){
+  }else if(opcode == TensorOpCode::DESTROY){
    auto tensor = operation->getTensorOperand(0);
    auto num_deleted = tensors_.erase(tensor->getName()); //unregisters the tensor
    if(num_deleted != 1){
@@ -556,13 +570,69 @@ bool NumServer::submitOp(std::shared_ptr<TensorOperation> operation)
     //const auto & tens_name = tensor->getName();
     //std::cout << "#DEBUG(exatn::NumServer::submitOp): Destroyed tensor " << tens_name << std::endl << std::flush;
    }
+  }else{
+   if(sanitizing_ && opcode != TensorOpCode::NOOP){
+    for(unsigned int oper = 0; oper < num_operands; ++oper){
+     if(operation->operandIsMutable(oper) == false){
+      auto functor_isnan = std::shared_ptr<TensorMethod>(new numerics::FunctorIsNaN());
+      std::shared_ptr<TensorOperation> op_isnan = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+      op_isnan->setTensorOperand(operation->getTensorOperand(oper));
+      std::dynamic_pointer_cast<numerics::TensorOpTransform>(op_isnan)->resetFunctor(functor_isnan);
+      submitted = tensor_rt_->submit(op_isnan);
+      if(submitted){
+       submitted = tensor_rt_->sync(*op_isnan);
+       if(submitted){
+        bool nan_free = std::dynamic_pointer_cast<numerics::FunctorIsNaN>(functor_isnan)->nanFree();
+        if(!nan_free){
+         std::cout << "#EXCEPTION(exatn::sanitizer:precheck): NaN detected in input tensor #" << oper
+                   << " in operation:\n";
+         operation->printIt();
+         std::shared_ptr<TensorOperation> op_print = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+         op_print->setTensorOperand(operation->getTensorOperand(oper));
+         std::dynamic_pointer_cast<numerics::TensorOpTransform>(op_print)->
+          resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorPrint("nan_tensor.txt")));
+         submitted = tensor_rt_->submit(op_print);
+         if(submitted) submitted = tensor_rt_->sync(*op_print);
+         std::abort();
+        }
+       }
+      }
+     }
+    }
+   }
   }
   //Submit tensor operation to tensor runtime:
   if(submitted) tensor_rt_->submit(operation);
   //Compute validation stamps for all output tensor operands, if needed (debug):
-  if(validation_tracing_ && submitted){
-   const auto opcode = operation->getOpcode();
+  if(submitted && (sanitizing_ || validation_tracing_)){
    if(opcode != TensorOpCode::NOOP && opcode != TensorOpCode::CREATE && opcode != TensorOpCode::DESTROY){
+    if(sanitizing_){
+     for(unsigned int oper = 0; oper < num_operands; ++oper){
+      auto functor_isnan = std::shared_ptr<TensorMethod>(new numerics::FunctorIsNaN());
+      std::shared_ptr<TensorOperation> op_isnan = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+      op_isnan->setTensorOperand(operation->getTensorOperand(oper));
+      std::dynamic_pointer_cast<numerics::TensorOpTransform>(op_isnan)->resetFunctor(functor_isnan);
+      submitted = tensor_rt_->submit(op_isnan);
+      if(submitted){
+       submitted = tensor_rt_->sync(*op_isnan);
+       if(submitted){
+        bool nan_free = std::dynamic_pointer_cast<numerics::FunctorIsNaN>(functor_isnan)->nanFree();
+        if(!nan_free){
+         std::cout << "#EXCEPTION(exatn::sanitizer:postcheck): NaN detected in tensor #" << oper
+                   << " in operation:\n";
+         operation->printIt();
+         std::shared_ptr<TensorOperation> op_print = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+         op_print->setTensorOperand(operation->getTensorOperand(oper));
+         std::dynamic_pointer_cast<numerics::TensorOpTransform>(op_print)->
+          resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorPrint("nan_tensor.txt")));
+         submitted = tensor_rt_->submit(op_print);
+         if(submitted) submitted = tensor_rt_->sync(*op_print);
+         std::abort();
+        }
+       }
+      }
+     }
+    }
     const auto num_out_operands = operation->getNumOperandsOut();
     if(logging_ > 0 && num_out_operands > 0) logfile_ << "#Validation stamp";
     for(unsigned int oper = 0; oper < num_out_operands; ++oper){
@@ -592,7 +662,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
  std::stack<unsigned int> deltas;
  const auto opcode = operation->getOpcode();
  const auto num_operands = operation->getNumOperands();
- //Create and initialize implicit Kronecker Delta tensors:
+ //Create and initialize implicit Kronecker Deltas and constant scalar tensors:
  if(opcode != TensorOpCode::CREATE && opcode != TensorOpCode::DESTROY){
   auto elem_type = TensorElementType::VOID;
   for(unsigned int i = 0; i < num_operands; ++i){
@@ -605,6 +675,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
    const auto & tensor_name = operand->getName();
    if(tensor_name.length() >= 2){
     if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
+     assert(operation->operandIsMutable(i) == false);
      if(!tensorAllocated(tensor_name)){
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Kronecker Delta tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
@@ -623,20 +694,25 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
       }
      }
     }else if(tensor_name[0] == '_' && tensor_name[1] == 'e'){ //_eX: scalar tensor equal to X (real integer)
-     assert(tensor_name.length() > 2);
-     const auto real_int = static_cast<double>(std::stoll(tensor_name.substr(2)));
-     assert(elem_type != TensorElementType::VOID);
-     std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
-     op0->setTensorOperand(operand);
-     std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
-     success = submitOp(op0);
-     if(success){
-      deltas.push(i);
-      std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
-      op1->setTensorOperand(operand);
-      std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
-       resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(real_int)));
-      success = submitOp(op1);
+     assert(operation->operandIsMutable(i) == false);
+     if(!tensorAllocated(tensor_name)){
+      //std::cout << "#DEBUG(exatn::NumServer::submitOp): Constant scalar tensor creation: "
+      //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
+      assert(tensor_name.length() > 2);
+      const auto real_int = static_cast<double>(std::stoll(tensor_name.substr(2)));
+      assert(elem_type != TensorElementType::VOID);
+      std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+      op0->setTensorOperand(operand);
+      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
+      success = submitOp(op0);
+      if(success){
+       deltas.push(i);
+       std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+       op1->setTensorOperand(operand);
+       std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+        resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(real_int)));
+       success = submitOp(op1);
+      }
      }
     }
    }
