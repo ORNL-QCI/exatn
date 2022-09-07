@@ -1,8 +1,8 @@
-/** ExaTN: Quantum computing related
-REVISION: 2021/11/02
+/** ExaTN: Quantum domain
+REVISION: 2022/09/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 #include <iostream>
 #include <fstream>
@@ -25,8 +25,8 @@ const std::vector<std::complex<double>> GATE_Y {{0.0, 0.0}, {0.0,-1.0},
                                                 {0.0, 1.0}, {0.0, 0.0}};
 const std::vector<std::complex<double>> GATE_Z {{1.0, 0.0}, {0.0, 0.0},
                                                 {0.0, 0.0}, {-1.0,0.0}};
-const std::vector<std::complex<double>> GATE_H {{1.0, 0.0}, {1.0, 0.0},
-                                                {1.0, 0.0}, {-1.0,0.0}};
+const std::vector<std::complex<double>> GATE_H {{std::sqrt(2.0)*0.5, 0.0}, {std::sqrt(2.0)*0.5, 0.0},
+                                                {std::sqrt(2.0)*0.5, 0.0}, {-std::sqrt(2.0)*0.5,0.0}};
 const std::vector<std::complex<double>> GATE_S {{1.0, 0.0}, {0.0, 0.0},
                                                 {0.0, 0.0}, {0.0, 1.0}};
 const std::vector<std::complex<double>> GATE_T {{1.0, 0.0}, {0.0, 0.0},
@@ -78,7 +78,16 @@ auto GATE_CR = [] (double theta) -> const std::vector<std::complex<double>> {
                                            {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {std::cos(theta),std::sin(theta)}};
 };
 
+//Double-parameter gates:
+auto GATE_FSIM = [] (double theta, double phi) -> const std::vector<std::complex<double>> {
+ return std::vector<std::complex<double>> {{1.0, 0.0}, {0.0, 0.0},              {0.0, 0.0},              {0.0, 0.0},
+                                           {0.0, 0.0}, {std::cos(theta), 0.0},  {0.0, -std::sin(theta)}, {0.0, 0.0},
+                                           {0.0, 0.0}, {0.0, -std::sin(theta)}, {std::cos(theta), 0.0},  {0.0, 0.0},
+                                           {0.0, 0.0}, {0.0, 0.0},              {0.0, 0.0},              {std::cos(theta),std::sin(theta)}};
+};
 
+
+//Functions:
 std::vector<std::complex<double>> getGateData(const Gate gate_name,
                                               std::initializer_list<double> angles)
 {
@@ -112,6 +121,10 @@ std::vector<std::complex<double>> getGateData(const Gate gate_name,
   case(Gate::gate_CR):
    assert(angles.size() == 1);
    gate_data = GATE_CR(*(angles.begin()));
+   break;
+  case(Gate::gate_FSIM):
+   assert(angles.size() == 2);
+   gate_data = GATE_FSIM(*(angles.begin()),*(angles.begin()+1));
    break;
   default:
    std::cout << "#ERROR(exatn::quantum::getGateData): Unknown quantum gate!" << std::endl;

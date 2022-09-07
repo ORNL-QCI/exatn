@@ -3205,7 +3205,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //Test configuration:
- const int bond_dim_lim = 1;
+ const int bond_dim_lim = 4;
  const int num_sites = 16;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
  const int max_layers = (num_sites - 1); //1 less CNOT gates
@@ -3253,7 +3253,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   success = circuit_net->appendTensorGate(exatn::getTensor("CNOT"),{i,i-1}); assert(success);
  }
  auto circuit = exatn::makeSharedTensorExpansion("Circuit",circuit_net,std::complex<double>{1.0,0.0});
- success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
+ //success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
  //circuit->printIt(); //debug
 
  //Evaluate the quantum circuit:

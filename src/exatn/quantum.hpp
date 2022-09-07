@@ -1,8 +1,8 @@
-/** ExaTN: Quantum computing related
-REVISION: 2021/11/02
+/** ExaTN: Quantum domain
+REVISION: 2022/09/07
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
 
 /** Rationale:
  a) Provides utilities related to quantum circuit simulations, like quantum gates,
@@ -57,7 +57,8 @@ enum class Gate{
  gate_CZ,
  gate_SWAP,
  gate_ISWAP,
- gate_CR
+ gate_CR,
+ gate_FSIM
 };
 
 //Pauli gate acting on a specific qubit:
