@@ -327,15 +327,14 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     double hess_grad = 0.0;
     done = computeNorm1Sync("_scalar_norm",hess_grad); assert(done);
     if(TensorNetworkReconstructor::debug > 1){
-     std::cout << "; Raw hessian norm  = " << std::scientific << hess_grad;
+     std::cout << "; Raw hessian norm = " << std::scientific << std::sqrt(hess_grad);
     }
     if(hess_grad > 0.0){
      epsilon_ = grad_norm * grad_norm / hess_grad; //Cauchy step size
-     relative_grad_norm *= epsilon_;
     }else{
      epsilon_ = DEFAULT_LEARN_RATE;
     }
-    if(relative_grad_norm > max_grad_norm) max_grad_norm = relative_grad_norm;
+    max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << "; Normalized gradient norm = " << std::scientific << relative_grad_norm
                << ": Tensor norm = " << tens_norm
@@ -348,12 +347,13 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
     //Check the norm of the updated tensor:
     double new_tens_norm = 0.0;
-    done = computeNorm1Sync(environment.tensor->getName(),new_tens_norm); assert(done);
+    done = computeNorm2Sync(environment.tensor->getName(),new_tens_norm); assert(done);
     if(std::abs(new_tens_norm) < 1e-13){
-     //std::cout << "#EXCEPTION(exatn::reconstructor): Tensor update to zero!\n";
-     //printTensor(environment.tensor->getName());
-     //printTensor(environment.gradient->getName());
-     //std::abort();
+     if(TensorNetworkReconstructor::debug > 0){
+      std::cout << "#EXCEPTION(exatn::reconstructor): Tensor update to zero!\n";
+      //printTensor(environment.tensor->getName());
+      //printTensor(environment.gradient->getName());
+     }
      done = addTensorsSync(add_pattern,epsilon_*0.5); assert(done);
     }
     //Normalize the optimizable tensor to unity:

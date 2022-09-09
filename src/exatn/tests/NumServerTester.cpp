@@ -3212,7 +3212,9 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  bool EVALUATE_FULL_TENSOR = false;
 
  exatn::resetLoggingLevel(1,1); //debug
- //exatn::resetContrSeqOptimizer("cutnn");
+#ifdef CUQUANTUM
+ exatn::resetContrSeqOptimizer("cutnn");
+#endif
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
