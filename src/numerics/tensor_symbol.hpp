@@ -1,8 +1,12 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/09/24
+REVISION: 2022/09/09
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause
+
 
 Rationale:
 (a) Valid symbolic tensor formats are (angle brackets mark placeholders for tokens):
@@ -200,6 +204,15 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
                                   unsigned int right_tensor_rank,
                                   std::string & symb_pattern,
                                   bool left_conjugated = false,
+                                  bool right_conjugated = false,
+                                  const std::string & dest_name = "D",
+                                  const std::string & left_name = "L",
+                                  const std::string & right_name = "R");
+
+/** Generates symbolic tensor contraction pattern for the dot product between two tensors. **/
+bool generate_dot_product_pattern(unsigned int tensor_rank,
+                                  std::string & symb_pattern,
+                                  bool left_conjugated = true,
                                   bool right_conjugated = false,
                                   const std::string & dest_name = "D",
                                   const std::string & left_name = "L",

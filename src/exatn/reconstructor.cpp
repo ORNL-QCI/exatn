@@ -312,7 +312,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     done = computeNorm2Sync(environment.gradient->getName(),grad_norm); assert(done);
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << environment.tensor->getName()
-               << ": Raw gradient norm = " << std::scientific << grad_norm;
+               << ": Raw grad = " << std::scientific << grad_norm;
     }
     assert(!std::isnan(grad_norm));
     //Compute the tensor norm:
@@ -327,7 +327,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     double hess_grad = 0.0;
     done = computeNorm1Sync("_scalar_norm",hess_grad); assert(done);
     if(TensorNetworkReconstructor::debug > 1){
-     std::cout << "; Raw hessian norm = " << std::scientific << std::sqrt(hess_grad);
+     std::cout << "; Raw hess = " << std::scientific << std::sqrt(hess_grad);
     }
     if(hess_grad > 0.0){
      epsilon_ = grad_norm * grad_norm / hess_grad; //Cauchy step size
@@ -335,10 +335,22 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
      epsilon_ = DEFAULT_LEARN_RATE;
     }
     max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
+    //Perform gradient decomposition:
+    done = initTensorSync("_scalar_norm",0.0); assert(done);
+    std::string dprod_pattern;
+    done = generate_dot_product_pattern(environment.tensor->getRank(),dprod_pattern,true,false,
+                                        "_scalar_norm",environment.tensor->getName(),environment.gradient->getName());
+    assert(done);
+    done = contractTensorsSync(dprod_pattern,1.0); assert(done);
+    double tens_grad_dot_abs = 0.0;
+    done = computeNorm1Sync("_scalar_norm",tens_grad_dot_abs); assert(done);
+    double colli_grad_norm = tens_grad_dot_abs / tens_norm;
+    double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
-     std::cout << "; Normalized gradient norm = " << std::scientific << relative_grad_norm
-               << ": Tensor norm = " << tens_norm
-               << ": Optimal step size = " << epsilon_ << std::endl;
+     std::cout << "; Ortho/Colli grad = " << std::scientific << ortho_grad_norm << " / " << colli_grad_norm
+               << "; Rel grad = " << relative_grad_norm
+               << ": Tens norm = " << tens_norm
+               << ": Step = " << epsilon_ << std::endl;
     }
     //Update the optimizable tensor:
     std::string add_pattern;
@@ -369,7 +381,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    residual_norm_ = std::sqrt(residual_norm_);
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << " Residual norm = " << std::scientific << residual_norm_
-              << "; Max gradient = " << max_grad_norm << std::endl;
+              << "; Max relative gradient = " << max_grad_norm << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:

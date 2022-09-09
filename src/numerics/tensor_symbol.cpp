@@ -1,8 +1,11 @@
 /** ExaTN: Numerics: Symbolic tensor processing
-REVISION: 2021/09/25
+REVISION: 2022/09/09
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 #include <iostream>
 
@@ -324,6 +327,23 @@ bool generate_contraction_pattern(const std::vector<numerics::TensorLeg> & patte
   std::cout << " " << symb_pattern << std::endl;
  }*/
  return true;
+}
+
+
+bool generate_dot_product_pattern(unsigned int tensor_rank,
+                                  std::string & symb_pattern,
+                                  bool left_conjugated,
+                                  bool right_conjugated,
+                                  const std::string & dest_name,
+                                  const std::string & left_name,
+                                  const std::string & right_name)
+{
+ std::vector<numerics::TensorLeg> leg_conn(tensor_rank*2);
+ for(unsigned int i = 0; i < tensor_rank; ++i) leg_conn[i] = numerics::TensorLeg{2,i};
+ for(unsigned int i = 0; i < tensor_rank; ++i) leg_conn[tensor_rank + i] = numerics::TensorLeg{1,i};
+ return generate_contraction_pattern(leg_conn,tensor_rank,tensor_rank,
+                                     symb_pattern,left_conjugated,right_conjugated,
+                                     dest_name,left_name,right_name);
 }
 
 
