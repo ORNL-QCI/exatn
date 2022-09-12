@@ -1,8 +1,11 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2021/10/22
+REVISION: 2022/09/12
 
-Copyright (C) 2018-2021 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2021 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 /** Rationale:
  (A) Given a tensor network expansion of some form, the tensor network reconstructor
@@ -67,6 +70,7 @@ public:
                   double * fidelity,                  //out: squared normalized overlap (fidelity)
                   bool rnd_init = true,               //in: random initialization flag
                   bool nesterov = true,               //in: Nesterov acceleration
+                  bool isometric = false,             //in: whether or not to use the fully isometric solver
                   double acceptable_fidelity = DEFAULT_ACCEPTABLE_FIDELITY); //in: acceptable fidelity
 
  bool reconstruct(const ProcessGroup & process_group, //in: executing process group
@@ -74,6 +78,7 @@ public:
                   double * fidelity,                  //out: squared normalized overlap (fidelity)
                   bool rnd_init = true,               //in: random initialization flag
                   bool nesterov = true,               //in: Nesterov acceleration
+                  bool isometric = false,             //in: whether or not to use the fully isometric solver
                   double acceptable_fidelity = DEFAULT_ACCEPTABLE_FIDELITY); //in: acceptable fidelity
 
  /** Returns the reconstructing (optimized) tensor network expansion. **/
@@ -95,6 +100,13 @@ protected:
                      bool rnd_init,                      //in: random initialization flag
                      bool nesterov,                      //in: Nesterov acceleration
                      double acceptable_fidelity);        //in: acceptable fidelity
+
+ //Implementation based on the steepest descent algorithm for isometric tensor networks:
+ bool reconstruct_iso_sd(const ProcessGroup & process_group, //in: executing process group
+                         double * residual_norm,             //out: 2-norm of the residual tensor (error)
+                         double * fidelity,                  //out: squared normalized overlap (fidelity)
+                         bool rnd_init,                      //in: random initialization flag
+                         double acceptable_fidelity);        //in: acceptable fidelity
 
 private:
 

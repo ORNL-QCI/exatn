@@ -3286,7 +3286,9 @@ TEST(NumServerTester, ExaTNGenVisitor) {
    success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
   }
  }
- success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+ if(!isometric){
+  success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
+ }
  //ansatz->printIt(); //debug
 
  //Create the full tensor ansatz:
@@ -3305,12 +3307,13 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  //Reconstruct the quantum circuit by a given tensor network ansatz:
  std::cout << "Reconstructing the quantum circuit by a given tensor network ansatz:" << std::endl;
  ansatz->conjugate();
+ //exatn::activateSanitizer();
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-5);
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true,true,false);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm

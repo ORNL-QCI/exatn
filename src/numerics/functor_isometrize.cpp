@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Tensor Isometrization
-REVISION: 2022/06/17
+REVISION: 2022/09/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -102,7 +102,16 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
     }
     rngy.next();
    }
-
+#if 0
+   //Print input matrix (debug):
+   std::cout << std::scientific;
+   for(DimOffset i = 0; i < volx; ++i){
+    for(DimOffset j = 0; j < voly; ++j){
+     std::cout << "  " << buf[volx*j + i];
+    }
+    std::cout << std::endl;
+   }
+#endif
    //Modified Gram-Schmidt procedure:
    for(DimOffset j = 0; j < voly; ++j){
     double nrm2 = 0.0;
@@ -124,7 +133,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
      }
     }
    }
-#if 0
+#if 1
    //Verification (debug):
    for(DimOffset j = 0; j < voly; ++j){
     double nrm2 = 0.0;
