@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2022/08/30
+REVISION: 2022/09/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
@@ -130,6 +130,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
                                                 bool nesterov,
                                                 double acceptable_fidelity)
 {
+ constexpr bool COLLAPSE_ISOMETRIES = false; //enables collapsing isometries in all tensor networks
+
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
  unsigned int num_procs = 1;
@@ -225,11 +227,33 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
       bool done = createTensorSync(environments_.back().tensor_aux,environments_[0].tensor->getElementType()); assert(done);
       done = initTensorSync(environments_.back().tensor_aux->getName(),0.0); assert(done);
      }
+     if(COLLAPSE_ISOMETRIES){
+      auto collapsed = environments_.back().gradient_expansion.collapseIsometries();
+      collapsed = environments_.back().hessian_expansion.collapseIsometries();
+     }
     }
    }
   }
  }
+ //Collapse isometries in the original TN functionals:
+ if(COLLAPSE_ISOMETRIES){
+  auto collapsed = overlap.collapseIsometries();
+  collapsed = overlap_conj.collapseIsometries();
+  collapsed = normalization.collapseIsometries();
+  collapsed = input_norm.collapseIsometries();
+  collapsed = lagrangian.collapseIsometries();
+  collapsed = residual.collapseIsometries();
+ }
  if(TensorNetworkReconstructor::debug > 1){
+  if(COLLAPSE_ISOMETRIES){
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Collapsed TN functionals:" << std::endl;
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Normalization expansion:" << std::endl;
+   normalization.printIt();
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Input norm expansion:" << std::endl;
+   input_norm.printIt();
+   std::cout << "#DEBUG(exatn::TensorNetworkOptimizer): Lagrangian expansion:" << std::endl;
+   lagrangian.printIt();
+  }
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Derivatives:" << std::endl;
   for(const auto & environment: environments_){
    std::cout << "#DEBUG: Derivative tensor network expansion w.r.t. " << environment.tensor->getName() << std::endl;
@@ -319,7 +343,6 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     double tens_norm = 0.0;
     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
     assert(tens_norm > 1e-7);
-    double relative_grad_norm = grad_norm / tens_norm;
     //Update the optimizable tensor using the computed gradient:
     //Compute the optimal step size:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
@@ -334,7 +357,6 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     }else{
      epsilon_ = DEFAULT_LEARN_RATE;
     }
-    max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
     //Perform gradient decomposition:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
     std::string dprod_pattern;
@@ -346,9 +368,12 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     done = computeNorm1Sync("_scalar_norm",tens_grad_dot_abs); assert(done);
     double colli_grad_norm = tens_grad_dot_abs / tens_norm;
     double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
+    double relative_colli_grad_norm = colli_grad_norm / tens_norm;
+    double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
+    max_grad_norm = std::max(max_grad_norm,relative_ortho_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
-     std::cout << "; Ortho/Colli grad = " << std::scientific << ortho_grad_norm << " / " << colli_grad_norm
-               << "; Rel grad = " << relative_grad_norm
+     std::cout << "; Relative Ortho/Colli grad = " << std::scientific
+               << relative_ortho_grad_norm << " / " << relative_colli_grad_norm
                << ": Tens norm = " << tens_norm
                << ": Step = " << epsilon_ << std::endl;
     }

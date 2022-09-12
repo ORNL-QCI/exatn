@@ -3205,8 +3205,11 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
 
  //Test configuration:
- const int bond_dim_lim = 4;
  const int num_sites = 16;
+ const std::string tn_type = "TTN"; // MPS or TTN
+ const unsigned int isometric = 1;
+ const int bond_dim_lim = 4;
+ const int arity = 2;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
  const int max_layers = (num_sites - 1); //1 less CNOT gates
  bool EVALUATE_FULL_TENSOR = false;
@@ -3224,7 +3227,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
 
  bool success = true;
 
- //Define the initial qubit state vector:
+ //Initial qubit state vector:
  std::vector<std::complex<double>> qzero {
   {1.0,0.0}, {0.0,0.0}
  };
@@ -3255,7 +3258,6 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   success = circuit_net->appendTensorGate(exatn::getTensor("CNOT"),{i,i-1}); assert(success);
  }
  auto circuit = exatn::makeSharedTensorExpansion("Circuit",circuit_net,std::complex<double>{1.0,0.0});
- //success = exatn::balanceNormalizeNorm2Sync(*circuit,1.0,1.0,false); assert(success);
  //circuit->printIt(); //debug
 
  //Evaluate the quantum circuit:
@@ -3264,10 +3266,18 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  }
 
  //Create tensor network ansatz:
- auto mps_builder = exatn::getTensorNetworkBuilder("MPS"); assert(mps_builder);
- success = mps_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ auto tn_builder = exatn::getTensorNetworkBuilder(tn_type); assert(tn_builder);
+ if(tn_type == "MPS"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+ }else if(tn_type == "TTN"){
+  success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
+  success = tn_builder->setParameter("arity",arity); assert(success);
+  success = tn_builder->setParameter("isometric",isometric); assert(success);
+ }else{
+  assert(false);
+ }
  auto ansatz_tensor = exatn::makeSharedTensor("AnsatzTensor",std::vector<int>(num_sites,2));
- auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*mps_builder);
+ auto ansatz_net = exatn::makeSharedTensorNetwork("Ansatz",ansatz_tensor,*tn_builder);
  ansatz_net->markOptimizableTensors([](const Tensor & tensor){return true;});
  auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
@@ -3644,7 +3654,7 @@ TEST(NumServerTester, SpinHamiltonians) {
  const unsigned int isometric = 1; //only for TTN
  const double accuracy = 1e-4;
 
- exatn::resetLoggingLevel(1,2); //debug
+ //exatn::resetLoggingLevel(1,1); //debug
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);

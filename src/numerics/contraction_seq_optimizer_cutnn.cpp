@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/08/01
+REVISION: 2022/09/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -169,12 +169,17 @@ double ContractionSeqOptimizerCutnn::determineContractionSequence(TensorNetwork 
                                                                   std::list<ContrTriple> & contr_seq,
                                                                   std::function<unsigned int ()> intermediate_num_generator)
 {
- auto info_cutnn = determineContractionSequenceWithSlicing(network,contr_seq,intermediate_num_generator);
- info_cutnn->extractContractionSequence(network,contr_seq,intermediate_num_generator);
  double flops = 0.0;
- HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(info_cutnn->cutnn_handle),
-                   info_cutnn->cutnn_info,CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,&flops,sizeof(flops)));
- return (flops * 0.5); //removed the FMA factor of 2 (formal multiplications only, no complex prefactor of 4)
+ if(network.getNumTensors() > 1){
+  auto info_cutnn = determineContractionSequenceWithSlicing(network,contr_seq,intermediate_num_generator);
+  info_cutnn->extractContractionSequence(network,contr_seq,intermediate_num_generator);
+  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(*(info_cutnn->cutnn_handle),
+                    info_cutnn->cutnn_info,CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,&flops,sizeof(flops)));
+  flops *= 0.5; //removed the FMA factor of 2 (formal multiplications only, no complex prefactor of 4)
+ }else{
+  contr_seq.clear();
+ }
+ return flops;
 }
 
 
@@ -299,6 +304,8 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  tn_rep.compute_type = getCutensorComputeType(tens_elem_type);
 
  //Create the cuTensorNet tensor network descriptor (not GPU specific):
+ /*std::cout << "#DEBUG(exatn::contraction_seq_optimizer_cutnn): Creating cuTensorNet descriptor for tensor network:\n";
+ network.printIt();*/
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(*cutnn_handle,tn_rep.num_input_tensors,
                   tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.alignments_in,
                   tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,tn_rep.alignment_out,
