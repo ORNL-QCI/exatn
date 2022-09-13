@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2022/09/12
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -316,7 +316,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor)["
               << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
               << "]: Iteration " << iteration << std::endl;
-   double max_grad_norm = 0.0;
+   double max_grad_norm = 0.0, max_ortho_grad_norm = 0.0;
    for(auto & environment: environments_){
     //Nesterov extrapolation:
     if(nesterov){
@@ -350,6 +350,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     double tens_norm = 0.0;
     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
     assert(tens_norm > 1e-7);
+    const double relative_grad_norm = grad_norm / tens_norm;
     //Update the optimizable tensor using the computed gradient:
     //Compute the optimal step size:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
@@ -373,11 +374,12 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     done = contractTensorsSync(dprod_pattern,1.0); assert(done);
     double tens_grad_dot_abs = 0.0;
     done = computeNorm1Sync("_scalar_norm",tens_grad_dot_abs); assert(done);
-    double colli_grad_norm = tens_grad_dot_abs / tens_norm;
-    double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
-    double relative_colli_grad_norm = colli_grad_norm / tens_norm;
-    double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
-    max_grad_norm = std::max(max_grad_norm,relative_ortho_grad_norm);
+    const double colli_grad_norm = tens_grad_dot_abs / tens_norm;
+    const double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
+    const double relative_colli_grad_norm = colli_grad_norm / tens_norm;
+    const double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
+    max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
+    max_ortho_grad_norm = std::max(max_ortho_grad_norm,relative_ortho_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << "; Relative Ortho/Colli grad = " << std::scientific
                << relative_ortho_grad_norm << " / " << relative_colli_grad_norm
@@ -413,7 +415,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    residual_norm_ = std::sqrt(residual_norm_);
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << " Residual norm = " << std::scientific << residual_norm_
-              << "; Max relative gradient = " << max_grad_norm << std::endl;
+              << "; Max relative gradient (ortho) = " << max_grad_norm
+              << "(" << max_ortho_grad_norm << ")" << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:

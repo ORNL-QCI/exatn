@@ -28,7 +28,7 @@ namespace numerics{
 class FunctorInitRnd: public talsh::TensorFunctor<Identifiable>{
 public:
 
- FunctorInitRnd(bool random_seed = false,
+ FunctorInitRnd(bool random_seed = true,
                 bool real_only = false):
   random_seed_(random_seed), real_only_(real_only) {}
 
