@@ -137,7 +137,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
                                                 bool nesterov,
                                                 double acceptable_fidelity)
 {
- constexpr bool COLLAPSE_ISOMETRIES = false; //enables collapsing isometries in all tensor networks
+ constexpr bool COLLAPSE_ISOMETRIES = true; //enables collapsing isometries in all tensor networks
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
@@ -151,6 +151,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   if(getProcessRank() != TensorNetworkReconstructor::focus) TensorNetworkReconstructor::debug = 0;
  }
 
+ bool success = true;
+
  input_norm_ = 0.0;
  output_norm_ = 0.0;
  residual_norm_ = 0.0;
@@ -160,7 +162,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
  if(rnd_init) reinitializeApproximant(process_group);
 
  //Balance-normalize the approximant (only optimizable tensors):
- bool success = balanceNormalizeNorm2Sync(process_group,*approximant_,1.0,1.0,true); assert(success);
+ success = balanceNormalizeNorm2Sync(process_group,*approximant_,1.0,1.0,true); assert(success);
 
  if(TensorNetworkReconstructor::debug > 0){
   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Target tensor expansion:" << std::endl;
@@ -210,6 +212,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
  }
 
  //Prepare derivative environments for all optimizable tensors in the approximant:
+ bool isometric_tensors_present = false;
  std::unordered_set<std::string> tensor_names;
  // Loop over the tensor networks constituting the approximant tensor expansion:
  for(auto network = approximant_->cbegin(); network != approximant_->cend(); ++network){
@@ -217,6 +220,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   for(auto tensor_conn = network->network->begin(); tensor_conn != network->network->end(); ++tensor_conn){
    const auto & tensor = tensor_conn->second;
    if(tensor.isOptimizable()){ //gradient w.r.t. an optimizable tensor inside the approximant tensor expansion
+    if(tensor.hasIsometries()) isometric_tensors_present = true;
     auto res = tensor_names.emplace(tensor.getName());
     if(res.second){ //prepare derivative environment only once for each unique tensor name
      auto gradient_tensor = std::make_shared<Tensor>("_g"+tensor.getName(),tensor.getShape(),tensor.getSignature());
@@ -274,7 +278,10 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   double overlap_abs = 0.0;
   double overlap_prev = 0.0;
   double overlap_diff = 0.0;
-  if(TensorNetworkReconstructor::debug > 0) expansion_->printCoefficients();
+  if(TensorNetworkReconstructor::debug > 0){
+   expansion_->printCoefficients();
+   approximant_->printCoefficients();
+  }
   //Compute the 2-norm of the input tensor network expansion:
   auto scalar_norm = makeSharedTensor("_scalar_norm");
   bool done = createTensorSync(scalar_norm,environments_[0].tensor->getElementType()); assert(done);
@@ -318,22 +325,27 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
               << "]: Iteration " << iteration << std::endl;
    double max_grad_norm = 0.0, max_ortho_grad_norm = 0.0;
    for(auto & environment: environments_){
+    //Create the gradient tensor:
+    done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
     //Nesterov extrapolation:
     if(nesterov){
-     double extra_coef = static_cast<double>(iteration) / (static_cast<double>(iteration) + 3.0);
-     done = scaleTensorSync(environment.tensor->getName(),(1.0 + extra_coef)); assert(done);
      std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
-                                      environment.tensor->getName(),environment.tensor_aux->getName()); assert(done);
+     double extra_coef = static_cast<double>(iteration) / (static_cast<double>(iteration) + 3.0);
+     done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
+     done = generate_addition_pattern(environment.gradient->getRank(),add_pattern,false,
+                                      environment.gradient->getName(),environment.tensor->getName()); assert(done);
+     done = addTensorsSync(add_pattern,(1.0 + extra_coef));
+     add_pattern.clear();
+     done = generate_addition_pattern(environment.gradient->getRank(),add_pattern,false,
+                                      environment.gradient->getName(),environment.tensor_aux->getName()); assert(done);
      done = addTensorsSync(add_pattern,-extra_coef); assert(done);
+     done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true);
      done = scaleTensorSync(environment.tensor_aux->getName(),extra_coef/(1.0+extra_coef)); assert(done);
      add_pattern.clear();
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+     done = generate_addition_pattern(environment.tensor_aux->getRank(),add_pattern,false,
                                       environment.tensor_aux->getName(),environment.tensor->getName()); assert(done);
      done = addTensorsSync(add_pattern,1.0/(1.0+extra_coef)); assert(done);
     }
-    //Create the gradient tensor:
-    done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
     //Initialize the gradient tensor to zero:
     done = initTensorSync(environment.gradient->getName(),0.0); assert(done);
     //Evaluate the gradient tensor expansion:
@@ -352,7 +364,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     assert(tens_norm > 1e-7);
     const double relative_grad_norm = grad_norm / tens_norm;
     //Update the optimizable tensor using the computed gradient:
-    //Compute the optimal step size:
+    // Compute the optimal step size:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
     done = evaluateSync(process_group,environment.hessian_expansion,scalar_norm,num_procs); assert(done);
     double hess_grad = 0.0;
@@ -365,7 +377,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     }else{
      epsilon_ = DEFAULT_LEARN_RATE;
     }
-    //Perform gradient decomposition:
+    // Perform gradient decomposition:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
     std::string dprod_pattern;
     done = generate_dot_product_pattern(environment.tensor->getRank(),dprod_pattern,true,false,
@@ -386,12 +398,12 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
                << ": Tens norm = " << tens_norm
                << ": Step = " << epsilon_ << std::endl;
     }
-    //Update the optimizable tensor:
+    // Update the optimizable tensor:
     std::string add_pattern;
     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
     done = addTensorsSync(add_pattern,-epsilon_); assert(done);
-    //Check the norm of the updated tensor:
+    // Check the norm of the updated tensor:
     double new_tens_norm = 0.0;
     done = computeNorm2Sync(environment.tensor->getName(),new_tens_norm); assert(done);
     if(std::abs(new_tens_norm) < 1e-13){
@@ -402,8 +414,8 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
      }
      done = addTensorsSync(add_pattern,epsilon_*0.5); assert(done);
     }
-    //Normalize the optimizable tensor to unity:
-    done = normalizeNorm2Sync(environment.tensor->getName(),1.0); assert(done);
+    // Normalize the optimizable tensor to unity:
+    //done = normalizeNorm2Sync(environment.tensor->getName(),1.0); assert(done);
     //Destroy the gradient tensor:
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
    }
@@ -416,7 +428,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << " Residual norm = " << std::scientific << residual_norm_
               << "; Max relative gradient (ortho) = " << max_grad_norm
-              << "(" << max_ortho_grad_norm << ")" << std::endl;
+              << " (" << max_ortho_grad_norm << ")" << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:
@@ -437,21 +449,12 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
               << std::scientific << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
    bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
-   converged = (overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration;
-   //converged = (max_grad_norm <= tolerance_) || ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
+   converged = (max_grad_norm <= DEFAULT_GRAD_ZERO_THRESHOLD) ||
+               (std::abs(overlap_abs - 1.0) <= tolerance_) ||
+               ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
    if(last_diff_iteration) overlap_diff = 0.0;
    ++iteration;
   }
-  /*//Inspect the residual norm contributions (debug):
-  if(TensorNetworkReconstructor::debug > 1){
-   std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Individual components of residual:";
-   for(auto net_iter = residual.cbegin(); net_iter != residual.cend(); ++net_iter){
-    auto output_tensor = exatn::getLocalTensor(net_iter->network->getTensor(0)->getName());
-    auto view = output_tensor->getSliceView<float>();
-    std::cout << " " << view[std::initializer_list<int>{}];
-   }
-   std::cout << std::endl;
-  }*/
   //Compute the approximant norm:
   done = initTensorSync("_scalar_norm",0.0); assert(done);
   done = evaluateSync(process_group,normalization,scalar_norm,num_procs); assert(done);

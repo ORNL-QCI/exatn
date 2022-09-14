@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/02
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1029,7 +1029,8 @@ public:
 
  /** Duplicates a given tensor network as a new tensor network copy.
      The name of the tensor network copy will be prepended with an underscore
-     whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
+     whereas all copies of the input tensors will be renamed with their unique (local) hashes.
+     The existing tensor isometries will be preserved during duplication. **/
  std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network); //in: tensor network
 
  std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes
@@ -1037,7 +1038,8 @@ public:
 
  /** Duplicates a given tensor network expansion as a new tensor network expansion copy.
      The name of the tensor network expansion copy will be prepended with an underscore
-     whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
+     whereas all copies of the input tensors will be renamed with their unique (local) hashes.
+     The existing tensor isometries will be preserved during duplication. **/
  std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion); //in: tensor expansion
 
  std::shared_ptr<TensorExpansion> duplicateSync(const ProcessGroup & process_group, //in: chosen group of MPI processes

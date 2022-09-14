@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor Functor: Tensor Isometrization
-REVISION: 2022/09/12
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -64,7 +64,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
 
   unsigned int rankx = iso_dims.size();
   unsigned int ranky = tens_rank - rankx;
-  if(rankx > 0 && ranky > 0){
+  if(rankx > 0){
    //Set up ranges:
    std::vector<DimExtent> extx(rankx), strx(rankx);
    std::vector<DimExtent> exty(ranky), stry(ranky);
@@ -84,6 +84,11 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
     }
    }
    assert(x == rankx && y == ranky);
+   if(ranky == 0){
+    exty.emplace_back(1);
+    stry.emplace_back(1);
+    ranky = 1;
+   }
    TensorRange rngx(std::vector<DimOffset>(rankx,0),extx,strx);
    TensorRange rngy(std::vector<DimOffset>(ranky,0),exty,stry);
    DimExtent volx = rngx.localVolume();
@@ -116,7 +121,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
    for(DimOffset j = 0; j < voly; ++j){
     double nrm2 = 0.0;
     for(DimOffset i = 0; i < volx; ++i){
-     const auto elem = std::abs(buf[volx*j + i]);
+     const double elem = std::abs(buf[volx*j + i]);
      nrm2 += elem * elem;
     }
     nrm2 = std::sqrt(nrm2);
@@ -124,7 +129,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
      buf[volx*j + i] /= tensor_body_type(nrm2);
     }
     for(DimOffset k = j+1; k < voly; ++k){
-     tensor_body_type dpr(0.0);
+     tensor_body_type dpr(0.0); //`dpr must be double precision
      for(DimOffset i = 0; i < volx; ++i){
       dpr += conjugated(buf[volx*j + i]) * buf[volx*k + i];
      }
@@ -138,14 +143,14 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
    for(DimOffset j = 0; j < voly; ++j){
     double nrm2 = 0.0;
     for(DimOffset k = 0; k < volx; ++k){
-     const auto elem = std::abs(buf[volx*j + k]);
+     const double elem = std::abs(buf[volx*j + k]);
      nrm2 += elem * elem;
     }
     nrm2 = std::sqrt(nrm2);
     make_sure(nrm2,1.0,1e-5,
      "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm!");
     for(DimOffset i = (j+1); i < voly; ++i){
-     tensor_body_type overlap{0.0};
+     tensor_body_type overlap{0.0}; //`overlap must be double precision
      for(DimOffset k = 0; k < volx; ++k){
       overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
      }
@@ -153,6 +158,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
       "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap!");
     }
    }
+   //std::cout << "MGS completed\n"; //debug
 #endif
    //Copy the result back into the tensor:
    rngy.reset();

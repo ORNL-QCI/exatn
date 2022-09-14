@@ -3282,11 +3282,12 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  auto ansatz = exatn::makeSharedTensorExpansion("Ansatz",ansatz_net,std::complex<double>{1.0,0.0});
  for(auto tens_conn = ansatz_net->begin(); tens_conn != ansatz_net->end(); ++tens_conn){
   if(tens_conn->first != 0){ //input tensors only
-   success = exatn::createTensor(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
-   success = exatn::initTensorRnd(tens_conn->second.getName()); assert(success);
+   success = exatn::createTensorSync(tens_conn->second.getTensor(),TENS_ELEM_TYPE); assert(success);
+   success = exatn::initTensorRndSync(tens_conn->second.getName()); assert(success);
+   //success = exatn::printTensorSync(tens_conn->second.getName()); assert(success); //debug
   }
  }
- if(!isometric){
+ if(isometric == 0){
   success = exatn::balanceNormalizeNorm2Sync(*ansatz,1.0,1.0,true); assert(success);
  }
  //ansatz->printIt(); //debug
@@ -3313,7 +3314,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  reconstructor.resetLearningRate(1.0);
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true,true,false);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm

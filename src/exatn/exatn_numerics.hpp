@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: General client header (free function API)
-REVISION: 2022/09/02
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1022,7 +1022,8 @@ inline bool balanceNormalizeNorm2Sync(const ProcessGroup & process_group, //in: 
 
 /** Duplicates a given tensor network as a new tensor network copy.
     The name of the tensor network copy will be prepended with an underscore
-    whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
+    whereas all copies of the input tensors will be renamed with their unique (local) hashes.
+    The existing tensor isometries will be preserved during duplication. **/
 inline std::shared_ptr<TensorNetwork> duplicateSync(const TensorNetwork & network) //in: tensor network
  {return numericalServer->duplicateSync(network);}
 
@@ -1033,7 +1034,8 @@ inline std::shared_ptr<TensorNetwork> duplicateSync(const ProcessGroup & process
 
 /** Duplicates a given tensor network expansion as a new tensor network expansion copy.
     The name of the tensor network expnasion copy will be prepended with an underscore
-    whereas all copies of the input tensors will be renamed with their unique (local) hashes. **/
+    whereas all copies of the input tensors will be renamed with their unique (local) hashes.
+    The existing tensor isometries will be preserved during duplication. **/
 inline std::shared_ptr<TensorExpansion> duplicateSync(const TensorExpansion & expansion) //in: tensor expansion
  {return numericalServer->duplicateSync(expansion);}
 

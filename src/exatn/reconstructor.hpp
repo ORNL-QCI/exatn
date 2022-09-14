@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2022/09/12
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -37,12 +37,13 @@ public:
  static unsigned int debug;
  static int focus;
 
- static constexpr const double DEFAULT_TOLERANCE = 1e-5;
- static constexpr const double DEFAULT_LEARN_RATE = 0.5;
- static constexpr const unsigned int DEFAULT_MAX_ITERATIONS = 1000;
- static constexpr const unsigned int DEFAULT_OVERLAP_ITERATIONS = 3;
- static constexpr const double DEFAULT_ACCEPTABLE_FIDELITY = 0.01;
- static constexpr const double DEFAULT_MIN_INITIAL_OVERLAP = 1e-9;
+ static constexpr double DEFAULT_TOLERANCE = 1e-5;
+ static constexpr double DEFAULT_LEARN_RATE = 0.5;
+ static constexpr unsigned int DEFAULT_MAX_ITERATIONS = 1000;
+ static constexpr unsigned int DEFAULT_OVERLAP_ITERATIONS = 3;
+ static constexpr double DEFAULT_ACCEPTABLE_FIDELITY = 0.01;
+ static constexpr double DEFAULT_MIN_INITIAL_OVERLAP = 1e-9;
+ static constexpr double DEFAULT_GRAD_ZERO_THRESHOLD = 1e-7;
 
  TensorNetworkReconstructor(std::shared_ptr<TensorExpansion> expansion,   //in: tensor network expansion to be reconstructed (constant)
                             std::shared_ptr<TensorExpansion> approximant, //inout: reconstructing tensor network expansion

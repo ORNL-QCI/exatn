@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/02
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -3648,7 +3648,7 @@ std::shared_ptr<TensorNetwork> NumServer::duplicateSync(const ProcessGroup & pro
     iter = res.first;
     iter->second->rename(); //new (automatically generated) tensor name
     success = createTensor(iter->second,tens_elem_type); assert(success);
-    success = copyTensor(iter->second->getName(),tensor_name); assert(success);
+    success = copyTensor(iter->second->getName(),tensor_name,true); assert(success);
    }
    tensor->second.replaceStoredTensor(iter->second);
   }

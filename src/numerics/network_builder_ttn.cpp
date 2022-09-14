@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2022/06/17
+REVISION: 2022/09/13
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -140,7 +140,7 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
    //Emplace the tensor:
    const auto new_tensor_id = tensor_id_base + num_dims_new;
    bool appended = network.placeTensor(new_tensor_id, //tensor id
-                                       std::make_shared<Tensor>("_T"+std::to_string(tensor_id_base + num_dims_new), //tensor name
+                                       std::make_shared<Tensor>("_T"+std::to_string(new_tensor_id), //tensor name
                                                                 tens_dims),
                                        tens_legs,false,false);
    assert(appended);
@@ -179,6 +179,25 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
  if(num_states_ > 1){
   auto * output_tens_conn = network.getTensorConn(0);
   output_tens_conn->appendLeg(DimExtent{num_states_},TensorLeg{tree_root_id,tree_root_dim});
+ }else{ // for single-state TTN, append the terminal tensor
+  auto * root_tens_conn = network.getTensorConn(tree_root_id);
+  const auto & root_extents = root_tens_conn->getDimExtents();
+  DimExtent comb_dim_ext = 1;
+  for(const auto & ext: root_extents){
+   comb_dim_ext *= ext;
+   if(comb_dim_ext >= max_bond_dim_){
+    comb_dim_ext = max_bond_dim_;
+    break;
+   }
+  }
+  const auto new_tensor_id = tree_root_id + 1;
+  root_tens_conn->appendLeg(comb_dim_ext,TensorLeg{new_tensor_id,0});
+  bool appended = network.placeTensor(new_tensor_id, //tensor id
+                                      std::make_shared<Tensor>("_T"+std::to_string(new_tensor_id), //tensor name
+                                                               std::initializer_list<DimExtent>{comb_dim_ext}),
+                                      {TensorLeg{tree_root_id,root_tens_conn->getRank()-1}},false,false);
+  assert(appended);
+  network.getTensor(new_tensor_id)->rename();
  }
  //std::cout << "#DEBUG(exatn::network_builder_ttn): Network built:\n"; network.printIt(); //debug
  return;
