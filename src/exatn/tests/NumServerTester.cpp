@@ -18,7 +18,7 @@
 #include "errors.hpp"
 
 //Test activation:
-/*#define EXATN_TEST0
+#define EXATN_TEST0
 #define EXATN_TEST1
 #define EXATN_TEST2
 #define EXATN_TEST3
@@ -43,16 +43,16 @@
 #define EXATN_TEST22
 #define EXATN_TEST23
 #define EXATN_TEST24
-#define EXATN_TEST25*/
+#define EXATN_TEST25
 #define EXATN_TEST26
-/*//#define EXATN_TEST27 //requires input file from source
+//#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
 //#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
 //#define EXATN_TEST32
 #define EXATN_TEST33
-//#define EXATN_TEST34*/
+//#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
