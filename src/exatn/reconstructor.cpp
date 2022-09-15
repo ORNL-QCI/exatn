@@ -1,5 +1,5 @@
 /** ExaTN:: Reconstructs an approximate tensor network expansion for a given tensor network expansion
-REVISION: 2022/09/13
+REVISION: 2022/09/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -373,7 +373,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
      std::cout << "; Raw hess = " << std::scientific << std::sqrt(hess_grad);
     }
     if(hess_grad > 0.0){
-     epsilon_ = grad_norm * grad_norm / hess_grad; //Cauchy step size
+     epsilon_ = grad_norm * grad_norm / hess_grad; //Cauchy step size (adaptive)
     }else{
      epsilon_ = DEFAULT_LEARN_RATE;
     }
@@ -519,7 +519,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
                                                     bool rnd_init,
                                                     double acceptable_fidelity)
 {
- constexpr bool COLLAPSE_ISOMETRIES = false; //enables collapsing isometries in all tensor networks
+ constexpr bool COLLAPSE_ISOMETRIES = true; //enables collapsing isometries in all tensor networks
 
  unsigned int local_rank; //local process rank within the process group
  if(!process_group.rankIsIn(exatn::getProcessRank(),&local_rank)) return true; //process is not in the group: Do nothing
@@ -654,7 +654,10 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
   double overlap_abs = 0.0;
   double overlap_prev = 0.0;
   double overlap_diff = 0.0;
-  if(TensorNetworkReconstructor::debug > 0) expansion_->printCoefficients();
+  if(TensorNetworkReconstructor::debug > 0){
+   expansion_->printCoefficients();
+   approximant_->printCoefficients();
+  }
   //Compute the 2-norm of the input tensor network expansion:
   auto scalar_norm = makeSharedTensor("_scalar_norm");
   bool done = createTensorSync(scalar_norm,environments_[0].tensor->getElementType()); assert(done);
@@ -696,7 +699,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor)["
               << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
               << "]: Iteration " << iteration << std::endl;
-   double max_grad_norm = 0.0;
+   double max_grad_norm = 0.0, max_ortho_grad_norm = 0.0;
    for(auto & environment: environments_){
     //Create the gradient tensor:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
@@ -716,6 +719,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     //Compute the tensor norm:
     double tens_norm = 0.0;
     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
+    const double relative_grad_norm = grad_norm / tens_norm;
     //Compute the tensor-gradient overlap:
     done = initTensorSync("_scalar_norm",0.0); assert(done);
     std::string dprod_pattern;
@@ -725,11 +729,12 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     done = contractTensorsSync(dprod_pattern,1.0); assert(done);
     double tens_grad_dot_abs = 0.0;
     done = computeNorm1Sync("_scalar_norm",tens_grad_dot_abs); assert(done);
-    double colli_grad_norm = tens_grad_dot_abs / tens_norm;
-    double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
-    double relative_colli_grad_norm = colli_grad_norm / tens_norm;
-    double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
-    max_grad_norm = std::max(max_grad_norm,relative_ortho_grad_norm);
+    const double colli_grad_norm = tens_grad_dot_abs / tens_norm;
+    const double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
+    const double relative_colli_grad_norm = colli_grad_norm / tens_norm;
+    const double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
+    max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
+    max_ortho_grad_norm = std::max(max_ortho_grad_norm,relative_ortho_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << "; Relative Ortho/Colli grad = " << std::scientific
                << relative_ortho_grad_norm << " / " << relative_colli_grad_norm
@@ -738,7 +743,11 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     }
     //Update the optimizable tensor:
     if(grad_norm > tolerance_){
-     done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true); assert(done);
+     std::string add_pattern;
+     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
+     done = addTensorsSync(add_pattern,epsilon_); assert(done);
+     //done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true); assert(done);
      //Check the norm of the updated tensor:
      double new_tens_norm = 0.0;
      done = computeNorm2Sync(environment.tensor->getName(),new_tens_norm); assert(done);
@@ -763,7 +772,8 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
    residual_norm_ = std::sqrt(residual_norm_);
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << " Residual norm = " << std::scientific << residual_norm_
-              << "; Max relative gradient = " << max_grad_norm << std::endl;
+              << "; Max relative gradient (ortho) = " << max_grad_norm
+              << " (" << max_ortho_grad_norm << ")" << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:
@@ -784,8 +794,9 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
               << std::scientific << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
    bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
-   converged = (overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration;
-   //converged = (max_grad_norm <= tolerance_) || ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
+   converged = (max_grad_norm <= DEFAULT_GRAD_ZERO_THRESHOLD) ||
+               (std::abs(overlap_abs - 1.0) <= tolerance_) ||
+               ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
    if(last_diff_iteration) overlap_diff = 0.0;
    ++iteration;
   }

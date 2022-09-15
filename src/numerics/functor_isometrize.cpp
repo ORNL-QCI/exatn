@@ -13,6 +13,9 @@ SPDX-License-Identifier: BSD-3-Clause **/
 
 #include "talshxx.hpp"
 
+#include <random>
+#include <functional>
+
 namespace exatn{
 
 namespace numerics{
@@ -57,6 +60,13 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
   strides[i] = stride;
   stride *= extents[i];
  }
+
+ std::random_device seeder;
+ std::default_random_engine generator(seeder());
+ std::uniform_real_distribution<float> distribution_float(-1.0,1.0);
+ auto rnd_float = std::bind(distribution_float,generator);
+ std::uniform_real_distribution<double> distribution_double(-1.0,1.0);
+ auto rnd_double = std::bind(distribution_double,generator);
 
  auto enforce_isometry = [&](auto * tensor_body,
                              const std::vector<unsigned int> & iso_dims){
@@ -109,7 +119,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
    }
 #if 0
    //Print input matrix (debug):
-   std::cout << std::scientific;
+   std::cout << "MGS input:\n" << std::scientific;
    for(DimOffset i = 0; i < volx; ++i){
     for(DimOffset j = 0; j < voly; ++j){
      std::cout << "  " << buf[volx*j + i];
@@ -138,6 +148,16 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
      }
     }
    }
+#if 0
+   //Print output matrix (debug):
+   std::cout << "MGS output:\n" << std::scientific;
+   for(DimOffset i = 0; i < volx; ++i){
+    for(DimOffset j = 0; j < voly; ++j){
+     std::cout << "  " << buf[volx*j + i];
+    }
+    std::cout << std::endl;
+   }
+#endif
 #if 1
    //Verification (debug):
    for(DimOffset j = 0; j < voly; ++j){
@@ -147,18 +167,22 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
      nrm2 += elem * elem;
     }
     nrm2 = std::sqrt(nrm2);
+    //std::cout << " " << nrm2; //debug
     make_sure(nrm2,1.0,1e-5,
-     "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm!");
+     "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm: "
+     +std::to_string(nrm2));
     for(DimOffset i = (j+1); i < voly; ++i){
      tensor_body_type overlap{0.0}; //`overlap must be double precision
      for(DimOffset k = 0; k < volx; ++k){
       overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
      }
+     //std::cout << " " << std::abs(overlap); //debug
      make_sure(static_cast<double>(std::abs(overlap)),0.0,1e-5,
-      "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap!");
+      "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap: "
+      +std::to_string(std::abs(overlap)));
     }
    }
-   //std::cout << "MGS completed\n"; //debug
+   //std::cout << " MGS completed\n"; //debug
 #endif
    //Copy the result back into the tensor:
    rngy.reset();

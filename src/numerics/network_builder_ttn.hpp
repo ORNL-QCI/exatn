@@ -1,8 +1,11 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2022/02/04
+REVISION: 2022/09/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
-Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
+Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
+Copyright (C) 2022-2022 NVIDIA Corporation
+
+SPDX-License-Identifier: BSD-3-Clause **/
 
 /** Rationale:
  (a) Builds a tree tensor network. Parameters:
@@ -10,6 +13,8 @@ Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle) **/
      * arity: >1: Tree arity;
      * num_states: >0: Number of quantum states to represent;
      * isometric: {0/1}: Whether or not all tensor factors should be isometric;
+     * free_root: {0/1}: Whether or not to keep the tree root tensor free of isometry constraints;
+     * add_terminal: {0/1}: Whether or not to add the order-1 terminal tensor to the root;
  (b) Leg numeration with arity 2 (tensor network vector):
 
     [0] [1]      [2] [3] ...
@@ -86,6 +91,8 @@ private:
  long long arity_;         //tree arity
  unsigned int num_states_; //number of quantum states to represent
  int isometric_;           //isometry
+ int free_root_;           //keep the tree root tensor free of isometries
+ int add_terminal_;        //append a terminal order-1 tensor to the tree root
 };
 
 } //namespace numerics

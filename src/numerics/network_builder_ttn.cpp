@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network builder: Tree: Tree Tensor Network
-REVISION: 2022/09/13
+REVISION: 2022/09/14
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -19,7 +19,8 @@ namespace exatn{
 namespace numerics{
 
 NetworkBuilderTTN::NetworkBuilderTTN():
- max_bond_dim_(1), arity_(2), num_states_(1), isometric_(0)
+ max_bond_dim_(1), arity_(2), num_states_(1),
+ isometric_(0), free_root_(0), add_terminal_(0)
 {
 }
 
@@ -35,6 +36,10 @@ bool NetworkBuilderTTN::getParameter(const std::string & name, long long * value
   *value = num_states_;
  }else if(name == "isometric"){
   *value = isometric_;
+ }else if(name == "free_root"){
+  *value = free_root_;
+ }else if(name == "add_terminal"){
+  *value = add_terminal_;
  }else{
   found = false;
  }
@@ -53,6 +58,10 @@ bool NetworkBuilderTTN::setParameter(const std::string & name, long long value)
   num_states_ = value;
  }else if(name == "isometric"){
   isometric_ = value;
+ }else if(name == "free_root"){
+  free_root_ = value;
+ }else if(name == "add_terminal"){
+  add_terminal_ = value;
  }else{
   found = false;
  }
@@ -175,29 +184,35 @@ void NetworkBuilderTTN::build(TensorNetwork & network, bool tensor_operator)
    ++layer;
   }
  }
- //Append the state leg to the tree root tensor:
+ //Post-processing:
  if(num_states_ > 1){
+  //Append the state leg to the tree root tensor:
   auto * output_tens_conn = network.getTensorConn(0);
   output_tens_conn->appendLeg(DimExtent{num_states_},TensorLeg{tree_root_id,tree_root_dim});
- }else{ // for single-state TTN, append the terminal tensor
+ }else{
+  //Unregister isometries in the tree root tensor, if needed:
   auto * root_tens_conn = network.getTensorConn(tree_root_id);
-  const auto & root_extents = root_tens_conn->getDimExtents();
-  DimExtent comb_dim_ext = 1;
-  for(const auto & ext: root_extents){
-   comb_dim_ext *= ext;
-   if(comb_dim_ext >= max_bond_dim_){
-    comb_dim_ext = max_bond_dim_;
-    break;
+  if(isometric_ != 0 && free_root_ != 0) root_tens_conn->unregisterIsometries();
+  //Append an order-1 terminal tensor to the tree root tensor, if needed:
+  if(add_terminal_ != 0){
+   const auto & root_extents = root_tens_conn->getDimExtents();
+   DimExtent comb_dim_ext = 1;
+   for(const auto & ext: root_extents){
+    comb_dim_ext *= ext;
+    if(comb_dim_ext >= max_bond_dim_){
+     comb_dim_ext = max_bond_dim_;
+     break;
+    }
    }
+   const auto new_tensor_id = tree_root_id + 1;
+   root_tens_conn->appendLeg(comb_dim_ext,TensorLeg{new_tensor_id,0});
+   bool appended = network.placeTensor(new_tensor_id, //tensor id
+                                       std::make_shared<Tensor>("_T"+std::to_string(new_tensor_id), //tensor name
+                                                                std::initializer_list<DimExtent>{comb_dim_ext}),
+                                       {TensorLeg{tree_root_id,root_tens_conn->getRank()-1}},false,false);
+   assert(appended);
+   network.getTensor(new_tensor_id)->rename();
   }
-  const auto new_tensor_id = tree_root_id + 1;
-  root_tens_conn->appendLeg(comb_dim_ext,TensorLeg{new_tensor_id,0});
-  bool appended = network.placeTensor(new_tensor_id, //tensor id
-                                      std::make_shared<Tensor>("_T"+std::to_string(new_tensor_id), //tensor name
-                                                               std::initializer_list<DimExtent>{comb_dim_ext}),
-                                      {TensorLeg{tree_root_id,root_tens_conn->getRank()-1}},false,false);
-  assert(appended);
-  network.getTensor(new_tensor_id)->rename();
  }
  //std::cout << "#DEBUG(exatn::network_builder_ttn): Network built:\n"; network.printIt(); //debug
  return;

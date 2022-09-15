@@ -3208,13 +3208,17 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  const int num_sites = 16;
  const std::string tn_type = "TTN"; // MPS or TTN
  const unsigned int isometric = 1;
+ const unsigned int free_root = 0;
+ const unsigned int add_terminal = 0;
+ const bool isometric_solver = true &&
+           (isometric != 0) && (free_root == 0) && (add_terminal == 0);
  const int bond_dim_lim = 4;
  const int arity = 2;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_sites/2)),bond_dim_lim);
  const int max_layers = (num_sites - 1); //1 less CNOT gates
  bool EVALUATE_FULL_TENSOR = false;
 
- exatn::resetLoggingLevel(1,1); //debug
+ //exatn::resetLoggingLevel(1,1); //debug
 #ifdef CUQUANTUM
  exatn::resetContrSeqOptimizer("cutnn");
 #endif
@@ -3273,6 +3277,10 @@ TEST(NumServerTester, ExaTNGenVisitor) {
   success = tn_builder->setParameter("max_bond_dim",max_bond_dim); assert(success);
   success = tn_builder->setParameter("arity",arity); assert(success);
   success = tn_builder->setParameter("isometric",isometric); assert(success);
+  if(isometric != 0){
+   success = tn_builder->setParameter("free_root",free_root); assert(success);
+   success = tn_builder->setParameter("add_terminal",add_terminal); assert(success);
+  }
  }else{
   assert(false);
  }
@@ -3311,10 +3319,16 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  //exatn::activateSanitizer();
  exatn::TensorNetworkReconstructor::resetDebugLevel(1); //debug
  exatn::TensorNetworkReconstructor reconstructor(circuit,ansatz,1e-5);
- reconstructor.resetLearningRate(1.0);
+ bool nesterov = true;
+ if(isometric_solver){
+  nesterov = false;
+  reconstructor.resetLearningRate(1e3);
+ }else{
+  reconstructor.resetLearningRate(1.0);
+ }
  success = exatn::sync(); assert(success);
  double residual_norm, fidelity;
- bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity);
+ bool reconstructed = reconstructor.reconstruct(&residual_norm,&fidelity,true,nesterov,isometric_solver);
  success = exatn::sync(); assert(success);
  if(reconstructed){
   std::cout << "Reconstruction succeeded: Residual norm = " << residual_norm
