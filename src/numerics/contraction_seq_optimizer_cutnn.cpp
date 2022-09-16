@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/09/12
+REVISION: 2022/09/16
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -200,6 +200,15 @@ InfoCuTensorNet::InfoCuTensorNet(cutensornetHandle_t * handle,
  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerConfig(*cutnn_handle,&cutnn_config));
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SLICER_MIN_SLICES,&minimum_slices,sizeof(minimum_slices)));
+ const cutensornetOptimizerCost_t cost_func = CUTENSORNET_OPTIMIZER_COST_TIME;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
+                   CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,&cost_func,sizeof(cost_func)));
+ const int32_t hyper_samples = 8;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
+                   CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,&hyper_samples,sizeof(hyper_samples)));
+ const int32_t reconfig_iter = 256;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
+                   CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_ITERATIONS,&reconfig_iter,sizeof(reconfig_iter)));
  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(*cutnn_handle,cutnn_network,&cutnn_info));
  HANDLE_CTN_ERROR(cutensornetContractionOptimize(*cutnn_handle,cutnn_network,cutnn_config,workspace_size,cutnn_info));
 }

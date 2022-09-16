@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/07/22
+REVISION: 2022/09/16
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -719,6 +719,18 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SLICER_MIN_SLICES,
                                                                       &min_slices,sizeof(min_slices)));
+   const cutensornetOptimizerCost_t cost_func = CUTENSORNET_OPTIMIZER_COST_TIME;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,
+                                                                      &cost_func,sizeof(cost_func)));
+   const int32_t hyper_samples = 8;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,
+                                                                      &hyper_samples,sizeof(hyper_samples)));
+   const int32_t reconfig_iter = 256;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_ITERATIONS,
+                                                                      &reconfig_iter,sizeof(reconfig_iter)));
    HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor,&(tn_req->opt_info)));
    HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
                                                    tn_req->net_descriptor,tn_req->opt_config,
