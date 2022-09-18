@@ -361,7 +361,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
     //Compute the tensor norm:
     double tens_norm = 0.0;
     done = computeNorm2Sync(environment.tensor->getName(),tens_norm); assert(done);
-    assert(tens_norm > 1e-7);
+    assert(tens_norm > DEFAULT_GRAD_ZERO_THRESHOLD);
     const double relative_grad_norm = grad_norm / tens_norm;
     //Update the optimizable tensor using the computed gradient:
     // Compute the optimal step size:
@@ -488,7 +488,7 @@ bool TensorNetworkReconstructor::reconstruct_sd(const ProcessGroup & process_gro
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Check the necessity to restart iterations:
   if(iteration >= max_iterations_) break;
-  if(converged && fidelity_ < acceptable_fidelity && tolerance_ > 1e-6){
+  if(converged && fidelity_ < acceptable_fidelity && tolerance_ > DEFAULT_GRAD_ZERO_THRESHOLD){
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Insufficient fidelity, iterations will be restarted\n";
    }
@@ -742,24 +742,22 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
                << ": Step = " << epsilon_ << std::endl;
     }
     //Update the optimizable tensor:
-    if(grad_norm > tolerance_){
-     std::string add_pattern;
-     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
-                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
-     done = addTensorsSync(add_pattern,epsilon_); assert(done);
-     //done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true); assert(done);
-     //Check the norm of the updated tensor:
-     double new_tens_norm = 0.0;
-     done = computeNorm2Sync(environment.tensor->getName(),new_tens_norm); assert(done);
-     if(std::abs(new_tens_norm) < 1e-13){
-      if(TensorNetworkReconstructor::debug > 0){
-       std::cout << "#EXCEPTION(exatn::reconstructor): Tensor update to zero:\n";
-       //printTensorSync(environment.tensor->getName());
-       //printTensorSync(environment.gradient->getName());
-       std::cout << "Aborting\n" << std::flush;
-      }
-      std::abort();
+    std::string add_pattern;
+    done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
+                                     environment.tensor->getName(),environment.gradient->getName()); assert(done);
+    done = addTensorsSync(add_pattern,epsilon_); assert(done);
+    //done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true); assert(done);
+    //Check the norm of the updated tensor:
+    double new_tens_norm = 0.0;
+    done = computeNorm2Sync(environment.tensor->getName(),new_tens_norm); assert(done);
+    if(std::abs(new_tens_norm) < 1e-13){
+     if(TensorNetworkReconstructor::debug > 0){
+      std::cout << "#EXCEPTION(exatn::reconstructor): Tensor update to zero:\n";
+      //printTensorSync(environment.tensor->getName());
+      //printTensorSync(environment.gradient->getName());
+      std::cout << "Aborting\n" << std::flush;
      }
+     std::abort();
     }
     //Destroy the gradient tensor:
     done = destroyTensorSync(environment.gradient->getName()); assert(done);
@@ -833,7 +831,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
   done = destroyTensorSync("_scalar_norm"); assert(done);
   //Check the necessity to restart iterations:
   if(iteration >= max_iterations_) break;
-  if(converged && fidelity_ < acceptable_fidelity && tolerance_ > 1e-6){
+  if(converged && fidelity_ < acceptable_fidelity && tolerance_ > DEFAULT_GRAD_ZERO_THRESHOLD){
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): Insufficient fidelity, iterations will be restarted\n";
    }

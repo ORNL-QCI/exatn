@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/08/01
+REVISION: 2022/09/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -409,6 +409,12 @@ bool TensorNetwork::isFinalized() const
 bool TensorNetwork::isValid()
 {
  return checkConnections();
+}
+
+
+TensorHashType TensorNetwork::getTensorNetworkHash() const
+{
+ return reinterpret_cast<TensorHashType>((void*)(this));
 }
 
 

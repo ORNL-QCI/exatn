@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/07/29
+REVISION: 2022/09/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -228,6 +228,9 @@ public:
 
  /** Returns TRUE if the tensor network is valid, FALSE otherwise. **/
  bool isValid();
+
+ /** Returns the tensor network hash. **/
+ TensorHashType getTensorNetworkHash() const;
 
  /** Returns the rank of the tensor network (rank of its output tensor). **/
  unsigned int getRank() const;

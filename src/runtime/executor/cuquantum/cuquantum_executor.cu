@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/09/16
+REVISION: 2022/09/18
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -746,8 +746,11 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                     &flops,sizeof(flops)));
    assert(flops >= 0.0);
+   const double total_flops = flops * 0.5 * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
    flops_ += ((flops * 0.5) / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution
              tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
+   //std::cout << "#INFO(exatn::CuQuantumExecutor): Path found for network " << tn_req->network->getTensorNetworkHash()
+   //          << " with total Flop count = " << std::scientific << (total_flops/1e9) << " Gflop" << std::endl; //debug
    tn_req->num_slices = 0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
                                                                     tn_req->opt_info,
