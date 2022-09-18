@@ -203,7 +203,7 @@ InfoCuTensorNet::InfoCuTensorNet(cutensornetHandle_t * handle,
  const cutensornetOptimizerCost_t cost_func = CUTENSORNET_OPTIMIZER_COST_TIME;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,&cost_func,sizeof(cost_func)));
- const int32_t hyper_samples = 8;
+ const int32_t hyper_samples = 32;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,&hyper_samples,sizeof(hyper_samples)));
  const int32_t reconfig_iter = 256;

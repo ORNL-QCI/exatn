@@ -723,7 +723,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,
                                                                       &cost_func,sizeof(cost_func)));
-   const int32_t hyper_samples = 8;
+   const int32_t hyper_samples = 32;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,
                                                                       &hyper_samples,sizeof(hyper_samples)));
