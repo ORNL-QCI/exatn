@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/13
+REVISION: 2022/09/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)

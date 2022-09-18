@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/13
+REVISION: 2022/09/18
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -1012,7 +1012,8 @@ bool NumServer::submit(const ProcessGroup & process_group,
      ++num_tens_ops_in_fly;
     }
     if(serialize || num_tens_ops_in_fly > exatn::runtime::TensorRuntime::MAX_RUNTIME_DAG_SIZE){
-     sync(process_group);
+     //sync(process_group);
+     sync();
      num_tens_ops_in_fly = 0;
     }
     input_slices.clear();
