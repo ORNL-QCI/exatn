@@ -2797,7 +2797,7 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
   assert(split_indices_.size() == num_split_indices);
 
  }else{ //Import slicing information from cuTensorNet
-
+#ifdef CUQUANTUM
   const auto ind_split_info = ContractionSeqOptimizerCutnn::extractIndexSplittingInfo(*this); //{{tensor_id,index_position},segment_size}
   num_split_indices = ind_split_info.size();
   split_indices_.resize(num_split_indices);
@@ -2875,7 +2875,9 @@ void TensorNetwork::splitIndices(std::size_t max_intermediate_volume)
     }
    }
   }
-
+#else
+  fatal_error("#FATAL(exatn::numerics::TensorNetwork::splitIndices): Request to use cuTensorNet without cuQuantum build!");
+#endif //CUQUANTUM
  }
 
  //Traverse tensor operations in reverse order and mark index splitting in each affected tensor:
