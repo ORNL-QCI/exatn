@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/09/18
+REVISION: 2022/09/30
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -96,6 +96,7 @@ struct TensorNetworkReq {
  int64_t ** strides_in = nullptr;
  int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
+ cutensornetTensorQualifiers_t * qualifiers_in = nullptr;
  std::vector<void**> gpu_data_in; //vector of owning arrays of non-owning pointers to the input tensor bodies on each GPU
  int32_t num_modes_out;
  int64_t * extents_out = nullptr; //non-owning
@@ -139,6 +140,7 @@ struct TensorNetworkReq {
   if(strides_out != nullptr) delete [] strides_out;
   //if(extents_out != nullptr) delete [] extents_out;
   for(auto & data_in: gpu_data_in) if(data_in != nullptr) delete [] data_in;
+  if(qualifiers_in != nullptr) delete [] qualifiers_in;
   if(alignments_in != nullptr) delete [] alignments_in;
   if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
@@ -370,6 +372,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
  tn_req->strides_in = new int64_t*[num_input_tensors];
  tn_req->modes_in = new int32_t*[num_input_tensors];
  tn_req->alignments_in = new uint32_t[num_input_tensors];
+ tn_req->qualifiers_in = new cutensornetTensorQualifiers_t[num_input_tensors];
 
  tn_req->gpu_data_in.resize(num_gpus,nullptr);
  for(auto & data_in: tn_req->gpu_data_in) data_in = new void*[num_input_tensors];
@@ -431,6 +434,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
    tn_req->num_modes_in[tens_num] = tens_rank;
    tn_req->extents_in[tens_num] = res0.first->second.extents.data();
    tn_req->modes_in[tens_num] = res1.first->second.data();
+   tn_req->qualifiers_in[tens_num].isConjugate = static_cast<int32_t>(tens.isComplexConjugated());
    ++tens_num;
   }
  }
@@ -461,7 +465,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
 
  //Create the cuTensorNet tensor network descriptor (not GPU specific):
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(gpu_attr_[0].second.cutn_handle,num_input_tensors,
-                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,
+                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,tn_req->qualifiers_in,
                   tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
                   tn_req->data_type,tn_req->compute_type,&(tn_req->net_descriptor)));
  return;
