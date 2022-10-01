@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/09/18
+REVISION: 2022/09/30
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -79,6 +79,10 @@ SPDX-License-Identifier: BSD-3-Clause **/
 #include "errors.hpp"
 
 namespace exatn{
+
+#ifdef CUQUANTUM
+struct TensorNetworkPathCutn;
+#endif
 
 namespace numerics{
 
@@ -524,9 +528,11 @@ public:
 #ifdef CUQUANTUM
  /** Saves the contraction path and slicing information produced by cuTensorNet. **/
  void setCuTensorNetInfo(std::shared_ptr<InfoCuTensorNet> cutn_info) {info_cutn_ = cutn_info; return;}
+ void setCuTensorNetPath(std::shared_ptr<TensorNetworkPathCutn> cutn_path) {cutn_path_ = cutn_path; return;}
 
  /** Returns the contraction path and slicing information produced by cuTensorNet. **/
  std::shared_ptr<InfoCuTensorNet> getCuTensorNetInfo() const {return info_cutn_;}
+ std::shared_ptr<TensorNetworkPathCutn> getCuTensorNetPath() const {return cutn_path_;}
 #endif
 
  /** Splits some indices of the tensor network into smaller segments in order
@@ -697,6 +703,7 @@ private:
  bool universal_indexing_; //universal indexing flag
 #ifdef CUQUANTUM
  std::shared_ptr<InfoCuTensorNet> info_cutn_; //cutensornet data structures
+ std::shared_ptr<TensorNetworkPathCutn> cutn_path_; //cutensornet contraction path and info
 #endif
 
  /** Data members: Bond adaptivity: **/

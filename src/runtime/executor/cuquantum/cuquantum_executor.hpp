@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/06/22
+REVISION: 2022/09/30
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -35,6 +35,7 @@ class Tensor;
 }
 
 namespace exatn {
+
 namespace runtime {
 
 using TensorImplFunc = std::function<void*(const numerics::Tensor &, int, int, std::size_t *)>;
@@ -57,6 +58,10 @@ struct ExecutionTimings {
 class CuQuantumExecutor {
 
 public:
+
+ static constexpr unsigned int HYPER_SAMPLES = 32;
+ static constexpr unsigned int RECONFIG_ITERATIONS = 256;
+ static constexpr unsigned int RECONFIG_LEAVES = 6;
 
  CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                    unsigned int pipeline_depth,
