@@ -1,0 +1,30 @@
+name: "Linux CI"
+
+on:
+  push:
+    branches: [ devel ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+    runs-on: ubuntu-latest
+    name: "Linux CI"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create Build Environment
+        run: cmake -E make_directory build
+      
+      - name: Install dependencies
+        run: sudo apt-get -y update && sudo apt-get install -y --no-install-recommends gfortran libopenmpi-dev libssl-dev libcurl4-openssl-dev python3 libpython3-dev python3-pip libblas-dev liblapack-dev
+      
+      - name: Configure
+        working-directory: build/
+        run: cmake $GITHUB_WORKSPACE -DBLAS_LIB=ATLAS -DBLAS_PATH=/usr/lib/x86_64-linux-gnu -DCMAKE_BUILD_TYPE=${{matrix.build_type}} 
+    
+      - name: Build
+        working-directory: build/
+        run: cmake --build . --target install
