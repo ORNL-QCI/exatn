@@ -699,7 +699,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor)["
               << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(numericalServer->getTimeStampStart())
               << "]: Iteration " << iteration << std::endl;
-   double max_grad_norm = 0.0, max_ortho_grad_norm = 0.0;
+   double max_ortho_grad_norm = 0.0;
    for(auto & environment: environments_){
     //Create the gradient tensor:
     done = createTensorSync(environment.gradient,environment.tensor->getElementType()); assert(done);
@@ -733,7 +733,6 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     const double ortho_grad_norm = std::sqrt(grad_norm*grad_norm - colli_grad_norm*colli_grad_norm);
     const double relative_colli_grad_norm = colli_grad_norm / tens_norm;
     const double relative_ortho_grad_norm = ortho_grad_norm / tens_norm;
-    max_grad_norm = std::max(max_grad_norm,relative_grad_norm);
     max_ortho_grad_norm = std::max(max_ortho_grad_norm,relative_ortho_grad_norm);
     if(TensorNetworkReconstructor::debug > 1){
      std::cout << "; Relative Ortho/Colli grad = " << std::scientific
@@ -745,7 +744,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     std::string add_pattern;
     done = generate_addition_pattern(environment.tensor->getRank(),add_pattern,false,
                                      environment.tensor->getName(),environment.gradient->getName()); assert(done);
-    done = addTensorsSync(add_pattern,epsilon_); assert(done);
+    done = addTensorsSync(add_pattern,(epsilon_*tens_norm/grad_norm)); assert(done);
     //done = copyTensorSync(environment.tensor->getName(),environment.gradient->getName(),true); assert(done);
     //Check the norm of the updated tensor:
     double new_tens_norm = 0.0;
@@ -770,8 +769,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
    residual_norm_ = std::sqrt(residual_norm_);
    if(TensorNetworkReconstructor::debug > 0){
     std::cout << " Residual norm = " << std::scientific << residual_norm_
-              << "; Max relative gradient (ortho) = " << max_grad_norm
-              << " (" << max_ortho_grad_norm << ")" << std::endl;
+              << "; Max relative ortho-gradient = " << max_ortho_grad_norm << std::endl;
     approximant_->printCoefficients();
    }
    //Compute the approximant norm:
@@ -792,8 +790,7 @@ bool TensorNetworkReconstructor::reconstruct_iso_sd(const ProcessGroup & process
     std::cout << "#DEBUG(exatn::TensorNetworkReconstructor): 2-norm of the output tensor network expansion = "
               << std::scientific << output_norm_ << "; Absolute overlap = " << overlap_abs << std::endl;
    bool last_diff_iteration = (iteration % DEFAULT_OVERLAP_ITERATIONS == (DEFAULT_OVERLAP_ITERATIONS-1));
-   converged = (max_grad_norm <= DEFAULT_GRAD_ZERO_THRESHOLD) ||
-               (std::abs(overlap_abs - 1.0) <= tolerance_) ||
+   converged = (std::abs(1.0 - overlap_abs) <= tolerance_) ||
                ((overlap_diff/overlap_abs <= tolerance_) && last_diff_iteration);
    if(last_diff_iteration) overlap_diff = 0.0;
    ++iteration;

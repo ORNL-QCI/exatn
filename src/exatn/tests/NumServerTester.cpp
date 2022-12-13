@@ -3325,7 +3325,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  bool nesterov = true;
  if(isometric_solver){
   nesterov = false;
-  reconstructor.resetLearningRate(1e3);
+  reconstructor.resetLearningRate(1e2);
  }else{
   reconstructor.resetLearningRate(1.0);
  }
