@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/09/30
+REVISION: 2022/12/12
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -485,8 +485,8 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
 
  //Create the cuTensorNet tensor network descriptor (not GPU specific):
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(gpu_attr_[0].second.cutn_handle,num_input_tensors,
-                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,tn_req->qualifiers_in,
-                  tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
+                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->qualifiers_in,
+                  tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,
                   tn_req->data_type,tn_req->compute_type,&(tn_req->net_descriptor)));
  return;
 }

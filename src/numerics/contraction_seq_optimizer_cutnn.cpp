@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/09/30
+REVISION: 2022/12/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -323,8 +323,8 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  /*std::cout << "#DEBUG(exatn::contraction_seq_optimizer_cutnn): Creating cuTensorNet descriptor for tensor network:\n";
  network.printIt();*/
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(*cutnn_handle,tn_rep.num_input_tensors,
-                  tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.alignments_in,tn_rep.qualifiers_in,
-                  tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,tn_rep.alignment_out,
+                  tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.qualifiers_in,
+                  tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,
                   tn_rep.data_type,tn_rep.compute_type,&cutnn_network));
  return;
 }
