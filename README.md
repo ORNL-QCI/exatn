@@ -80,8 +80,7 @@ Compilers (C++14, Fortran-2003): GNU 8+
 MPI (optional): MPICH 3+, OpenMPI 4+
 BLAS (optional): OpenBLAS (recommended), ATLAS (default Linux BLAS), MKL, ACML (not tested), ESSL (not tested)
 CUDA 9+ (optional, NVIDIA GPU only)
-cuTensor/cuQuantum (optional, NVIDIA GPU only)
-Note: The support of lazy tensor conjugation in ExaTN+cuQuantum is coming soon
+cuTensor/cuQuantum v.22.11 or higher (optional but highly recommended, NVIDIA GPU only)
 ```
 For TaProl Parser Development
 ```

@@ -675,7 +675,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
    const auto & tensor_name = operand->getName();
    if(tensor_name.length() >= 2){
     if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
-     assert(operation->operandIsMutable(i) == false);
+     if(i >= operation->getNumOperandsOut()) assert(operation->operandIsMutable(i) == false);
      if(!tensorAllocated(tensor_name)){
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Kronecker Delta tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
@@ -694,7 +694,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
       }
      }
     }else if(tensor_name[0] == '_' && tensor_name[1] == 'e'){ //_eX: scalar tensor equal to X (real integer)
-     assert(operation->operandIsMutable(i) == false);
+     if(i >= operation->getNumOperandsOut()) assert(operation->operandIsMutable(i) == false);
      if(!tensorAllocated(tensor_name)){
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Constant scalar tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
