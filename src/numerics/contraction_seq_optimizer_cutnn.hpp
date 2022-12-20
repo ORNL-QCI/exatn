@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: cuTensorNet heuristics
-REVISION: 2022/07/29
+REVISION: 2022/09/30
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -32,6 +32,10 @@ struct InfoCuTensorNet;
 class ContractionSeqOptimizerCutnn: public ContractionSeqOptimizer{
 
 public:
+
+ static constexpr unsigned int HYPER_SAMPLES = 32;
+ static constexpr unsigned int RECONFIG_ITERATIONS = 256;
+ static constexpr unsigned int RECONFIG_LEAVES = 6;
 
  ContractionSeqOptimizerCutnn();
  virtual ~ContractionSeqOptimizerCutnn();

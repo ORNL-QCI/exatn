@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/09/18
+REVISION: 2022/12/19
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -48,6 +48,27 @@ SPDX-License-Identifier: BSD-3-Clause **/
 
 
 namespace exatn {
+
+// Cached cutensornet contraction path (inside TensorNetwork):
+struct TensorNetworkPathCutn {
+ cutensornetContractionOptimizerInfo_t path_cutn;
+ bool initialized = false;
+
+ void initialize(const cutensornetHandle_t handle,
+                 const cutensornetNetworkDescriptor_t network)
+ {
+  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(handle,network,&path_cutn));
+  initialized = true;
+ }
+
+ ~TensorNetworkPathCutn()
+ {
+  if(initialized) cutensornetDestroyContractionOptimizerInfo(path_cutn);
+  initialized = false;
+ }
+};
+
+
 namespace runtime {
 
 /** Retrieves a state of cutensornetContractionOptimizerInfo_t as a plain byte packet. **/
@@ -96,6 +117,7 @@ struct TensorNetworkReq {
  int64_t ** strides_in = nullptr;
  int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
+ cutensornetTensorQualifiers_t * qualifiers_in = nullptr;
  std::vector<void**> gpu_data_in; //vector of owning arrays of non-owning pointers to the input tensor bodies on each GPU
  int32_t num_modes_out;
  int64_t * extents_out = nullptr; //non-owning
@@ -108,7 +130,7 @@ struct TensorNetworkReq {
  std::vector<void*> memory_window_ptr; //end of the GPU memory segment allocated for the tensors on each GPU
  cutensornetNetworkDescriptor_t net_descriptor;
  cutensornetContractionOptimizerConfig_t opt_config;
- cutensornetContractionOptimizerInfo_t opt_info;
+ std::shared_ptr<TensorNetworkPathCutn> opt_info;
  std::vector<cutensornetWorkspaceDescriptor_t> workspace_descriptor; //for each GPU
  std::vector<cutensornetContractionPlan_t> comp_plan; //for each GPU
  cudaDataType_t data_type;
@@ -132,13 +154,13 @@ struct TensorNetworkReq {
   for(auto & stream: gpu_stream) cudaStreamDestroy(stream);
   for(auto & plan: comp_plan) cutensornetDestroyContractionPlan(plan);
   for(auto & ws_descr: workspace_descriptor) cutensornetDestroyWorkspaceDescriptor(ws_descr);
-  cutensornetDestroyContractionOptimizerInfo(opt_info);
   cutensornetDestroyContractionOptimizerConfig(opt_config);
   cutensornetDestroyNetworkDescriptor(net_descriptor);
   //if(modes_out != nullptr) delete [] modes_out;
   if(strides_out != nullptr) delete [] strides_out;
   //if(extents_out != nullptr) delete [] extents_out;
   for(auto & data_in: gpu_data_in) if(data_in != nullptr) delete [] data_in;
+  if(qualifiers_in != nullptr) delete [] qualifiers_in;
   if(alignments_in != nullptr) delete [] alignments_in;
   if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
@@ -370,6 +392,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
  tn_req->strides_in = new int64_t*[num_input_tensors];
  tn_req->modes_in = new int32_t*[num_input_tensors];
  tn_req->alignments_in = new uint32_t[num_input_tensors];
+ tn_req->qualifiers_in = new cutensornetTensorQualifiers_t[num_input_tensors];
 
  tn_req->gpu_data_in.resize(num_gpus,nullptr);
  for(auto & data_in: tn_req->gpu_data_in) data_in = new void*[num_input_tensors];
@@ -431,6 +454,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
    tn_req->num_modes_in[tens_num] = tens_rank;
    tn_req->extents_in[tens_num] = res0.first->second.extents.data();
    tn_req->modes_in[tens_num] = res1.first->second.data();
+   tn_req->qualifiers_in[tens_num].isConjugate = static_cast<int32_t>(tens.isComplexConjugated());
    ++tens_num;
   }
  }
@@ -461,8 +485,8 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
 
  //Create the cuTensorNet tensor network descriptor (not GPU specific):
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(gpu_attr_[0].second.cutn_handle,num_input_tensors,
-                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->alignments_in,
-                  tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,tn_req->alignment_out,
+                  tn_req->num_modes_in,tn_req->extents_in,tn_req->strides_in,tn_req->modes_in,tn_req->qualifiers_in,
+                  tn_req->num_modes_out,tn_req->extents_out,tn_req->strides_out,tn_req->modes_out,
                   tn_req->data_type,tn_req->compute_type,&(tn_req->net_descriptor)));
  return;
 }
@@ -723,44 +747,59 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,
                                                                       &cost_func,sizeof(cost_func)));
-   const int32_t hyper_samples = 32;
+   const int32_t hyper_samples = (int(MIN_HYPER_SAMPLES) - 1) / (tn_req->num_procs) + 1;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,
                                                                       &hyper_samples,sizeof(hyper_samples)));
-   const int32_t reconfig_iter = 256;
+   const int32_t reconfig_iter = RECONFIG_ITERATIONS;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_ITERATIONS,
                                                                       &reconfig_iter,sizeof(reconfig_iter)));
-   HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor,&(tn_req->opt_info)));
-   HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
-                                                   tn_req->net_descriptor,tn_req->opt_config,
-                                                   min_gpu_workspace_size,tn_req->opt_info));
+   const int32_t reconfig_leaves = RECONFIG_LEAVES;
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_LEAVES,
+                                                                      &reconfig_leaves,sizeof(reconfig_leaves)));
+   const int32_t rnd_seed = (tn_req->proc_id + 1);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SEED,
+                                                                      &rnd_seed,sizeof(rnd_seed)));
+   auto cached_path = tn_req->network->getCuTensorNetPath();
+   if(cached_path){
+    tn_req->opt_info = cached_path;
+   }else{
+    tn_req->opt_info = std::make_shared<TensorNetworkPathCutn>();
+    tn_req->opt_info->initialize(gpu_attr_[gpu].second.cutn_handle,tn_req->net_descriptor);
+    HANDLE_CTN_ERROR(cutensornetContractionOptimize(gpu_attr_[gpu].second.cutn_handle,
+                                                    tn_req->net_descriptor,tn_req->opt_config,
+                                                    min_gpu_workspace_size,tn_req->opt_info->path_cutn));
+    tn_req->network->setCuTensorNetPath(tn_req->opt_info);
+   }
 #ifdef MPI_ENABLED
    if(tn_req->num_procs > 1){
-    broadcastCutensornetContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_info,tn_req->comm);
+    broadcastCutensornetContractionOptimizerInfo(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_info->path_cutn,tn_req->comm);
    }
 #endif
    double flops = 0.0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
-                                                                    tn_req->opt_info,
+                                                                    tn_req->opt_info->path_cutn,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_FLOP_COUNT,
                                                                     &flops,sizeof(flops)));
    assert(flops >= 0.0);
    const double total_flops = flops * 0.5 * tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
-   flops_ += ((flops * 0.5) / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution
+   flops_ += ((flops * 0.5) / static_cast<double>(tn_req->num_procs)) * //assuming uniform work distribution (not true in general)
              tensorElementTypeOpFactor(tn_req->network->getTensorElementType());
    //std::cout << "#INFO(exatn::CuQuantumExecutor): Path found for network " << tn_req->network->getTensorNetworkHash()
    //          << " with total Flop count = " << std::scientific << (total_flops/1e9) << " Gflop" << std::endl; //debug
    tn_req->num_slices = 0;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(gpu_attr_[gpu].second.cutn_handle,
-                                                                    tn_req->opt_info,
+                                                                    tn_req->opt_info->path_cutn,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICES,
                                                                     &(tn_req->num_slices),sizeof(tn_req->num_slices)));
    assert(tn_req->num_slices > 0);
   }
   HANDLE_CTN_ERROR(cutensornetCreateWorkspaceDescriptor(gpu_attr_[gpu].second.cutn_handle,&(tn_req->workspace_descriptor[gpu])));
   HANDLE_CTN_ERROR(cutensornetWorkspaceComputeSizes(gpu_attr_[gpu].second.cutn_handle,
-                                                    tn_req->net_descriptor,tn_req->opt_info,
+                                                    tn_req->net_descriptor,tn_req->opt_info->path_cutn,
                                                     tn_req->workspace_descriptor[gpu]));
   uint64_t required_workspace_size = 0;
   HANDLE_CTN_ERROR(cutensornetWorkspaceGetSize(gpu_attr_[gpu].second.cutn_handle,
@@ -776,7 +815,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
                                            CUTENSORNET_MEMSPACE_DEVICE,
                                            tn_req->gpu_workspace[gpu],tn_req->gpu_worksize[gpu]));
   HANDLE_CTN_ERROR(cutensornetCreateContractionPlan(gpu_attr_[gpu].second.cutn_handle,
-                                                    tn_req->net_descriptor,tn_req->opt_info,
+                                                    tn_req->net_descriptor,tn_req->opt_info->path_cutn,
                                                     tn_req->workspace_descriptor[gpu],&(tn_req->comp_plan[gpu])));
  }
  tn_req->prepare_finish = Timer::timeInSecHR();

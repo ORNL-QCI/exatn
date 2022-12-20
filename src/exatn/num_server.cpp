@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/18
+REVISION: 2022/09/30
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -675,7 +675,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
    const auto & tensor_name = operand->getName();
    if(tensor_name.length() >= 2){
     if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
-     assert(operation->operandIsMutable(i) == false);
+     if(i >= operation->getNumOperandsOut()) assert(operation->operandIsMutable(i) == false);
      if(!tensorAllocated(tensor_name)){
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Kronecker Delta tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
@@ -694,7 +694,7 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
       }
      }
     }else if(tensor_name[0] == '_' && tensor_name[1] == 'e'){ //_eX: scalar tensor equal to X (real integer)
-     assert(operation->operandIsMutable(i) == false);
+     if(i >= operation->getNumOperandsOut()) assert(operation->operandIsMutable(i) == false);
      if(!tensorAllocated(tensor_name)){
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Constant scalar tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
@@ -760,7 +760,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const bool serialize = false;
 
 #ifdef CUQUANTUM
- if(comp_backend_ == "cuquantum"){
+ if(comp_backend_ == "cuquantum" && network.getNumTensors() > 2){
   auto sh_network = std::shared_ptr<TensorNetwork>(&network,[](TensorNetwork * net_ptr){});
   return submit(process_group,sh_network);
  }
@@ -844,7 +844,11 @@ bool NumServer::submit(const ProcessGroup & process_group,
  if(logging_ > 0) logfile_ << max_intermediate_volume << " (after slicing)" << std::endl << std::flush;
  //if(max_intermediate_presence_volume > 0.0 && max_intermediate_volume > 0.0)
 #ifdef CUQUANTUM
- network.splitIndices(static_cast<std::size_t>(max_intermediate_volume),contr_seq_slicer_);
+ if(contr_seq_optimizer_ == "cutnn"){
+  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume),contr_seq_slicer_);
+ }else{
+  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume),true);
+ }
 #else
  network.splitIndices(static_cast<std::size_t>(max_intermediate_volume));
 #endif
@@ -1046,9 +1050,10 @@ bool NumServer::submit(const ProcessGroup & process_group,
 bool NumServer::submit(const ProcessGroup & process_group,
                        std::shared_ptr<TensorNetwork> network)
 {
+ assert(network);
 #ifdef CUQUANTUM
  //Try execution via an alternative computational backend:
- if(comp_backend_ == "cuquantum"){
+ if(comp_backend_ == "cuquantum" && network->getNumTensors() > 2){
   //Determine parallel execution configuration:
   unsigned int local_rank; //local process rank within the process group
   if(!process_group.rankIsIn(process_rank_,&local_rank)) return true; //process is not in the group: Do nothing
@@ -1254,7 +1259,7 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
   if(comp_backend_ == "cuquantum"){
    auto cuter = tn_exec_handles_.find(iter->second->getTensorHash());
    success = (cuter == tn_exec_handles_.end());
-   if(!success){
+   if(!success){ //tensor network is processed by the cuquantum backend
     success = tensor_rt_->syncNetwork(cuter->second,wait);
     if(success){
      if(logging_ > 0) logfile_ << "[" << std::fixed << std::setprecision(6) << exatn::Timer::timeInSecHR(getTimeStampStart())
@@ -1270,8 +1275,8 @@ bool NumServer::sync(const ProcessGroup & process_group, const Tensor & tensor, 
      }
 #endif
     }
+    return success;
    }
-   return success;
   }
 #endif
   if(iter->second->isComposite()){

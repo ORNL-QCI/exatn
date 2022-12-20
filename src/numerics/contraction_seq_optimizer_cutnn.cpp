@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/09/16
+REVISION: 2022/12/12
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -62,6 +62,7 @@ struct TensorNetworkParsed {
  int64_t ** strides_in = nullptr;
  int32_t ** modes_in = nullptr;
  uint32_t * alignments_in = nullptr;
+ cutensornetTensorQualifiers_t * qualifiers_in = nullptr;
  int32_t num_modes_out = 0;
  int64_t * extents_out = nullptr; //non-owning
  int64_t * strides_out = nullptr;
@@ -81,11 +82,13 @@ struct TensorNetworkParsed {
   strides_in = new int64_t*[num_input_tensors];
   modes_in = new int32_t*[num_input_tensors];
   alignments_in = new uint32_t[num_input_tensors];
+  qualifiers_in = new cutensornetTensorQualifiers_t[num_input_tensors];
  }
 
  ~TensorNetworkParsed()
  {
   if(strides_out != nullptr) delete [] strides_out;
+  if(qualifiers_in != nullptr) delete [] qualifiers_in;
   if(alignments_in != nullptr) delete [] alignments_in;
   if(modes_in != nullptr) delete [] modes_in;
   if(strides_in != nullptr) delete [] strides_in;
@@ -203,12 +206,15 @@ InfoCuTensorNet::InfoCuTensorNet(cutensornetHandle_t * handle,
  const cutensornetOptimizerCost_t cost_func = CUTENSORNET_OPTIMIZER_COST_TIME;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,&cost_func,sizeof(cost_func)));
- const int32_t hyper_samples = 32;
+ const int32_t hyper_samples = ContractionSeqOptimizerCutnn::HYPER_SAMPLES;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,&hyper_samples,sizeof(hyper_samples)));
- const int32_t reconfig_iter = 256;
+ const int32_t reconfig_iter = ContractionSeqOptimizerCutnn::RECONFIG_ITERATIONS;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_ITERATIONS,&reconfig_iter,sizeof(reconfig_iter)));
+ const int32_t reconfig_leaves = ContractionSeqOptimizerCutnn::RECONFIG_LEAVES;
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
+                   CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_LEAVES,&reconfig_leaves,sizeof(reconfig_leaves)));
  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(*cutnn_handle,cutnn_network,&cutnn_info));
  HANDLE_CTN_ERROR(cutensornetContractionOptimize(*cutnn_handle,cutnn_network,cutnn_config,workspace_size,cutnn_info));
 }
@@ -305,6 +311,7 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
    tn_rep.num_modes_in[tens_num] = tens_rank;
    tn_rep.extents_in[tens_num] = res0.first->second.extents.data();
    tn_rep.modes_in[tens_num] = res1.first->second.data();
+   tn_rep.qualifiers_in[tens_num].isConjugate = static_cast<int32_t>(tens.isComplexConjugated());
    ++tens_num;
   }
  }
@@ -316,8 +323,8 @@ void InfoCuTensorNet::parseTensorNetwork(const TensorNetwork & network)
  /*std::cout << "#DEBUG(exatn::contraction_seq_optimizer_cutnn): Creating cuTensorNet descriptor for tensor network:\n";
  network.printIt();*/
  HANDLE_CTN_ERROR(cutensornetCreateNetworkDescriptor(*cutnn_handle,tn_rep.num_input_tensors,
-                  tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.alignments_in,
-                  tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,tn_rep.alignment_out,
+                  tn_rep.num_modes_in,tn_rep.extents_in,tn_rep.strides_in,tn_rep.modes_in,tn_rep.qualifiers_in,
+                  tn_rep.num_modes_out,tn_rep.extents_out,tn_rep.strides_out,tn_rep.modes_out,
                   tn_rep.data_type,tn_rep.compute_type,&cutnn_network));
  return;
 }

@@ -30,7 +30,7 @@
 #define EXATN_TEST9
 #define EXATN_TEST10
 #define EXATN_TEST11
-//#define EXATN_TEST12
+#define EXATN_TEST12
 #define EXATN_TEST13
 #define EXATN_TEST14
 //#define EXATN_TEST15 //buggy (parsed named spaces/subspaces)
@@ -48,11 +48,11 @@
 //#define EXATN_TEST27 //requires input file from source
 //#define EXATN_TEST28 //requires input file from source
 #define EXATN_TEST29
-//#define EXATN_TEST30
+#define EXATN_TEST30
 //#define EXATN_TEST31 //requires input file from source
-//#define EXATN_TEST32
+#define EXATN_TEST32
 #define EXATN_TEST33
-//#define EXATN_TEST34
+#define EXATN_TEST34
 
 
 #ifdef EXATN_TEST0
@@ -79,6 +79,11 @@ TEST(NumServerTester, PerformanceExaTN)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -303,6 +308,11 @@ TEST(NumServerTester, ExamplarExaTN)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -418,6 +428,11 @@ TEST(NumServerTester, ParallelExaTN)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -510,6 +525,11 @@ TEST(NumServerTester, superEasyNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Example of tensor network processing:
  //3-site MPS closure with 2-body Hamiltonian applied to sites 0 and 1:
@@ -585,6 +605,11 @@ TEST(NumServerTester, circuitNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Quantum Circuit:
  //Q0----H---------
@@ -693,6 +718,11 @@ TEST(NumServerTester, circuitConjugateNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero {
@@ -780,6 +810,11 @@ TEST(NumServerTester, largeCircuitNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Quantum Circuit:
  //Q00---H-----
@@ -931,6 +966,11 @@ TEST(NumServerTester, Sycamore8NumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 172; //total number of gates is 172
@@ -1063,6 +1103,11 @@ TEST(NumServerTester, Sycamore12NumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  const unsigned int num_qubits = 53;
  const unsigned int num_gates = 258; //total number of gates is 258
@@ -1186,6 +1231,11 @@ TEST(NumServerTester, rcsNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Configuration:
  const int NB_QUBITS = 52;
@@ -1381,6 +1431,11 @@ TEST(NumServerTester, BigMPSNumServer)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  const int nbQubits = 32;
  const std::vector<int> qubitTensorDim(nbQubits, 2);
@@ -1469,6 +1524,11 @@ TEST(NumServerTester, HamiltonianNumServer)
            << used_mem << std::endl << std::flush;
  if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  //Declare MPS tensors:
  auto q0 = std::make_shared<Tensor>("Q0",TensorShape{2,2});
@@ -1638,6 +1698,11 @@ TEST(NumServerTester, IsingTNO)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -1761,7 +1826,7 @@ TEST(NumServerTester, IsingTNO)
   //success = exatn::sync(); assert(success);
   //success = exatn::balanceNorm2Sync(*vec_tns,1.0,true); assert(success);
   exatn::TensorNetworkOptimizer::resetDebugLevel(1,0);
-  exatn::TensorNetworkOptimizer optimizer1(ham,vec_tns,1e-5);
+  exatn::TensorNetworkOptimizer optimizer1(ham,vec_tns,1e-4);
   success = exatn::sync(); assert(success);
   bool converged = optimizer1.optimize();
   success = exatn::sync(); assert(success);
@@ -1822,7 +1887,7 @@ TEST(NumServerTester, IsingTNO)
   std::cout << "Linear solver for the tensor network Hamiltonian:" << std::endl;
   success = exatn::initTensorsRndSync(*vec_net); assert(success);
   exatn::TensorNetworkLinearSolver::resetDebugLevel(1,0);
-  exatn::TensorNetworkLinearSolver linsolver(ham_tno,rhs_tns,vec_tns,1e-5);
+  exatn::TensorNetworkLinearSolver linsolver(ham_tno,rhs_tns,vec_tns,1e-4);
   success = exatn::sync(); assert(success);
   converged = linsolver.solve(&residual_norm,&fidelity);
   success = exatn::sync(); assert(success);
@@ -1876,6 +1941,11 @@ TEST(NumServerTester, MPSBuilderNumServer)
            << used_mem << std::endl << std::flush;
  if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  auto & networkBuildFactory = *(exatn::NetworkBuildFactory::get());
  auto builder = networkBuildFactory.createNetworkBuilderShared("MPS"); assert(builder);
@@ -1921,6 +1991,11 @@ TEST(NumServerTester, TestSVD)
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -2043,6 +2118,11 @@ TEST(NumServerTester, testGarbage) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  // Define the initial qubit state vector:
  std::vector<std::complex<double>> qzero{
@@ -2278,6 +2358,11 @@ TEST(NumServerTester, neurIPS) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -2471,6 +2556,11 @@ TEST(NumServerTester, MPSNorm) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -2560,6 +2650,11 @@ TEST(NumServerTester, UserDefinedMethod) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -2655,6 +2750,11 @@ TEST(NumServerTester, PrintTensors) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -2709,6 +2809,11 @@ TEST(NumServerTester, CollapseTensors) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -3219,15 +3324,18 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  bool EVALUATE_FULL_TENSOR = false;
 
  //exatn::resetLoggingLevel(1,1); //debug
-#ifdef CUQUANTUM
- exatn::resetContrSeqOptimizer("cutnn");
-#endif
 
  std::size_t free_mem = 0;
  auto used_mem = exatn::getMemoryUsage(&free_mem);
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ exatn::resetContrSeqOptimizer("cutnn");
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -3322,7 +3430,7 @@ TEST(NumServerTester, ExaTNGenVisitor) {
  bool nesterov = true;
  if(isometric_solver){
   nesterov = false;
-  reconstructor.resetLearningRate(1e3);
+  reconstructor.resetLearningRate(1e2);
  }else{
   reconstructor.resetLearningRate(1.0);
  }
@@ -3393,6 +3501,11 @@ TEST(NumServerTester, HubbardHamiltonian) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -3519,6 +3632,11 @@ TEST(NumServerTester, MCVQEHamiltonian) {
            << used_mem << std::endl << std::flush;
  if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -3613,6 +3731,11 @@ TEST(NumServerTester, TensorOperatorReconstruction) {
            << used_mem << std::endl << std::flush;
  if(used_mem != 0) exatn::numericalServer->printAllocatedTensors();
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
@@ -3679,6 +3802,11 @@ TEST(NumServerTester, SpinHamiltonians) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -3841,7 +3969,7 @@ TEST(NumServerTester, ExcitedMCVQE) {
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
  const unsigned int num_states = 4;
- const double accuracy = 3e-5;
+ const double accuracy = 1e-4;
 
  //exatn::resetLoggingLevel(1,2); //debug
 
@@ -3850,6 +3978,11 @@ TEST(NumServerTester, ExcitedMCVQE) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -4018,6 +4151,11 @@ TEST(NumServerTester, IsometricAIEM) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
  bool root = (exatn::getProcessRank() == 0);
@@ -4295,6 +4433,11 @@ TEST(NumServerTester, TensorComposite) {
  std::cout << "#MSG(exatn): Backend tensor memory usage on entrance = "
            << used_mem << std::endl << std::flush;
  assert(used_mem == 0);
+#ifdef CUQUANTUM
+ auto backends = exatn::queryComputationalBackends();
+ if(std::find(backends.cbegin(),backends.cend(),"cuquantum") != backends.cend())
+  exatn::switchComputationalBackend("cuquantum");
+#endif
 
  bool success = true;
 
