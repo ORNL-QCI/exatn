@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/12/12
+REVISION: 2022/12/19
 
 Copyright (C) 2018-2022 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -747,7 +747,7 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_COST_FUNCTION_OBJECTIVE,
                                                                       &cost_func,sizeof(cost_func)));
-   const int32_t hyper_samples = HYPER_SAMPLES;
+   const int32_t hyper_samples = (int(MIN_HYPER_SAMPLES) - 1) / (tn_req->num_procs) + 1;
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_HYPER_NUM_SAMPLES,
                                                                       &hyper_samples,sizeof(hyper_samples)));
@@ -759,6 +759,10 @@ void CuQuantumExecutor::planExecution(std::shared_ptr<TensorNetworkReq> tn_req)
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
                                                                       CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_LEAVES,
                                                                       &reconfig_leaves,sizeof(reconfig_leaves)));
+   const int32_t rnd_seed = (tn_req->proc_id + 1);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(gpu_attr_[gpu].second.cutn_handle,tn_req->opt_config,
+                                                                      CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SEED,
+                                                                      &rnd_seed,sizeof(rnd_seed)));
    auto cached_path = tn_req->network->getCuTensorNetPath();
    if(cached_path){
     tn_req->opt_info = cached_path;
