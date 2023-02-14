@@ -1,9 +1,9 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/09/18
+REVISION: 2023/02/14
 
-Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -661,6 +661,7 @@ void TensorNetwork::invalidateContractionSequence()
  universal_indexing_ = false;
 #ifdef CUQUANTUM
  info_cutn_.reset();
+ cutn_path_.reset();
 #endif
  return;
 }
@@ -724,6 +725,7 @@ void TensorNetwork::importContractionSequence(const std::list<ContrTriple> & con
  assert(finalized_ != 0); //tensor network must be in finalized state
 #ifdef CUQUANTUM
  info_cutn_.reset();
+ cutn_path_.reset();
 #endif
  contraction_seq_.clear();
  contraction_seq_ = contr_sequence;
@@ -741,6 +743,7 @@ void TensorNetwork::importContractionSequence(const std::vector<unsigned int> & 
  assert(finalized_ != 0); //tensor network must be in finalized state
 #ifdef CUQUANTUM
  info_cutn_.reset();
+ cutn_path_.reset();
 #endif
  contraction_seq_.clear();
  unpackContractionSequenceFromVector(contraction_seq_,contr_sequence_content);
