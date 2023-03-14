@@ -1,9 +1,9 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/12/19
+REVISION: 2023/03/14
 
-Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2023 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -179,10 +179,10 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
  static_assert(std::is_same<cutensornetHandle_t,void*>::value,"#FATAL(exatn::runtime::CuQuantumExecutor): cutensornetHandle_t != (void*)");
 
  const size_t version = cutensornetGetVersion();
- if(process_rank_ == 0){
+ /*if(process_rank_ == 0){
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): cuTensorNet backend version " << version << std::endl;
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Total number of processes = " << num_processes_ << std::endl;
- }
+ }*/
 
  int num_gpus = 0;
  auto error_code = talshDeviceCount(DEV_NVIDIA_GPU,&num_gpus); assert(error_code == TALSH_SUCCESS);
@@ -203,8 +203,8 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
                                            gpu_attr_.back().second.buffer_size,MEM_ALIGNMENT));
   }
  }
- if(process_rank_ == 0)
-  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
+ //if(process_rank_ == 0)
+ // std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Number of available GPUs = " << gpu_attr_.size() << std::endl;
  if(gpu_attr_.empty()){
   fatal_error("#FATAL(exatn::runtime::CuQuantumExecutor): cuQuantum backend requires at least one NVIDIA GPU per MPI process!\n");
  }
@@ -213,7 +213,7 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
   HANDLE_CTN_ERROR(cutensornetCreate((cutensornetHandle_t*)(&gpu.second.cutn_handle)));
  }
- if(process_rank_ == 0){
+ /*if(process_rank_ == 0){
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Created cuTensorNet contexts for all available GPUs" << std::endl;
   std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): GPU configuration:\n";
   for(const auto & gpu: gpu_attr_){
@@ -223,7 +223,7 @@ CuQuantumExecutor::CuQuantumExecutor(TensorImplFunc tensor_data_access_func,
              << "; buf_ptr = " << gpu.second.buffer_ptr
              << ", size = " << gpu.second.buffer_size << std::endl;
   }
- }
+ }*/
 }
 
 
@@ -234,12 +234,12 @@ CuQuantumExecutor::~CuQuantumExecutor()
   HANDLE_CUDA_ERROR(cudaSetDevice(gpu.first));
   HANDLE_CTN_ERROR(cutensornetDestroy((cutensornetHandle_t)(gpu.second.cutn_handle)));
  }
- if(process_rank_ == 0)
-  std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
+ //if(process_rank_ == 0)
+ // std::cout << "#DEBUG(exatn::runtime::CuQuantumExecutor): Destroyed cuTensorNet contexts for all available GPUs" << std::endl;
 
- std::cout << "#MSG(exatn::cuQuantum): Statistics across all GPU devices:\n";
+ /*std::cout << "#MSG(exatn::cuQuantum): Statistics across all GPU devices:\n";
  std::cout << " Number of Flops processed: " << flops_ << std::endl;
- std::cout << "#END_MSG\n";
+ std::cout << "#END_MSG\n";*/
  gpu_attr_.clear();
 }
 
