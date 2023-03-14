@@ -579,7 +579,19 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
   assert(num_sliced_modes >= 0);
   appendToBytePacket(info_state,num_sliced_modes);
   if(num_sliced_modes > 0){
-   std::vector<int32_t> sliced_modes(num_sliced_modes);
+   cutensornetSlicingConfig_t sliced_modes{0, new cutensornetSliceInfoPair_t[num_sliced_modes]};
+   assert(sliced_modes.data != nullptr);
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICING_CONFIG,
+                                                                    &sliced_modes,sizeof(sliced_modes)));
+   assert(sliced_modes.numSlicedModes == num_sliced_modes);
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    appendToBytePacket(info_state,sliced_modes.data[i].slicedMode);
+    appendToBytePacket(info_state,sliced_modes.data[i].slicedExtent);
+   }
+   delete [] sliced_modes.data;
+   /*std::vector<int32_t> sliced_modes(num_sliced_modes);
    HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoGetAttribute(handle,
                                                                     info,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_MODE,
@@ -594,9 +606,9 @@ void getCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                                     sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
    for(int32_t i = 0; i < num_sliced_modes; ++i){
     appendToBytePacket(info_state,sliced_extents[i]);
-   }
+   }*/
   }
-  if(contr_path.data != nullptr) delete [] contr_path.data;
+  delete [] contr_path.data;
  }
  return;
 }
@@ -632,7 +644,21 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
   int32_t num_sliced_modes = 0;
   extractFromBytePacket(info_state,num_sliced_modes);
   assert(num_sliced_modes >= 0);
-  HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+  if(num_sliced_modes > 0){
+   cutensornetSlicingConfig_t sliced_modes{static_cast<uint32_t>(num_sliced_modes),
+                                           new cutensornetSliceInfoPair_t[num_sliced_modes]};
+   assert(sliced_modes.data != nullptr);
+   for(int32_t i = 0; i < num_sliced_modes; ++i){
+    extractFromBytePacket(info_state,sliced_modes.data[i].slicedMode);
+    extractFromBytePacket(info_state,sliced_modes.data[i].slicedExtent);
+   }
+   HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
+                                                                    info,
+                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICING_CONFIG,
+                                                                    &sliced_modes,sizeof(sliced_modes)));
+   delete [] sliced_modes.data;
+  }
+  /*HANDLE_CTN_ERROR(cutensornetContractionOptimizerInfoSetAttribute(handle,
                                                                    info,
                                                                    CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_NUM_SLICED_MODES,
                                                                    &num_sliced_modes,sizeof(num_sliced_modes)));
@@ -653,8 +679,8 @@ void setCutensornetContractionOptimizerInfoState(cutensornetHandle_t & handle,
                                                                     info,
                                                                     CUTENSORNET_CONTRACTION_OPTIMIZER_INFO_SLICED_EXTENT,
                                                                     sliced_extents.data(),sliced_extents.size()*sizeof(int64_t)));
-  }
-  if(contr_path.data != nullptr) delete [] contr_path.data;
+  }*/
+  delete [] contr_path.data;
  }
  return;
 }
@@ -716,7 +742,7 @@ void broadcastCutensornetContractionOptimizerInfo(cutensornetHandle_t & handle,
    setCutensornetContractionOptimizerInfoState(handle,info,&packet);
   }
   destroyBytePacket(&packet);
-  if(contr_path.data != nullptr) delete [] contr_path.data;
+  delete [] contr_path.data;
  }
  return;
 }
