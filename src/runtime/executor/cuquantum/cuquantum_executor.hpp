@@ -1,9 +1,9 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2022/12/19
+REVISION: 2023/03/15
 
-Copyright (C) 2018-2022 Dmitry Lyakh
+Copyright (C) 2018-2023 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause
 
@@ -146,6 +146,8 @@ protected:
  const unsigned int process_rank_;
  /** Executed flops **/
  double flops_;
+ /** Logging level **/
+ static int logging_;
 };
 
 } //namespace runtime
