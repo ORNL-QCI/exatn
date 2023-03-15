@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2023/03/14
+REVISION: 2023/03/15
 
 Copyright (C) 2018-2023 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -405,6 +405,12 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
  tn_req->strides_out = NULL;
  tn_req->alignment_out = MEM_ALIGNMENT;
 
+ if(logging_ > 0){
+  std::cout << "#INFO(exatn::runtime::CuQuantumExecutor): Dumping tensor network "
+            << net.getName() << " {\n";
+ }
+
+ std::vector<int32_t> output_tensor_modes(net.getTensor(0)->getRank());
  int32_t mode_id = 0, tens_num = 0;
  for(auto iter = net.cbegin(); iter != net.cend(); ++iter){
   const auto tens_id = iter->first;
@@ -457,6 +463,23 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
    tn_req->qualifiers_in[tens_num].isConjugate = static_cast<int32_t>(tens.isComplexConjugated());
    ++tens_num;
   }
+
+  if(logging_ > 0){
+   if(tens_id == 0) {
+    for(unsigned int i = 0; i < tens_rank; ++i) output_tensor_modes[i] = res1.first->second[i];
+   }else{
+    for(unsigned int i = 0; i < tens_rank; ++i) std::cout << " " << res1.first->second[i];
+    std::cout << " |";
+    for(unsigned int i = 0; i < tens_rank; ++i) std::cout << " " << tens_dims[i];
+    std::cout << std::endl;
+   }
+  }
+ }
+
+ if(logging_ > 0){
+  std::cout << "---" << std::endl;
+  for(const auto & md: output_tensor_modes) std::cout << " " << md;
+  std::cout << std::endl << "}" << std::endl << std::flush;
  }
 
  const auto tens_elem_type = net.getTensorElementType();
@@ -1067,6 +1090,8 @@ ExecutionTimings ExecutionTimings::computeBest(const std::vector<ExecutionTiming
  }
  return std::move(result_timings);
 }
+
+int CuQuantumExecutor::logging_ {0};
 
 } //namespace runtime
 } //namespace exatn
