@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/30
+REVISION: 2022/03/17
 
 Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -695,7 +695,9 @@ bool NumServer::submit(std::shared_ptr<TensorOperation> operation, std::shared_p
      }
     }else if(tensor_name[0] == '_' && tensor_name[1] == 'e'){ //_eX: scalar tensor equal to X (real integer)
      if(i >= operation->getNumOperandsOut()) assert(operation->operandIsMutable(i) == false);
-     if(!tensorAllocated(tensor_name)){
+     if(tensorAllocated(tensor_name)){
+      success = operation->resetTensorOperand(i,getTensor(tensor_name)); assert(success);
+     }else{
       //std::cout << "#DEBUG(exatn::NumServer::submitOp): Constant scalar tensor creation: "
       //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
       assert(tensor_name.length() > 2);
