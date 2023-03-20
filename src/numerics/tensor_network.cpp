@@ -1,5 +1,5 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2023/02/14
+REVISION: 2023/03/20
 
 Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -2123,6 +2123,21 @@ bool TensorNetwork::conjugate()
  }
  for(auto iter = this->begin(); iter != this->end(); ++iter) (iter->second).conjugate();
  return true;
+}
+
+
+bool TensorNetwork::containsScalarTensors() const
+{
+ bool scalar_tensors = false;
+ for(auto tens = cbegin(); tens != cend(); ++tens){
+  if(tens->first != 0){
+   if(tens->second.getRank() == 0){
+    scalar_tensors = true;
+    break;
+   }
+  }
+ }
+ return scalar_tensors;
 }
 
 
