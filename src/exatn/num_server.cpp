@@ -1,9 +1,9 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/03/17
+REVISION: 2023/03/20
 
-Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -1094,6 +1094,9 @@ bool NumServer::submit(const ProcessGroup & process_group,
    success = submit(op1,tensor_mapper); if(!success) return false;
    success = sync(*op1); assert(success);
   }
+
+  //Create and initialize special input tensors (if present):
+  initSpecialTensors(process_group,*network);
 
   //Submit tensor network for execution as a whole:
   const auto exec_handle = tensor_rt_->submit(network,process_group.getMPICommProxy(),num_procs,local_rank);
@@ -3770,6 +3773,70 @@ std::complex<double> NumServer::getScalarValue(const std::string & name)
   fatal_error("#ERROR(NumServer::getScalarValue): Tensor not found: "+name);
  }
  return scal_val;
+}
+
+void NumServer::initSpecialTensors(const ProcessGroup & process_group, TensorNetwork & network)
+{
+ auto tensor_mapper = getTensorMapper(process_group);
+ for(auto tens = network.begin(); tens != network.end(); ++tens) {
+  if(tens->first != 0) {
+   const auto & tensor_name = tens->second.getName();
+   auto operand = tens->second.getTensor();
+   const auto elem_type = operand->getElementType();
+   if(tensor_name.length() >= 2){
+    if(tensor_name[0] == '_' && tensor_name[1] == 'd'){ //_d: explicit Kronecker Delta tensor
+     if(!tensorAllocated(tensor_name)){
+      //std::cout << "#DEBUG(exatn::NumServer::initSpecialTensors): Kronecker Delta tensor creation: "
+      //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
+      assert(elem_type != TensorElementType::VOID);
+      implicit_tensors_.emplace(std::make_pair(tensor_name,operand)); //list of implicitly created tensors (for garbage collection)
+      if(!(process_group == getDefaultProcessGroup())){
+       auto saved = tensor_comms_.emplace(std::make_pair(tensor_name,process_group));
+       assert(saved.second);
+      }
+      std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+      op0->setTensorOperand(operand);
+      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
+      bool success = submit(op0,tensor_mapper);
+      if(success){
+       std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+       op1->setTensorOperand(operand);
+       std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+        resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitDelta()));
+       success = submit(op1,tensor_mapper); assert(success);
+      }
+     }
+    }else if(tensor_name[0] == '_' && tensor_name[1] == 'e'){ //_eX: scalar tensor equal to X (real integer)
+     if(tensorAllocated(tensor_name)){
+      tens->second.replaceStoredTensor(getTensor(tensor_name));
+     }else{
+      //std::cout << "#DEBUG(exatn::NumServer::initSpecialTensors): Constant scalar tensor creation: "
+      //          << tensor_name << ": Element type = " << static_cast<int>(elem_type) << std::endl; //debug
+      assert(tensor_name.length() > 2);
+      const auto real_int = static_cast<double>(std::stoll(tensor_name.substr(2)));
+      assert(elem_type != TensorElementType::VOID);
+      implicit_tensors_.emplace(std::make_pair(tensor_name,operand)); //list of implicitly created tensors (for garbage collection)
+      if(!(process_group == getDefaultProcessGroup())){
+       auto saved = tensor_comms_.emplace(std::make_pair(tensor_name,process_group));
+       assert(saved.second);
+      }
+      std::shared_ptr<TensorOperation> op0 = tensor_op_factory_->createTensorOp(TensorOpCode::CREATE);
+      op0->setTensorOperand(operand);
+      std::dynamic_pointer_cast<numerics::TensorOpCreate>(op0)->resetTensorElementType(elem_type);
+      bool success = submit(op0,tensor_mapper);
+      if(success){
+       std::shared_ptr<TensorOperation> op1 = tensor_op_factory_->createTensorOp(TensorOpCode::TRANSFORM);
+       op1->setTensorOperand(operand);
+       std::dynamic_pointer_cast<numerics::TensorOpTransform>(op1)->
+        resetFunctor(std::shared_ptr<TensorMethod>(new numerics::FunctorInitVal(real_int)));
+       success = submit(op1,tensor_mapper);
+      }
+     }
+    }
+   }
+  }
+ }
+ return;
 }
 
 void NumServer::destroyOrphanedTensors(bool force)

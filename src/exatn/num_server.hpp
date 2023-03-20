@@ -1,9 +1,9 @@
 /** ExaTN::Numerics: Numerical server
-REVISION: 2022/09/18
+REVISION: 2023/03/20
 
-Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -1096,6 +1096,10 @@ protected:
      This method has local synchronization semantics! **/
  bool sync(TensorOperation & operation, //in: previously submitted tensor operation
            bool wait = true);
+
+ /** Creates/initializes special tensors (delta, const scalar, etc.) present in the given tensor network. */
+ void initSpecialTensors(const ProcessGroup & process_group,
+                         TensorNetwork & network);
 
  /** Destroys orphaned tensors (garbage collection). Setting <force> to TRUE
      will force destruction regardless of the use count. **/
