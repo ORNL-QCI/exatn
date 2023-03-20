@@ -762,7 +762,7 @@ bool NumServer::submit(const ProcessGroup & process_group,
  const bool serialize = false;
 
 #ifdef CUQUANTUM
- if(comp_backend_ == "cuquantum" && network.getNumTensors() > 2){
+ if(comp_backend_ == "cuquantum" && network.getNumTensors() > 2 && (!network.containsScalarTensors())){
   auto sh_network = std::shared_ptr<TensorNetwork>(&network,[](TensorNetwork * net_ptr){});
   return submit(process_group,sh_network);
  }

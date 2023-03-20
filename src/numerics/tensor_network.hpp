@@ -1,9 +1,9 @@
 /** ExaTN::Numerics: Tensor network
-REVISION: 2022/09/30
+REVISION: 2023/03/20
 
-Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -435,7 +435,10 @@ public:
      all tensors as well as reversal of the direction of all tensor legs. **/
  bool conjugate();
 
- /** Returns TRUE if the tensor network contains tensors with isometries. **/
+ /** Returns TRUE if the tensor network contains input tensors of order 0. **/
+ bool containsScalarTensors() const;
+
+ /** Returns TRUE if the tensor network contains input tensors with isometries. **/
  int hasIsometries() const {return has_isometries_;}
 
  /** Collapses all isometric tensor pairs, thus simplifying the tensor network.
