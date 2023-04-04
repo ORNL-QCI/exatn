@@ -1,9 +1,9 @@
 /** ExaTN::Numerics: Tensor contraction sequence optimizer: CuTensorNet heuristics
-REVISION: 2022/12/12
+REVISION: 2023/04/04
 
-Copyright (C) 2018-2022 Dmitry I. Lyakh (Liakh)
+Copyright (C) 2018-2023 Dmitry I. Lyakh (Liakh)
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
-Copyright (C) 2022-2022 NVIDIA Corporation
+Copyright (C) 2022-2023 NVIDIA Corporation
 
 SPDX-License-Identifier: BSD-3-Clause **/
 
@@ -215,6 +215,9 @@ InfoCuTensorNet::InfoCuTensorNet(cutensornetHandle_t * handle,
  const int32_t reconfig_leaves = ContractionSeqOptimizerCutnn::RECONFIG_LEAVES;
  HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
                    CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_RECONFIG_NUM_LEAVES,&reconfig_leaves,sizeof(reconfig_leaves)));
+ const int32_t rnd_seed = static_cast<int32_t>(reinterpret_cast<std::size_t>(this) % 16385UL);
+ HANDLE_CTN_ERROR(cutensornetContractionOptimizerConfigSetAttribute(*cutnn_handle,cutnn_config,
+                   CUTENSORNET_CONTRACTION_OPTIMIZER_CONFIG_SEED,&rnd_seed,sizeof(rnd_seed)));
  HANDLE_CTN_ERROR(cutensornetCreateContractionOptimizerInfo(*cutnn_handle,cutnn_network,&cutnn_info));
  HANDLE_CTN_ERROR(cutensornetContractionOptimize(*cutnn_handle,cutnn_network,cutnn_config,workspace_size,cutnn_info));
 }
