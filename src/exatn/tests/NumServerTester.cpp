@@ -3782,16 +3782,16 @@ TEST(NumServerTester, SpinHamiltonians) {
  using exatn::quantum::PauliMap;
  using exatn::quantum::PauliProduct;
 
- const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX64;
+ const auto TENS_ELEM_TYPE = TensorElementType::COMPLEX32;
 
  const std::complex<double> j_param {-1.0,0.0};
  const std::complex<double> h_param {-0.1,0.0};
- const int num_spin_sites = 4;
- const int bond_dim_lim = 4;
+ const int num_spin_sites = 8;
+ const int bond_dim_lim = 2;
  const int max_bond_dim = std::min(static_cast<int>(std::pow(2,num_spin_sites/2)),bond_dim_lim);
  const int arity = 2;
  const std::string tn_type = "TTN"; //MPS or TTN
- const unsigned int num_states = 4; //only for TTN
+ const unsigned int num_states = 1; //only for TTN
  const unsigned int isometric = 1; //only for TTN
  const double accuracy = 1e-4;
 
@@ -3888,8 +3888,6 @@ TEST(NumServerTester, SpinHamiltonians) {
  //Build tensor network vectors:
  auto ket_tensor = exatn::makeSharedTensor("TensorSpace",std::vector<int>(num_spin_sites,2));
  auto vec_net0 = exatn::makeSharedTensorNetwork("VectorNet0",ket_tensor,*tn_builder,false);
- vec_net0->getTensor(3)->replaceDimension(2,2); //debug
- vec_net0->getTensor(0)->replaceDimension(4,2); //debug
  vec_net0->markOptimizableAllTensors();
  auto vec_tns0 = exatn::makeSharedTensorExpansion("VectorTNS0",vec_net0,std::complex<double>{1.0,0.0});
  auto rhs_net = exatn::makeSharedTensorNetwork("RightHandSideNet",ket_tensor,*tn_builder,false);
