@@ -34,6 +34,7 @@ void FunctorIsometrize::unpack(BytePacket & packet)
 }
 
 
+// Complex conjugation:
 template <typename NumericType>
 inline NumericType conjugated(NumericType value)
 {
@@ -44,6 +45,212 @@ template <typename NumericType>
 inline std::complex<NumericType> conjugated(std::complex<NumericType> value)
 {
  return std::conj(value);
+}
+
+
+// MGS for float and double:
+template<typename NumericType>
+void modifiedGramSchmidt(NumericType * tensor_body, TensorRange & rngx, TensorRange & rngy)
+{
+ //Allocate a tempory matricized buffer:
+ DimExtent volx = rngx.localVolume();
+ DimExtent voly = rngy.localVolume();
+ auto * buf = new double[voly*volx];
+
+ //Load data into the tempory matricized buffer:
+ rngy.reset();
+#pragma omp parallel for schedule(guided) shared(rngx,rngy,volx,voly,buf,tensor_body)
+ for(DimOffset j = 0; j < voly; ++j){
+  rngx.reset();
+  for(DimOffset i = 0; i < volx; ++i){
+   buf[volx*j + i] = static_cast<double>(tensor_body[rngy.globalOffset() + rngx.globalOffset()]);
+   rngx.next();
+  }
+  rngy.next();
+ }
+#if 0
+ //Print input matrix (debug):
+ std::cout << "MGS input:\n" << std::scientific;
+ for(DimOffset i = 0; i < volx; ++i){
+  for(DimOffset j = 0; j < voly; ++j){
+   std::cout << "  " << buf[volx*j + i];
+  }
+  std::cout << std::endl;
+ }
+#endif
+ //Modified Gram-Schmidt procedure:
+ for(DimOffset j = 0; j < voly; ++j){
+  double nrm2 {0.0};
+#pragma omp parallel for schedule(guided) shared(j,volx,buf) reduction(+:nrm2)
+  for(DimOffset i = 0; i < volx; ++i){
+   const double elem = std::abs(buf[volx*j + i]);
+   nrm2 += elem * elem;
+  }
+  nrm2 = std::sqrt(nrm2);
+#pragma omp parallel for schedule(guided) shared(j,volx,buf,nrm2)
+  for(DimOffset i = 0; i < volx; ++i){
+   buf[volx*j + i] /= nrm2;
+  }
+#pragma omp parallel for schedule(guided) shared(j,volx,voly,buf)
+  for(DimOffset k = j+1; k < voly; ++k){
+   double dpr {0.0};
+   for(DimOffset i = 0; i < volx; ++i){
+    dpr += conjugated(buf[volx*j + i]) * buf[volx*k + i];
+   }
+   for(DimOffset i = 0; i < volx; ++i){
+    buf[volx*k + i] -= dpr * buf[volx*j + i];
+   }
+  }
+ }
+#if 0
+ //Print output matrix (debug):
+ std::cout << "MGS output:\n" << std::scientific;
+ for(DimOffset i = 0; i < volx; ++i){
+  for(DimOffset j = 0; j < voly; ++j){
+   std::cout << "  " << buf[volx*j + i];
+  }
+  std::cout << std::endl;
+ }
+#endif
+#if 1
+ //Verification (debug):
+ for(DimOffset j = 0; j < voly; ++j){
+  double nrm2 {0.0};
+  for(DimOffset k = 0; k < volx; ++k){
+   const double elem = std::abs(buf[volx*j + k]);
+   nrm2 += elem * elem;
+  }
+  nrm2 = std::sqrt(nrm2);
+  make_sure(nrm2,1.0,1e-5,
+   "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm: " + std::to_string(nrm2));
+  for(DimOffset i = (j+1); i < voly; ++i){
+   double overlap {0.0};
+   for(DimOffset k = 0; k < volx; ++k){
+    overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
+   }
+   make_sure(static_cast<double>(std::abs(overlap)),0.0,1e-5,
+    "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap: " + std::to_string(std::abs(overlap)));
+  }
+ }
+#endif
+ //Copy the result back into the tensor:
+ rngy.reset();
+#pragma omp parallel for schedule(guided) shared(rngx,rngy,volx,voly,buf,tensor_body)
+ for(DimOffset j = 0; j < voly; ++j){
+  rngx.reset();
+  for(DimOffset i = 0; i < volx; ++i){
+   tensor_body[rngy.globalOffset() + rngx.globalOffset()] = static_cast<NumericType>(buf[volx*j + i]);
+   rngx.next();
+  }
+  rngy.next();
+ }
+
+ //Deallocate the temporary matricized buffer:
+ delete [] buf;
+ return;
+}
+
+
+// MGS for complex float and double:
+template<typename NumericType>
+void modifiedGramSchmidt(std::complex<NumericType> * tensor_body, TensorRange & rngx, TensorRange & rngy)
+{
+ //Allocate a tempory matricized buffer:
+ DimExtent volx = rngx.localVolume();
+ DimExtent voly = rngy.localVolume();
+ auto * buf = new std::complex<double>[voly*volx];
+
+ //Load data into the tempory matricized buffer:
+ rngy.reset();
+#pragma omp parallel for schedule(guided) shared(rngx,rngy,volx,voly,buf,tensor_body)
+ for(DimOffset j = 0; j < voly; ++j){
+  rngx.reset();
+  for(DimOffset i = 0; i < volx; ++i){
+   buf[volx*j + i] = std::complex<double>(tensor_body[rngy.globalOffset() + rngx.globalOffset()]);
+   rngx.next();
+  }
+  rngy.next();
+ }
+#if 0
+ //Print input matrix (debug):
+ std::cout << "MGS input:\n" << std::scientific;
+ for(DimOffset i = 0; i < volx; ++i){
+  for(DimOffset j = 0; j < voly; ++j){
+   std::cout << "  " << buf[volx*j + i];
+  }
+  std::cout << std::endl;
+ }
+#endif
+ //Modified Gram-Schmidt procedure:
+ for(DimOffset j = 0; j < voly; ++j){
+  double nrm2 {0.0};
+#pragma omp parallel for schedule(guided) shared(j,volx,buf) reduction(+:nrm2)
+  for(DimOffset i = 0; i < volx; ++i){
+   const double elem = std::abs(buf[volx*j + i]);
+   nrm2 += elem * elem;
+  }
+  nrm2 = std::sqrt(nrm2);
+#pragma omp parallel for schedule(guided) shared(j,volx,buf,nrm2)
+  for(DimOffset i = 0; i < volx; ++i){
+   buf[volx*j + i] /= nrm2;
+  }
+#pragma omp parallel for schedule(guided) shared(j,volx,voly,buf)
+  for(DimOffset k = j+1; k < voly; ++k){
+   std::complex<double> dpr {0.0,0.0};
+   for(DimOffset i = 0; i < volx; ++i){
+    dpr += conjugated(buf[volx*j + i]) * buf[volx*k + i];
+   }
+   for(DimOffset i = 0; i < volx; ++i){
+    buf[volx*k + i] -= dpr * buf[volx*j + i];
+   }
+  }
+ }
+#if 0
+ //Print output matrix (debug):
+ std::cout << "MGS output:\n" << std::scientific;
+ for(DimOffset i = 0; i < volx; ++i){
+  for(DimOffset j = 0; j < voly; ++j){
+   std::cout << "  " << buf[volx*j + i];
+  }
+  std::cout << std::endl;
+ }
+#endif
+#if 1
+ //Verification (debug):
+ for(DimOffset j = 0; j < voly; ++j){
+  double nrm2 {0.0};
+  for(DimOffset k = 0; k < volx; ++k){
+   const double elem = std::abs(buf[volx*j + k]);
+   nrm2 += elem * elem;
+  }
+  nrm2 = std::sqrt(nrm2);
+  make_sure(nrm2,1.0,1e-5,
+   "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm: " + std::to_string(nrm2));
+  for(DimOffset i = (j+1); i < voly; ++i){
+   std::complex<double> overlap {0.0,0.0};
+   for(DimOffset k = 0; k < volx; ++k){
+    overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
+   }
+   make_sure(static_cast<double>(std::abs(overlap)),0.0,1e-5,
+    "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap: " + std::to_string(std::abs(overlap)));
+  }
+ }
+#endif
+ //Copy the result back into the tensor:
+ rngy.reset();
+#pragma omp parallel for schedule(guided) shared(rngx,rngy,volx,voly,buf,tensor_body)
+ for(DimOffset j = 0; j < voly; ++j){
+  rngx.reset();
+  for(DimOffset i = 0; i < volx; ++i){
+   tensor_body[rngy.globalOffset() + rngx.globalOffset()] = std::complex<NumericType>(buf[volx*j + i]);
+   rngx.next();
+  }
+  rngy.next();
+ }
+
+ //Deallocate the temporary matricized buffer:
+ delete [] buf;
+ return;
 }
 
 
@@ -61,12 +268,12 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
   stride *= extents[i];
  }
 
- std::random_device seeder;
+ /*std::random_device seeder;
  std::default_random_engine generator(seeder());
  std::uniform_real_distribution<float> distribution_float(-1.0,1.0);
  auto rnd_float = std::bind(distribution_float,generator);
  std::uniform_real_distribution<double> distribution_double(-1.0,1.0);
- auto rnd_double = std::bind(distribution_double,generator);
+ auto rnd_double = std::bind(distribution_double,generator);*/
 
  auto enforce_isometry = [&](auto * tensor_body,
                              const std::vector<unsigned int> & iso_dims){
@@ -101,102 +308,7 @@ int FunctorIsometrize::apply(talsh::Tensor & local_tensor) //tensor slice (in ge
    }
    TensorRange rngx(std::vector<DimOffset>(rankx,0),extx,strx);
    TensorRange rngy(std::vector<DimOffset>(ranky,0),exty,stry);
-   DimExtent volx = rngx.localVolume();
-   DimExtent voly = rngy.localVolume();
-
-   //Allocate a tempory matricized buffer:
-   tensor_body_type * buf = new tensor_body_type[voly*volx];
-
-   //Load data into the tempory matricized buffer:
-   rngy.reset();
-   for(DimOffset j = 0; j < voly; ++j){
-    rngx.reset();
-    for(DimOffset i = 0; i < volx; ++i){
-     buf[volx*j + i] = tensor_body[rngy.globalOffset() + rngx.globalOffset()];
-     rngx.next();
-    }
-    rngy.next();
-   }
-#if 0
-   //Print input matrix (debug):
-   std::cout << "MGS input:\n" << std::scientific;
-   for(DimOffset i = 0; i < volx; ++i){
-    for(DimOffset j = 0; j < voly; ++j){
-     std::cout << "  " << buf[volx*j + i];
-    }
-    std::cout << std::endl;
-   }
-#endif
-   //Modified Gram-Schmidt procedure:
-   for(DimOffset j = 0; j < voly; ++j){
-    double nrm2 = 0.0;
-    for(DimOffset i = 0; i < volx; ++i){
-     const double elem = std::abs(buf[volx*j + i]);
-     nrm2 += elem * elem;
-    }
-    nrm2 = std::sqrt(nrm2);
-    for(DimOffset i = 0; i < volx; ++i){
-     buf[volx*j + i] /= tensor_body_type(nrm2);
-    }
-    for(DimOffset k = j+1; k < voly; ++k){
-     tensor_body_type dpr(0.0); //`dpr must be double precision
-     for(DimOffset i = 0; i < volx; ++i){
-      dpr += conjugated(buf[volx*j + i]) * buf[volx*k + i];
-     }
-     for(DimOffset i = 0; i < volx; ++i){
-      buf[volx*k + i] -= dpr * buf[volx*j + i];
-     }
-    }
-   }
-#if 0
-   //Print output matrix (debug):
-   std::cout << "MGS output:\n" << std::scientific;
-   for(DimOffset i = 0; i < volx; ++i){
-    for(DimOffset j = 0; j < voly; ++j){
-     std::cout << "  " << buf[volx*j + i];
-    }
-    std::cout << std::endl;
-   }
-#endif
-#if 1
-   //Verification (debug):
-   for(DimOffset j = 0; j < voly; ++j){
-    double nrm2 = 0.0;
-    for(DimOffset k = 0; k < volx; ++k){
-     const double elem = std::abs(buf[volx*j + k]);
-     nrm2 += elem * elem;
-    }
-    nrm2 = std::sqrt(nrm2);
-    //std::cout << " " << nrm2; //debug
-    make_sure(nrm2,1.0,1e-5,
-     "#FATAL(FunctorIsometrize::apply): MGS procedure failed in norm: "
-     +std::to_string(nrm2));
-    for(DimOffset i = (j+1); i < voly; ++i){
-     tensor_body_type overlap{0.0}; //`overlap must be double precision
-     for(DimOffset k = 0; k < volx; ++k){
-      overlap += conjugated(buf[volx*j + k]) * buf[volx*i + k];
-     }
-     //std::cout << " " << std::abs(overlap); //debug
-     make_sure(static_cast<double>(std::abs(overlap)),0.0,1e-5,
-      "#FATAL(FunctorIsometrize::apply): MGS procedure failed in overlap: "
-      +std::to_string(std::abs(overlap)));
-    }
-   }
-   //std::cout << " MGS completed\n"; //debug
-#endif
-   //Copy the result back into the tensor:
-   rngy.reset();
-   for(DimOffset j = 0; j < voly; ++j){
-    rngx.reset();
-    for(DimOffset i = 0; i < volx; ++i){
-     tensor_body[rngy.globalOffset() + rngx.globalOffset()] = buf[volx*j + i];
-     rngx.next();
-    }
-    rngy.next();
-   }
-
-   //Deallocate the temporary matricized buffer:
-   delete [] buf;
+   modifiedGramSchmidt(tensor_body,rngx,rngy);
   }
   return 0;
  };
