@@ -1,5 +1,5 @@
 /** ExaTN: Tensor Runtime: Tensor network executor: NVIDIA cuQuantum
-REVISION: 2023/03/15
+REVISION: 2023/05/15
 
 Copyright (C) 2018-2023 Dmitry Lyakh
 Copyright (C) 2018-2022 Oak Ridge National Laboratory (UT-Battelle)
@@ -461,6 +461,7 @@ void CuQuantumExecutor::parseTensorNetwork(std::shared_ptr<TensorNetworkReq> tn_
    tn_req->extents_in[tens_num] = res0.first->second.extents.data();
    tn_req->modes_in[tens_num] = res1.first->second.data();
    tn_req->qualifiers_in[tens_num].isConjugate = static_cast<int32_t>(tens.isComplexConjugated());
+   tn_req->qualifiers_in[tens_num].isConstant = static_cast<int32_t>(!tens.isOptimizable());
    ++tens_num;
   }
 
