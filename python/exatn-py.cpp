@@ -81,7 +81,7 @@ py::class_<exatn::numerics::TensorExpansion,
             return network.getTensor(id);
           },
           "")
-      .def("collapseIsometries", &TensorNetwork::collapseIsometries, "")
+      .def("collapseIsometries", &TensorNetwork::collapseIsometries, py::arg("deltas_appended") = nullptr, "")
       .def("getTensor", &TensorNetwork::getTensor, "")
       .def("placeTensor",
            (bool (exatn::numerics::TensorNetwork::*)(
