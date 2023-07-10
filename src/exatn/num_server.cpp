@@ -1439,6 +1439,11 @@ bool NumServer::registerTensorIsometry(const std::string & name,
 
 bool NumServer::withinTensorExistenceDomain(const std::string & tensor_name) const
 {
+  std::cout << "TENSORS in this process: " << std::endl;
+  for(auto kv : tensors_)
+  {
+    std::cout << kv.first << std::endl;
+  }
  bool exists = (tensors_.find(tensor_name) != tensors_.cend());
  if(!exists) exists = (implicit_tensors_.find(tensor_name) != implicit_tensors_.cend());
  return exists;
